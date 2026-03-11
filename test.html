@@ -5,21 +5,41 @@ button{background:#C9A84C;color:#000;border:none;padding:.8rem 2rem;border-radiu
 pre{background:#222;padding:1rem;border-radius:5px;margin-top:1rem;white-space:pre-wrap;font-size:.85rem;}
 .ok{color:#4ADE80;font-weight:bold}.err{color:#FB7185;font-weight:bold}</style></head>
 <body>
-<h2 style="color:#C9A84C">🔧 Lumina AI v6 — API Test</h2>
+<h2 style="color:#C9A84C">🔧 Synapti<span style="color:#C9A84C">q</span> v7 — API Test</h2>
 <button onclick="test()">▶ Test Claude Opus API</button>
+<button onclick="testResend()">📧 Test Resend Email</button>
+<button onclick="testStripe()">💳 Test Stripe</button>
 <pre id="out">Click to test...</pre>
 <script>
 async function test(){
   document.getElementById('out').textContent='⏳ Calling Claude Opus...';
   try{
     const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-opus-4-6',max_tokens:50,messages:[{role:'user',content:'Say exactly: LUMINA API WORKING ✓'}]})});
+      body:JSON.stringify({model:'claude-opus-4-6',max_tokens:50,messages:[{role:'user',content:'Say exactly: SYNAPTIQ API WORKING ✓'}]})});
     const data=await r.json();
     if(data.content?.[0]?.text){
-      document.getElementById('out').innerHTML='<span class="ok">✅ SUCCESS!\n\n'+data.content[0].text+'</span>';
+      document.getElementById('out').innerHTML='<span class="ok">✅ Claude Opus: '+data.content[0].text+'</span>';
     } else {
       document.getElementById('out').innerHTML='<span class="err">❌ '+JSON.stringify(data,null,2)+'</span>';
     }
   }catch(e){document.getElementById('out').innerHTML='<span class="err">❌ '+e.message+'</span>';}
+}
+async function testResend(){
+  document.getElementById('out').textContent='⏳ Testing Resend...';
+  try{
+    const r=await fetch('/api/resend',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({to:'test@synaptiq.co.uk',type:'welcome',name:'Test Student'})});
+    const data=await r.json();
+    document.getElementById('out').innerHTML=r.ok?'<span class="ok">✅ Resend: '+JSON.stringify(data)+'</span>':'<span class="err">❌ '+JSON.stringify(data)+'</span>';
+  }catch(e){document.getElementById('out').innerHTML='<span class="err">❌ Resend: '+e.message+'</span>';}
+}
+async function testStripe(){
+  document.getElementById('out').textContent='⏳ Testing Stripe...';
+  try{
+    const r=await fetch('/api/stripe',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({plan:'student',email:'test@synaptiq.co.uk'})});
+    const data=await r.json();
+    document.getElementById('out').innerHTML=r.ok?'<span class="ok">✅ Stripe: session created — '+data.sessionId+'</span>':'<span class="err">❌ '+JSON.stringify(data)+'</span>';
+  }catch(e){document.getElementById('out').innerHTML='<span class="err">❌ Stripe: '+e.message+'</span>';}
 }
 </script></body></html>

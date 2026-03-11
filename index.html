@@ -1698,14 +1698,14 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="auth-step" id="step4">
         <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1.5rem">Almost there! 🎉</h3>
         <div style="background:var(--bg3);border-radius:12px;padding:1rem;margin-bottom:1.5rem;font-size:.85rem;color:var(--muted);line-height:1.6">
-          <strong style="color:var(--white);display:block;margin-bottom:.5rem">Your learning profile is ready:</strong>
+          <strong style="color:var(--white);display:block;margin-bottom:.5rem">Your Synaptiq profile:</strong>
           <div id="profile-summary"></div>
         </div>
         <div class="gdpr-check">
           <input type="checkbox" id="gdpr-check">
           <label for="gdpr-check">I agree to the <a onclick="nav('privacy')">Privacy Policy</a> and <a href="#">Terms of Service</a>. I understand my data helps personalise my learning experience and can be deleted at any time.</label>
         </div>
-        <button class="btn-full" onclick="createAccount()">🚀 Start Learning Free</button>
+        <button class="btn-full" onclick="createAccount()">🚀 Start Free Trial</button>
         <button class="btn-back" onclick="prevStep(3)">← Back</button>
       </div>
     </div>
@@ -1746,12 +1746,14 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="sidebar-section-label">Learning</div>
       <div class="sidebar-item active" id="si-home" onclick="showDash('home')"><i class="fas fa-house"></i>Dashboard</div>
       <div class="sidebar-item" id="si-tutor" onclick="showDash('tutor')"><i class="fas fa-robot"></i>AI Tutor</div>
+      <div class="sidebar-item" id="si-content" onclick="showDash('content')"><i class="fas fa-book-open"></i>A-Level Content</div>
       <div class="sidebar-item" id="si-questions" onclick="showDash('questions')"><i class="fas fa-file-lines"></i>Question Papers</div>
+      <div class="sidebar-item" id="si-resources" onclick="showDash('resources')"><i class="fas fa-upload"></i>Resources</div>
       <div class="sidebar-section-label">Progress</div>
       <div class="sidebar-item" id="si-progress" onclick="showDash('progress')"><i class="fas fa-chart-line"></i>Progress</div>
       <div class="sidebar-item" id="si-strengths" onclick="showDash('strengths')"><i class="fas fa-bullseye"></i>Strengths</div>
       <div class="sidebar-section-label">School</div>
-      <div class="sidebar-item" id="si-assign" onclick="showDash('assignments')"><i class="fas fa-clipboard-list"></i>Assignments<span class="sidebar-badge">2</span></div>
+      <div class="sidebar-item" id="si-assignments" onclick="showDash('assignments')"><i class="fas fa-clipboard-list"></i>Assignments<span class="sidebar-badge">2</span></div>
       <div class="sidebar-section-label">Account</div>
       <div class="sidebar-item" id="si-settings" onclick="showDash('settings')"><i class="fas fa-gear"></i>Settings</div>
     </div>
@@ -1765,34 +1767,33 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="page-title" id="dash-greeting">Good morning! 👋</div>
       <p class="page-subtitle">Here's your learning overview</p>
       <div class="stats-row">
-        <div class="stat-card"><div class="stat-card-label">Questions Answered</div><div class="stat-card-value" id="stat-q">1,247</div><div class="stat-card-change">↑ 12 today</div></div>
-        <div class="stat-card"><div class="stat-card-label">Accuracy Rate</div><div class="stat-card-value" id="stat-acc">78%</div><div class="stat-card-change">↑ 3% this week</div></div>
-        <div class="stat-card"><div class="stat-card-label">Study Streak</div><div class="stat-card-value">14 🔥</div><div class="stat-card-change">days in a row</div></div>
-        <div class="stat-card"><div class="stat-card-label">Topics Mastered</div><div class="stat-card-value">23</div><div class="stat-card-change">of 60 total</div></div>
+        <div class="stat-card"><div class="stat-card-label">Questions Answered</div><div class="stat-card-value" id="stat-q">0</div><div class="stat-card-change">↑ Start today!</div></div>
+        <div class="stat-card"><div class="stat-card-label">Accuracy Rate</div><div class="stat-card-value" id="stat-acc">—</div><div class="stat-card-change">Answer questions to track</div></div>
+        <div class="stat-card"><div class="stat-card-label">Study Streak</div><div class="stat-card-value">1 🔥</div><div class="stat-card-change">Keep it going!</div></div>
+        <div class="stat-card"><div class="stat-card-label">Topics Explored</div><div class="stat-card-value" id="stat-topics">0</div><div class="stat-card-change">of 180 A-Level topics</div></div>
       </div>
       <div class="dash-grid">
         <div>
           <!-- Quick chat -->
           <div class="card" style="margin-bottom:1.5rem">
             <div class="card-header">
-              <span class="card-title">🤖 Quick Ask — AI Tutor</span>
+              <span class="card-title">🤖 Quick Ask — A-Level Maths Tutor</span>
               <button class="btn btn-gold" style="font-size:.75rem;padding:.4rem .9rem" onclick="showDash('tutor')">Open Tutor →</button>
             </div>
             <div class="chat-messages" id="dash-chat"></div>
             <div class="chat-input-row">
-              <textarea class="chat-input" id="dash-input" placeholder="Ask anything..." onkeydown="dashKey(event)"></textarea>
+              <textarea class="chat-input" id="dash-input" placeholder="Ask about any A-Level Maths topic..." onkeydown="dashKey(event)"></textarea>
               <button class="chat-send" onclick="dashSend()">Send ✦</button>
             </div>
           </div>
-          <!-- Progress -->
+          <!-- A-Level Progress -->
           <div class="card">
-            <div class="card-header"><span class="card-title">📊 Subject Progress</span></div>
+            <div class="card-header"><span class="card-title">📊 A-Level Module Progress</span></div>
             <div class="card-body">
-              <div class="progress-item"><div class="progress-header"><span>Mathematics</span><span>72%</span></div><div class="progress-bar"><div class="progress-fill" style="width:72%;background:var(--blue)"></div></div></div>
-              <div class="progress-item"><div class="progress-header"><span>Physics</span><span>65%</span></div><div class="progress-bar"><div class="progress-fill" style="width:65%;background:var(--green)"></div></div></div>
-              <div class="progress-item"><div class="progress-header"><span>Chemistry</span><span>58%</span></div><div class="progress-bar"><div class="progress-fill" style="width:58%;background:var(--purple)"></div></div></div>
-              <div class="progress-item"><div class="progress-header"><span>Biology</span><span>81%</span></div><div class="progress-bar"><div class="progress-fill" style="width:81%;background:var(--pink)"></div></div></div>
-              <div class="progress-item"><div class="progress-header"><span>English Lit</span><span>70%</span></div><div class="progress-bar"><div class="progress-fill" style="width:70%;background:var(--orange)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Pure Mathematics 1</span><span>0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--blue)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Pure Mathematics 2</span><span>0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--gold)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Statistics Y1 & Y2</span><span>0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--green)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Mechanics Y1 & Y2</span><span>0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--purple)"></div></div></div>
             </div>
           </div>
         </div>
@@ -1801,10 +1802,7 @@ body.mode-adhd .adhd-break { display: block; }
           <div class="card">
             <div class="card-header"><span class="card-title">⚡ Recent Activity</span></div>
             <div class="card-body" style="padding:1rem 1.5rem">
-              <div class="activity-item"><div class="activity-icon" style="background:rgba(96,165,250,0.15);color:var(--blue)">📝</div><div><div class="activity-text fw700">Completed 5 Maths questions</div><div style="font-size:.75rem;color:var(--muted)">Algebra — Quadratics</div></div><div class="activity-time">2m</div></div>
-              <div class="activity-item"><div class="activity-icon" style="background:rgba(201,168,76,0.15);color:var(--gold)">🤖</div><div><div class="activity-text fw700">AI Tutor session</div><div style="font-size:.75rem;color:var(--muted)">Physics — Forces</div></div><div class="activity-time">1h</div></div>
-              <div class="activity-item"><div class="activity-icon" style="background:rgba(74,222,128,0.15);color:var(--green)">✅</div><div><div class="activity-text fw700">Assignment submitted</div><div style="font-size:.75rem;color:var(--muted)">Chemistry homework</div></div><div class="activity-time">3h</div></div>
-              <div class="activity-item"><div class="activity-icon" style="background:rgba(167,139,250,0.15);color:var(--purple)">🏆</div><div><div class="activity-text fw700">Achievement unlocked!</div><div style="font-size:.75rem;color:var(--muted)">7-day streak 🔥</div></div><div class="activity-time">1d</div></div>
+              <div class="activity-item"><div class="activity-icon" style="background:rgba(201,168,76,0.15);color:var(--gold)">🎓</div><div><div class="activity-text fw700">Welcome to Synaptiq!</div><div style="font-size:.75rem;color:var(--muted)">Your A-Level Maths journey starts now</div></div><div class="activity-time">now</div></div>
             </div>
           </div>
           <!-- Quick actions -->
@@ -1812,9 +1810,9 @@ body.mode-adhd .adhd-break { display: block; }
             <div class="card-header"><span class="card-title">🚀 Quick Actions</span></div>
             <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
               <button class="btn btn-outline" style="border-radius:10px;padding:.875rem" onclick="showDash('tutor')">🤖 AI Tutor</button>
-              <button class="btn btn-outline" style="border-radius:10px;padding:.875rem" onclick="showDash('questions')">📝 Generate Questions</button>
-              <button class="btn btn-outline" style="border-radius:10px;padding:.875rem" onclick="showDash('progress')">📊 Progress</button>
-              <button class="btn btn-outline" style="border-radius:10px;padding:.875rem" onclick="showDash('strengths')">🎯 Strengths</button>
+              <button class="btn btn-outline" style="border-radius:10px;padding:.875rem" onclick="showDash('content')">📚 A-Level Content</button>
+              <button class="btn btn-outline" style="border-radius:10px;padding:.875rem" onclick="showDash('questions')">📝 Past Paper Questions</button>
+              <button class="btn btn-outline" style="border-radius:10px;padding:.875rem" onclick="showDash('resources')">📄 Upload Resources</button>
             </div>
           </div>
         </div>
@@ -1824,44 +1822,75 @@ body.mode-adhd .adhd-break { display: block; }
     <!-- AI TUTOR SUBPAGE -->
     <div class="subpage" id="sp-tutor" style="padding:0;margin:-2rem;height:calc(100vh - 64px)">
       <div class="tutor-layout">
+        <!-- Topic sidebar -->
         <div class="tutor-subjects">
-          <h4>Subjects</h4>
-          <button class="subj-btn active" id="tsub-math" onclick="setSubject('Mathematics','➕','math')">➕ Mathematics</button>
-          <button class="subj-btn" id="tsub-econ" onclick="setSubject('Economics','💰','econ')">💰 Economics</button>
-          <button class="subj-btn" id="tsub-phys" onclick="setSubject('Physics','⚡','sci')">⚡ Physics</button>
-          <button class="subj-btn" id="tsub-chem" onclick="setSubject('Chemistry','🧪','sci')">🧪 Chemistry</button>
-          <button class="subj-btn" id="tsub-bio" onclick="setSubject('Biology','🧬','sci')">🧬 Biology</button>
-          <button class="subj-btn" id="tsub-eng" onclick="setSubject('English Literature','📖','eng')">📖 English Lit</button>
-          <button class="subj-btn" id="tsub-hist" onclick="setSubject('History','🏛️','hist')">🏛️ History</button>
-          <button class="subj-btn" id="tsub-comp" onclick="setSubject('Computer Science','💻','comp')">💻 Computer Sci</button>
-          <button class="subj-btn" id="tsub-fr" onclick="setSubject('French','🇫🇷','lang')">🇫🇷 French</button>
+          <h4>A-Level Topics</h4>
+          <button class="subj-btn active" onclick="setTopic('A-Level Maths — General')">📐 General</button>
+          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Pure 1</div>
+          <button class="subj-btn" onclick="setTopic('Algebraic Expressions')">Algebraic Expressions</button>
+          <button class="subj-btn" onclick="setTopic('Quadratics')">Quadratics</button>
+          <button class="subj-btn" onclick="setTopic('Equations & Inequalities')">Equations & Inequalities</button>
+          <button class="subj-btn" onclick="setTopic('Graphs & Transformations')">Graphs & Transformations</button>
+          <button class="subj-btn" onclick="setTopic('Straight Line Graphs')">Straight Line Graphs</button>
+          <button class="subj-btn" onclick="setTopic('Circles')">Circles</button>
+          <button class="subj-btn" onclick="setTopic('Algebraic Methods')">Algebraic Methods</button>
+          <button class="subj-btn" onclick="setTopic('Binomial Expansion (Y1)')">Binomial Expansion</button>
+          <button class="subj-btn" onclick="setTopic('Trigonometric Ratios')">Trigonometric Ratios</button>
+          <button class="subj-btn" onclick="setTopic('Trigonometric Identities')">Trig Identities</button>
+          <button class="subj-btn" onclick="setTopic('Vectors (Pure 1)')">Vectors</button>
+          <button class="subj-btn" onclick="setTopic('Differentiation (Pure 1)')">Differentiation</button>
+          <button class="subj-btn" onclick="setTopic('Integration (Pure 1)')">Integration</button>
+          <button class="subj-btn" onclick="setTopic('Exponentials & Logarithms')">Exponentials & Logs</button>
+          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Pure 2</div>
+          <button class="subj-btn" onclick="setTopic('Algebraic Methods (Pure 2)')">Algebraic Methods</button>
+          <button class="subj-btn" onclick="setTopic('Functions & Graphs')">Functions & Graphs</button>
+          <button class="subj-btn" onclick="setTopic('Sequences & Series')">Sequences & Series</button>
+          <button class="subj-btn" onclick="setTopic('Radians')">Radians</button>
+          <button class="subj-btn" onclick="setTopic('Trigonometric Functions')">Trig Functions</button>
+          <button class="subj-btn" onclick="setTopic('Parametric Equations')">Parametric Equations</button>
+          <button class="subj-btn" onclick="setTopic('Differentiation (Pure 2)')">Differentiation</button>
+          <button class="subj-btn" onclick="setTopic('Numerical Methods')">Numerical Methods</button>
+          <button class="subj-btn" onclick="setTopic('Integration (Pure 2)')">Integration</button>
+          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Statistics</div>
+          <button class="subj-btn" onclick="setTopic('Statistical Sampling')">Statistical Sampling</button>
+          <button class="subj-btn" onclick="setTopic('Data Presentation')">Data Presentation</button>
+          <button class="subj-btn" onclick="setTopic('Probability')">Probability</button>
+          <button class="subj-btn" onclick="setTopic('Statistical Distributions')">Distributions</button>
+          <button class="subj-btn" onclick="setTopic('Hypothesis Testing')">Hypothesis Testing</button>
+          <button class="subj-btn" onclick="setTopic('Normal Distribution')">Normal Distribution</button>
+          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Mechanics</div>
+          <button class="subj-btn" onclick="setTopic('Kinematics')">Kinematics</button>
+          <button class="subj-btn" onclick="setTopic('Forces & Newton\'s Laws')">Forces & Newton's Laws</button>
+          <button class="subj-btn" onclick="setTopic('Moments')">Moments</button>
+          <button class="subj-btn" onclick="setTopic('Projectiles')">Projectiles</button>
+          <button class="subj-btn" onclick="setTopic('Friction')">Friction</button>
         </div>
         <div class="tutor-chat">
           <div class="tutor-header">
             <div>
-              <h3 id="tutor-subject-title">Mathematics Tutor</h3>
-              <p>Ask me anything — I'll explain step by step</p>
+              <h3 id="tutor-subject-title">A-Level Maths Tutor</h3>
+              <p id="tutor-topic-sub">Ask me anything — I'll show full working step by step</p>
             </div>
             <div style="display:flex;gap:.5rem">
-              <button class="tts-btn" id="tts-toggle" onclick="toggleTTS()" title="Read aloud (Dyslexia support)">🔊</button>
+              <button class="tts-btn" id="tts-toggle" onclick="toggleTTS()" title="Read aloud">🔊</button>
               <button class="btn btn-outline" style="font-size:.75rem" onclick="clearTutor()">Clear Chat</button>
             </div>
           </div>
           <div class="quick-actions">
-            <button class="quick-btn" onclick="tutorQuick('Explain a key concept for me')">💡 Explain concept</button>
-            <button class="quick-btn" onclick="tutorQuick('Give me a practice question')">📝 Practice question</button>
-            <button class="quick-btn" onclick="tutorQuick('Give me exam technique tips')">🎯 Exam technique</button>
-            <button class="quick-btn" onclick="tutorQuick('What are the most common exam topics?')">📋 Common topics</button>
-            <button class="quick-btn" onclick="tutorQuick('Explain this simply as if I am 10 years old')">🧒 Simplify</button>
+            <button class="quick-btn" onclick="tutorQuick('Explain this topic from scratch with a worked example')">💡 Explain concept</button>
+            <button class="quick-btn" onclick="tutorQuick('Give me an exam-style practice question on this topic with full working')">📝 Practice question</button>
+            <button class="quick-btn" onclick="tutorQuick('What are the key formulas and methods I need to know for the exam?')">📋 Key formulas</button>
+            <button class="quick-btn" onclick="tutorQuick('What mistakes do students commonly make on this topic?')">⚠️ Common mistakes</button>
+            <button class="quick-btn" onclick="tutorQuick('Show me a mark-scheme style solution to a typical exam question')">✅ Mark scheme style</button>
           </div>
           <div class="tutor-messages" id="tutor-messages"></div>
           <div class="tutor-input-area">
             <div class="tutor-input-row">
-              <textarea class="tutor-input" id="tutor-input" placeholder="Ask your tutor anything..." onkeydown="tutorKey(event)" rows="1"></textarea>
+              <textarea class="tutor-input" id="tutor-input" placeholder="Ask about any A-Level Maths topic..." onkeydown="tutorKey(event)" rows="1"></textarea>
               <button class="tts-btn" id="speak-btn" onclick="speakInput()" title="Speak your question">🎤</button>
               <button class="tutor-send" onclick="tutorSend()">Send ✦</button>
             </div>
-            <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem;text-align:center">Powered by Claude Opus — your personal AI tutor</p>
+            <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem;text-align:center">Powered by Claude Opus · A-Level Maths specialist · Mark-scheme aligned</p>
           </div>
         </div>
       </div>
@@ -1869,16 +1898,20 @@ body.mode-adhd .adhd-break { display: block; }
 
     <!-- QUESTIONS SUBPAGE -->
     <div class="subpage" id="sp-questions">
-      <div class="page-title">📝 Question Paper Generator</div>
-      <p class="page-subtitle">Generate exam-style questions tailored to your level and board</p>
+      <div class="page-title">📝 A-Level Maths Question Generator</div>
+      <p class="page-subtitle">Generate exam-style questions with full worked solutions — mark-scheme aligned</p>
       <div class="questions-layout">
         <div class="form-card">
           <div class="form-row">
-            <div class="form-group"><label>Subject</label>
-              <select id="q-subject">
-                <option>Mathematics</option><option>Physics</option><option>Chemistry</option>
-                <option>Biology</option><option>English Literature</option><option>History</option>
-                <option>Computer Science</option><option>Economics</option><option>French</option>
+            <div class="form-group"><label>Module</label>
+              <select id="q-module">
+                <option>Pure Mathematics 1</option>
+                <option>Pure Mathematics 2</option>
+                <option>Statistics Year 1</option>
+                <option>Statistics Year 2</option>
+                <option>Mechanics Year 1</option>
+                <option>Mechanics Year 2</option>
+                <option>Mixed (All Modules)</option>
               </select>
             </div>
             <div class="form-group"><label>Exam Board</label>
@@ -1886,8 +1919,8 @@ body.mode-adhd .adhd-break { display: block; }
             </div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Level</label>
-              <select id="q-level"><option>Foundation GCSE</option><option>Higher GCSE</option><option>AS Level</option><option>A-Level</option></select>
+            <div class="form-group"><label>Year</label>
+              <select id="q-level"><option>Year 12 (AS Level)</option><option selected>Year 13 (A-Level)</option></select>
             </div>
             <div class="form-group"><label>Number of Questions</label>
               <select id="q-num"><option>3</option><option selected>5</option><option>8</option><option>10</option></select>
@@ -1895,14 +1928,14 @@ body.mode-adhd .adhd-break { display: block; }
           </div>
           <div class="form-row">
             <div class="form-group"><label>Question Type</label>
-              <select id="q-type"><option>Mixed</option><option>Multiple Choice</option><option>Short Answer</option><option>Extended Writing</option><option>Calculation</option></select>
+              <select id="q-type"><option>Mixed</option><option>Short Calculation</option><option>Proof</option><option>Extended Problem</option><option>Multiple Choice</option></select>
             </div>
             <div class="form-group"><label>Target Grade</label>
-              <select id="q-grade"><option>Grade 4-5</option><option>Grade 6-7</option><option selected>Grade 7-8</option><option>Grade 8-9</option></select>
+              <select id="q-grade"><option>Grade C-D</option><option>Grade B</option><option selected>Grade A</option><option>Grade A*</option></select>
             </div>
           </div>
           <div class="form-group"><label>Specific Topics (optional)</label>
-            <input type="text" id="q-topics" placeholder="e.g. Quadratics, Pythagoras, Trigonometry">
+            <input type="text" id="q-topics" placeholder="e.g. Integration by parts, Normal distribution, Projectiles">
           </div>
           <button class="btn btn-gold" style="width:100%;padding:1rem;font-size:1rem" onclick="generateQuestions()">✦ Generate with Claude Opus</button>
         </div>
@@ -1935,10 +1968,10 @@ body.mode-adhd .adhd-break { display: block; }
           <div class="card">
             <div class="card-header"><span class="card-title">Subject Performance</span></div>
             <div class="card-body">
-              <div class="progress-item"><div class="progress-header"><span>Mathematics</span><span class="fw700" style="color:var(--blue)">72%</span></div><div class="progress-bar"><div class="progress-fill" style="width:72%;background:var(--blue)"></div></div></div>
-              <div class="progress-item"><div class="progress-header"><span>Biology</span><span class="fw700" style="color:var(--green)">81%</span></div><div class="progress-bar"><div class="progress-fill" style="width:81%;background:var(--green)"></div></div></div>
-              <div class="progress-item"><div class="progress-header"><span>Physics</span><span class="fw700" style="color:var(--purple)">65%</span></div><div class="progress-bar"><div class="progress-fill" style="width:65%;background:var(--purple)"></div></div></div>
-              <div class="progress-item"><div class="progress-header"><span>Chemistry</span><span class="fw700" style="color:var(--orange)">58%</span></div><div class="progress-bar"><div class="progress-fill" style="width:58%;background:var(--orange)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Pure Mathematics 1</span><span class="fw700" style="color:var(--blue)">0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--blue)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Pure Mathematics 2</span><span class="fw700" style="color:var(--gold)">0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--gold)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Statistics Y1 & Y2</span><span class="fw700" style="color:var(--green)">0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--green)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Mechanics Y1 & Y2</span><span class="fw700" style="color:var(--purple)">0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--purple)"></div></div></div>
             </div>
           </div>
           <!-- Heatmap -->
@@ -1984,21 +2017,13 @@ body.mode-adhd .adhd-break { display: block; }
         <div class="card">
           <div class="card-header" style="border-left:3px solid var(--green)"><span class="card-title">💪 Your Strengths</span></div>
           <div class="card-body" id="strengths-list">
-            <div class="strength-item"><span class="sw-topic">Biology — Cell Structure</span><span class="sw-pct good">91%</span></div>
-            <div class="strength-item"><span class="sw-topic">Maths — Algebra</span><span class="sw-pct good">88%</span></div>
-            <div class="strength-item"><span class="sw-topic">English — Analysis</span><span class="sw-pct good">85%</span></div>
-            <div class="strength-item"><span class="sw-topic">History — WW2</span><span class="sw-pct good">82%</span></div>
-            <div class="strength-item"><span class="sw-topic">Physics — Waves</span><span class="sw-pct good">79%</span></div>
+            <p style="color:var(--muted);font-size:.875rem">Run the AI analysis to identify your A-Level Maths strengths.</p>
           </div>
         </div>
         <div class="card">
           <div class="card-header" style="border-left:3px solid var(--red)"><span class="card-title">⚠️ Focus Areas</span></div>
           <div class="card-body" id="weaknesses-list">
-            <div class="weakness-item"><span class="sw-topic">Maths — Trigonometry</span><span class="sw-pct bad">38%</span></div>
-            <div class="weakness-item"><span class="sw-topic">Chemistry — Organic</span><span class="sw-pct bad">42%</span></div>
-            <div class="weakness-item"><span class="sw-topic">Physics — Electricity</span><span class="sw-pct bad">45%</span></div>
-            <div class="weakness-item"><span class="sw-topic">Maths — Statistics</span><span class="sw-pct bad">51%</span></div>
-            <div class="weakness-item"><span class="sw-topic">Biology — Genetics</span><span class="sw-pct bad">55%</span></div>
+            <p style="color:var(--muted);font-size:.875rem">Run the AI analysis to identify topics that need more revision.</p>
           </div>
         </div>
       </div>
@@ -2031,11 +2056,11 @@ body.mode-adhd .adhd-break { display: block; }
         </div>
         <div class="assign-card">
           <div class="assign-header">
-            <div class="assign-title">Forces & Newton's Laws Essay</div>
+            <div class="assign-title">Integration by Parts — Mixed Practice</div>
             <span class="status-badge status-new">New</span>
           </div>
-          <div class="assign-meta">⚡ Physics · Edexcel · Due: Friday · 15 marks</div>
-          <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">Write an extended answer explaining Newton's three laws of motion with real-world examples.</p>
+          <div class="assign-meta">📐 A-Level Maths · Pure 2 · AQA · Due: Friday · 20 marks</div>
+          <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">Use integration by parts to evaluate the following integrals. Show all working — marks are awarded for method.</p>
           <div style="display:flex;gap:.75rem">
             <button class="btn btn-gold" onclick="openAssignment(2)">Start Assignment</button>
             <button class="btn btn-outline" onclick="getHint(2)">💡 Get AI Hint</button>
@@ -2044,13 +2069,13 @@ body.mode-adhd .adhd-break { display: block; }
       </div>
       <div class="assign-view" id="av-teacher">
         <div class="form-card">
-          <h3 style="font-weight:700;margin-bottom:1.5rem">Create New Assignment</h3>
+          <h3 style="font-weight:700;margin-bottom:1.5rem">Create A-Level Maths Assignment</h3>
           <div class="form-row">
             <div class="form-group"><label>Title</label><input type="text" id="asgn-title" placeholder="Assignment title"></div>
-            <div class="form-group"><label>Subject</label><select id="asgn-subject"><option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Biology</option><option>English Literature</option><option>History</option></select></div>
+            <div class="form-group"><label>Module</label><select id="asgn-subject"><option>Pure Mathematics 1</option><option>Pure Mathematics 2</option><option>Statistics Year 1</option><option>Statistics Year 2</option><option>Mechanics Year 1</option><option>Mechanics Year 2</option></select></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Year Group</label><select id="asgn-year"><option>Year 10</option><option>Year 11</option><option>Year 12</option><option>Year 13</option></select></div>
+            <div class="form-group"><label>Year Group</label><select id="asgn-year"><option>Year 12</option><option>Year 13</option></select></div>
             <div class="form-group"><label>Due Date</label><input type="date" id="asgn-due"></div>
           </div>
           <div class="form-group"><label>Instructions</label><textarea style="width:100%;padding:.875rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--white);font-family:var(--font-body);min-height:80px;resize:vertical" id="asgn-instructions" placeholder="What should students do?"></textarea></div>
@@ -2059,6 +2084,120 @@ body.mode-adhd .adhd-break { display: block; }
             <button class="btn btn-outline" style="padding:.875rem 1.5rem" onclick="saveAssignment()">💾 Save & Assign</button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- A-LEVEL CONTENT SUBPAGE -->
+    <div class="subpage" id="sp-content">
+      <div class="page-title">📚 A-Level Maths Content</div>
+      <p class="page-subtitle">Every chapter organised by module — click any chapter to study with your AI tutor</p>
+      <div class="content-tabs">
+        <button class="content-tab active" onclick="switchContent('pure1',this)">📘 Pure 1 (Year 12)</button>
+        <button class="content-tab" onclick="switchContent('pure2',this)">📗 Pure 2 (Year 13)</button>
+        <button class="content-tab" onclick="switchContent('stats',this)">📊 Stats Y1 &amp; Y2</button>
+        <button class="content-tab" onclick="switchContent('mech',this)">⚙️ Mechanics Y1 &amp; Y2</button>
+      </div>
+
+      <!-- Pure 1 -->
+      <div class="content-panel active" id="cp-pure1">
+        <div style="margin-bottom:1rem;padding:.75rem 1rem;background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);border-radius:10px;font-size:.85rem;color:var(--muted)">
+          📘 <strong style="color:var(--white)">Pure Mathematics 1</strong> — Year 12 (AS Level) · Covers algebraic foundations through to calculus
+        </div>
+        <div id="sec-pure1"></div>
+      </div>
+
+      <!-- Pure 2 -->
+      <div class="content-panel" id="cp-pure2">
+        <div style="margin-bottom:1rem;padding:.75rem 1rem;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:10px;font-size:.85rem;color:var(--muted)">
+          📗 <strong style="color:var(--white)">Pure Mathematics 2</strong> — Year 13 (A-Level) · Advanced techniques including parametric, further calculus and vectors
+        </div>
+        <div id="sec-pure2"></div>
+      </div>
+
+      <!-- Stats -->
+      <div class="content-panel" id="cp-stats">
+        <div style="margin-bottom:1rem;padding:.75rem 1rem;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:10px;font-size:.85rem;color:var(--muted)">
+          📊 <strong style="color:var(--white)">Statistics</strong> — Year 1 &amp; Year 2 · Data, probability, distributions and hypothesis testing
+        </div>
+        <div id="sec-stats-y1"></div>
+        <div style="height:1rem"></div>
+        <div id="sec-stats-y2"></div>
+      </div>
+
+      <!-- Mechanics -->
+      <div class="content-panel" id="cp-mech">
+        <div style="margin-bottom:1rem;padding:.75rem 1rem;background:rgba(167,139,250,0.08);border:1px solid rgba(167,139,250,0.2);border-radius:10px;font-size:.85rem;color:var(--muted)">
+          ⚙️ <strong style="color:var(--white)">Mechanics</strong> — Year 1 &amp; Year 2 · Forces, kinematics, Newton's laws and projectiles
+        </div>
+        <div id="sec-mech-y1"></div>
+        <div style="height:1rem"></div>
+        <div id="sec-mech-y2"></div>
+      </div>
+    </div>
+
+    <!-- RESOURCES SUBPAGE -->
+    <div class="subpage" id="sp-resources">
+      <div class="page-title">📄 Resources</div>
+      <p class="page-subtitle">Upload mark schemes and past papers — the AI will refer to them for accurate, board-aligned answers</p>
+
+      <div id="upload-zone" class="upload-zone" onclick="document.getElementById('file-input').click()"
+           ondragover="event.preventDefault();this.classList.add('drag-over')"
+           ondragleave="this.classList.remove('drag-over')"
+           ondrop="handleFileDrop(event)">
+        <div class="upload-icon">📎</div>
+        <h3>Drop files here or click to upload</h3>
+        <p>Supports PDF, images (JPG, PNG) and text files · Max 10MB per file</p>
+        <input type="file" id="file-input" style="display:none" accept=".pdf,.jpg,.jpeg,.png,.txt" onchange="handleFileSelect(event)">
+      </div>
+
+      <div class="upload-form" id="upload-form">
+        <h4 style="font-weight:700;margin-bottom:1rem">📋 Label your upload</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Category</label>
+            <select id="upload-category">
+              <option value="mark-scheme">Mark Scheme</option>
+              <option value="past-paper">Past Paper</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Exam Board</label>
+            <select id="upload-board">
+              <option>AQA</option><option>Edexcel</option><option>OCR</option><option>WJEC</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Year / Series</label>
+            <input type="text" id="upload-year" placeholder="e.g. June 2023 Paper 1">
+          </div>
+          <div class="form-group">
+            <label>Module</label>
+            <select id="upload-module">
+              <option>Pure 1</option><option>Pure 2</option><option>Statistics</option><option>Mechanics</option><option>Full Paper</option>
+            </select>
+          </div>
+        </div>
+        <div id="upload-filename" style="font-size:.85rem;color:var(--muted);margin-bottom:1rem"></div>
+        <div style="display:flex;gap:.75rem">
+          <button class="btn btn-gold" style="padding:.875rem 1.5rem" onclick="confirmUpload()">✦ Save Resource</button>
+          <button class="btn btn-outline" style="padding:.875rem 1.5rem" onclick="cancelUpload()">Cancel</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between">
+        <h3 style="font-weight:700;font-size:1rem">Uploaded Resources</h3>
+        <span id="upload-count" style="font-size:.8rem;color:var(--muted)">0 files</span>
+      </div>
+      <div id="resources-list" class="resources-list">
+        <div style="padding:2rem;text-align:center;color:var(--muted);font-size:.875rem;background:var(--bg2);border:1px solid var(--border);border-radius:12px">
+          No resources uploaded yet. Upload a mark scheme or past paper to help the AI give more accurate answers.
+        </div>
+      </div>
+
+      <div style="margin-top:2rem;padding:1.25rem;background:rgba(201,168,76,0.06);border:1px solid var(--border);border-radius:12px;font-size:.85rem;color:var(--muted)">
+        <strong style="color:var(--white)">💡 How it works:</strong> When you upload a mark scheme, the AI tutor reads it and uses the exact marking criteria to answer your questions. This means answers are tailored to how your specific exam board awards marks — helping you learn exactly what to write.
       </div>
     </div>
 
@@ -2111,18 +2250,22 @@ body.mode-adhd .adhd-break { display: block; }
 <div id="page-privacy" class="page">
   <div class="privacy-body">
     <h1>Privacy Policy</h1>
-    <p>Last updated: January 2025</p>
+    <p>Last updated: March 2025 · Synaptiq — A-Level Maths AI Tutor</p>
     <h2>1. Data We Collect</h2>
-    <p>We collect your name, email, learning profile (including any learning difficulties you disclose), and learning activity data including questions answered, tutor conversations, and progress metrics.</p>
+    <p>We collect your name, email, learning profile (including year group, exam board, and any learning differences you disclose), and learning activity data including questions answered, AI tutor conversations, and uploaded resources (mark schemes and past papers).</p>
     <h2>2. How We Use Your Data</h2>
-    <p>Your data is used exclusively to personalise your learning experience. Learning difficulty information is used to adapt the AI tutor, font settings, question formatting, and accessibility features.</p>
+    <p>Your data is used exclusively to personalise your A-Level Maths learning experience. Learning difference information is used to adapt the AI tutor, font settings, question formatting, and accessibility features. Uploaded resources are used solely to improve the accuracy of AI tutor responses.</p>
     <h2>3. AI Conversations</h2>
-    <p>Your conversations with the AI tutor are processed via the Anthropic API. These conversations are used to provide responses and are not stored permanently beyond your active session.</p>
-    <h2>4. Your Rights (GDPR)</h2>
-    <p>You have the right to: access your data, correct inaccurate data, delete your data, export your data, and withdraw consent at any time. Contact us at privacy@luminaai.co.uk.</p>
-    <h2>5. Data for Minors</h2>
+    <p>Your conversations with the Synaptiq AI tutor are processed via the Anthropic API. These conversations are used to provide responses and are not stored permanently beyond your active session.</p>
+    <h2>4. Uploaded Resources</h2>
+    <p>Mark schemes and past papers you upload are stored securely and used only to provide context to the AI tutor for your sessions. They are not shared with other users or third parties.</p>
+    <h2>5. Your Rights (GDPR)</h2>
+    <p>You have the right to: access your data, correct inaccurate data, delete your data, export your data, and withdraw consent at any time. Contact us at privacy@synaptiq.co.uk.</p>
+    <h2>6. Payments</h2>
+    <p>Payment processing is handled by Stripe. We do not store card details. Subscription billing is managed securely by Stripe in accordance with PCI DSS standards.</p>
+    <h2>7. Data for Minors</h2>
     <p>For users under 13, we require parental consent. We collect minimal data and do not use it for any purpose beyond providing the educational service.</p>
-    <h2>6. Cookies</h2>
+    <h2>8. Cookies</h2>
     <p>We use essential cookies for authentication and optional analytics cookies (which you can decline). We do not use advertising cookies.</p>
     <p><button class="btn btn-gold" onclick="nav('home')">← Back to Home</button></p>
   </div>
@@ -2160,6 +2303,50 @@ body.mode-adhd .adhd-break { display: block; }
   </div>
 </div>
 
+<!-- ═══════════════════════ EXIT-INTENT POPUP ═══════════════════════ -->
+<div id="exit-popup">
+  <div class="exit-popup-box">
+    <button class="exit-popup-close" onclick="closeExitPopup()">✕</button>
+    <div style="font-size:3rem;margin-bottom:1rem">🎓</div>
+    <h2>Don't leave without your<br><span style="color:var(--gold)">free trial!</span></h2>
+    <p>Get 7 days of unlimited A-Level Maths AI tutoring — no card needed. Join 2,400+ students already using Synaptiq.</p>
+    <button class="btn-hero-primary" style="width:100%;margin-bottom:.75rem" onclick="closeExitPopup();nav('auth');trackEvent('cta_clicked',{location:'exit_popup'})">Claim My Free Trial →</button>
+    <button onclick="closeExitPopup()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.85rem">No thanks, I'll struggle on my own</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════ ONBOARDING MODAL ═══════════════════════ -->
+<div id="onboarding-modal">
+  <div class="onboarding-box">
+    <h2>Welcome to Synapti<span style="color:var(--gold)">q</span>! 🎉</h2>
+    <p class="sub">Here's how to get the most out of your A-Level Maths tutor:</p>
+    <div class="onboarding-tips">
+      <div class="onboarding-tip">
+        <div class="tip-icon">📚</div>
+        <div>
+          <h4>Browse your A-Level Content</h4>
+          <p>Every chapter from Pure 1 to Mechanics is organised in the Content page. Click any chapter to study it with AI.</p>
+        </div>
+      </div>
+      <div class="onboarding-tip">
+        <div class="tip-icon">📄</div>
+        <div>
+          <h4>Upload your mark scheme</h4>
+          <p>Go to Resources and upload your exam board's mark scheme. The AI will use it to give perfectly aligned answers.</p>
+        </div>
+      </div>
+      <div class="onboarding-tip">
+        <div class="tip-icon">🤖</div>
+        <div>
+          <h4>Ask the AI anything</h4>
+          <p>Open the AI Tutor and ask about any topic. It shows full step-by-step working — exactly how the mark scheme expects it.</p>
+        </div>
+      </div>
+    </div>
+    <button class="btn-full" onclick="closeOnboarding()">Let's get started →</button>
+  </div>
+</div>
+
 <!-- ═══════════════════════ TOAST & XP ═══════════════════════ -->
 <div id="toast"></div>
 <div id="xp-popup">+50 XP ⭐</div>
@@ -2183,8 +2370,7 @@ const state = {
   xp: 0,
   level: 1,
   modes: { adhd: false, dyslexia: false, dyscalculia: false },
-  subject: 'Mathematics',
-  subjectColor: 'math',
+  topic: 'A-Level Maths — General',
   tutorHistory: [],
   dashHistory: [],
   selectedPlan: 'student',
@@ -2193,7 +2379,9 @@ const state = {
   ttsEnabled: false,
   calcValue: '',
   calcPrev: '',
-  calcOp: ''
+  calcOp: '',
+  uploads: [],
+  pendingFile: null
 };
 
 // ═══════════════════════════════════════
@@ -2230,7 +2418,9 @@ function scrollTo(sel) {
 
 function showDash(sub) {
   document.querySelectorAll('.subpage').forEach(s => s.classList.remove('active'));
-  document.getElementById('sp-' + sub).classList.add('active');
+  const sp = document.getElementById('sp-' + sub);
+  if (!sp) return;
+  sp.classList.add('active');
   document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
   const si = document.getElementById('si-' + sub);
   if (si) si.classList.add('active');
@@ -2238,12 +2428,14 @@ function showDash(sub) {
   state.currentSubpage = sub;
 
   if (sub === 'progress') buildHeatmap();
+  if (sub === 'content') buildContentPage();
+  if (sub === 'resources') renderResourcesList();
   if (sub === 'home') {
     updateGreeting();
-    if (state.dashHistory.length === 0) addDashMsg('bot', "Hello! I'm your Lumina AI tutor. What would you like to learn today? 🎓");
+    if (state.dashHistory.length === 0) addDashMsg('bot', "Hello! I'm your Synaptiq A-Level Maths tutor. Ask me anything — from Pure 1 algebra to Mechanics projectiles. What shall we work on? ✦");
   }
   if (sub === 'tutor') {
-    if (state.tutorHistory.length === 0) addTutorMsg('bot', `Hello! I'm your ${state.subject} tutor, powered by Claude Opus. I can explain concepts step-by-step, create practice questions, or help with exam technique.\n\nWhat would you like to work on today? ✦`);
+    if (state.tutorHistory.length === 0) addTutorMsg('bot', `Hello! I'm your A-Level Maths tutor, powered by Claude Opus ✦\n\nI can explain any topic with full step-by-step working, generate practice questions, or help you understand mark scheme requirements.\n\nSelect a topic on the left, or just ask me anything!`);
   }
 }
 
@@ -2290,12 +2482,19 @@ function nextStep(from) {
   }
   if (from === 3) {
     const diffs = state.selectedDiffs.length ? state.selectedDiffs.join(', ') : 'No specific needs';
+    const progressFill = document.getElementById('auth-progress-fill');
+    if (progressFill) progressFill.style.width = '100%';
     document.getElementById('profile-summary').innerHTML = `
       <strong>Plan:</strong> ${state.selectedPlan === 'student' ? 'Student (£60/mo)' : 'Homeschool (£200/mo)'}<br>
       <strong>Year:</strong> ${document.getElementById('reg-year').value}<br>
-      <strong>Subject:</strong> ${document.getElementById('reg-subject').value}<br>
+      <strong>Exam Board:</strong> ${document.getElementById('reg-board').value}<br>
+      <strong>Target Grade:</strong> ${document.getElementById('reg-target').value}<br>
       <strong>Learning needs:</strong> ${diffs}
     `;
+  } else {
+    const fills = { 1: '50%', 2: '75%' };
+    const progressFill = document.getElementById('auth-progress-fill');
+    if (progressFill && fills[from]) progressFill.style.width = fills[from];
   }
 }
 
@@ -2317,31 +2516,39 @@ function createAccount() {
     name, email,
     plan: state.selectedPlan,
     year: document.getElementById('reg-year').value,
-    subject: document.getElementById('reg-subject').value,
+    subject: 'A-Level Mathematics',
     board: document.getElementById('reg-board').value,
+    target: document.getElementById('reg-target').value,
     diffs: state.selectedDiffs
   };
-  try { localStorage.setItem('lumina_user', JSON.stringify(state.user)); } catch(e) {}
+  try { localStorage.setItem('synaptiq_user', JSON.stringify(state.user)); } catch(e) {}
+  // Send welcome email via Resend
+  fetch('/api/resend', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ to: email, type: 'welcome', name })
+  }).catch(() => {});
+  trackEvent('sign_up', { plan: state.selectedPlan, board: state.user.board });
   applyLearningProfile();
   enterDashboard();
   addXP(100, '🎉 Welcome bonus!');
+  setTimeout(() => showOnboarding(), 800);
 }
 
 function loginUser() {
   const email = document.getElementById('login-email').value;
   const pass = document.getElementById('login-pass').value;
   if (!email || !pass) { showToast('Please enter your email and password'); return; }
-  // In a real app this would verify with a backend
-  // For demo, restore from localStorage or create demo user
   try {
-    const saved = localStorage.getItem('lumina_user');
+    const saved = localStorage.getItem('synaptiq_user');
     if (saved) { state.user = JSON.parse(saved); }
     else {
-      state.user = { name: email.split('@')[0], email, plan: 'student', diffs: [] };
+      state.user = { name: email.split('@')[0], email, plan: 'student', subject: 'A-Level Mathematics', diffs: [], board: 'AQA' };
     }
   } catch(e) {
-    state.user = { name: 'Student', email, plan: 'student', diffs: [] };
+    state.user = { name: 'Student', email, plan: 'student', subject: 'A-Level Mathematics', diffs: [], board: 'AQA' };
   }
+  trackEvent('login', {});
   applyLearningProfile();
   enterDashboard();
 }
@@ -2350,7 +2557,7 @@ function logout() {
   state.user = null;
   state.tutorHistory = [];
   state.dashHistory = [];
-  try { localStorage.removeItem('lumina_user'); } catch(e) {}
+  try { localStorage.removeItem('synaptiq_user'); } catch(e) {}
   document.getElementById('app-nav').style.display = 'none';
   document.getElementById('public-nav').style.display = 'flex';
   document.getElementById('auth-buttons').style.display = 'flex';
@@ -2401,13 +2608,15 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // Check for saved session
   try {
-    const saved = localStorage.getItem('lumina_user');
+    const saved = localStorage.getItem('synaptiq_user');
     if (saved) {
       state.user = JSON.parse(saved);
       applyLearningProfile();
+      loadUploadsFromStorage();
     }
   } catch(e) {}
   buildNumberLine(0);
+  initExitIntent();
 });
 
 // ═══════════════════════════════════════
@@ -2556,13 +2765,40 @@ function getA11yInstructions() {
 
 function getTutorSystem() {
   const user = state.user;
-  const year = user?.year || 'Year 11';
+  const year = user?.year || 'Year 13 (A-Level)';
   const board = user?.board || 'AQA';
-  let sys = `You are an expert ${state.subject} tutor for UK students, specialising in ${board} ${year}. 
-Your name is Lumina. You are encouraging, patient, and brilliant at explaining complex ideas simply.
-Always tailor your explanations to the student's level. Use UK terminology and exam board conventions.
-When giving examples, use real-world scenarios. If the student seems stuck, break it down further.
-For maths and science, always show your working step by step.`;
+  const target = user?.target || 'A';
+  const topic = state.topic || 'A-Level Maths — General';
+
+  // Build uploads context
+  let uploadsCtx = '';
+  if (state.uploads && state.uploads.length > 0) {
+    const relevant = state.uploads.slice(0, 5);
+    uploadsCtx = '\n\nThe student has uploaded the following resources. Use them to give mark-scheme-aligned answers:\n' +
+      relevant.map(u => `- ${u.category === 'mark-scheme' ? 'MARK SCHEME' : 'PAST PAPER'}: ${u.name} (${u.board || board}, ${u.year || ''}, ${u.module || ''})`).join('\n');
+    if (relevant.some(u => u.content)) {
+      uploadsCtx += '\n\nExtracted content from uploads:\n' +
+        relevant.filter(u => u.content).map(u => `[${u.name}]:\n${u.content.slice(0, 600)}`).join('\n\n');
+    }
+  }
+
+  let sys = `You are Synaptiq, an expert A-Level Mathematics tutor for UK students.
+You are specialising in ${board} ${year}, targeting grade ${target}.
+Current topic focus: ${topic}.
+
+Your personality: Encouraging, patient, and brilliant at making complex maths feel achievable.
+Your method: Always show FULL step-by-step working. Never skip steps — A-Level mark schemes award method marks.
+Use UK mathematical notation and terminology. Follow ${board} conventions exactly.
+
+When answering maths questions:
+1. State the method/approach first
+2. Show every algebraic step clearly
+3. Box or highlight the final answer
+4. Mention any common mistakes to avoid
+5. Reference mark scheme language where relevant (e.g. "B1 for...", "M1 for method...")
+
+When explaining concepts: Start with the core idea, then show a worked example, then give a practice question.${uploadsCtx}`;
+
   const a11y = getA11yInstructions();
   if (a11y) sys += '\n\n' + a11y;
   return sys;
@@ -2571,14 +2807,18 @@ For maths and science, always show your working step by step.`;
 // ═══════════════════════════════════════
 // TUTOR CHAT
 // ═══════════════════════════════════════
-function setSubject(name, icon, color) {
-  state.subject = name;
-  state.subjectColor = color;
+function setTopic(name) {
+  state.topic = name;
   state.tutorHistory = [];
   document.querySelectorAll('.subj-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tutor-subject-title').textContent = name + ' Tutor';
+  // Highlight the clicked button
+  event && event.target && event.target.classList.add('active');
+  document.getElementById('tutor-subject-title').textContent = 'A-Level Maths Tutor';
+  const subEl = document.getElementById('tutor-topic-sub');
+  if (subEl) subEl.textContent = 'Topic: ' + name;
   document.getElementById('tutor-messages').innerHTML = '';
-  addTutorMsg('bot', `Subject switched to ${icon} ${name}! I'm ready to help. What would you like to explore? ✦`);
+  addTutorMsg('bot', `Topic set to: **${name}** ✦\n\nI'm ready to explain, give worked examples, or generate exam-style questions on this topic. What would you like to do?`);
+  trackEvent('chapter_opened', { topic: name });
 }
 
 function addTutorMsg(role, text) {
@@ -2620,6 +2860,7 @@ async function tutorSend() {
     state.tutorHistory.push({ role: 'assistant', content: reply });
     addTutorMsg('bot', reply);
     addXP(10);
+    trackEvent('tutor_message_sent', { topic: state.topic });
   } catch (e) {
     typing.remove();
     addTutorMsg('bot', '⚠️ ' + e.message);
@@ -2638,7 +2879,7 @@ function tutorQuick(prompt) {
 function clearTutor() {
   state.tutorHistory = [];
   document.getElementById('tutor-messages').innerHTML = '';
-  addTutorMsg('bot', `Chat cleared! Ready to help with ${state.subject}. ✦`);
+  addTutorMsg('bot', `Chat cleared! Ready to help with A-Level Maths. ✦`);
 }
 
 // ═══════════════════════════════════════
@@ -2664,7 +2905,7 @@ async function dashSend() {
   typing.innerHTML = '<span></span><span></span><span></span>';
   document.getElementById('dash-chat').appendChild(typing);
   document.getElementById('dash-chat').scrollTop = 99999;
-  const sys = 'You are Lumina, a helpful AI tutor. Answer questions concisely and helpfully for UK students. Keep answers short (2-3 paragraphs max) for the dashboard widget. ' + getA11yInstructions();
+  const sys = 'You are Synaptiq, an expert A-Level Maths AI tutor. Answer questions concisely and helpfully for UK A-Level students. Keep answers short (2-3 paragraphs max) for the dashboard widget. Always show key working steps even in brief answers. ' + getA11yInstructions();
   try {
     const data = await callClaude(state.dashHistory, sys);
     const reply = getReply(data);
@@ -2686,7 +2927,7 @@ function dashKey(e) {
 // QUESTION GENERATOR
 // ═══════════════════════════════════════
 async function generateQuestions() {
-  const sub = document.getElementById('q-subject').value;
+  const module = document.getElementById('q-module').value;
   const board = document.getElementById('q-board').value;
   const level = document.getElementById('q-level').value;
   const num = document.getElementById('q-num').value;
@@ -2696,20 +2937,22 @@ async function generateQuestions() {
   const output = document.getElementById('q-output');
   const qContainer = document.getElementById('q-questions');
   output.classList.add('show');
-  document.getElementById('q-output-title').textContent = `${sub} Practice Paper`;
-  document.getElementById('q-output-sub').textContent = `${num} questions · ${board} ${level} · ${grade}`;
-  qContainer.innerHTML = '<div class="msg bot" style="max-width:100%">✦ Generating your questions with Claude Opus...</div>';
+  document.getElementById('q-output-title').textContent = `A-Level Maths — ${module}`;
+  document.getElementById('q-output-sub').textContent = `${num} questions · ${board} ${level} · Target: ${grade}`;
+  qContainer.innerHTML = '<div class="msg bot" style="max-width:100%">✦ Generating your A-Level Maths questions with Claude Opus...</div>';
   const a11y = getA11yInstructions();
-  let sys = `You are an expert UK exam question writer specialising in ${board} ${level} ${sub}.
-Generate exactly ${num} exam-style questions for ${grade} target.
-Question types: ${type}. ${topics ? 'Focus on: ' + topics : 'Cover key topics.'}
-Format STRICTLY as JSON array with this structure:
-[{"question":"...","marks":3,"type":"short answer","hint":"..."}]
-Each question must be exam-quality, use UK spelling, follow ${board} style.
+  let sys = `You are an expert A-Level Mathematics exam question writer specialising in ${board} ${level}, ${module}.
+Generate exactly ${num} exam-style questions at ${grade} target grade.
+Question types: ${type}. ${topics ? 'Focus specifically on: ' + topics : 'Cover key examinable topics in ' + module + '.'}
+IMPORTANT: Include full mark-scheme style worked solutions for each question.
+Format STRICTLY as JSON array: [{"question":"...","marks":4,"type":"calculation","hint":"...","solution":"..."}]
+Each question must be exam-quality, use UK spelling and ${board} notation style.
+For calculations, show all working steps in the solution field.
 ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility notes: ' + a11y : ''}`;
   try {
-    const data = await callClaude([{ role: 'user', content: `Generate ${num} ${sub} questions for ${board} ${level}, ${grade} target. ${topics ? 'Topics: ' + topics : ''}` }], sys);
+    const data = await callClaude([{ role: 'user', content: `Generate ${num} A-Level Maths (${module}) questions for ${board} ${level}, grade ${grade} target. ${topics ? 'Topics: ' + topics : ''}` }], sys);
     const reply = getReply(data);
+    trackEvent('question_generated', { module, board, num });
     let questions;
     try {
       const clean = reply.replace(/```json|```/g, '').trim();
@@ -2720,12 +2963,14 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
     }
     qContainer.innerHTML = '';
     questions.forEach((q, i) => {
+      const solId = `sol-${i}`;
       qContainer.innerHTML += `
         <div class="question-block">
-          <div class="question-num">Question ${i + 1} <span class="marks-badge">${q.marks || 3} marks</span></div>
+          <div class="question-num">Question ${i + 1} <span class="marks-badge">${q.marks || 4} marks</span></div>
           <div class="question-text">${q.question}</div>
-          ${q.hint ? `<div style="font-size:.8rem;color:var(--gold);margin-bottom:.5rem">💡 Hint: ${q.hint}</div>` : ''}
-          <div class="answer-space" contenteditable="true" spellcheck="true" style="outline:none">Click here to write your answer...</div>
+          ${q.hint ? `<div style="font-size:.8rem;color:var(--gold);margin-bottom:.75rem">💡 Hint: ${q.hint}</div>` : ''}
+          <div class="answer-space" contenteditable="true" spellcheck="true" style="outline:none">Click here to write your working...</div>
+          ${q.solution ? `<div style="margin-top:.75rem"><button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent.includes('Show')?'Hide Mark Scheme':'Show Mark Scheme ✓'" style="background:transparent;border:1px solid rgba(74,222,128,0.3);color:var(--green);border-radius:6px;padding:.35rem .75rem;font-size:.75rem;cursor:pointer">Show Mark Scheme ✓</button><div id="${solId}" style="display:none;margin-top:.75rem;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:1rem;font-size:.85rem;white-space:pre-wrap">${q.solution}</div></div>` : ''}
         </div>`;
     });
     addXP(20);
@@ -2743,12 +2988,15 @@ async function analyseStrengths() {
   const body = document.getElementById('ai-recs-body');
   recs.style.display = 'block';
   body.innerHTML = '<div class="msg bot" style="max-width:100%">⏳ Claude Opus is analysing your performance...</div>';
-  const sys = `You are an expert educational analyst. Given a student's strengths and weaknesses, provide specific, actionable recommendations.
-Format response as HTML with: <div class="weakness-item"><span class="sw-topic">Action</span><span class="sw-pct bad">Priority</span></div>
-Provide 5 specific study recommendations. Use Priority: HIGH, MEDIUM, or LOW.
+  const board = state.user?.board || 'AQA';
+  const sys = `You are an expert A-Level Mathematics educational analyst for ${board}.
+Given a student's A-Level Maths profile, provide specific actionable recommendations.
+Format response as HTML with: <div class="weakness-item"><span class="sw-topic">Action item</span><span class="sw-pct bad">Priority</span></div>
+Provide 5 specific A-Level Maths study recommendations covering Pure, Stats and Mechanics topics.
+Use Priority: HIGH, MEDIUM, or LOW.
 ${getA11yInstructions()}`;
   try {
-    const data = await callClaude([{ role: 'user', content: 'My strongest topics: Biology Cell Structure (91%), Maths Algebra (88%), English Analysis (85%). My weakest: Maths Trigonometry (38%), Chemistry Organic (42%), Physics Electricity (45%). Give me a personalised study plan.' }], sys);
+    const data = await callClaude([{ role: 'user', content: `I'm studying ${board} A-Level Maths. Based on common difficulty areas — integration, trigonometric identities, hypothesis testing, projectile motion, and binomial expansion — give me a personalised study plan with specific action items.` }], sys);
     body.innerHTML = getReply(data);
     addXP(15);
   } catch (e) {
@@ -2768,11 +3016,11 @@ function switchAssign(view) {
 
 async function getHint(id) {
   const hints = {
-    1: 'quadratic equations — try using the quadratic formula x = (-b ± √(b²-4ac)) / 2a, or factorising first',
-    2: 'Newton\'s three laws — think about inertia, F=ma, and equal/opposite reactions with real examples'
+    1: 'quadratics — try completing the square or the quadratic formula x = (-b ± √(b²-4ac)) / 2a. First check if it factorises.',
+    2: 'integration by parts — use the formula ∫u(dv/dx)dx = uv - ∫v(du/dx)dx. Choose u to be the function that simplifies when differentiated.'
   };
-  showToast('💡 Asking Claude for a hint...');
-  const sys = `You are a supportive tutor helping a student with their homework. Give a helpful HINT that guides them WITHOUT giving the answer away. Keep it to 2-3 sentences. ${getA11yInstructions()}`;
+  showToast('💡 Asking Synaptiq for a hint...');
+  const sys = `You are a supportive A-Level Maths tutor helping a student with their homework. Give a helpful HINT that guides them WITHOUT giving the answer away. Reference the mark scheme approach where relevant. Keep it to 2-3 sentences. ${getA11yInstructions()}`;
   try {
     const data = await callClaude([{ role: 'user', content: `Give me a hint for: ${hints[id]}. Don't give me the answer, just guide me.` }], sys);
     showToast('💡 ' + getReply(data).slice(0, 100) + '...');
@@ -2785,11 +3033,12 @@ async function createAssignment() {
   const title = document.getElementById('asgn-title').value;
   const subject = document.getElementById('asgn-subject').value;
   const year = document.getElementById('asgn-year').value;
+  const board = state.user?.board || 'AQA';
   if (!title) { showToast('Please enter a title first'); return; }
   showToast('✦ Generating assignment with Claude Opus...');
-  const sys = `You are an experienced UK teacher creating a homework assignment. Write clear, engaging instructions appropriate for the level. Follow UK curriculum standards.`;
+  const sys = `You are an experienced A-Level Maths teacher creating a homework assignment. Write clear, exam-style instructions following ${board} conventions. Include mark scheme guidance.`;
   try {
-    const data = await callClaude([{ role: 'user', content: `Create a detailed homework assignment for ${year} ${subject} titled "${title}". Include learning objectives, instructions, mark scheme hints, and 3-5 specific tasks.` }], sys);
+    const data = await callClaude([{ role: 'user', content: `Create a detailed A-Level Maths homework assignment for ${year} titled "${title}" (module: ${subject}). Include: learning objectives, exam-style questions (3-5), mark allocations, and mark scheme hints. Follow ${board} style.` }], sys);
     document.getElementById('asgn-instructions').value = getReply(data).slice(0, 500);
     showToast('✦ Assignment generated!');
   } catch (e) {
@@ -2804,11 +3053,11 @@ function openAssignment(id) { showToast('Opening assignment...'); showDash('tuto
 // VIDEO PLAYER (Interactive)
 // ═══════════════════════════════════════
 const videoChapters = [
-  { title: 'Welcome to Lumina AI', desc: 'Learn how the platform transforms your studying', q: null },
-  { title: 'AI Tutor', desc: 'Ask Claude Opus anything — step by step explanations', q: { text: 'What makes Lumina\'s AI tutor different from Google?', opts: ['It uses Claude Opus, the most advanced AI model', 'It has better images', 'It plays videos', 'It\'s cheaper'], correct: 0 } },
-  { title: 'Question Generator', desc: 'Create real exam-style questions for any topic', q: { text: 'Which exam boards does Lumina support?', opts: ['Only AQA', 'AQA, Edexcel, OCR, and WJEC', 'Only Edexcel', 'No specific board'], correct: 1 } },
-  { title: 'Progress Tracking', desc: 'See exactly how you\'re improving over time', q: null },
-  { title: 'Accessibility Features', desc: 'ADHD, Dyslexia, and Dyscalculia support', q: { text: 'Which accessibility modes does Lumina offer?', opts: ['Only ADHD', 'Only dyslexia fonts', 'ADHD, Dyslexia AND Dyscalculia — separately', 'Colour blindness only'], correct: 2 } }
+  { title: 'Welcome to Synaptiq', desc: 'A-Level Maths AI tutoring — built for exam success', q: null },
+  { title: 'AI Tutor', desc: 'Full step-by-step working, mark-scheme aligned answers', q: { text: 'What makes Synaptiq\'s AI tutor different?', opts: ['It shows full step-by-step working like a mark scheme', 'It only does multiple choice', 'It plays video lessons', 'It\'s a calculator'], correct: 0 } },
+  { title: 'Upload Resources', desc: 'Upload your mark scheme — AI answers match exactly', q: { text: 'What happens when you upload a mark scheme?', opts: ['Nothing changes', 'The AI uses it to give board-aligned answers', 'It replaces the tutor', 'It only works for AQA'], correct: 1 } },
+  { title: 'A-Level Content', desc: 'Every chapter from Pure 1 to Mechanics, organised', q: null },
+  { title: 'Accessibility', desc: 'ADHD, Dyslexia, and Dyscalculia support built in', q: { text: 'Which accessibility modes does Synaptiq offer?', opts: ['Only ADHD', 'Only dyslexia fonts', 'ADHD, Dyslexia AND Dyscalculia', 'Colour blindness only'], correct: 2 } }
 ];
 let currentChapter = 0;
 
@@ -2925,6 +3174,263 @@ function buildHeatmap() {
 }
 
 // ═══════════════════════════════════════
+// A-LEVEL CONTENT BUILDER
+// ═══════════════════════════════════════
+const ALEVEL_CONTENT = {
+  pure1: {
+    label: 'Pure Mathematics 1', year: 'Year 12',
+    chapters: ['Algebraic Expressions','Quadratics','Equations & Inequalities','Graphs & Transformations','Straight Line Graphs','Circles','Algebraic Methods','The Binomial Expansion','Trigonometric Ratios','Trigonometric Identities & Equations','Vectors','Differentiation','Integration','Exponentials & Logarithms']
+  },
+  pure2: {
+    label: 'Pure Mathematics 2', year: 'Year 13',
+    chapters: ['Algebraic Methods','Functions & Graphs','Sequences & Series','Binomial Expansion','Radians','Trigonometric Functions','Trigonometry & Modelling','Parametric Equations','Differentiation','Numerical Methods','Integration','Vectors']
+  },
+  statsY1: {
+    label: 'Statistics', year: 'Year 12',
+    chapters: ['Statistical Sampling','Data Presentation & Interpretation','Probability','Statistical Distributions','Statistical Hypothesis Testing']
+  },
+  statsY2: {
+    label: 'Statistics', year: 'Year 13',
+    chapters: ['Regression, Correlation & Hypothesis Testing','Conditional Probability','The Normal Distribution']
+  },
+  mechY1: {
+    label: 'Mechanics', year: 'Year 12',
+    chapters: ['Quantities & Units in Mechanics','Kinematics 1 — Constant Acceleration','Forces & Newton\'s Laws','Variable Acceleration']
+  },
+  mechY2: {
+    label: 'Mechanics', year: 'Year 13',
+    chapters: ['Moments','Forces & Friction','Projectiles','Applications of Forces','Further Kinematics']
+  }
+};
+
+function buildSection(key) {
+  const s = ALEVEL_CONTENT[key];
+  const sectionId = `sec-${key.replace(/[A-Z]/g, c => '-' + c.toLowerCase())}`;
+  const html = `
+    <div style="margin-bottom:.5rem">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+        <span class="stats-sub-label">${s.label} — ${s.year}</span>
+      </div>
+      <div class="chapter-list">
+        ${s.chapters.map((ch, i) => `
+          <div class="chapter-item">
+            <div class="chapter-item-left">
+              <div class="chapter-num-badge">${i + 1}</div>
+              <span class="chapter-name">${ch}</span>
+            </div>
+            <button class="chapter-study-btn" onclick="studyChapter('${ch.replace(/'/g,"\\'")}')">Study →</button>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  return html;
+}
+
+function buildContentPage() {
+  const sections = {
+    'sec-pure1': 'pure1',
+    'sec-pure2': 'pure2',
+    'sec-stats-y1': 'statsY1',
+    'sec-stats-y2': 'statsY2',
+    'sec-mech-y1': 'mechY1',
+    'sec-mech-y2': 'mechY2'
+  };
+  for (const [id, key] of Object.entries(sections)) {
+    const el = document.getElementById(id);
+    if (el && !el.hasChildNodes()) el.innerHTML = buildSection(key);
+  }
+}
+
+function switchContent(panel, btn) {
+  document.querySelectorAll('.content-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const el = document.getElementById('cp-' + panel);
+  if (el) el.classList.add('active');
+}
+
+function studyChapter(chapter) {
+  setTopic(chapter);
+  showDash('tutor');
+  trackEvent('chapter_opened', { chapter });
+}
+
+// ═══════════════════════════════════════
+// RESOURCE UPLOADS
+// ═══════════════════════════════════════
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) prepareUpload(file);
+}
+
+function handleFileDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) prepareUpload(file);
+}
+
+function prepareUpload(file) {
+  state.pendingFile = file;
+  document.getElementById('upload-filename').textContent = '📎 ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+  document.getElementById('upload-form').classList.add('show');
+}
+
+function cancelUpload() {
+  state.pendingFile = null;
+  document.getElementById('upload-form').classList.remove('show');
+  document.getElementById('file-input').value = '';
+}
+
+async function confirmUpload() {
+  const file = state.pendingFile;
+  if (!file) return;
+  const category = document.getElementById('upload-category').value;
+  const board = document.getElementById('upload-board').value;
+  const year = document.getElementById('upload-year').value;
+  const module = document.getElementById('upload-module').value;
+
+  showToast('📎 Processing upload...');
+
+  let content = '';
+  if (file.type === 'text/plain') {
+    content = await file.text().catch(() => '');
+    content = content.slice(0, 2000);
+  } else if (file.type.startsWith('image/')) {
+    // Store as data URL for reference
+    content = await new Promise(res => {
+      const r = new FileReader();
+      r.onload = e => res('[Image file — ' + file.name + ']');
+      r.readAsDataURL(file);
+    });
+  } else {
+    content = '[' + file.type + ' file — ' + file.name + '. Text extraction not available in browser. AI will reference this resource by name.]';
+  }
+
+  const resource = {
+    id: Date.now(),
+    name: file.name,
+    category,
+    board,
+    year,
+    module,
+    content,
+    size: file.size,
+    uploadedAt: new Date().toISOString()
+  };
+
+  state.uploads.push(resource);
+  saveUploadsToStorage();
+  renderResourcesList();
+  cancelUpload();
+  trackEvent('resource_uploaded', { category, board, module });
+  showToast('✅ Resource uploaded! AI tutor will now use it.');
+}
+
+function deleteResource(id) {
+  state.uploads = state.uploads.filter(u => u.id !== id);
+  saveUploadsToStorage();
+  renderResourcesList();
+  showToast('Resource removed');
+}
+
+function renderResourcesList() {
+  const list = document.getElementById('resources-list');
+  const count = document.getElementById('upload-count');
+  if (!list) return;
+  if (count) count.textContent = state.uploads.length + ' file' + (state.uploads.length !== 1 ? 's' : '');
+  if (state.uploads.length === 0) {
+    list.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--muted);font-size:.875rem;background:var(--bg2);border:1px solid var(--border);border-radius:12px">No resources uploaded yet. Upload a mark scheme or past paper to help the AI give more accurate answers.</div>';
+    return;
+  }
+  list.innerHTML = state.uploads.map(u => `
+    <div class="resource-item">
+      <div class="resource-icon ${u.category}">${u.category === 'mark-scheme' ? '✅' : '📄'}</div>
+      <div class="resource-info">
+        <div class="resource-name">${u.name}</div>
+        <div class="resource-meta">${u.board} · ${u.module} · ${u.year || 'No date'} · ${(u.size/1024).toFixed(1)} KB</div>
+      </div>
+      <span class="resource-badge ${u.category === 'mark-scheme' ? 'ms' : 'pp'}">${u.category === 'mark-scheme' ? 'Mark Scheme' : 'Past Paper'}</span>
+      <button class="resource-delete" onclick="deleteResource(${u.id})" title="Remove">✕</button>
+    </div>`).join('');
+}
+
+function saveUploadsToStorage() {
+  try {
+    const light = state.uploads.map(u => ({ ...u, content: u.content ? u.content.slice(0, 500) : '' }));
+    localStorage.setItem('synaptiq_uploads', JSON.stringify(light));
+  } catch(e) {}
+}
+
+function loadUploadsFromStorage() {
+  try {
+    const saved = localStorage.getItem('synaptiq_uploads');
+    if (saved) state.uploads = JSON.parse(saved);
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════
+// EXIT-INTENT POPUP
+// ═══════════════════════════════════════
+function initExitIntent() {
+  if (sessionStorage.getItem('synaptiq_exit_shown')) return;
+  document.addEventListener('mouseleave', (e) => {
+    if (e.clientY <= 5 && !state.user) {
+      document.getElementById('exit-popup').classList.add('show');
+      sessionStorage.setItem('synaptiq_exit_shown', '1');
+    }
+  });
+}
+
+function closeExitPopup() {
+  document.getElementById('exit-popup').classList.remove('show');
+}
+
+// ═══════════════════════════════════════
+// ONBOARDING MODAL
+// ═══════════════════════════════════════
+function showOnboarding() {
+  if (localStorage.getItem('synaptiq_onboarded')) return;
+  document.getElementById('onboarding-modal').classList.add('show');
+}
+
+function closeOnboarding() {
+  document.getElementById('onboarding-modal').classList.remove('show');
+  localStorage.setItem('synaptiq_onboarded', '1');
+}
+
+// ═══════════════════════════════════════
+// GA4 TRACKING
+// ═══════════════════════════════════════
+function trackEvent(name, params) {
+  try {
+    if (typeof gtag !== 'undefined') gtag('event', name, params || {});
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════
+// STRIPE CHECKOUT
+// ═══════════════════════════════════════
+async function startCheckout(plan) {
+  const email = state.user?.email || '';
+  showToast('⏳ Opening secure checkout...');
+  try {
+    const r = await fetch('/api/stripe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan, email })
+    });
+    const data = await r.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      showToast('⚠️ Checkout error: ' + (data.error || 'Unknown error'));
+    }
+  } catch (e) {
+    showToast('⚠️ Could not open checkout. Try again.');
+  }
+}
+
+// ═══════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════
 function showToast(msg) {
@@ -2942,13 +3448,6 @@ function getGreeting() {
 function updateGreeting() {
   const el = document.getElementById('dash-greeting');
   if (el && state.user) el.textContent = `${getGreeting()}, ${state.user.name.split(' ')[0]}! 👋`;
-}
-
-// Init welcome tutor message if on tutor subpage
-function initTutor() {
-  if (!document.getElementById('tutor-messages').children.length) {
-    addTutorMsg('bot', `Hello! I'm your Mathematics tutor, powered by Claude Opus ✦\n\nI can explain any concept step by step, give you practice questions, help with exam technique, or simplify tricky topics.\n\nWhat would you like to work on today?`);
-  }
 }
 </script>
 </body>
