@@ -1347,19 +1347,19 @@ body.mode-adhd .adhd-break { display: block; }
 .lesson-section{margin-bottom:2rem}
 .lesson-section h3{color:var(--gold);font-size:1rem;border-bottom:1px solid var(--bg3);padding-bottom:.5rem;margin-bottom:1rem}
 .lesson-section ul{padding-left:1.25rem}
-.lesson-section li{margin-bottom:.4rem;color:var(--muted);line-height:1.7}
+.lesson-section li{margin-bottom:.4rem;color:var(--muted);line-height:1.85}
 .worked-example{background:var(--bg2);border:1px solid var(--bg3);border-radius:10px;padding:1.25rem;margin:.75rem 0}
 .worked-example .ex-problem{font-weight:600;color:var(--white);margin-bottom:.75rem}
-.worked-step{padding:.35rem 0;color:var(--muted);border-bottom:1px solid var(--bg3);font-size:.9rem;line-height:1.6}
+.worked-step{padding:.35rem 0;color:var(--muted);border-bottom:1px solid var(--bg3);font-size:1rem;line-height:1.75}
 .worked-step:last-child{border:none}
 .practice-q{background:var(--bg2);border:1px solid var(--bg3);border-radius:10px;padding:1.25rem;margin:.5rem 0}
 .practice-q .q-text{color:var(--white);font-weight:600;margin-bottom:.75rem}
 .show-answer-btn{background:none;border:1px solid var(--gold);color:var(--gold);padding:.3rem .8rem;border-radius:6px;cursor:pointer;font-size:.8rem;margin-top:.5rem;transition:.15s}
 .show-answer-btn:hover{background:rgba(201,168,76,0.1)}
-.q-answer{display:none;margin-top:.75rem;padding:.75rem;background:rgba(201,168,76,0.06);border-radius:6px;color:var(--muted);font-size:.9rem;line-height:1.7}
+.q-answer{display:none;margin-top:.75rem;padding:.75rem;background:rgba(201,168,76,0.06);border-radius:6px;color:var(--muted);font-size:.95rem;line-height:1.9}
 .q-answer.visible{display:block}
 .key-formulas-box{background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:1.25rem}
-.key-formula-item{color:var(--gold);padding:.35rem 0;border-bottom:1px solid rgba(201,168,76,0.1);font-size:.95rem}
+.key-formula-item{color:var(--gold);padding:.35rem 0;border-bottom:1px solid rgba(201,168,76,0.1);font-size:1rem}
 .key-formula-item:last-child{border:none}
 .lesson-loading{text-align:center;padding:3rem;color:var(--muted)}
 .lesson-spin{width:40px;height:40px;border:3px solid var(--bg3);border-top-color:var(--gold);border-radius:50%;animation:lspin 1s linear infinite;margin:0 auto 1rem}
@@ -1638,6 +1638,16 @@ body.mode-adhd .adhd-break { display: block; }
   #geo-panel { width: 100vw !important; right: 0; left: 0; }
   .geo-toggle-btn { display: flex; }
 }
+.lesson-graph-tool{margin-top:1.5rem;border:1px solid var(--bg3);border-radius:12px;overflow:hidden}
+.graph-tool-header{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.25rem;background:var(--bg2);cursor:pointer;user-select:none;border-bottom:1px solid transparent;transition:.2s}
+.graph-tool-header:hover{background:var(--bg3)}
+.graph-tool-header.open{border-bottom-color:var(--bg3)}
+.graph-tool-title{color:var(--gold);font-weight:600;font-size:.95rem;display:flex;align-items:center;gap:.5rem}
+.graph-tool-body{display:none;padding:1rem;background:var(--bg2);flex-direction:column;gap:.75rem}
+.graph-tool-body.open{display:flex}
+.graph-tool-iframe{width:100%;height:420px;border:none;border-radius:8px;background:#1a1a2e}
+.graph-draw-btn{align-self:flex-start;background:none;border:1px solid var(--blue);color:var(--blue);padding:.4rem 1rem;border-radius:8px;cursor:pointer;font-size:.85rem;transition:.15s}
+.graph-draw-btn:hover{background:rgba(96,165,250,0.1)}
 </style>
 </head>
 <body>
@@ -4614,6 +4624,22 @@ function sanitizeClaudeJson(str) {
   return result;
 }
 
+const GRAPH_KEYWORDS=['graph','transform','circle','trig','vector','parametric','coordinat','differentiat','integrat','exponential','logarithm','function','sequence','distribution','normal','kinematic','straight line','quadratic','curve','modelling'];
+function needsGraphTool(ch){const c=ch.toLowerCase();return GRAPH_KEYWORDS.some(k=>c.includes(k));}
+function toggleGraphTool(btn){
+  const body=btn.closest('.lesson-graph-tool').querySelector('.graph-tool-body');
+  const open=body.classList.toggle('open');
+  btn.classList.toggle('open',open);
+  btn.querySelector('.graph-tool-chevron').textContent=open?'▲':'▼';
+  if(open && !body.querySelector('iframe')){
+    const iframe=document.createElement('iframe');
+    iframe.src='https://www.desmos.com/calculator?embed';
+    iframe.className='graph-tool-iframe';
+    iframe.allow='fullscreen';
+    body.insertBefore(iframe,body.firstChild);
+  }
+}
+
 async function teachChapter(mk, idx, btn) {
   document.querySelectorAll('.teacher-chapter-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
@@ -4642,7 +4668,7 @@ Return ONLY this HTML structure (fill in all [...] placeholders):
 </div>
 <div class="lesson-section">
 <h3><i class="fas fa-book-open"></i> Key Theory</h3>
-<div style="color:var(--muted);line-height:1.9">[full multi-paragraph theory with LaTeX]</div>
+<div style="color:var(--muted);line-height:2.1;font-size:1rem">[full multi-paragraph theory with LaTeX]</div>
 </div>
 <div class="lesson-section">
 <h3><i class="fas fa-pencil"></i> Worked Examples</h3>
@@ -4666,6 +4692,12 @@ ${resourceCtx}`;
     const data = await callClaude([{ role: 'user', content: `Teach me: ${chapter} (${mod.label}, ${mod.year})` }], sys, 8000);
     raw = getReply(data).replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
     box.innerHTML = `<div style="margin-bottom:2rem"><div class="lesson-year-badge">${mod.year}</div><h2 style="margin:.25rem 0;color:var(--white);font-size:1.5rem">${chapter}</h2></div>${raw}`;
+    if (needsGraphTool(chapter)) {
+      const toolDiv = document.createElement('div');
+      toolDiv.className = 'lesson-graph-tool';
+      toolDiv.innerHTML = `<div class="graph-tool-header" onclick="toggleGraphTool(this)"><span class="graph-tool-title"><i class="fas fa-chart-line"></i> Graph & Drawing Tools</span><span class="graph-tool-chevron">▼</span></div><div class="graph-tool-body"><button class="graph-draw-btn" onclick="toggleGeo()"><i class="fas fa-pencil-ruler"></i> Open Drawing Canvas</button></div>`;
+      box.appendChild(toolDiv);
+    }
     if (window.MathJax) MathJax.typesetPromise([box]).catch(() => {});
     if (typeof addXP === 'function') addXP(15, 'Completed a lesson');
   } catch (e) {
