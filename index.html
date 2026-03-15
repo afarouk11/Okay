@@ -1984,16 +1984,7 @@ body.mode-adhd .adhd-break { display: block; }
             <div class="diff-name">Dyscalculia</div>
             <div class="diff-desc">Visual maths, number lines, step-by-step</div>
           </div>
-          <div class="diff-card" id="diff-autism" onclick="toggleDiff('autism')">
-            <div class="diff-icon">🧩</div>
-            <div class="diff-name">Autism Spectrum</div>
-            <div class="diff-desc">Predictable structure, literal explanations</div>
-          </div>
-          <div class="diff-card" id="diff-visual" onclick="toggleDiff('visual')">
-            <div class="diff-icon">👁️</div>
-            <div class="diff-name">Visual Impairment</div>
-            <div class="diff-desc">High contrast, larger text</div>
-          </div>
+
           <div class="diff-card" id="diff-none" onclick="toggleDiff('none')">
             <div class="diff-icon">✨</div>
             <div class="diff-name">No Specific Needs</div>
@@ -2876,7 +2867,7 @@ function scrollTo(sel) {
   if (el) el.scrollIntoView({ behavior: 'smooth' });
 }
 
-function showDash(sub) {
+function _showDashCore(sub) {
   document.querySelectorAll('.subpage').forEach(s => s.classList.remove('active'));
   const sp = document.getElementById('sp-' + sub);
   if (!sp) return;
@@ -4532,10 +4523,9 @@ Score each criterion 0-100. Be specific and reference A-Level Maths marking conv
   btn.disabled = false;
 }
 
-// Hook into showDash to load flashcards + AI Teacher when navigating
-const _origShowDash = showDash;
+// showDash: navigate to a dashboard subpage and trigger side effects
 function showDash(sub) {
-  _origShowDash(sub);
+  _showDashCore(sub);
   if (sub === 'flashcards') loadFcDue();
   if (sub === 'content') initTeacher();
   setMobNav(sub);
