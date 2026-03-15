@@ -4632,24 +4632,44 @@ async function teachChapter(mk, idx, btn) {
   }
 
   const sys = `You are an expert A-Level Mathematics teacher for UK students (${board} exam board).
-Deliver a complete, thorough lesson. Use LaTeX math notation: inline with $...$ and display equations with $$...$$. For example: $x^2 + 3x - 4 = 0$, $$\\frac{d}{dx}(x^n) = nx^{n-1}$$. Never write x^2 in plain text.
-Return ONLY valid JSON (no markdown code fences, no extra text):
-{
-  "objectives": ["at least 3 learning objectives"],
-  "theory": "full explanation with LaTeX math",
-  "workedExamples": [{"problem": "...", "steps": ["step 1", "step 2", "..."]}],
-  "practiceQuestions": [{"q": "question text", "answer": "full worked answer with LaTeX"}],
-  "keyFormulas": ["formula 1", "formula 2", "..."]
-}
-Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice questions, 3 key formulas.${resourceCtx}`;
+Deliver a complete lesson as HTML — no JSON, no markdown fences, just HTML elements.
+Use LaTeX math: inline $...$, display $$...$$. Example: $x^2+3x-4=0$, $$\\frac{d}{dx}(x^n)=nx^{n-1}$$. Never write maths in plain text.
+Return ONLY this HTML structure (fill in all [...] placeholders):
 
+<div class="lesson-section">
+<h3><i class="fas fa-bullseye"></i> Learning Objectives</h3>
+<ul><li>[objective 1]</li><li>[objective 2]</li><li>[objective 3]</li></ul>
+</div>
+<div class="lesson-section">
+<h3><i class="fas fa-book-open"></i> Key Theory</h3>
+<div style="color:var(--muted);line-height:1.9">[full multi-paragraph theory with LaTeX]</div>
+</div>
+<div class="lesson-section">
+<h3><i class="fas fa-pencil"></i> Worked Examples</h3>
+<div class="worked-example"><div class="ex-problem">[problem]</div><div class="worked-step"><strong>Step 1:</strong> [step]</div><div class="worked-step"><strong>Step 2:</strong> [step]</div><div class="worked-step"><strong>Step 3:</strong> [step]</div></div>
+<div class="worked-example"><div class="ex-problem">[problem 2]</div><div class="worked-step"><strong>Step 1:</strong> [step]</div><div class="worked-step"><strong>Step 2:</strong> [step]</div><div class="worked-step"><strong>Step 3:</strong> [step]</div></div>
+</div>
+<div class="lesson-section">
+<h3><i class="fas fa-question-circle"></i> Practice Questions</h3>
+<div class="practice-q"><div class="q-text">Q1: [question]</div><button class="show-answer-btn" onclick="togglePracticeAnswer(this)">Show Answer</button><div class="q-answer">[full worked answer with LaTeX]</div></div>
+<div class="practice-q"><div class="q-text">Q2: [question]</div><button class="show-answer-btn" onclick="togglePracticeAnswer(this)">Show Answer</button><div class="q-answer">[full worked answer with LaTeX]</div></div>
+<div class="practice-q"><div class="q-text">Q3: [question]</div><button class="show-answer-btn" onclick="togglePracticeAnswer(this)">Show Answer</button><div class="q-answer">[full worked answer with LaTeX]</div></div>
+</div>
+<div class="lesson-section">
+<h3><i class="fas fa-star"></i> Key Formulas</h3>
+<div class="key-formulas-box"><div class="key-formula-item">[formula 1]</div><div class="key-formula-item">[formula 2]</div><div class="key-formula-item">[formula 3]</div></div>
+</div>
+${resourceCtx}`;
+
+  let raw = '';
   try {
-    const data = await callClaude([{ role: 'user', content: `Teach me: ${chapter} (${mod.label}, ${mod.year})` }], sys, 4000);
-    let raw = getReply(data).replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-    const lesson = JSON.parse(sanitizeClaudeJson(raw));
-    renderLesson(chapter, mod.year, lesson, box);
+    const data = await callClaude([{ role: 'user', content: `Teach me: ${chapter} (${mod.label}, ${mod.year})` }], sys, 8000);
+    raw = getReply(data).replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+    box.innerHTML = `<div style="margin-bottom:2rem"><div class="lesson-year-badge">${mod.year}</div><h2 style="margin:.25rem 0;color:var(--white);font-size:1.5rem">${chapter}</h2></div>${raw}`;
+    if (window.MathJax) MathJax.typesetPromise([box]).catch(() => {});
+    if (typeof addXP === 'function') addXP(15, 'Completed a lesson');
   } catch (e) {
-    box.innerHTML = `<div style="padding:2rem;color:var(--red)">⚠️ Could not generate lesson: ${e.message}<br><small style="color:var(--muted);word-break:break-all;font-size:0.75rem">${typeof raw !== 'undefined' ? raw.slice(0,300) : ''}</small></div>`;
+    box.innerHTML = `<div style="padding:2rem;color:var(--red)">⚠️ Could not generate lesson: ${e.message}</div>`;
   }
 }
 
