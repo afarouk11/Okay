@@ -1328,6 +1328,275 @@ body.mode-adhd .adhd-break { display: block; }
   height: 100%; background: var(--gold); border-radius: 2px;
   transition: width .4s ease;
 }
+
+/* ═══════════════════════════════════════
+   GEOMETRY CANVAS
+═══════════════════════════════════════ */
+#geo-panel {
+  display: none;
+  position: fixed; top: 64px; right: 0; bottom: 0;
+  width: 420px; background: var(--bg2);
+  border-left: 1px solid var(--border);
+  z-index: 500; flex-direction: column;
+  box-shadow: -8px 0 32px rgba(0,0,0,0.5);
+}
+#geo-panel.show { display: flex; }
+.geo-toolbar {
+  display: flex; gap: .4rem; flex-wrap: wrap;
+  padding: .75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.geo-tool {
+  padding: .4rem .75rem; border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg4); color: var(--muted);
+  font-size: .78rem; cursor: pointer; transition: all .2s;
+}
+.geo-tool:hover { border-color: var(--gold); color: var(--gold); }
+.geo-tool.active { background: var(--gold); color: var(--black); border-color: var(--gold); }
+#geo-canvas {
+  flex: 1; cursor: crosshair;
+  background: radial-gradient(circle at 50% 50%, #141924 0%, #0A0C12 100%);
+}
+.geo-info {
+  padding: .75rem 1rem; background: var(--bg3);
+  border-top: 1px solid var(--border);
+  font-size: .8rem; color: var(--muted); min-height: 60px;
+}
+.geo-measurement {
+  display: inline-block; background: rgba(201,168,76,0.15);
+  border: 1px solid var(--gold); border-radius: 6px;
+  padding: .2rem .5rem; font-size: .75rem; color: var(--gold);
+  margin: .2rem;
+}
+.geo-toggle-btn {
+  position: fixed; right: 1rem; bottom: 5rem;
+  background: var(--blue); color: white;
+  border: none; border-radius: 50%; width: 52px; height: 52px;
+  font-size: 1.3rem; cursor: pointer; z-index: 499;
+  box-shadow: 0 4px 20px rgba(96,165,250,0.4);
+  display: none; align-items: center; justify-content: center;
+  transition: all .2s;
+}
+.geo-toggle-btn.show { display: flex; }
+.geo-toggle-btn:hover { transform: scale(1.1); }
+
+/* ═══════════════════════════════════════
+   POMODORO TIMER
+═══════════════════════════════════════ */
+#pomodoro-widget {
+  position: fixed; top: 72px; right: 1rem; z-index: 800;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 16px; padding: 1rem 1.25rem;
+  min-width: 200px; display: none;
+  box-shadow: var(--shadow);
+  animation: fadeUp .3s ease;
+}
+#pomodoro-widget.show { display: block; }
+.pom-label { font-size: .7rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .5rem; }
+.pom-time {
+  font-family: var(--font-mono); font-size: 2.5rem; font-weight: 700;
+  text-align: center; line-height: 1; margin-bottom: .75rem;
+  color: var(--white); transition: color .3s;
+}
+.pom-time.break { color: var(--green); }
+.pom-time.warning { color: var(--orange); animation: pulse 1s infinite; }
+.pom-ring {
+  width: 80px; height: 80px; border-radius: 50%;
+  border: 4px solid var(--bg4);
+  margin: 0 auto .75rem;
+  position: relative; display: flex;
+  align-items: center; justify-content: center;
+}
+.pom-ring svg { position: absolute; top: -4px; left: -4px; transform: rotate(-90deg); }
+.pom-ring circle { transition: stroke-dashoffset .5s ease; }
+.pom-phase { font-size: .75rem; text-align: center; color: var(--muted); margin-bottom: .75rem; }
+.pom-controls { display: flex; gap: .5rem; justify-content: center; }
+.pom-btn {
+  padding: .4rem .9rem; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg3);
+  color: var(--white); font-size: .8rem; cursor: pointer;
+  transition: all .2s; font-weight: 600;
+}
+.pom-btn:hover { border-color: var(--gold); color: var(--gold); }
+.pom-btn.start { background: var(--gold); color: var(--black); border-color: var(--gold); }
+.pom-sessions { display: flex; gap: .3rem; justify-content: center; margin-top: .75rem; }
+.pom-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bg4); border: 1px solid var(--border); transition: all .3s; }
+.pom-dot.done { background: var(--gold); border-color: var(--gold); }
+.pom-float-btn {
+  position: fixed; top: 72px; right: 1rem; z-index: 799;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: .5rem .75rem;
+  font-size: .8rem; cursor: pointer; display: none;
+  align-items: center; gap: .4rem; color: var(--muted);
+  transition: all .2s; box-shadow: var(--shadow);
+}
+.pom-float-btn:hover { border-color: var(--gold); color: var(--gold); }
+.pom-float-btn.show { display: flex; }
+
+/* ═══════════════════════════════════════
+   SPACED REPETITION SYSTEM
+═══════════════════════════════════════ */
+.sr-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 16px; padding: 2rem;
+  text-align: center; cursor: pointer;
+  transition: all .3s; min-height: 200px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.sr-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent, rgba(201,168,76,0.05));
+}
+.sr-question { font-size: 1.1rem; line-height: 1.6; margin-bottom: 1rem; }
+.sr-answer {
+  display: none; color: var(--green); font-size: 1rem;
+  line-height: 1.6; padding: 1rem; background: rgba(74,222,128,0.1);
+  border-radius: 10px; border: 1px solid rgba(74,222,128,0.3);
+  margin-top: .5rem;
+}
+.sr-answer.show { display: block; }
+.sr-rating { display: none; gap: .75rem; margin-top: 1rem; }
+.sr-rating.show { display: flex; }
+.sr-rate-btn {
+  flex: 1; padding: .75rem; border-radius: 10px;
+  border: none; font-weight: 700; cursor: pointer; transition: all .2s;
+}
+.sr-rate-easy { background: rgba(74,222,128,0.2); color: var(--green); border: 1px solid rgba(74,222,128,0.4); }
+.sr-rate-ok { background: rgba(251,146,60,0.2); color: var(--orange); border: 1px solid rgba(251,146,60,0.4); }
+.sr-rate-hard { background: rgba(251,113,133,0.2); color: var(--red); border: 1px solid rgba(251,113,133,0.4); }
+.sr-rate-btn:hover { transform: translateY(-2px); }
+.sr-next-info { font-size: .75rem; color: var(--muted); margin-top: .5rem; }
+
+/* ═══════════════════════════════════════
+   FLASHCARDS PAGE
+═══════════════════════════════════════ */
+.flashcard-area { margin-top: 1.5rem; }
+.fc-progress { font-size: .875rem; color: var(--muted); margin-bottom: 1rem; }
+.flashcard {
+  background: var(--bg2); border: 1px solid var(--gold);
+  border-radius: 16px; padding: 0;
+  min-height: 200px; cursor: pointer;
+  perspective: 1000px; margin-bottom: 1rem;
+}
+.flashcard-inner {
+  position: relative; width: 100%; min-height: 200px;
+  transform-style: preserve-3d; transition: transform .5s;
+}
+.flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+.flashcard-front, .flashcard-back {
+  position: absolute; width: 100%; min-height: 200px;
+  backface-visibility: hidden; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem; text-align: center; font-size: 1.05rem; line-height: 1.7;
+}
+.flashcard-front { background: var(--bg2); color: var(--white); }
+.flashcard-back {
+  background: rgba(201,168,76,0.08); color: var(--gold);
+  transform: rotateY(180deg); font-weight: 600;
+}
+.flashcard-actions { display: flex; gap: 1rem; margin-top: .5rem; }
+.fc-wrong {
+  flex: 1; padding: .75rem; border-radius: 10px;
+  background: rgba(251,113,133,0.15); color: var(--red);
+  border: 1px solid rgba(251,113,133,0.3); font-weight: 700; cursor: pointer;
+  transition: all .2s;
+}
+.fc-right {
+  flex: 1; padding: .75rem; border-radius: 10px;
+  background: rgba(74,222,128,0.15); color: var(--green);
+  border: 1px solid rgba(74,222,128,0.3); font-weight: 700; cursor: pointer;
+  transition: all .2s;
+}
+.fc-wrong:hover, .fc-right:hover { transform: translateY(-2px); }
+.fc-input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--white);
+  font-family: var(--font-body); font-size: .9rem;
+  padding: .75rem 1rem; margin-bottom: .75rem;
+  transition: border .2s;
+}
+.fc-input:focus { outline: none; border-color: var(--gold); }
+.fc-create-box {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem;
+}
+.fc-create-box label { display: block; font-size: .8rem; font-weight: 600; color: var(--muted); margin-bottom: .4rem; margin-top: .75rem; }
+.fc-create-box label:first-child { margin-top: 0; }
+
+/* ═══════════════════════════════════════
+   ESSAY / WORKED SOLUTION MARKER
+═══════════════════════════════════════ */
+.essay-dropzone {
+  border: 2px dashed var(--border); border-radius: 12px;
+  padding: 2rem; text-align: center; cursor: pointer;
+  transition: all .2s; margin-bottom: 1rem;
+}
+.essay-dropzone:hover, .essay-dropzone.drag-over {
+  border-color: var(--gold); background: rgba(201,168,76,0.05);
+}
+.essay-dropzone i { font-size: 2.5rem; color: var(--muted); margin-bottom: 1rem; }
+.essay-grade {
+  width: 80px; height: 80px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; font-weight: 900; border: 3px solid;
+  flex-shrink: 0;
+}
+.grade-a { border-color: var(--green); color: var(--green); background: rgba(74,222,128,0.1); }
+.grade-b { border-color: var(--blue); color: var(--blue); background: rgba(96,165,250,0.1); }
+.grade-c { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.1); }
+.grade-d { border-color: var(--orange); color: var(--orange); background: rgba(251,146,60,0.1); }
+.grade-e { border-color: var(--red); color: var(--red); background: rgba(251,113,133,0.1); }
+.essay-criteria-bar {
+  display: flex; align-items: center; gap: 1rem; margin-bottom: .75rem;
+}
+.essay-criteria-label { width: 160px; font-size: .85rem; flex-shrink: 0; }
+.essay-criteria-track {
+  flex: 1; height: 8px; background: var(--bg4);
+  border-radius: 4px; overflow: hidden;
+}
+.essay-criteria-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  transition: width .8s ease;
+}
+.essay-criteria-score { font-size: .8rem; color: var(--gold); font-weight: 700; width: 40px; text-align: right; }
+
+/* ═══════════════════════════════════════
+   MOBILE BOTTOM NAV
+═══════════════════════════════════════ */
+#mobile-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 900;
+  background: rgba(10,12,18,0.97);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  padding: .5rem 0 calc(.5rem + env(safe-area-inset-bottom));
+}
+.mob-nav-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+}
+.mob-nav-btn {
+  display: flex; flex-direction: column; align-items: center;
+  gap: .2rem; padding: .5rem .25rem;
+  background: none; border: none; color: var(--muted);
+  font-size: .6rem; font-weight: 600; cursor: pointer;
+  transition: all .2s;
+}
+.mob-nav-btn i { font-size: 1.2rem; }
+.mob-nav-btn.active { color: var(--gold); }
+.mob-nav-btn.active i {
+  filter: drop-shadow(0 0 6px rgba(201,168,76,0.6));
+}
+@media(max-width:768px) {
+  #mobile-nav { display: block; }
+  .sidebar { display: none !important; }
+  #geo-panel { width: 100vw !important; right: 0; left: 0; }
+  .geo-toggle-btn { display: flex; }
+}
 </style>
 </head>
 <body>
@@ -1754,6 +2023,9 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="sidebar-item" id="si-strengths" onclick="showDash('strengths')"><i class="fas fa-bullseye"></i>Strengths</div>
       <div class="sidebar-section-label">School</div>
       <div class="sidebar-item" id="si-assignments" onclick="showDash('assignments')"><i class="fas fa-clipboard-list"></i>Assignments<span class="sidebar-badge">2</span></div>
+      <div class="sidebar-section-label">Tools</div>
+      <div class="sidebar-item" id="si-flashcards" onclick="showDash('flashcards')"><i class="fas fa-clone"></i>Flashcards</div>
+      <div class="sidebar-item" id="si-essay" onclick="showDash('essay')"><i class="fas fa-pen-nib"></i>Work Checker</div>
       <div class="sidebar-section-label">Account</div>
       <div class="sidebar-item" id="si-settings" onclick="showDash('settings')"><i class="fas fa-gear"></i>Settings</div>
     </div>
@@ -2243,6 +2515,103 @@ body.mode-adhd .adhd-break { display: block; }
       </div>
     </div>
 
+    <!-- FLASHCARDS SUBPAGE -->
+    <div class="subpage" id="sp-flashcards">
+      <div class="page-title">🗂️ Flashcards</div>
+      <p class="page-subtitle">Spaced repetition to lock A-Level Maths into long-term memory</p>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center">
+        <button class="btn btn-gold" style="font-size:.85rem;padding:.5rem 1.25rem" onclick="showFcCreate()"><i class="fas fa-plus"></i> New Card</button>
+        <button class="btn btn-outline" style="font-size:.85rem;padding:.5rem 1.25rem" onclick="generateFcWithAI()">✦ Generate with AI</button>
+        <span style="font-size:.8rem;color:var(--muted)" id="fc-due-count"></span>
+      </div>
+
+      <div id="fc-create" style="display:none">
+        <div class="fc-create-box">
+          <label>Front (Question)</label>
+          <input class="fc-input" id="fc-front" placeholder="e.g. What is the derivative of sin(x)?">
+          <label>Back (Answer)</label>
+          <textarea class="fc-input" id="fc-back" rows="3" placeholder="e.g. cos(x)"></textarea>
+          <div style="display:flex;gap:.75rem;margin-top:.75rem">
+            <button class="btn btn-gold" style="font-size:.85rem" onclick="addFlashcard()">Save Card</button>
+            <button class="btn btn-outline" style="font-size:.85rem" onclick="showFcCreate()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="fc-review-area" class="flashcard-area">
+        <div class="fc-progress" id="fc-progress-text">Loading cards...</div>
+        <div class="flashcard" id="fc-card" onclick="document.getElementById('fc-card').classList.toggle('flipped')" style="display:none">
+          <div class="flashcard-inner">
+            <div class="flashcard-front" id="fc-front-display">Front</div>
+            <div class="flashcard-back" id="fc-back-display">Back</div>
+          </div>
+        </div>
+        <div class="flashcard-actions" id="fc-actions" style="display:none">
+          <button class="fc-wrong" onclick="fcAnswer(false)"><i class="fas fa-times"></i> Didn't Know</button>
+          <button class="fc-right" onclick="fcAnswer(true)"><i class="fas fa-check"></i> Got It!</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- WORK CHECKER SUBPAGE -->
+    <div class="subpage" id="sp-essay">
+      <div class="page-title">✍️ Worked Solution Checker</div>
+      <p class="page-subtitle">Submit your worked solution for instant AI marking with grade, feedback, and improvement tips</p>
+      <div style="max-width:800px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+          <div>
+            <label style="display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.4rem">Topic</label>
+            <select class="form-select" id="essay-subject" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.65rem .9rem;color:var(--white);font-size:.9rem">
+              <option>Pure Mathematics</option>
+              <option>Statistics</option>
+              <option>Mechanics</option>
+              <option>Further Pure</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.4rem">Exam Board</label>
+            <select class="form-select" id="essay-board" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.65rem .9rem;color:var(--white);font-size:.9rem">
+              <option>AQA</option><option>Edexcel</option><option>OCR</option><option>OCR MEI</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:1rem">
+          <label style="display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.4rem">Question</label>
+          <input type="text" id="essay-question" placeholder="e.g. Find ∫(2x+3)dx, giving your answer in terms of x" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.65rem .9rem;color:var(--white);font-size:.9rem">
+        </div>
+        <div class="essay-dropzone" id="essay-img-drop" onclick="document.getElementById('essay-img-input').click()">
+          <i class="fas fa-image"></i>
+          <div style="font-weight:600;margin-bottom:.25rem">Upload question image (optional)</div>
+          <div style="font-size:.8rem;color:var(--muted)">Photograph your question paper or working</div>
+          <input type="file" id="essay-img-input" accept="image/*" style="display:none" onchange="handleEssayImage(event)">
+        </div>
+        <div style="margin-bottom:1.5rem">
+          <label style="display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.4rem">Your Worked Solution</label>
+          <textarea id="essay-text" rows="12" placeholder="Write out your full working here — show every step.&#10;&#10;e.g.&#10;∫(2x+3)dx&#10;= x² + 3x + C" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;color:var(--white);font-family:var(--font-body);font-size:.9rem;resize:vertical;line-height:1.7"></textarea>
+        </div>
+        <button class="btn btn-gold" onclick="markEssay()" id="essay-submit-btn" style="width:100%;padding:1rem;font-size:1rem">✦ Check My Working</button>
+
+        <div id="essay-results" style="display:none;margin-top:2rem">
+          <div style="display:flex;align-items:center;gap:2rem;margin-bottom:2rem;flex-wrap:wrap">
+            <div class="essay-grade grade-a" id="essay-grade-circle">—</div>
+            <div>
+              <div style="font-size:1.5rem;font-weight:800" id="essay-grade-label">—</div>
+              <div style="color:var(--muted);font-size:.875rem" id="essay-marks-label">Marking...</div>
+            </div>
+          </div>
+          <div id="essay-criteria-bars" style="margin-bottom:2rem"></div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1rem">
+            <div style="font-weight:700;margin-bottom:1rem">📋 Detailed Feedback</div>
+            <div id="essay-feedback-text" style="font-size:.9rem;line-height:1.8;color:var(--muted)"></div>
+          </div>
+          <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.2);border-radius:16px;padding:1.5rem">
+            <div style="font-weight:700;margin-bottom:1rem;color:var(--green)">💡 How to Improve</div>
+            <div id="essay-improve-text" style="font-size:.9rem;line-height:1.8"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- end main-content -->
 </div><!-- end page-dashboard -->
 
@@ -2586,6 +2955,10 @@ function enterDashboard() {
 
   nav('dashboard');
   showDash('home');
+  // Show new feature UI elements
+  if (typeof updateMobileNav === 'function') updateMobileNav();
+  if (typeof updateGeoBtn === 'function') updateGeoBtn();
+  if (typeof updatePomBtn === 'function') updatePomBtn();
 }
 
 function showSignup() {
@@ -2613,6 +2986,12 @@ document.addEventListener('DOMContentLoaded', () => {
       state.user = JSON.parse(saved);
       applyLearningProfile();
       loadUploadsFromStorage();
+      // Show new feature UI elements for resumed sessions
+      setTimeout(() => {
+        if (typeof updateMobileNav === 'function') updateMobileNav();
+        if (typeof updateGeoBtn === 'function') updateGeoBtn();
+        if (typeof updatePomBtn === 'function') updatePomBtn();
+      }, 100);
     }
   } catch(e) {}
   buildNumberLine(0);
@@ -3449,6 +3828,625 @@ function updateGreeting() {
   const el = document.getElementById('dash-greeting');
   if (el && state.user) el.textContent = `${getGreeting()}, ${state.user.name.split(' ')[0]}! 👋`;
 }
+</script>
+
+<!-- ═══════════════ MOBILE BOTTOM NAV ═══════════════ -->
+<div id="mobile-nav">
+  <div class="mob-nav-grid">
+    <button class="mob-nav-btn active" id="mn-home" onclick="showDash('home');setMobNav('home')"><i class="fas fa-house"></i>Home</button>
+    <button class="mob-nav-btn" id="mn-tutor" onclick="showDash('tutor');setMobNav('tutor')"><i class="fas fa-robot"></i>Tutor</button>
+    <button class="mob-nav-btn" id="mn-questions" onclick="showDash('questions');setMobNav('questions')"><i class="fas fa-file-lines"></i>Questions</button>
+    <button class="mob-nav-btn" id="mn-flashcards" onclick="showDash('flashcards');setMobNav('flashcards')"><i class="fas fa-clone"></i>Cards</button>
+    <button class="mob-nav-btn" id="mn-progress" onclick="showDash('progress');setMobNav('progress')"><i class="fas fa-chart-line"></i>Progress</button>
+  </div>
+</div>
+
+<!-- ═══════════════ POMODORO WIDGET ═══════════════ -->
+<button class="pom-float-btn" id="pom-float" onclick="togglePomodoro()">
+  ⏱️ <span id="pom-float-time">25:00</span>
+</button>
+
+<div id="pomodoro-widget">
+  <div class="pom-label" id="pom-phase-label">Focus Session</div>
+  <div class="pom-ring">
+    <svg width="88" height="88" viewBox="0 0 88 88">
+      <circle cx="44" cy="44" r="40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="4"/>
+      <circle id="pom-ring-circle" cx="44" cy="44" r="40" fill="none" stroke="#C9A84C" stroke-width="4"
+        stroke-dasharray="251.2" stroke-dashoffset="0" stroke-linecap="round"/>
+    </svg>
+    <div class="pom-time" id="pom-display">25:00</div>
+  </div>
+  <div class="pom-phase" id="pom-phase-text">Stay focused — you've got this! 💪</div>
+  <div class="pom-controls">
+    <button class="pom-btn start" id="pom-start-btn" onclick="pomStart()">▶ Start</button>
+    <button class="pom-btn" onclick="pomReset()">↺ Reset</button>
+    <button class="pom-btn" onclick="togglePomodoro()">✕</button>
+  </div>
+  <div class="pom-sessions" id="pom-sessions">
+    <div class="pom-dot" id="pd0"></div>
+    <div class="pom-dot" id="pd1"></div>
+    <div class="pom-dot" id="pd2"></div>
+    <div class="pom-dot" id="pd3"></div>
+  </div>
+</div>
+
+<!-- ═══════════════ GEOMETRY PANEL ═══════════════ -->
+<div id="geo-panel">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid var(--border);background:var(--bg3)">
+    <div style="font-weight:700;font-size:.95rem">📐 Geometry Canvas</div>
+    <button onclick="toggleGeo()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem">✕</button>
+  </div>
+  <div class="geo-toolbar">
+    <button class="geo-tool active" id="gt-point" onclick="setGeoTool('point')">• Point</button>
+    <button class="geo-tool" id="gt-line" onclick="setGeoTool('line')">— Line</button>
+    <button class="geo-tool" id="gt-triangle" onclick="setGeoTool('triangle')">△ Triangle</button>
+    <button class="geo-tool" id="gt-circle" onclick="setGeoTool('circle')">○ Circle</button>
+    <button class="geo-tool" id="gt-rect" onclick="setGeoTool('rect')">□ Rectangle</button>
+    <button class="geo-tool" id="gt-angle" onclick="setGeoTool('angle')">∠ Angle</button>
+    <button class="geo-tool" id="gt-measure" onclick="setGeoTool('measure')">📏 Measure</button>
+    <button class="geo-tool" onclick="clearGeo()">🗑️ Clear</button>
+  </div>
+  <canvas id="geo-canvas" width="420" height="420"></canvas>
+  <div class="geo-info" id="geo-info">
+    Select a tool and click on the canvas to draw. Measurements appear automatically.
+  </div>
+</div>
+
+<!-- Geometry toggle button -->
+<button class="geo-toggle-btn" id="geo-toggle-btn" onclick="toggleGeo()">📐</button>
+
+<!-- ═══════════════ NEW FEATURE SCRIPTS ═══════════════ -->
+<script>
+// ═══════════════════════════════════════
+// MOBILE NAV
+// ═══════════════════════════════════════
+function setMobNav(active) {
+  document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('mn-' + active);
+  if (btn) btn.classList.add('active');
+}
+
+// Show mobile nav only when user is logged into dashboard
+function updateMobileNav() {
+  const mn = document.getElementById('mobile-nav');
+  if (mn) mn.style.display = state.user ? 'block' : 'none';
+}
+
+// ═══════════════════════════════════════
+// POMODORO TIMER
+// ═══════════════════════════════════════
+const pom = {
+  duration: 25 * 60,
+  breakDuration: 5 * 60,
+  longBreakDuration: 15 * 60,
+  timeLeft: 25 * 60,
+  isRunning: false,
+  isBreak: false,
+  session: 0,
+  interval: null,
+  totalSessions: 4
+};
+
+function togglePomodoro() {
+  const w = document.getElementById('pomodoro-widget');
+  w.classList.toggle('show');
+}
+
+function pomStart() {
+  if (pom.isRunning) {
+    clearInterval(pom.interval);
+    pom.isRunning = false;
+    document.getElementById('pom-start-btn').textContent = '▶ Resume';
+    return;
+  }
+  pom.isRunning = true;
+  document.getElementById('pom-start-btn').textContent = '⏸ Pause';
+  pom.interval = setInterval(() => {
+    pom.timeLeft--;
+    updatePomDisplay();
+    if (pom.timeLeft <= 0) {
+      clearInterval(pom.interval);
+      pom.isRunning = false;
+      pomPhaseEnd();
+    }
+  }, 1000);
+}
+
+function pomPhaseEnd() {
+  if (!pom.isBreak) {
+    pom.session++;
+    document.getElementById('pd' + (pom.session - 1))?.classList.add('done');
+    if (typeof addXP === 'function') addXP(25, '⏱️ Focus session complete! +25 XP');
+    if (pom.session >= pom.totalSessions) {
+      pom.timeLeft = pom.longBreakDuration;
+      pom.session = 0;
+      document.querySelectorAll('.pom-dot').forEach(d => d.classList.remove('done'));
+      document.getElementById('pom-phase-label').textContent = '🎉 Long Break';
+      document.getElementById('pom-phase-text').textContent = 'Amazing work! Take a 15 minute break.';
+      document.getElementById('pom-display').classList.add('break');
+    } else {
+      pom.timeLeft = pom.breakDuration;
+      document.getElementById('pom-phase-label').textContent = '☕ Short Break';
+      document.getElementById('pom-phase-text').textContent = 'Take a 5 minute break — stretch and breathe!';
+      document.getElementById('pom-display').classList.add('break');
+    }
+    pom.isBreak = true;
+    showToast('✅ Focus session done! Take a break.');
+  } else {
+    pom.timeLeft = pom.duration;
+    pom.isBreak = false;
+    document.getElementById('pom-phase-label').textContent = '🎯 Focus Session';
+    document.getElementById('pom-phase-text').textContent = "Stay focused — you've got this! 💪";
+    document.getElementById('pom-display').classList.remove('break');
+    showToast('🎯 Break over — back to studying!');
+  }
+  document.getElementById('pom-start-btn').textContent = '▶ Start';
+  updatePomDisplay();
+}
+
+function pomReset() {
+  clearInterval(pom.interval);
+  pom.isRunning = false;
+  pom.isBreak = false;
+  pom.timeLeft = pom.duration;
+  document.getElementById('pom-start-btn').textContent = '▶ Start';
+  document.getElementById('pom-phase-label').textContent = '🎯 Focus Session';
+  document.getElementById('pom-phase-text').textContent = "Stay focused — you've got this! 💪";
+  document.getElementById('pom-display').classList.remove('break', 'warning');
+  updatePomDisplay();
+}
+
+function updatePomDisplay() {
+  const m = Math.floor(pom.timeLeft / 60);
+  const s = pom.timeLeft % 60;
+  const str = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  document.getElementById('pom-display').textContent = str;
+  document.getElementById('pom-float-time').textContent = str;
+  const total = pom.isBreak ? (pom.session >= pom.totalSessions ? pom.longBreakDuration : pom.breakDuration) : pom.duration;
+  const pct = pom.timeLeft / total;
+  const circumference = 251.2;
+  document.getElementById('pom-ring-circle').style.strokeDashoffset = circumference * (1 - pct);
+  document.getElementById('pom-ring-circle').style.stroke = pom.isBreak ? '#4ADE80' : (pom.timeLeft < 60 ? '#FB923C' : '#C9A84C');
+  if (pom.timeLeft < 60 && !pom.isBreak) {
+    document.getElementById('pom-display').classList.add('warning');
+  } else {
+    document.getElementById('pom-display').classList.remove('warning');
+  }
+}
+
+// ═══════════════════════════════════════
+// GEOMETRY CANVAS ENGINE
+// ═══════════════════════════════════════
+const geo = {
+  tool: 'point',
+  points: [],
+  shapes: [],
+  tempPoints: [],
+  canvas: null,
+  ctx: null,
+  colors: { point:'#C9A84C', line:'#60A5FA', triangle:'#4ADE80', circle:'#F472B6', rect:'#FB923C', angle:'#A78BFA' }
+};
+
+function initGeo() {
+  geo.canvas = document.getElementById('geo-canvas');
+  geo.ctx = geo.canvas.getContext('2d');
+  geo.canvas.addEventListener('click', geoClick);
+  geo.canvas.addEventListener('mousemove', geoMouseMove);
+  drawGeoGrid();
+}
+
+function drawGeoGrid() {
+  const ctx = geo.ctx, w = geo.canvas.width, h = geo.canvas.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 1;
+  for(let x=0;x<w;x+=20) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+  for(let y=0;y<h;y+=20) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(w/2,0); ctx.lineTo(w/2,h); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke();
+  geo.shapes.forEach(s => drawShape(s));
+}
+
+function geoClick(e) {
+  const r = geo.canvas.getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  if (geo.tool === 'point') {
+    geo.shapes.push({type:'point', x, y});
+    drawShape({type:'point',x,y});
+    updateGeoInfo(`Point at (${Math.round(x-210)}, ${Math.round(210-y)})`);
+  } else if (geo.tool === 'line') {
+    geo.tempPoints.push({x,y});
+    drawDot(x,y,'#60A5FA');
+    if (geo.tempPoints.length === 2) {
+      const [p1,p2] = geo.tempPoints;
+      const len = Math.sqrt((p2.x-p1.x)**2+(p2.y-p1.y)**2);
+      geo.shapes.push({type:'line',p1,p2});
+      drawShape({type:'line',p1,p2});
+      updateGeoInfo(`Line length: ${(len/20).toFixed(2)} units`);
+      geo.tempPoints = [];
+      drawGeoGrid();
+    }
+  } else if (geo.tool === 'triangle') {
+    geo.tempPoints.push({x,y});
+    drawDot(x,y,'#4ADE80');
+    if (geo.tempPoints.length === 3) {
+      const [a,b,c] = geo.tempPoints;
+      geo.shapes.push({type:'triangle',a,b,c});
+      drawShape({type:'triangle',a,b,c});
+      const ab = Math.sqrt((b.x-a.x)**2+(b.y-a.y)**2);
+      const bc = Math.sqrt((c.x-b.x)**2+(c.y-b.y)**2);
+      const ca = Math.sqrt((a.x-c.x)**2+(a.y-c.y)**2);
+      const area = Math.abs((b.x-a.x)*(c.y-a.y)-(c.x-a.x)*(b.y-a.y))/2;
+      updateGeoInfo(`Triangle — Sides: ${(ab/20).toFixed(1)}, ${(bc/20).toFixed(1)}, ${(ca/20).toFixed(1)} units | Area: ${(area/400).toFixed(1)} sq.units`);
+      geo.tempPoints = [];
+      drawGeoGrid();
+    }
+  } else if (geo.tool === 'circle') {
+    geo.tempPoints.push({x,y});
+    if (geo.tempPoints.length === 2) {
+      const [c,edge] = geo.tempPoints;
+      const r = Math.sqrt((edge.x-c.x)**2+(edge.y-c.y)**2);
+      geo.shapes.push({type:'circle',cx:c.x,cy:c.y,r});
+      drawShape({type:'circle',cx:c.x,cy:c.y,r});
+      updateGeoInfo(`Circle — Radius: ${(r/20).toFixed(2)} units | Circumference: ${(2*Math.PI*r/20).toFixed(2)} units | Area: ${(Math.PI*r*r/400).toFixed(2)} sq.units`);
+      geo.tempPoints = [];
+      drawGeoGrid();
+    }
+  } else if (geo.tool === 'rect') {
+    geo.tempPoints.push({x,y});
+    if (geo.tempPoints.length === 2) {
+      const [p1,p2] = geo.tempPoints;
+      const w = Math.abs(p2.x-p1.x), h2 = Math.abs(p2.y-p1.y);
+      geo.shapes.push({type:'rect',x:Math.min(p1.x,p2.x),y:Math.min(p1.y,p2.y),w,h:h2});
+      drawShape({type:'rect',x:Math.min(p1.x,p2.x),y:Math.min(p1.y,p2.y),w,h:h2});
+      updateGeoInfo(`Rectangle — Width: ${(w/20).toFixed(1)}, Height: ${(h2/20).toFixed(1)} units | Area: ${(w*h2/400).toFixed(1)} sq.units | Perimeter: ${((2*w+2*h2)/20).toFixed(1)} units`);
+      geo.tempPoints = [];
+      drawGeoGrid();
+    }
+  } else if (geo.tool === 'angle') {
+    geo.tempPoints.push({x,y});
+    drawDot(x,y,'#A78BFA');
+    if (geo.tempPoints.length === 3) {
+      const [a,v,b] = geo.tempPoints;
+      const angle = calcAngle(a,v,b);
+      geo.shapes.push({type:'angle',a,v,b,angle});
+      drawShape({type:'angle',a,v,b,angle});
+      updateGeoInfo(`Angle: ${angle.toFixed(1)}° | Type: ${angle < 90 ? 'Acute' : angle === 90 ? 'Right' : angle < 180 ? 'Obtuse' : 'Reflex'}`);
+      geo.tempPoints = [];
+      drawGeoGrid();
+    }
+  } else if (geo.tool === 'measure') {
+    geo.tempPoints.push({x,y});
+    drawDot(x,y,'#FBBF24');
+    if (geo.tempPoints.length === 2) {
+      const [p1,p2] = geo.tempPoints;
+      const d = Math.sqrt((p2.x-p1.x)**2+(p2.y-p1.y)**2);
+      const a = Math.atan2(p2.y-p1.y,p2.x-p1.x)*180/Math.PI;
+      drawMeasureLine(p1,p2,d);
+      updateGeoInfo(`Distance: ${(d/20).toFixed(2)} units | Bearing: ${((a+360)%360).toFixed(1)}°`);
+      geo.tempPoints = [];
+    }
+  }
+}
+
+function geoMouseMove(e) {
+  if (geo.tempPoints.length === 0) return;
+  drawGeoGrid();
+  const r = geo.canvas.getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  geo.tempPoints.forEach(p => drawDot(p.x, p.y, geo.colors[geo.tool] || '#C9A84C'));
+  geo.ctx.setLineDash([5,5]);
+  geo.ctx.strokeStyle = geo.colors[geo.tool] || '#C9A84C';
+  geo.ctx.lineWidth = 1.5;
+  geo.ctx.beginPath();
+  geo.ctx.moveTo(geo.tempPoints[geo.tempPoints.length-1].x, geo.tempPoints[geo.tempPoints.length-1].y);
+  geo.ctx.lineTo(x, y);
+  geo.ctx.stroke();
+  geo.ctx.setLineDash([]);
+}
+
+function drawShape(s) {
+  const ctx = geo.ctx;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (s.type === 'point') {
+    drawDot(s.x, s.y, geo.colors.point);
+    ctx.fillStyle = geo.colors.point;
+    ctx.font = '11px monospace';
+    ctx.fillText(`(${Math.round(s.x-210)},${Math.round(210-s.y)})`, s.x+8, s.y-8);
+  } else if (s.type === 'line') {
+    ctx.strokeStyle = geo.colors.line; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(s.p1.x,s.p1.y); ctx.lineTo(s.p2.x,s.p2.y); ctx.stroke();
+    drawDot(s.p1.x,s.p1.y,geo.colors.line); drawDot(s.p2.x,s.p2.y,geo.colors.line);
+  } else if (s.type === 'triangle') {
+    ctx.strokeStyle = geo.colors.triangle; ctx.lineWidth = 2.5;
+    ctx.fillStyle = 'rgba(74,222,128,0.08)';
+    ctx.beginPath(); ctx.moveTo(s.a.x,s.a.y); ctx.lineTo(s.b.x,s.b.y); ctx.lineTo(s.c.x,s.c.y); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    [s.a,s.b,s.c].forEach(p => drawDot(p.x,p.y,geo.colors.triangle));
+  } else if (s.type === 'circle') {
+    ctx.strokeStyle = geo.colors.circle; ctx.lineWidth = 2.5;
+    ctx.fillStyle = 'rgba(244,114,182,0.08)';
+    ctx.beginPath(); ctx.arc(s.cx,s.cy,s.r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    drawDot(s.cx,s.cy,geo.colors.circle);
+  } else if (s.type === 'rect') {
+    ctx.strokeStyle = geo.colors.rect; ctx.lineWidth = 2.5;
+    ctx.fillStyle = 'rgba(251,146,60,0.08)';
+    ctx.beginPath(); ctx.rect(s.x,s.y,s.w,s.h); ctx.fill(); ctx.stroke();
+  } else if (s.type === 'angle') {
+    ctx.strokeStyle = geo.colors.angle; ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.moveTo(s.a.x,s.a.y); ctx.lineTo(s.v.x,s.v.y); ctx.lineTo(s.b.x,s.b.y); ctx.stroke();
+    const a1 = Math.atan2(s.a.y-s.v.y,s.a.x-s.v.x);
+    const a2 = Math.atan2(s.b.y-s.v.y,s.b.x-s.v.x);
+    ctx.beginPath(); ctx.arc(s.v.x,s.v.y,30,a1,a2); ctx.strokeStyle='rgba(167,139,250,0.5)'; ctx.stroke();
+    ctx.fillStyle='#A78BFA'; ctx.font='bold 12px sans-serif';
+    ctx.fillText(s.angle.toFixed(1)+'°',s.v.x+35,s.v.y);
+  }
+}
+
+function drawDot(x,y,color) {
+  const ctx = geo.ctx;
+  ctx.fillStyle = color;
+  ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.stroke();
+}
+
+function drawMeasureLine(p1,p2,d) {
+  const ctx = geo.ctx;
+  ctx.strokeStyle = '#FBBF24'; ctx.lineWidth = 2;
+  ctx.setLineDash([6,3]);
+  ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+  ctx.setLineDash([]);
+  const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
+  ctx.fillStyle='#FBBF24'; ctx.font='bold 12px monospace';
+  ctx.fillText((d/20).toFixed(2)+'u',mx+5,my-5);
+  drawDot(p1.x,p1.y,'#FBBF24'); drawDot(p2.x,p2.y,'#FBBF24');
+}
+
+function calcAngle(a,v,b) {
+  const v1 = {x:a.x-v.x, y:a.y-v.y};
+  const v2 = {x:b.x-v.x, y:b.y-v.y};
+  const dot = v1.x*v2.x+v1.y*v2.y;
+  const mag = Math.sqrt(v1.x**2+v1.y**2)*Math.sqrt(v2.x**2+v2.y**2);
+  return Math.acos(Math.max(-1,Math.min(1,dot/mag)))*180/Math.PI;
+}
+
+function setGeoTool(tool) {
+  geo.tool = tool; geo.tempPoints = [];
+  document.querySelectorAll('.geo-tool').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('gt-'+tool);
+  if (btn) btn.classList.add('active');
+  updateGeoInfo({
+    point:'Click to place a point',
+    line:'Click two points to draw a line',
+    triangle:'Click three points to draw a triangle',
+    circle:'Click centre then edge for a circle',
+    rect:'Click two opposite corners for a rectangle',
+    angle:'Click three points: first ray, vertex, second ray',
+    measure:'Click two points to measure distance'
+  }[tool]);
+}
+
+function clearGeo() { geo.shapes = []; geo.tempPoints = []; drawGeoGrid(); updateGeoInfo('Canvas cleared. Select a tool to draw.'); }
+function updateGeoInfo(msg) { document.getElementById('geo-info').innerHTML = '<span class="geo-measurement">'+msg+'</span>'; }
+
+function toggleGeo() {
+  const panel = document.getElementById('geo-panel');
+  panel.classList.toggle('show');
+  if (panel.classList.contains('show') && !geo.canvas) initGeo();
+  else if (panel.classList.contains('show')) drawGeoGrid();
+}
+
+// Show geo button when logged in on dashboard
+function updateGeoBtn() {
+  const btn = document.getElementById('geo-toggle-btn');
+  if (btn) btn.classList.toggle('show', !!state.user);
+}
+
+// Pomodoro float btn visibility
+function updatePomBtn() {
+  const btn = document.getElementById('pom-float');
+  if (btn) btn.classList.toggle('show', !!state.user);
+}
+
+// ═══════════════════════════════════════
+// FLASHCARDS
+// ═══════════════════════════════════════
+let fcCards = JSON.parse(localStorage.getItem('synaptiq_fc') || '[]');
+let fcCurrent = 0;
+let fcDue = [];
+
+function showFcCreate() {
+  const el = document.getElementById('fc-create');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function addFlashcard() {
+  const front = document.getElementById('fc-front').value.trim();
+  const back = document.getElementById('fc-back').value.trim();
+  if (!front || !back) { showToast('Please fill in both sides of the card'); return; }
+  fcCards.push({
+    id: Date.now(), front, back, subject: 'Mathematics',
+    nextReview: new Date().toISOString().split('T')[0],
+    ease: 2
+  });
+  localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+  document.getElementById('fc-front').value = '';
+  document.getElementById('fc-back').value = '';
+  document.getElementById('fc-create').style.display = 'none';
+  loadFcDue();
+  showToast('✅ Flashcard added!');
+}
+
+async function generateFcWithAI() {
+  showToast('✦ Generating a Maths flashcard...');
+  const sys = 'Create one spaced repetition flashcard for a UK A-Level Mathematics student. Return ONLY valid JSON: {"q":"question","a":"answer with key facts"}. No markdown, no explanation.';
+  try {
+    const data = await callClaude([{role:'user',content:'Generate a challenging A-Level Maths flashcard on a random topic (Pure, Stats, or Mechanics).'}], sys);
+    const raw = getReply(data).replace(/```json|```/g,'').trim();
+    const card = JSON.parse(raw);
+    fcCards.push({
+      id: Date.now(), front: card.q, back: card.a, subject: 'Mathematics',
+      nextReview: new Date().toISOString().split('T')[0], ease: 2
+    });
+    localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+    loadFcDue();
+    showToast('✅ AI flashcard added!');
+  } catch(e) {
+    showToast('⚠️ Could not generate card — try again');
+  }
+}
+
+function loadFcDue() {
+  const today = new Date().toISOString().split('T')[0];
+  fcDue = fcCards.filter(c => c.nextReview <= today);
+  fcCurrent = 0;
+  const dueCount = document.getElementById('fc-due-count');
+  if (dueCount) dueCount.textContent = fcDue.length > 0 ? `${fcDue.length} card${fcDue.length !== 1 ? 's' : ''} due today` : '';
+  showFcCard();
+}
+
+function showFcCard() {
+  const card = document.getElementById('fc-card');
+  const actions = document.getElementById('fc-actions');
+  const prog = document.getElementById('fc-progress-text');
+  if (!card) return;
+  if (fcCurrent >= fcDue.length) {
+    card.style.display = 'none';
+    actions.style.display = 'none';
+    prog.textContent = fcDue.length === 0 ? 'No cards due today. Add some cards or use "Generate with AI"!' : '🎉 All done for today! Come back tomorrow.';
+    return;
+  }
+  const c = fcDue[fcCurrent];
+  document.getElementById('fc-front-display').textContent = c.front;
+  document.getElementById('fc-back-display').textContent = c.back;
+  card.style.display = 'block';
+  card.classList.remove('flipped');
+  actions.style.display = 'flex';
+  prog.textContent = `Card ${fcCurrent + 1} of ${fcDue.length}`;
+}
+
+function fcAnswer(correct) {
+  const c = fcDue[fcCurrent];
+  const idx = fcCards.findIndex(x => x.id === c.id);
+  if (idx >= 0) {
+    const days = correct ? fcCards[idx].ease * 2 : 1;
+    const next = new Date();
+    next.setDate(next.getDate() + days);
+    fcCards[idx].nextReview = next.toISOString().split('T')[0];
+    if (correct) fcCards[idx].ease = Math.min(fcCards[idx].ease + 1, 10);
+    else fcCards[idx].ease = Math.max(1, fcCards[idx].ease - 1);
+    localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+  }
+  fcCurrent++;
+  showFcCard();
+}
+
+// ═══════════════════════════════════════
+// WORKED SOLUTION CHECKER (Essay Marker)
+// ═══════════════════════════════════════
+let essayImageBase64 = null;
+
+function handleEssayImage(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    essayImageBase64 = ev.target.result.split(',')[1];
+    document.getElementById('essay-img-drop').innerHTML = `<i class="fas fa-check-circle" style="color:var(--green)"></i><div style="color:var(--green);font-weight:600">Image uploaded — will be included in marking</div>`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderFeedback(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\n/g,'<br>')
+    .replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g,'<em>$1</em>');
+}
+
+async function markEssay() {
+  const topic = document.getElementById('essay-subject').value;
+  const board = document.getElementById('essay-board').value;
+  const question = document.getElementById('essay-question').value;
+  const text = document.getElementById('essay-text').value.trim();
+  if (text.length < 20) { showToast('Please write out your worked solution first'); return; }
+
+  const btn = document.getElementById('essay-submit-btn');
+  btn.textContent = '✦ Checking your working...';
+  btn.disabled = true;
+  document.getElementById('essay-results').style.display = 'none';
+
+  const rubric = [
+    {name: 'Method Marks (M)', weight: 40},
+    {name: 'Accuracy Marks (A)', weight: 35},
+    {name: 'Communication & Notation', weight: 15},
+    {name: 'Final Answer', weight: 10}
+  ];
+  const rubricStr = rubric.map(r => `{"name":"${r.name}","score":0}`).join(',');
+
+  const sys = `You are an experienced UK A-Level Mathematics examiner for ${board}. Mark the student's worked solution for the topic: ${topic}. Return ONLY valid JSON with NO markdown:
+{
+  "grade": "A*|A|B|C|D|E",
+  "marks": "e.g. 8/10",
+  "criteria": [${rubricStr}],
+  "feedback": "Detailed feedback on the working shown, referencing ${board} mark scheme conventions",
+  "improve": "Specific bullet points on how to improve the solution"
+}
+Score each criterion 0-100. Be specific and reference A-Level Maths marking conventions.`;
+
+  const msgs = [{role:'user', content:`Question: ${question || 'General A-Level Maths question'}\n\nWorked Solution:\n${text}`}];
+
+  try {
+    const data = await callClaude(msgs, sys);
+    const raw = getReply(data).replace(/```json|```/g,'').trim();
+    const result = JSON.parse(raw);
+
+    const gradeMap = {'A*':'a','A':'a','B':'b','C':'c','D':'d','E':'e','U':'e'};
+    const gradeClass = gradeMap[result.grade] || 'c';
+    document.getElementById('essay-grade-circle').textContent = result.grade;
+    document.getElementById('essay-grade-circle').className = `essay-grade grade-${gradeClass}`;
+    document.getElementById('essay-grade-label').textContent = `Grade ${result.grade}`;
+    document.getElementById('essay-marks-label').textContent = result.marks;
+
+    const bars = document.getElementById('essay-criteria-bars');
+    bars.innerHTML = (result.criteria || []).map(c => `
+      <div class="essay-criteria-bar">
+        <div class="essay-criteria-label">${c.name}</div>
+        <div class="essay-criteria-track"><div class="essay-criteria-fill" style="width:${c.score}%"></div></div>
+        <div class="essay-criteria-score">${c.score}%</div>
+      </div>`).join('');
+
+    document.getElementById('essay-feedback-text').innerHTML = renderFeedback(result.feedback || '');
+    document.getElementById('essay-improve-text').innerHTML = renderFeedback(result.improve || '');
+    document.getElementById('essay-results').style.display = 'block';
+    if (typeof addXP === 'function') addXP(20, '✍️ Solution checked! +20 XP');
+  } catch(e) {
+    showToast('⚠️ Marking failed — please try again');
+    console.error(e);
+  }
+  btn.textContent = '✦ Check My Working';
+  btn.disabled = false;
+}
+
+// Hook into showDash to load flashcards when navigating
+const _origShowDash = showDash;
+function showDash(sub) {
+  _origShowDash(sub);
+  if (sub === 'flashcards') loadFcDue();
+  setMobNav(sub);
+}
+
+// Hook into post-login to show new UI elements
+const _origOnLogin = typeof onLoginSuccess === 'function' ? onLoginSuccess : null;
+document.addEventListener('synaptiq-login', () => {
+  updateMobileNav();
+  updateGeoBtn();
+  updatePomBtn();
+});
 </script>
 </body>
 </html>
