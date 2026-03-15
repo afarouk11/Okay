@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   const serviceKey = process.env.SUPABASE_SERVICE_KEY;
   if (!supabaseUrl || !serviceKey) return res.status(500).json({ error: 'Missing Supabase config' });
 
-  const { action, payload } = req.body;
+  const { action, payload, upload, userId } = req.body;
 
   const supabaseHeaders = {
     'Content-Type': 'application/json',
@@ -21,13 +21,9 @@ export default async function handler(req, res) {
 
   try {
     if (action === 'upsert_profile') {
-      // Save user profile to Supabase users table
       const r = await fetch(`${supabaseUrl}/rest/v1/profiles`, {
         method: 'POST',
-        headers: {
-          ...supabaseHeaders,
-          'Prefer': 'resolution=merge-duplicates'
-        },
+        headers: { ...supabaseHeaders, 'Prefer': 'resolution=merge-duplicates' },
         body: JSON.stringify(payload)
       });
       const data = await r.json();
@@ -43,21 +39,28 @@ export default async function handler(req, res) {
     }
 
     if (action === 'save_upload') {
+      // Accept either `upload` (new) or `payload` (legacy)
+      const body = upload || payload;
       const r = await fetch(`${supabaseUrl}/rest/v1/resources`, {
         method: 'POST',
         headers: { ...supabaseHeaders, 'Prefer': 'return=representation' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(body)
       });
       const data = await r.json();
       return res.status(r.status).json(data);
     }
 
     if (action === 'get_uploads') {
-      const r = await fetch(`${supabaseUrl}/rest/v1/resources?user_id=eq.${payload.userId}&select=*&order=created_at.desc`, {
-        headers: supabaseHeaders
-      });
+      // Accept either `userId` (new) or `payload.userId` (legacy)
+      const uid = userId || (payload && payload.userId);
+      if (!uid) return res.status(400).json({ error: 'userId required' });
+      // Fetch user-specific uploads AND global shared resources
+      const r = await fetch(
+        `${supabaseUrl}/rest/v1/resources?or=(user_id.eq.${uid},is_global.eq.true)&select=*&order=uploaded_at.desc`,
+        { headers: supabaseHeaders }
+      );
       const data = await r.json();
-      return res.status(r.status).json(data);
+      return res.status(r.status).json({ data: Array.isArray(data) ? data : [] });
     }
 
     return res.status(400).json({ error: 'Unknown action: ' + action });
