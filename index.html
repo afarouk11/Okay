@@ -3184,10 +3184,10 @@ function buildNumberLine(highlight) {
 // ═══════════════════════════════════════
 // CLAUDE API
 // ═══════════════════════════════════════
-async function callClaude(messages, system) {
+async function callClaude(messages, system, max_tokens) {
   const body = {
     model: 'claude-opus-4-6',
-    max_tokens: 1500,
+    max_tokens: max_tokens || 1500,
     messages
   };
   if (system) body.system = system;
@@ -4593,6 +4593,11 @@ function initTeacher() {
   renderTeacherChapters();
 }
 
+// Escape unescaped LaTeX backslashes in Claude's JSON output (e.g. \frac → \\frac)
+function fixJsonLatex(str) {
+  return str.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+}
+
 async function teachChapter(mk, idx, btn) {
   document.querySelectorAll('.teacher-chapter-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
@@ -4623,9 +4628,9 @@ Return ONLY valid JSON (no markdown code fences, no extra text):
 Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice questions, 3 key formulas.${resourceCtx}`;
 
   try {
-    const data = await callClaude([{ role: 'user', content: `Teach me: ${chapter} (${mod.label}, ${mod.year})` }], sys);
+    const data = await callClaude([{ role: 'user', content: `Teach me: ${chapter} (${mod.label}, ${mod.year})` }], sys, 4000);
     let raw = getReply(data).replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-    const lesson = JSON.parse(raw);
+    const lesson = JSON.parse(fixJsonLatex(raw));
     renderLesson(chapter, mod.year, lesson, box);
   } catch (e) {
     box.innerHTML = `<div style="padding:2rem;color:var(--red)">⚠️ Could not generate lesson: ${e.message}</div>`;
