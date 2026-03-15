@@ -4377,7 +4377,7 @@ async function generateFcWithAI() {
   try {
     const data = await callClaude([{role:'user',content:'Generate a challenging A-Level Maths flashcard on a random topic (Pure, Stats, or Mechanics).'}], sys);
     const raw = getReply(data).replace(/```json|```/g,'').trim();
-    const card = JSON.parse(raw);
+    const card = JSON.parse(sanitizeClaudeJson(raw));
     fcCards.push({
       id: Date.now(), front: card.q, back: card.a, subject: 'Mathematics',
       nextReview: new Date().toISOString().split('T')[0], ease: 2
@@ -4494,7 +4494,7 @@ Score each criterion 0-100. Be specific and reference A-Level Maths marking conv
   try {
     const data = await callClaude(msgs, sys);
     const raw = getReply(data).replace(/```json|```/g,'').trim();
-    const result = JSON.parse(raw);
+    const result = JSON.parse(sanitizeClaudeJson(raw));
 
     const gradeMap = {'A*':'a','A':'a','B':'b','C':'c','D':'d','E':'e','U':'e'};
     const gradeClass = gradeMap[result.grade] || 'c';
@@ -4594,8 +4594,24 @@ function initTeacher() {
 }
 
 // Escape unescaped LaTeX backslashes in Claude's JSON output (e.g. \frac → \\frac)
-function fixJsonLatex(str) {
-  return str.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+function sanitizeClaudeJson(str) {
+  // Fix literal newlines/tabs inside JSON string values (root cause of "Unterminated string" errors)
+  let result = '';
+  let inString = false;
+  let escaped = false;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str[i];
+    if (escaped) { result += ch; escaped = false; continue; }
+    if (ch === '\\') { if (inString) escaped = true; result += ch; continue; }
+    if (ch === '"') { inString = !inString; result += ch; continue; }
+    if (inString) {
+      if (ch === '\n') { result += '\\n'; continue; }
+      if (ch === '\r') { result += '\\r'; continue; }
+      if (ch === '\t') { result += '\\t'; continue; }
+    }
+    result += ch;
+  }
+  return result;
 }
 
 async function teachChapter(mk, idx, btn) {
@@ -4630,10 +4646,10 @@ Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice q
   try {
     const data = await callClaude([{ role: 'user', content: `Teach me: ${chapter} (${mod.label}, ${mod.year})` }], sys, 4000);
     let raw = getReply(data).replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-    const lesson = JSON.parse(fixJsonLatex(raw));
+    const lesson = JSON.parse(sanitizeClaudeJson(raw));
     renderLesson(chapter, mod.year, lesson, box);
   } catch (e) {
-    box.innerHTML = `<div style="padding:2rem;color:var(--red)">⚠️ Could not generate lesson: ${e.message}</div>`;
+    box.innerHTML = `<div style="padding:2rem;color:var(--red)">⚠️ Could not generate lesson: ${e.message}<br><small style="color:var(--muted);word-break:break-all;font-size:0.75rem">${typeof raw !== 'undefined' ? raw.slice(0,300) : ''}</small></div>`;
   }
 }
 
