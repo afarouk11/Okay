@@ -1410,59 +1410,6 @@ body.mode-adhd .adhd-break { display: block; }
 .global-resource-item .gr-badge{font-size:.7rem;padding:.2rem .5rem;border-radius:10px;font-weight:600;background:rgba(201,168,76,0.15);color:var(--gold)}
 
 /* ═══════════════════════════════════════
-   GEOMETRY CANVAS
-═══════════════════════════════════════ */
-#geo-panel {
-  display: none;
-  position: fixed; top: 64px; right: 0; bottom: 0;
-  width: 420px; background: var(--bg2);
-  border-left: 1px solid var(--border);
-  z-index: 500; flex-direction: column;
-  box-shadow: -8px 0 32px rgba(0,0,0,0.5);
-}
-#geo-panel.show { display: flex; }
-.geo-toolbar {
-  display: flex; gap: .4rem; flex-wrap: wrap;
-  padding: .75rem 1rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg3);
-}
-.geo-tool {
-  padding: .4rem .75rem; border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--bg4); color: var(--muted);
-  font-size: .78rem; cursor: pointer; transition: all .2s;
-}
-.geo-tool:hover { border-color: var(--gold); color: var(--gold); }
-.geo-tool.active { background: var(--gold); color: var(--black); border-color: var(--gold); }
-#geo-canvas {
-  flex: 1; cursor: crosshair;
-  background: radial-gradient(circle at 50% 50%, #141924 0%, #0A0C12 100%);
-}
-.geo-info {
-  padding: .75rem 1rem; background: var(--bg3);
-  border-top: 1px solid var(--border);
-  font-size: .8rem; color: var(--muted); min-height: 60px;
-}
-.geo-measurement {
-  display: inline-block; background: rgba(201,168,76,0.15);
-  border: 1px solid var(--gold); border-radius: 6px;
-  padding: .2rem .5rem; font-size: .75rem; color: var(--gold);
-  margin: .2rem;
-}
-.geo-toggle-btn {
-  position: fixed; right: 1rem; bottom: 5rem;
-  background: var(--blue); color: white;
-  border: none; border-radius: 50%; width: 52px; height: 52px;
-  font-size: 1.3rem; cursor: pointer; z-index: 499;
-  box-shadow: 0 4px 20px rgba(96,165,250,0.4);
-  display: none; align-items: center; justify-content: center;
-  transition: all .2s;
-}
-.geo-toggle-btn.show { display: flex; }
-.geo-toggle-btn:hover { transform: scale(1.1); }
-
-/* ═══════════════════════════════════════
    POMODORO TIMER
 ═══════════════════════════════════════ */
 #pomodoro-widget {
@@ -1674,26 +1621,15 @@ body.mode-adhd .adhd-break { display: block; }
 @media(max-width:768px) {
   #mobile-nav { display: block; }
   .sidebar { display: none !important; }
-  #geo-panel { width: 100vw !important; right: 0; left: 0; }
-  .geo-toggle-btn { display: flex; }
+
 }
-.lesson-graph-tool{margin-top:1.5rem;border:1px solid var(--bg3);border-radius:12px;overflow:hidden}
-.graph-tool-header{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.25rem;background:var(--bg2);cursor:pointer;user-select:none;border-bottom:1px solid transparent;transition:.2s}
-.graph-tool-header:hover{background:var(--bg3)}
-.graph-tool-header.open{border-bottom-color:var(--bg3)}
-.graph-tool-title{color:var(--gold);font-weight:600;font-size:.95rem;display:flex;align-items:center;gap:.5rem}
-.graph-tool-body{display:none;padding:1rem;background:var(--bg2);flex-direction:column;gap:.75rem}
-.graph-tool-body.open{display:flex}
-.graph-tool-iframe{width:100%;height:420px;border:none;border-radius:8px;background:#1a1a2e}
-.graph-draw-btn{align-self:flex-start;background:none;border:1px solid var(--blue);color:var(--blue);padding:.4rem 1rem;border-radius:8px;cursor:pointer;font-size:.85rem;transition:.15s}
-.graph-draw-btn:hover{background:rgba(96,165,250,0.1)}
 .check-btn{margin-top:.6rem;background:none;border:1px solid var(--gold);color:var(--gold);padding:.35rem .85rem;border-radius:6px;cursor:pointer;font-size:.8rem;transition:.15s;display:flex;align-items:center;gap:.4rem}
 .check-btn:hover{background:rgba(201,168,76,0.1)}
 .check-btn:disabled{opacity:.5;cursor:not-allowed}
 .ai-feedback{margin-top:.75rem;padding:1rem;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:8px;font-size:.875rem;line-height:1.8;display:none}
 .ai-feedback.show{display:block}
 .feedback-grade{font-size:1.1rem;font-weight:700;color:var(--gold);margin-bottom:.5rem}
-@media print{.sidebar,#mobile-nav,.geo-toggle-btn,.lesson-graph-tool,.show-answer-btn,.graph-draw-btn,header,.teacher-tabs,.teacher-chapter-list,.lesson-toolbar{display:none!important}.dashboard-layout{display:block!important}.teacher-content{padding:0!important}body{background:white!important;color:black!important}.lesson-section h3{color:black!important;border-color:#ccc!important}.worked-example,.practice-q,.key-formulas-box{border-color:#ccc!important;background:#f9f9f9!important}}
+@media print{.sidebar,#mobile-nav,.show-answer-btn,header,.teacher-tabs,.teacher-chapter-list,.lesson-toolbar{display:none!important}.dashboard-layout{display:block!important}.teacher-content{padding:0!important}body{background:white!important;color:black!important}.lesson-section h3{color:black!important;border-color:#ccc!important}.worked-example,.practice-q,.key-formulas-box{border-color:#ccc!important;background:#f9f9f9!important}}
 </style>
 </head>
 <body>
@@ -3146,7 +3082,7 @@ function enterDashboard() {
   showDash('home');
   // Show new feature UI elements
   if (typeof updateMobileNav === 'function') updateMobileNav();
-  if (typeof updateGeoBtn === 'function') updateGeoBtn();
+
   if (typeof updatePomBtn === 'function') updatePomBtn();
 }
 
@@ -4224,30 +4160,6 @@ function updateGreeting() {
   </div>
 </div>
 
-<!-- ═══════════════ GEOMETRY PANEL ═══════════════ -->
-<div id="geo-panel">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid var(--border);background:var(--bg3)">
-    <div style="font-weight:700;font-size:.95rem">📐 Geometry Canvas</div>
-    <button onclick="toggleGeo()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem">✕</button>
-  </div>
-  <div class="geo-toolbar">
-    <button class="geo-tool active" id="gt-point" onclick="setGeoTool('point')">• Point</button>
-    <button class="geo-tool" id="gt-line" onclick="setGeoTool('line')">— Line</button>
-    <button class="geo-tool" id="gt-triangle" onclick="setGeoTool('triangle')">△ Triangle</button>
-    <button class="geo-tool" id="gt-circle" onclick="setGeoTool('circle')">○ Circle</button>
-    <button class="geo-tool" id="gt-rect" onclick="setGeoTool('rect')">□ Rectangle</button>
-    <button class="geo-tool" id="gt-angle" onclick="setGeoTool('angle')">∠ Angle</button>
-    <button class="geo-tool" id="gt-measure" onclick="setGeoTool('measure')">📏 Measure</button>
-    <button class="geo-tool" onclick="clearGeo()">🗑️ Clear</button>
-  </div>
-  <canvas id="geo-canvas" width="420" height="420"></canvas>
-  <div class="geo-info" id="geo-info">
-    Select a tool and click on the canvas to draw. Measurements appear automatically.
-  </div>
-</div>
-
-<!-- Geometry toggle button -->
-<button class="geo-toggle-btn" id="geo-toggle-btn" onclick="toggleGeo()">📐</button>
 
 <!-- ═══════════════ NEW FEATURE SCRIPTS ═══════════════ -->
 <script>
@@ -4368,236 +4280,6 @@ function updatePomDisplay() {
   }
 }
 
-// ═══════════════════════════════════════
-// GEOMETRY CANVAS ENGINE
-// ═══════════════════════════════════════
-const geo = {
-  tool: 'point',
-  points: [],
-  shapes: [],
-  tempPoints: [],
-  canvas: null,
-  ctx: null,
-  colors: { point:'#C9A84C', line:'#60A5FA', triangle:'#4ADE80', circle:'#F472B6', rect:'#FB923C', angle:'#A78BFA' }
-};
-
-function initGeo() {
-  geo.canvas = document.getElementById('geo-canvas');
-  geo.ctx = geo.canvas.getContext('2d');
-  geo.canvas.addEventListener('click', geoClick);
-  geo.canvas.addEventListener('mousemove', geoMouseMove);
-  drawGeoGrid();
-}
-
-function drawGeoGrid() {
-  const ctx = geo.ctx, w = geo.canvas.width, h = geo.canvas.height;
-  ctx.clearRect(0,0,w,h);
-  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-  ctx.lineWidth = 1;
-  for(let x=0;x<w;x+=20) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
-  for(let y=0;y<h;y+=20) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
-  ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(w/2,0); ctx.lineTo(w/2,h); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(0,h/2); ctx.lineTo(w,h/2); ctx.stroke();
-  geo.shapes.forEach(s => drawShape(s));
-}
-
-function geoClick(e) {
-  const r = geo.canvas.getBoundingClientRect();
-  const x = e.clientX - r.left, y = e.clientY - r.top;
-  if (geo.tool === 'point') {
-    geo.shapes.push({type:'point', x, y});
-    drawShape({type:'point',x,y});
-    updateGeoInfo(`Point at (${Math.round(x-210)}, ${Math.round(210-y)})`);
-  } else if (geo.tool === 'line') {
-    geo.tempPoints.push({x,y});
-    drawDot(x,y,'#60A5FA');
-    if (geo.tempPoints.length === 2) {
-      const [p1,p2] = geo.tempPoints;
-      const len = Math.sqrt((p2.x-p1.x)**2+(p2.y-p1.y)**2);
-      geo.shapes.push({type:'line',p1,p2});
-      drawShape({type:'line',p1,p2});
-      updateGeoInfo(`Line length: ${(len/20).toFixed(2)} units`);
-      geo.tempPoints = [];
-      drawGeoGrid();
-    }
-  } else if (geo.tool === 'triangle') {
-    geo.tempPoints.push({x,y});
-    drawDot(x,y,'#4ADE80');
-    if (geo.tempPoints.length === 3) {
-      const [a,b,c] = geo.tempPoints;
-      geo.shapes.push({type:'triangle',a,b,c});
-      drawShape({type:'triangle',a,b,c});
-      const ab = Math.sqrt((b.x-a.x)**2+(b.y-a.y)**2);
-      const bc = Math.sqrt((c.x-b.x)**2+(c.y-b.y)**2);
-      const ca = Math.sqrt((a.x-c.x)**2+(a.y-c.y)**2);
-      const area = Math.abs((b.x-a.x)*(c.y-a.y)-(c.x-a.x)*(b.y-a.y))/2;
-      updateGeoInfo(`Triangle — Sides: ${(ab/20).toFixed(1)}, ${(bc/20).toFixed(1)}, ${(ca/20).toFixed(1)} units | Area: ${(area/400).toFixed(1)} sq.units`);
-      geo.tempPoints = [];
-      drawGeoGrid();
-    }
-  } else if (geo.tool === 'circle') {
-    geo.tempPoints.push({x,y});
-    if (geo.tempPoints.length === 2) {
-      const [c,edge] = geo.tempPoints;
-      const r = Math.sqrt((edge.x-c.x)**2+(edge.y-c.y)**2);
-      geo.shapes.push({type:'circle',cx:c.x,cy:c.y,r});
-      drawShape({type:'circle',cx:c.x,cy:c.y,r});
-      updateGeoInfo(`Circle — Radius: ${(r/20).toFixed(2)} units | Circumference: ${(2*Math.PI*r/20).toFixed(2)} units | Area: ${(Math.PI*r*r/400).toFixed(2)} sq.units`);
-      geo.tempPoints = [];
-      drawGeoGrid();
-    }
-  } else if (geo.tool === 'rect') {
-    geo.tempPoints.push({x,y});
-    if (geo.tempPoints.length === 2) {
-      const [p1,p2] = geo.tempPoints;
-      const w = Math.abs(p2.x-p1.x), h2 = Math.abs(p2.y-p1.y);
-      geo.shapes.push({type:'rect',x:Math.min(p1.x,p2.x),y:Math.min(p1.y,p2.y),w,h:h2});
-      drawShape({type:'rect',x:Math.min(p1.x,p2.x),y:Math.min(p1.y,p2.y),w,h:h2});
-      updateGeoInfo(`Rectangle — Width: ${(w/20).toFixed(1)}, Height: ${(h2/20).toFixed(1)} units | Area: ${(w*h2/400).toFixed(1)} sq.units | Perimeter: ${((2*w+2*h2)/20).toFixed(1)} units`);
-      geo.tempPoints = [];
-      drawGeoGrid();
-    }
-  } else if (geo.tool === 'angle') {
-    geo.tempPoints.push({x,y});
-    drawDot(x,y,'#A78BFA');
-    if (geo.tempPoints.length === 3) {
-      const [a,v,b] = geo.tempPoints;
-      const angle = calcAngle(a,v,b);
-      geo.shapes.push({type:'angle',a,v,b,angle});
-      drawShape({type:'angle',a,v,b,angle});
-      updateGeoInfo(`Angle: ${angle.toFixed(1)}° | Type: ${angle < 90 ? 'Acute' : angle === 90 ? 'Right' : angle < 180 ? 'Obtuse' : 'Reflex'}`);
-      geo.tempPoints = [];
-      drawGeoGrid();
-    }
-  } else if (geo.tool === 'measure') {
-    geo.tempPoints.push({x,y});
-    drawDot(x,y,'#FBBF24');
-    if (geo.tempPoints.length === 2) {
-      const [p1,p2] = geo.tempPoints;
-      const d = Math.sqrt((p2.x-p1.x)**2+(p2.y-p1.y)**2);
-      const a = Math.atan2(p2.y-p1.y,p2.x-p1.x)*180/Math.PI;
-      drawMeasureLine(p1,p2,d);
-      updateGeoInfo(`Distance: ${(d/20).toFixed(2)} units | Bearing: ${((a+360)%360).toFixed(1)}°`);
-      geo.tempPoints = [];
-    }
-  }
-}
-
-function geoMouseMove(e) {
-  if (geo.tempPoints.length === 0) return;
-  drawGeoGrid();
-  const r = geo.canvas.getBoundingClientRect();
-  const x = e.clientX - r.left, y = e.clientY - r.top;
-  geo.tempPoints.forEach(p => drawDot(p.x, p.y, geo.colors[geo.tool] || '#C9A84C'));
-  geo.ctx.setLineDash([5,5]);
-  geo.ctx.strokeStyle = geo.colors[geo.tool] || '#C9A84C';
-  geo.ctx.lineWidth = 1.5;
-  geo.ctx.beginPath();
-  geo.ctx.moveTo(geo.tempPoints[geo.tempPoints.length-1].x, geo.tempPoints[geo.tempPoints.length-1].y);
-  geo.ctx.lineTo(x, y);
-  geo.ctx.stroke();
-  geo.ctx.setLineDash([]);
-}
-
-function drawShape(s) {
-  const ctx = geo.ctx;
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  if (s.type === 'point') {
-    drawDot(s.x, s.y, geo.colors.point);
-    ctx.fillStyle = geo.colors.point;
-    ctx.font = '11px monospace';
-    ctx.fillText(`(${Math.round(s.x-210)},${Math.round(210-s.y)})`, s.x+8, s.y-8);
-  } else if (s.type === 'line') {
-    ctx.strokeStyle = geo.colors.line; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(s.p1.x,s.p1.y); ctx.lineTo(s.p2.x,s.p2.y); ctx.stroke();
-    drawDot(s.p1.x,s.p1.y,geo.colors.line); drawDot(s.p2.x,s.p2.y,geo.colors.line);
-  } else if (s.type === 'triangle') {
-    ctx.strokeStyle = geo.colors.triangle; ctx.lineWidth = 2.5;
-    ctx.fillStyle = 'rgba(74,222,128,0.08)';
-    ctx.beginPath(); ctx.moveTo(s.a.x,s.a.y); ctx.lineTo(s.b.x,s.b.y); ctx.lineTo(s.c.x,s.c.y); ctx.closePath();
-    ctx.fill(); ctx.stroke();
-    [s.a,s.b,s.c].forEach(p => drawDot(p.x,p.y,geo.colors.triangle));
-  } else if (s.type === 'circle') {
-    ctx.strokeStyle = geo.colors.circle; ctx.lineWidth = 2.5;
-    ctx.fillStyle = 'rgba(244,114,182,0.08)';
-    ctx.beginPath(); ctx.arc(s.cx,s.cy,s.r,0,Math.PI*2); ctx.fill(); ctx.stroke();
-    drawDot(s.cx,s.cy,geo.colors.circle);
-  } else if (s.type === 'rect') {
-    ctx.strokeStyle = geo.colors.rect; ctx.lineWidth = 2.5;
-    ctx.fillStyle = 'rgba(251,146,60,0.08)';
-    ctx.beginPath(); ctx.rect(s.x,s.y,s.w,s.h); ctx.fill(); ctx.stroke();
-  } else if (s.type === 'angle') {
-    ctx.strokeStyle = geo.colors.angle; ctx.lineWidth = 2.5;
-    ctx.beginPath(); ctx.moveTo(s.a.x,s.a.y); ctx.lineTo(s.v.x,s.v.y); ctx.lineTo(s.b.x,s.b.y); ctx.stroke();
-    const a1 = Math.atan2(s.a.y-s.v.y,s.a.x-s.v.x);
-    const a2 = Math.atan2(s.b.y-s.v.y,s.b.x-s.v.x);
-    ctx.beginPath(); ctx.arc(s.v.x,s.v.y,30,a1,a2); ctx.strokeStyle='rgba(167,139,250,0.5)'; ctx.stroke();
-    ctx.fillStyle='#A78BFA'; ctx.font='bold 12px sans-serif';
-    ctx.fillText(s.angle.toFixed(1)+'°',s.v.x+35,s.v.y);
-  }
-}
-
-function drawDot(x,y,color) {
-  const ctx = geo.ctx;
-  ctx.fillStyle = color;
-  ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
-  ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.stroke();
-}
-
-function drawMeasureLine(p1,p2,d) {
-  const ctx = geo.ctx;
-  ctx.strokeStyle = '#FBBF24'; ctx.lineWidth = 2;
-  ctx.setLineDash([6,3]);
-  ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
-  ctx.setLineDash([]);
-  const mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
-  ctx.fillStyle='#FBBF24'; ctx.font='bold 12px monospace';
-  ctx.fillText((d/20).toFixed(2)+'u',mx+5,my-5);
-  drawDot(p1.x,p1.y,'#FBBF24'); drawDot(p2.x,p2.y,'#FBBF24');
-}
-
-function calcAngle(a,v,b) {
-  const v1 = {x:a.x-v.x, y:a.y-v.y};
-  const v2 = {x:b.x-v.x, y:b.y-v.y};
-  const dot = v1.x*v2.x+v1.y*v2.y;
-  const mag = Math.sqrt(v1.x**2+v1.y**2)*Math.sqrt(v2.x**2+v2.y**2);
-  return Math.acos(Math.max(-1,Math.min(1,dot/mag)))*180/Math.PI;
-}
-
-function setGeoTool(tool) {
-  geo.tool = tool; geo.tempPoints = [];
-  document.querySelectorAll('.geo-tool').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('gt-'+tool);
-  if (btn) btn.classList.add('active');
-  updateGeoInfo({
-    point:'Click to place a point',
-    line:'Click two points to draw a line',
-    triangle:'Click three points to draw a triangle',
-    circle:'Click centre then edge for a circle',
-    rect:'Click two opposite corners for a rectangle',
-    angle:'Click three points: first ray, vertex, second ray',
-    measure:'Click two points to measure distance'
-  }[tool]);
-}
-
-function clearGeo() { geo.shapes = []; geo.tempPoints = []; drawGeoGrid(); updateGeoInfo('Canvas cleared. Select a tool to draw.'); }
-function updateGeoInfo(msg) { document.getElementById('geo-info').innerHTML = '<span class="geo-measurement">'+msg+'</span>'; }
-
-function toggleGeo() {
-  const panel = document.getElementById('geo-panel');
-  panel.classList.toggle('show');
-  if (panel.classList.contains('show') && !geo.canvas) initGeo();
-  else if (panel.classList.contains('show')) drawGeoGrid();
-}
-
-// Show geo button when logged in on dashboard
-function updateGeoBtn() {
-  const btn = document.getElementById('geo-toggle-btn');
-  if (btn) btn.classList.toggle('show', !!state.user);
-}
 
 // Pomodoro float btn visibility
 function updatePomBtn() {
@@ -4800,7 +4482,7 @@ function showDash(sub) {
 // Hook into post-login to show new UI elements and load global resources
 document.addEventListener('synaptiq-login', () => {
   updateMobileNav();
-  updateGeoBtn();
+
   updatePomBtn();
   // Show admin panel if admin account
   const adminEmail = 'Afarouk.wrk@gmail.com';
@@ -4880,21 +4562,6 @@ function sanitizeClaudeJson(str) {
   return result;
 }
 
-const GRAPH_KEYWORDS=['graph','transform','circle','trig','vector','parametric','coordinat','differentiat','integrat','exponential','logarithm','function','sequence','distribution','normal','kinematic','straight line','quadratic','curve','modelling'];
-function needsGraphTool(ch){const c=ch.toLowerCase();return GRAPH_KEYWORDS.some(k=>c.includes(k));}
-function toggleGraphTool(btn){
-  const body=btn.closest('.lesson-graph-tool').querySelector('.graph-tool-body');
-  const open=body.classList.toggle('open');
-  btn.classList.toggle('open',open);
-  btn.querySelector('.graph-tool-chevron').textContent=open?'▲':'▼';
-  if(open && !body.querySelector('iframe')){
-    const iframe=document.createElement('iframe');
-    iframe.src='https://www.desmos.com/calculator?embed';
-    iframe.className='graph-tool-iframe';
-    iframe.allow='fullscreen';
-    body.insertBefore(iframe,body.firstChild);
-  }
-}
 
 async function teachChapter(mk, idx, btn) {
   document.querySelectorAll('.teacher-chapter-btn').forEach(b => b.classList.remove('active'));
@@ -4954,12 +4621,7 @@ ${resourceCtx}`;
     toolbar.style.cssText = 'display:flex;gap:.6rem;margin-bottom:1.25rem;flex-wrap:wrap';
     toolbar.innerHTML = `<button onclick="window.print()" style="background:none;border:1px solid var(--bg3);color:var(--muted);padding:.35rem .8rem;border-radius:6px;cursor:pointer;font-size:.8rem;transition:.15s" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--bg3)';this.style.color='var(--muted)'">🖨️ Print</button><button onclick="copyLesson(this)" style="background:none;border:1px solid var(--bg3);color:var(--muted);padding:.35rem .8rem;border-radius:6px;cursor:pointer;font-size:.8rem;transition:.15s" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--bg3)';this.style.color='var(--muted)'">📋 Copy</button>`;
     box.insertBefore(toolbar, box.firstChild);
-    if (needsGraphTool(chapter)) {
-      const toolDiv = document.createElement('div');
-      toolDiv.className = 'lesson-graph-tool';
-      toolDiv.innerHTML = `<div class="graph-tool-header" onclick="toggleGraphTool(this)"><span class="graph-tool-title"><i class="fas fa-chart-line"></i> Graph & Drawing Tools</span><span class="graph-tool-chevron">▼</span></div><div class="graph-tool-body"><button class="graph-draw-btn" onclick="toggleGeo()"><i class="fas fa-pencil-ruler"></i> Open Drawing Canvas</button></div>`;
-      box.appendChild(toolDiv);
-    }
+
     if (window.MathJax) MathJax.typesetPromise([box]).catch(() => {});
     updateStats({ topic: chapter });
     if (typeof addXP === 'function') addXP(15, 'Completed a lesson');
