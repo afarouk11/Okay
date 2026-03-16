@@ -3938,6 +3938,17 @@ function safeGetItem(key) {
   try { return localStorage.getItem(key); } catch(e) { return null; }
 }
 
+function safeSetItem(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch(e) {
+    if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
+      try { localStorage.removeItem('synaptiq_uploads'); } catch(_) {}
+      try { localStorage.setItem(key, value); } catch(_) { /* storage full — skip */ }
+    }
+  }
+}
+
 function cookieConsent(choice) {
   safeSetItem('synaptiq_consent', choice);
   const banner = document.getElementById('cookie-banner');
@@ -5015,13 +5026,6 @@ function loadCachedStudyPlan() {
 // ═══════════════════════════════════════
 // VIDEO PLAYER (Interactive)
 // ═══════════════════════════════════════
-const videoChapters = [
-  { title: 'Welcome to Synaptiq', desc: 'A-Level Maths AI tutoring — built for exam success', q: null },
-  { title: 'AI Tutor', desc: 'Full step-by-step working, mark-scheme aligned answers', q: { text: 'What makes Synaptiq\'s AI tutor different?', opts: ['It shows full step-by-step working like a mark scheme', 'It only does multiple choice', 'It plays video lessons', 'It\'s a calculator'], correct: 0 } },
-  { title: 'Upload Resources', desc: 'Upload your mark scheme — AI answers match exactly', q: { text: 'What happens when you upload a mark scheme?', opts: ['Nothing changes', 'The AI uses it to give board-aligned answers', 'It replaces the tutor', 'It only works for AQA'], correct: 1 } },
-  { title: 'A-Level Content', desc: 'Every chapter from Pure 1 to Mechanics, organised', q: null },
-  { title: 'Accessibility', desc: 'ADHD, Dyslexia, and Dyscalculia support built in', q: { text: 'Which accessibility modes does Synaptiq offer?', opts: ['Only ADHD', 'Only dyslexia fonts', 'ADHD, Dyslexia AND Dyscalculia', 'Colour blindness only'], correct: 2 } }
-];
 
 
 
@@ -5434,8 +5438,7 @@ function trackEvent(name, params) {
 function updateMobileNav() {
   const mn = document.getElementById('mobile-nav');
   if (mn) mn.style.display = state.user ? 'block' : 'none';
-
-
+}
 
 
 
@@ -5575,18 +5578,6 @@ function sanitizeAIHTML(html) {
     }(doc.body));
     return doc.body.innerHTML;
   } catch(e) { return ''; }
-}
-
-// Safe localStorage wrapper — handles QuotaExceededError by pruning uploads first
-function safeSetItem(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch(e) {
-    if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
-      try { localStorage.removeItem('synaptiq_uploads'); } catch(_) {}
-      try { localStorage.setItem(key, value); } catch(_) { /* storage full — skip */ }
-    }
-  }
 }
 
 // Validate schema of AI-returned JSON objects before use
