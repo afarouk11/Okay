@@ -3890,6 +3890,21 @@ function initGA4() {
   gtag('config', GA_ID);
 }
 
+function safeSetItem(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch(e) {
+    if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
+      try { localStorage.removeItem('synaptiq_uploads'); } catch(_) {}
+      try { localStorage.setItem(key, value); } catch(_) {}
+    }
+  }
+}
+
+function safeGetItem(key) {
+  try { return localStorage.getItem(key); } catch(e) { return null; }
+}
+
 function cookieConsent(choice) {
   safeSetItem('synaptiq_consent', choice);
   const banner = document.getElementById('cookie-banner');
@@ -4119,9 +4134,12 @@ async function loginUser() {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ action: 'verify_login', payload: { email, password: pass } })
     });
-    if (!r.ok) throw new Error('Server error ' + r.status);
     const profile = await r.json();
-    if (!profile || profile.error || !profile.email) {
+    if (!r.ok || profile.error) {
+      showToast('⚠️ ' + (profile.error || 'Invalid email or password. Please try again.'));
+      return;
+    }
+    if (!profile.email) {
       showToast('⚠️ Invalid email or password. Please try again.');
       return;
     }
