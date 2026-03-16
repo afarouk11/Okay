@@ -58,8 +58,29 @@ export default async function handler(req, res) {
         { headers: supabaseHeaders }
       );
       const profiles = await profileR.json();
-      const profile = Array.isArray(profiles) ? profiles[0] : null;
-      if (!profile) return res.status(404).json({ error: 'Profile not found — please register first' });
+      let profile = Array.isArray(profiles) ? profiles[0] : null;
+
+      // If credentials are valid but no profile row exists, create a minimal one
+      if (!profile) {
+        const authUserId = authData.user?.id;
+        const minimalProfile = {
+          email,
+          name: email.split('@')[0],
+          plan: 'free',
+          xp: 0,
+          level: 1,
+          stats: {},
+          flashcards: [],
+          ...(authUserId ? { id: authUserId } : {})
+        };
+        const createR = await fetch(`${supabaseUrl}/rest/v1/profiles`, {
+          method: 'POST',
+          headers: { ...supabaseHeaders, 'Prefer': 'return=representation,resolution=merge-duplicates' },
+          body: JSON.stringify(minimalProfile)
+        });
+        const created = await createR.json();
+        profile = Array.isArray(created) ? created[0] : (created || minimalProfile);
+      }
 
       return res.status(200).json(profile);
     }
