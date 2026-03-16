@@ -4134,9 +4134,12 @@ async function loginUser() {
       method: 'POST', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ action: 'verify_login', payload: { email, password: pass } })
     });
-    if (!r.ok) throw new Error('Server error ' + r.status);
     const profile = await r.json();
-    if (!profile || profile.error || !profile.email) {
+    if (!r.ok || profile.error) {
+      showToast('⚠️ ' + (profile.error || 'Invalid email or password. Please try again.'));
+      return;
+    }
+    if (!profile.email) {
       showToast('⚠️ Invalid email or password. Please try again.');
       return;
     }
