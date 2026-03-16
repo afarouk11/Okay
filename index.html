@@ -2992,6 +2992,13 @@ function createAccount() {
     diffs: state.selectedDiffs
   };
   try { localStorage.setItem('synaptiq_user', JSON.stringify(state.user)); } catch(e) {}
+  // Save profile to Supabase and store the returned id
+  fetch('/api/supabase-auth', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ action: 'upsert_profile', payload: { ...state.user, xp: 0, level: 1, stats: {}, flashcards: [] } })
+  }).then(r=>r.json()).then(d=>{
+    if (d && d.id) { state.user.id = d.id; localStorage.setItem('synaptiq_user', JSON.stringify(state.user)); }
+  }).catch(()=>{});
   // Send welcome email via Resend
   fetch('/api/resend', {
     method: 'POST',
@@ -3005,22 +3012,40 @@ function createAccount() {
   setTimeout(() => showOnboarding(), 800);
 }
 
-function loginUser() {
+async function loginUser() {
   const email = document.getElementById('login-email').value;
   const pass = document.getElementById('login-pass').value;
   if (!email || !pass) { showToast('Please enter your email and password'); return; }
   try {
-    const saved = localStorage.getItem('synaptiq_user');
-    if (saved) { state.user = JSON.parse(saved); }
-    else {
-      state.user = { name: email.split('@')[0], email, plan: 'student', subject: 'A-Level Mathematics', diffs: [], board: 'AQA' };
+    // Fetch profile from Supabase
+    const r = await fetch('/api/supabase-auth', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'get_profile', payload: { email } })
+    });
+    const profile = await r.json();
+    if (profile && profile.email) {
+      state.user = profile;
+      state.xp = profile.xp || 0;
+      state.level = profile.level || 1;
+      if (profile.stats) localStorage.setItem('synaptiq_stats', JSON.stringify(profile.stats));
+      if (profile.flashcards && profile.flashcards.length) {
+        fcCards = profile.flashcards;
+        localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+      }
+    } else {
+      // Fall back to localStorage or create minimal profile
+      const saved = localStorage.getItem('synaptiq_user');
+      state.user = saved ? JSON.parse(saved) : { name: email.split('@')[0], email, plan: 'student', subject: 'A-Level Mathematics', diffs: [], board: 'AQA' };
     }
   } catch(e) {
-    state.user = { name: 'Student', email, plan: 'student', subject: 'A-Level Mathematics', diffs: [], board: 'AQA' };
+    const saved = localStorage.getItem('synaptiq_user');
+    state.user = saved ? JSON.parse(saved) : { name: email.split('@')[0], email, plan: 'student', subject: 'A-Level Mathematics', diffs: [], board: 'AQA' };
   }
+  localStorage.setItem('synaptiq_user', JSON.stringify(state.user));
   trackEvent('login', {});
   applyLearningProfile();
   enterDashboard();
+  updateXPDisplay();
 }
 
 function logout() {
@@ -3088,6 +3113,25 @@ document.addEventListener('DOMContentLoaded', () => {
       applyLearningProfile();
       loadUploadsFromStorage();
       enterDashboard();
+      // Background re-fetch latest profile data from DB to sync across devices
+      if (state.user.id && state.user.email) {
+        fetch('/api/supabase-auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'get_profile', payload: { email: state.user.email } })
+        }).then(r => r.json()).then(profile => {
+          if (!profile || profile.error) return;
+          if (typeof profile.xp === 'number') { state.xp = profile.xp; localStorage.setItem('synaptiq_xp', profile.xp); }
+          if (typeof profile.level === 'number') { state.level = profile.level; localStorage.setItem('synaptiq_level', profile.level); }
+          if (profile.stats && typeof profile.stats === 'object') localStorage.setItem('synaptiq_stats', JSON.stringify(profile.stats));
+          if (Array.isArray(profile.flashcards) && profile.flashcards.length) {
+            fcCards = profile.flashcards;
+            localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+          }
+          updateXPDisplay();
+          updateDashboardStats();
+        }).catch(() => {});
+      }
     }
   } catch(e) {}
   buildNumberLine(0);
@@ -3659,6 +3703,22 @@ function speakInput() {
 // ═══════════════════════════════════════
 // XP SYSTEM
 // ═══════════════════════════════════════
+let _syncTimer = null;
+function syncToCloud() {
+  if (!state.user?.id) return;
+  clearTimeout(_syncTimer);
+  _syncTimer = setTimeout(() => {
+    try {
+      const stats = JSON.parse(localStorage.getItem('synaptiq_stats') || '{}');
+      const flashcards = JSON.parse(localStorage.getItem('synaptiq_fc') || '[]');
+      fetch('/api/supabase-auth', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ action: 'patch_profile', payload: { id: state.user.id, xp: state.xp, level: state.level, stats, flashcards } })
+      }).catch(()=>{});
+    } catch(e) {}
+  }, 3000);
+}
+
 function addXP(amount, msg) {
   state.xp += amount;
   const newLevel = Math.floor(state.xp / 200) + 1;
@@ -3671,6 +3731,7 @@ function addXP(amount, msg) {
   popup.textContent = (msg || `+${amount} XP ⭐`);
   popup.classList.add('show');
   setTimeout(() => popup.classList.remove('show'), 2000);
+  syncToCloud();
 }
 
 function updateStats(delta) {
@@ -4456,6 +4517,7 @@ function addFlashcard() {
     ease: 2
   });
   localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+  syncToCloud();
   document.getElementById('fc-front').value = '';
   document.getElementById('fc-back').value = '';
   document.getElementById('fc-create').style.display = 'none';
@@ -4475,6 +4537,7 @@ async function generateFcWithAI() {
       nextReview: new Date().toISOString().split('T')[0], ease: 2
     });
     localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+    syncToCloud();
     loadFcDue();
     showToast('✅ AI flashcard added!');
   } catch(e) {
@@ -4522,6 +4585,7 @@ function fcAnswer(correct) {
     if (correct) fcCards[idx].ease = Math.min(fcCards[idx].ease + 1, 10);
     else fcCards[idx].ease = Math.max(1, fcCards[idx].ease - 1);
     localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+    syncToCloud();
   }
   fcCurrent++;
   showFcCard();
