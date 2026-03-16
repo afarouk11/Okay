@@ -1948,10 +1948,11 @@ body.mode-adhd .adhd-break { display: block; }
             <div class="plan-tag">Institution</div>
           </div>
         </div>
-        <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Your full name"></div>
-        <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@email.com"></div>
-        <div class="form-group"><label>Password</label><input type="password" id="reg-pass" placeholder="Min. 8 characters"></div>
+        <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Your full name" onkeydown="if(event.key==='Enter')document.getElementById('reg-email').focus()"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@email.com" onkeydown="if(event.key==='Enter')document.getElementById('reg-pass').focus()"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="reg-pass" placeholder="Min. 8 characters" onkeydown="if(event.key==='Enter')nextStep(1)"></div>
         <button class="btn-full" onclick="nextStep(1)">Continue →</button>
+        <p style="text-align:center;margin-top:.75rem;font-size:.8rem;color:var(--muted)">Already have an account? <a onclick="showLogin()" style="color:var(--gold);cursor:pointer">Log in</a></p>
       </div>
 
       <!-- Step 2: Profile -->
@@ -2008,7 +2009,6 @@ body.mode-adhd .adhd-break { display: block; }
             <div class="diff-name">Dyscalculia</div>
             <div class="diff-desc">Visual maths, number lines, step-by-step</div>
           </div>
-
           <div class="diff-card" id="diff-none" onclick="toggleDiff('none')">
             <div class="diff-icon">✨</div>
             <div class="diff-name">No Specific Needs</div>
@@ -2041,16 +2041,14 @@ body.mode-adhd .adhd-break { display: block; }
         <button class="auth-tab" onclick="showSignup()">Sign Up</button>
         <button class="auth-tab active">Log In</button>
       </div>
-      <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@email.com"></div>
-      <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@email.com" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password" onkeydown="if(event.key==='Enter')loginUser()"></div>
       <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem">
         <input type="checkbox" id="login-remember" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">
         <label for="login-remember" style="font-size:.85rem;color:var(--muted);cursor:pointer;margin:0">Remember me for 30 days</label>
       </div>
       <button class="btn-full" onclick="loginUser()">Log In →</button>
-      <p style="text-align:center;margin-top:.75rem;font-size:.8rem;color:var(--muted)">
-        <a onclick="showForgotPassword()" style="color:var(--gold);cursor:pointer">Forgot password?</a>
-      </p>
+      <p style="text-align:center;margin-top:.75rem;font-size:.8rem"><a onclick="showForgotPassword()" style="color:var(--gold);cursor:pointer">Forgot your password?</a></p>
       <p style="text-align:center;margin-top:.5rem;font-size:.8rem;color:var(--muted)">Don't have an account? <a onclick="showSignup()" style="color:var(--gold);cursor:pointer">Sign up free</a></p>
 
       <!-- Forgot password inline panel -->
@@ -4002,6 +4000,17 @@ function nav(page) {
     document.getElementById('user-menu').style.display = 'none';
     document.getElementById('a11y-bar').style.display = 'none';
     document.getElementById('xp-badge').style.display = 'none';
+    // Reset signup to step 1
+    document.getElementById('signup-flow').style.display = 'block';
+    document.getElementById('login-form').classList.remove('active');
+    document.querySelectorAll('.auth-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step1').classList.add('active');
+    const progressFill = document.getElementById('auth-progress-fill');
+    if (progressFill) progressFill.style.width = '25%';
+    for (let i = 1; i <= 4; i++) {
+      const dot = document.getElementById('dot' + i);
+      if (dot) dot.classList.toggle('active', i === 1);
+    }
   }
 
   if (page === 'home' && !state.user) {
@@ -4347,6 +4356,15 @@ async function sendPasswordReset() {
 function showSignup() {
   document.getElementById('signup-flow').style.display = 'block';
   document.getElementById('login-form').classList.remove('active');
+  // Reset to step 1
+  document.querySelectorAll('.auth-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step1').classList.add('active');
+  const progressFill = document.getElementById('auth-progress-fill');
+  if (progressFill) progressFill.style.width = '25%';
+  for (let i = 1; i <= 4; i++) {
+    const dot = document.getElementById('dot' + i);
+    if (dot) dot.classList.toggle('active', i === 1);
+  }
 }
 
 function showLogin() {
@@ -10139,136 +10157,8 @@ window.sendTutor = function() {
   if (_v9TutorSend) _v9TutorSend();
 };
 
-// Zero all stats on first login for new users
-const _v9PrevLogin = window.handleLogin;
-window.handleLogin = function() {
-  if (_v9PrevLogin) _v9PrevLogin();
-  // Ensure stats display as zero for new users
-  const u = state.user;
-  if (u && (u.questions === undefined || u.questions === 847)) {
-    u.questions = 0; u.accuracy = 0; u.streak = 0; u.topics = 0; u.xp = 0; u.level = 1;
-    try { localStorage.setItem('synaptiq_user', JSON.stringify(u)); } catch(e) {}
-  }
-};
-
-
-// ════════════════════════════════════════════════════
-// LUMINA AI V10 — ALL NEW FEATURES + REAL AUTH
-// ════════════════════════════════════════════════════
-
-// ─── SUPABASE AUTH ───────────────────────────────────
-const SUPABASE_URL = window.SUPABASE_URL || '';
-const SUPABASE_ANON = window.SUPABASE_ANON_KEY || '';
+// Stub for optional Supabase SDK integration (saveProgressDB checks this)
 let supabaseClient = null;
-
-function initSupabase() {
-  if (SUPABASE_URL && SUPABASE_ANON && window.supabase) {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-    
-    checkExistingSession();
-  }
-}
-
-async function checkExistingSession() {
-  if (!supabaseClient) return;
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session) {
-    const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', session.user.id).single();
-    if (profile) {
-      state.user = { ...session.user, ...profile };
-      state.user.name = profile.name;
-      try { localStorage.setItem('synaptiq_token', session.access_token); } catch(e) {}
-      try { localStorage.setItem('synaptiq_user', JSON.stringify(state.user)); } catch(e) {}
-      enterDashboard();
-    }
-  }
-}
-
-async function realSignup(name, email, password, plan) {
-  if (!supabaseClient) return fallbackSignup(name, email, plan);
-  showAuthLoading(true);
-  const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { name, plan } } });
-  if (error) { showAuthError(error.message); showAuthLoading(false); return; }
-  // Create profile
-  await supabaseClient.from('profiles').insert({ id: data.user.id, name, email, plan: plan||'student', xp:0, level:1, streak:0, questions_answered:0, accuracy:0 });
-  // Welcome email
-  await fetch('/api/email', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type:'welcome', email, name }) }).catch(()=>{});
-  showAuthSuccess('Account created! Check your email to verify your account.');
-  showAuthLoading(false);
-}
-
-async function realLogin(email, password) {
-  if (!supabaseClient) return fallbackLogin(email);
-  showAuthLoading(true);
-  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if (error) { showAuthError('Invalid email or password'); showAuthLoading(false); return; }
-  const { data: profile } = await supabaseClient.from('profiles').select('*').eq('id', data.user.id).single();
-  state.user = { ...data.user, ...profile };
-  state.user.name = profile?.name || email.split('@')[0];
-  try { localStorage.setItem('synaptiq_token', data.session.access_token); } catch(e) {}
-  try { localStorage.setItem('synaptiq_user', JSON.stringify(state.user)); } catch(e) {}
-  showAuthLoading(false);
-  enterDashboard();
-}
-
-async function realLogout() {
-  if (supabaseClient) await supabaseClient.auth.signOut();
-  try { localStorage.removeItem('synaptiq_token'); } catch(e) {}
-  state.user = null;
-  location.reload();
-}
-
-async function realResetPassword(email) {
-  if (!supabaseClient) { document.getElementById('reset-confirm').style.display='block'; return; }
-  const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset' });
-  if (error) { showToast('⚠️ ' + error.message); return; }
-  document.getElementById('reset-confirm').style.display = 'block';
-}
-
-// Fallback (localStorage) when Supabase not configured
-function fallbackSignup(name, email, plan) {
-  state.user = { name, email, plan:plan||'student', xp:0, level:1, streak:0, questions_answered:0 };
-  try { localStorage.setItem('synaptiq_user', JSON.stringify(state.user)); } catch(e) {}
-  enterDashboard();
-}
-function fallbackLogin(email) {
-  try { const u = localStorage.getItem('synaptiq_user'); if(u) { state.user = JSON.parse(u); enterDashboard(); return; } } catch(e) {}
-  state.user = { name: email.split('@')[0], email, xp:0, level:1, streak:0 };
-  enterDashboard();
-}
-
-function showAuthLoading(on) { document.querySelectorAll('.auth-form').forEach(f => f.classList.toggle('auth-loading', on)); }
-function showAuthError(msg) { const el = document.querySelector('.auth-error'); if(el) { el.textContent = '⚠️ ' + msg; el.style.display='block'; } }
-function showAuthSuccess(msg) { const el = document.querySelector('.auth-success'); if(el) { el.textContent = '✅ ' + msg; el.style.display='block'; } }
-
-// Override existing login/signup handlers
-const _v10OrigLogin = window.handleLogin;
-window.handleLogin = function() {
-  const email = document.getElementById('login-email')?.value || '';
-  const password = document.getElementById('login-pass')?.value || '';
-  if (!email) { showAuthError('Please enter your email'); return; }
-  if (supabaseClient) { realLogin(email, password); }
-  else { if (_v10OrigLogin) _v10OrigLogin(); }
-};
-
-const _v10OrigSignup = window.handleSignup;
-window.handleSignup = function() {
-  const name = document.getElementById('signup-name')?.value || '';
-  const email = document.getElementById('signup-email')?.value || '';
-  const password = document.getElementById('signup-password')?.value || '';
-  const plan = document.getElementById('signup-plan')?.value || 'student';
-  if (!name || !email) { showAuthError('Please fill in all fields'); return; }
-  if (password && password.length < 8) { showAuthError('Password must be at least 8 characters'); return; }
-  if (supabaseClient) { realSignup(name, email, password, plan); }
-  else { if (_v10OrigSignup) _v10OrigSignup(); else fallbackSignup(name, email, plan); }
-};
-
-// Override password reset — reads from whichever input is present (inline panel or modal)
-window.sendPasswordReset = function() {
-  const email = (document.getElementById('forgot-email') || document.getElementById('reset-email'))?.value.trim();
-  if (!email) { showToast('Please enter your email'); return; }
-  realResetPassword(email);
-};
 
 // ─── SAVE PROGRESS TO SUPABASE ───────────────────────
 async function saveProgressDB(subject, topic, correct, total, xpEarned) {
