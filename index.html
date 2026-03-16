@@ -4033,7 +4033,7 @@ function _showDashCore(sub) {
   document.querySelectorAll('#app-nav a').forEach(a => a.classList.remove('active'));
   state.currentSubpage = sub;
 
-  if (sub === 'progress') buildHeatmap();
+  if (sub === 'progress') { buildHeatmap(); updateDashboardStats(); }
   if (sub === 'strengths') loadCachedStudyPlan();
   if (sub === 'content') buildContentPage();
   if (sub === 'resources') renderResourcesList();
@@ -4351,6 +4351,7 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch(e) {}
   buildNumberLine(0);
   initExitIntent();
+  updateExamCountdown();
 });
 
 // ═══════════════════════════════════════
@@ -5157,6 +5158,11 @@ function updateStats(delta) {
     }
     s.lastSeen = today;
     safeSetItem('synaptiq_stats', JSON.stringify(s));
+    // Track study days for heatmap
+    const isoToday = new Date().toISOString().slice(0, 10);
+    const days = JSON.parse(localStorage.getItem('synaptiq_study_days') || '{}');
+    days[isoToday] = (days[isoToday] || 0) + 1;
+    safeSetItem('synaptiq_study_days', JSON.stringify(days));
   } catch(e) {}
 }
 
@@ -5273,11 +5279,17 @@ function buildHeatmap() {
   const activity = JSON.parse(localStorage.getItem('synaptiq_activity') || '{}');
   const levels = ['', 'l1', 'l2', 'l3', 'l4'];
   let html = '';
+  // Load actual study days from localStorage
+  let studyDays = {};
+  try {
+    const raw = localStorage.getItem('synaptiq_study_days');
+    studyDays = raw ? JSON.parse(raw) : {};
+  } catch(e) {}
   for (let i = 0; i < 84; i++) {
     const date = new Date();
     date.setDate(date.getDate() - (83 - i));
     const key = date.toISOString().slice(0, 10);
-    const sessions = activity[key] || 0;
+    const sessions = activity[key] || studyDays[key] || 0;
     const lvl = sessions === 0 ? 0 : sessions < 3 ? 1 : sessions < 6 ? 2 : sessions < 10 ? 3 : 4;
     const label = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
     html += `<div class="heat-cell ${levels[lvl]}" data-tip="${label}: ${sessions} session${sessions !== 1 ? 's' : ''}"></div>`;
@@ -6381,6 +6393,226 @@ async function adminConfirmUpload() {
 
   adminCancelUpload();
   renderAdminResources();
+}
+
+// ═══════════════════════════════════════
+// EXAM COUNTDOWN
+// ═══════════════════════════════════════
+function saveExamDate(val) {
+  if (!val) return;
+  localStorage.setItem('synaptiq_exam_date', val);
+  updateExamCountdown();
+}
+
+function updateExamCountdown() {
+  const stored = localStorage.getItem('synaptiq_exam_date');
+  const inp = document.getElementById('exam-date-input');
+  const settingsInp = document.getElementById('settings-exam-date');
+  const display = document.getElementById('countdown-display');
+  const title = document.getElementById('countdown-title');
+  const subtitle = document.getElementById('countdown-subtitle');
+  const daysEl = document.getElementById('countdown-days');
+  if (!stored) return;
+  if (inp) inp.value = stored;
+  if (settingsInp) settingsInp.value = stored;
+  const examDate = new Date(stored);
+  const now = new Date();
+  const diff = Math.ceil((examDate - now) / 86400000);
+  if (display) display.style.display = 'block';
+  if (daysEl) daysEl.textContent = diff > 0 ? diff : 0;
+  if (title) title.textContent = diff > 0 ? 'Days Until Your A-Level Maths Exam' : 'Good luck in your exam! 🎓';
+  if (subtitle) subtitle.textContent = diff > 30 ? 'Plenty of time — build a strong foundation now.' : diff > 14 ? 'Final stretch — focus on weak areas and past papers.' : diff > 0 ? 'Last push — revise formulas and exam technique!' : examDate.toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'});
+}
+
+// ═══════════════════════════════════════
+// FORMULA SHEET
+// ═══════════════════════════════════════
+const FORMULAS = {
+  pure1: [
+    { title: 'Quadratic Formula', items: [
+      'x = \\dfrac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
+      '\\text{Discriminant: } \\Delta = b^2 - 4ac',
+      '\\Delta > 0 \\Rightarrow \\text{two real roots}; \\quad \\Delta = 0 \\Rightarrow \\text{repeated root}; \\quad \\Delta < 0 \\Rightarrow \\text{no real roots}'
+    ]},
+    { title: 'Laws of Indices', items: [
+      'a^m \\cdot a^n = a^{m+n}',
+      '\\dfrac{a^m}{a^n} = a^{m-n}',
+      '(a^m)^n = a^{mn}',
+      'a^0 = 1, \\quad a^{-n} = \\dfrac{1}{a^n}, \\quad a^{1/n} = \\sqrt[n]{a}'
+    ]},
+    { title: 'Binomial Expansion (Positive Integer n)', items: [
+      '(a+b)^n = \\sum_{r=0}^{n} \\binom{n}{r} a^{n-r} b^r',
+      '\\binom{n}{r} = \\dfrac{n!}{r!(n-r)!}',
+      '(1+x)^n = 1 + nx + \\dfrac{n(n-1)}{2!}x^2 + \\dfrac{n(n-1)(n-2)}{3!}x^3 + \\cdots'
+    ]},
+    { title: 'Straight Lines & Circles', items: [
+      'y - y_1 = m(x - x_1)',
+      'm = \\dfrac{y_2 - y_1}{x_2 - x_1}',
+      '\\text{Perpendicular: } m_1 m_2 = -1',
+      '(x-a)^2 + (y-b)^2 = r^2 \\quad \\text{centre }(a,b)\\text{, radius }r'
+    ]},
+    { title: 'Differentiation (Pure 1)', items: [
+      '\\dfrac{d}{dx}(x^n) = nx^{n-1}',
+      '\\dfrac{d}{dx}(kf(x)) = kf\'(x)',
+      '\\text{Chain rule: } \\dfrac{dy}{dx} = \\dfrac{dy}{du} \\cdot \\dfrac{du}{dx}'
+    ]},
+    { title: 'Integration (Pure 1)', items: [
+      '\\int x^n\\,dx = \\dfrac{x^{n+1}}{n+1} + C \\quad (n \\neq -1)',
+      '\\int_a^b f(x)\\,dx = F(b) - F(a)',
+      '\\text{Area} = \\int_a^b |f(x)|\\,dx'
+    ]},
+    { title: 'Trigonometry (Pure 1)', items: [
+      '\\sin^2\\theta + \\cos^2\\theta = 1',
+      '\\tan\\theta = \\dfrac{\\sin\\theta}{\\cos\\theta}',
+      '\\text{Sine rule: } \\dfrac{a}{\\sin A} = \\dfrac{b}{\\sin B} = \\dfrac{c}{\\sin C}',
+      '\\text{Cosine rule: } a^2 = b^2 + c^2 - 2bc\\cos A',
+      '\\text{Area} = \\tfrac{1}{2}ab\\sin C'
+    ]},
+    { title: 'Exponentials & Logarithms', items: [
+      '\\ln(ab) = \\ln a + \\ln b',
+      '\\ln\\!\\left(\\dfrac{a}{b}\\right) = \\ln a - \\ln b',
+      '\\ln(a^k) = k\\ln a',
+      'e^{\\ln x} = x, \\quad \\ln(e^x) = x',
+      'a^x = e^{x\\ln a}'
+    ]}
+  ],
+  pure2: [
+    { title: 'Functions', items: [
+      'fg(x) = f(g(x)) \\quad \\text{(composite)}',
+      'f^{-1}(x) \\text{ exists iff } f \\text{ is one-to-one}',
+      '|x| = a \\Rightarrow x = \\pm a'
+    ]},
+    { title: 'Sequences & Series', items: [
+      '\\text{AP: } u_n = a + (n-1)d, \\quad S_n = \\dfrac{n}{2}(2a + (n-1)d)',
+      '\\text{GP: } u_n = ar^{n-1}, \\quad S_n = \\dfrac{a(1-r^n)}{1-r}',
+      'S_\\infty = \\dfrac{a}{1-r} \\quad (|r|<1)',
+      '\\sum_{r=1}^n r = \\dfrac{n(n+1)}{2}'
+    ]},
+    { title: 'Radians', items: [
+      's = r\\theta, \\quad A = \\tfrac{1}{2}r^2\\theta',
+      '180° = \\pi \\text{ rad}'
+    ]},
+    { title: 'Trigonometry (Pure 2)', items: [
+      '\\sin 2A = 2\\sin A\\cos A',
+      '\\cos 2A = \\cos^2 A - \\sin^2 A = 2\\cos^2 A - 1 = 1 - 2\\sin^2 A',
+      '\\tan 2A = \\dfrac{2\\tan A}{1 - \\tan^2 A}',
+      '1 + \\tan^2\\theta = \\sec^2\\theta',
+      '1 + \\cot^2\\theta = \\csc^2\\theta',
+      'R\\sin(\\theta+\\alpha): R=\\sqrt{a^2+b^2},\\; \\tan\\alpha = b/a'
+    ]},
+    { title: 'Parametric Equations', items: [
+      '\\dfrac{dy}{dx} = \\dfrac{dy/dt}{dx/dt}',
+      '\\int y\\,dx = \\int y\\,\\dfrac{dx}{dt}\\,dt'
+    ]},
+    { title: 'Differentiation (Pure 2)', items: [
+      '\\dfrac{d}{dx}(e^x) = e^x, \\quad \\dfrac{d}{dx}(\\ln x) = \\dfrac{1}{x}',
+      '\\dfrac{d}{dx}(\\sin x) = \\cos x, \\quad \\dfrac{d}{dx}(\\cos x) = -\\sin x',
+      '\\text{Product rule: } (uv)' + "'" + ' = u' + "'" + 'v + uv' + "'",
+      '\\text{Quotient rule: } \\left(\\dfrac{u}{v}\\right)' + "'" + ' = \\dfrac{u' + "'" + 'v - uv' + "'" + '}{v^2}'
+    ]},
+    { title: 'Integration (Pure 2)', items: [
+      '\\int e^x\\,dx = e^x + C',
+      '\\int \\dfrac{1}{x}\\,dx = \\ln|x| + C',
+      '\\int \\sin x\\,dx = -\\cos x + C, \\quad \\int \\cos x\\,dx = \\sin x + C',
+      '\\text{By parts: } \\int u\\,dv = uv - \\int v\\,du',
+      '\\text{By substitution: } \\int f(g(x))g' + "'" + '(x)\\,dx'
+    ]},
+    { title: 'Numerical Methods', items: [
+      'x_{n+1} = x_n - \\dfrac{f(x_n)}{f' + "'" + '(x_n)} \\quad \\text{(Newton–Raphson)}',
+      '\\text{Trapezium rule: } \\int_a^b y\\,dx \\approx \\tfrac{h}{2}[y_0 + 2(y_1+\\cdots+y_{n-1})+y_n]'
+    ]}
+  ],
+  stats: [
+    { title: 'Descriptive Statistics', items: [
+      '\\bar{x} = \\dfrac{\\sum x}{n} \\quad \\text{(mean)}',
+      '\\sigma^2 = \\dfrac{\\sum x^2}{n} - \\bar{x}^2 \\quad \\text{(variance)}',
+      '\\text{IQR} = Q_3 - Q_1',
+      '\\text{Outlier if } x < Q_1 - 1.5\\cdot\\text{IQR} \\text{ or } x > Q_3 + 1.5\\cdot\\text{IQR}'
+    ]},
+    { title: 'Probability', items: [
+      'P(A \\cup B) = P(A) + P(B) - P(A \\cap B)',
+      'P(A|B) = \\dfrac{P(A \\cap B)}{P(B)}',
+      '\\text{Independent: } P(A \\cap B) = P(A)P(B)'
+    ]},
+    { title: 'Discrete Distributions', items: [
+      'X \\sim B(n,p): \\quad P(X=r) = \\binom{n}{r}p^r(1-p)^{n-r}',
+      'E(X) = np, \\quad \\text{Var}(X) = np(1-p)',
+      'X \\sim \\text{Po}(\\lambda): \\quad P(X=r) = \\dfrac{e^{-\\lambda}\\lambda^r}{r!}',
+      'E(X) = \\text{Var}(X) = \\lambda'
+    ]},
+    { title: 'Normal Distribution', items: [
+      'X \\sim N(\\mu, \\sigma^2)',
+      'Z = \\dfrac{X - \\mu}{\\sigma} \\sim N(0,1)',
+      '\\overline{X} \\sim N\\!\\left(\\mu, \\dfrac{\\sigma^2}{n}\\right) \\quad \\text{(sampling distribution)}'
+    ]},
+    { title: 'Hypothesis Testing', items: [
+      '\\text{Null hypothesis } H_0, \\text{ alternative } H_1',
+      '\\text{Reject } H_0 \\text{ if } p\\text{-value} < \\alpha \\text{ (significance level)}',
+      '\\text{Critical region: values that lead to rejection of } H_0'
+    ]},
+    { title: 'Correlation & Regression', items: [
+      'r = \\dfrac{S_{xy}}{\\sqrt{S_{xx}S_{yy}}}',
+      'S_{xy} = \\sum xy - \\dfrac{(\\sum x)(\\sum y)}{n}',
+      'y = a + bx, \\quad b = \\dfrac{S_{xy}}{S_{xx}}'
+    ]}
+  ],
+  mech: [
+    { title: 'Kinematics (constant acceleration)', items: [
+      'v = u + at',
+      's = ut + \\tfrac{1}{2}at^2',
+      'v^2 = u^2 + 2as',
+      's = \\tfrac{1}{2}(u+v)t'
+    ]},
+    { title: 'Projectiles', items: [
+      'x = V\\cos\\theta \\cdot t',
+      'y = V\\sin\\theta \\cdot t - \\tfrac{1}{2}gt^2',
+      'v_x = V\\cos\\theta \\quad (\\text{constant})',
+      'v_y = V\\sin\\theta - gt',
+      '\\text{Range} = \\dfrac{V^2\\sin 2\\theta}{g}'
+    ]},
+    { title: 'Forces & Newton\'s Laws', items: [
+      'F = ma',
+      'W = mg \\quad (g \\approx 9.8\\,\\text{ms}^{-2})',
+      'F_\\text{friction} \\leq \\mu R',
+      'F_\\text{friction} = \\mu R \\quad \\text{(limiting equilibrium)}'
+    ]},
+    { title: 'Moments', items: [
+      '\\text{Moment} = F \\times d \\quad \\text{(perpendicular distance)}',
+      '\\sum \\text{clockwise moments} = \\sum \\text{anticlockwise moments} \\quad \\text{(equilibrium)}'
+    ]},
+    { title: 'Energy, Work & Power', items: [
+      'W = Fd\\cos\\theta',
+      'KE = \\tfrac{1}{2}mv^2',
+      'GPE = mgh',
+      'P = Fv, \\quad P = \\dfrac{W}{t}',
+      '\\text{Work–energy theorem: } W_{\\text{net}} = \\Delta KE'
+    ]},
+    { title: 'Variable Acceleration', items: [
+      'v = \\dfrac{ds}{dt}, \\quad a = \\dfrac{dv}{dt} = v\\dfrac{dv}{ds}',
+      's = \\int v\\,dt, \\quad v = \\int a\\,dt'
+    ]}
+  ]
+};
+
+function switchFormulaTab(tab, btn) {
+  document.querySelectorAll('#formula-tabs button').forEach(b => {
+    b.className = 'btn btn-outline';
+  });
+  if (btn) btn.className = 'btn btn-gold';
+  renderFormulaTab(tab);
+}
+
+function renderFormulaTab(tab) {
+  const sections = FORMULAS[tab] || [];
+  const html = sections.map(sec => `
+    <div class="card" style="margin-bottom:1.25rem">
+      <div class="card-header"><span class="card-title">${sec.title}</span></div>
+      <div class="card-body">
+        ${sec.items.map(f => `<div style="padding:.6rem 0;border-bottom:1px solid var(--border);font-size:1rem;line-height:1.8">\\(${f}\\)</div>`).join('')}
+      </div>
+    </div>`).join('');
+  document.getElementById('formula-content').innerHTML = html;
+  if (window.MathJax) MathJax.typesetPromise([document.getElementById('formula-content')]).catch(()=>{});
 }
 
 function renderAdminResources() {
