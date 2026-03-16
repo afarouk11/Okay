@@ -74,6 +74,44 @@
   --font-mono: 'Space Mono', monospace;
 }
 
+/* ═══════════════════════════════════════
+   LIGHT MODE
+═══════════════════════════════════════ */
+body.light {
+  --black: #F5F3EE;
+  --bg1: #F0EDE6;
+  --bg2: #E8E4DB;
+  --bg3: #DDD9CE;
+  --bg4: #D2CEC2;
+  --white: #1A1A1A;
+  --muted: #5A5A6A;
+  --border: rgba(140,110,40,0.2);
+  --shadow: 0 8px 32px rgba(0,0,0,0.12);
+  --glow: 0 0 40px rgba(201,168,76,0.08);
+}
+body.light #nav { background: rgba(245,243,238,0.95); }
+body.light ::-webkit-scrollbar-track { background: var(--bg2); }
+body.light .lesson-card, body.light .stat-card, body.light .question-block,
+body.light .msg.bot, body.light .form-card, body.light .note-card,
+body.light .flashcard-front, body.light .flashcard-back { box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+body.light .tutor-messages { background: var(--bg1); }
+body.light .msg.user { background: var(--gold); color: var(--black); }
+body.light .msg.bot { background: var(--bg3); color: var(--white); }
+
+/* Theme toggle button */
+.theme-toggle {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: var(--bg3);
+  color: var(--muted);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .95rem;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.theme-toggle:hover { border-color: var(--gold); color: var(--gold); }
+
 /* ACCESSIBILITY MODES */
 body.mode-dyslexia { font-family: 'Lexend', sans-serif !important; letter-spacing: 0.05em; line-height: 2; }
 body.mode-dyslexia * { font-family: inherit !important; }
@@ -1690,6 +1728,7 @@ body.mode-adhd .adhd-break { display: block; }
       <button class="a11y-btn" id="btn-dyslexia" onclick="toggleMode('dyslexia')">Dyslexia</button>
       <button class="a11y-btn" id="btn-dyscalculia" onclick="toggleMode('dyscalculia')">Dyscalculia</button>
     </div>
+    <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
     <div id="xp-badge"><i class="fas fa-star"></i><span id="xp-display">0 XP</span></div>
     <div id="auth-buttons">
       <button class="btn btn-outline" onclick="nav('auth')">Log In</button>
@@ -3097,6 +3136,9 @@ function showLogin() {
   document.getElementById('login-form').classList.add('active');
 }
 
+// Apply saved theme immediately
+applyTheme();
+
 // Check auth tabs
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.auth-tab').forEach((tab, i) => {
@@ -3158,6 +3200,23 @@ function setMode(mode, on) {
   if (tog) tog.classList.toggle('on', on);
   if (mode === 'dyscalculia') {
     document.getElementById('calc-overlay').classList.toggle('show', on);
+  }
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('theme-toggle').textContent = isLight ? '☀️' : '🌙';
+  localStorage.setItem('synaptiq_theme', isLight ? 'light' : 'dark');
+}
+
+function applyTheme() {
+  const saved = localStorage.getItem('synaptiq_theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const useLight = saved === 'light' || (!saved && !prefersDark);
+  if (useLight) {
+    document.body.classList.add('light');
+    const btn = document.getElementById('theme-toggle');
+    if (btn) btn.textContent = '☀️';
   }
 }
 
