@@ -1400,6 +1400,9 @@ body.mode-adhd .adhd-break { display: block; }
 .key-formulas-box{background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:1.25rem}
 .key-formula-item{color:var(--gold);padding:.35rem 0;border-bottom:1px solid rgba(201,168,76,0.1);font-size:1rem}
 .key-formula-item:last-child{border:none}
+.lesson-diagram{margin:1.25rem 0;background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:1.25rem;display:flex;flex-direction:column;align-items:center;gap:.6rem}
+.lesson-diagram svg{display:block;max-width:420px;width:100%;height:auto}
+.diagram-caption{font-size:.8rem;color:var(--muted);text-align:center;font-style:italic}
 .lesson-loading{text-align:center;padding:3rem;color:var(--muted)}
 .lesson-spin{width:40px;height:40px;border:3px solid var(--bg3);border-top-color:var(--gold);border-radius:50%;animation:lspin 1s linear infinite;margin:0 auto 1rem}
 @keyframes lspin{to{transform:rotate(360deg)}}
@@ -4584,6 +4587,72 @@ async function teachChapter(mk, idx, btn) {
 Deliver a complete lesson as HTML — no JSON, no markdown fences, just HTML elements.
 Use LaTeX math: inline $...$, display $$...$$. Example: $x^2+3x-4=0$, $$\\frac{d}{dx}(x^n)=nx^{n-1}$$. Never write maths in plain text.
 Each <p> tag must be a single self-contained idea. Never put all theory into one block.
+
+━━━ DIAGRAMS — MANDATORY ━━━
+You MUST include at least one inline SVG diagram wrapped in <div class="lesson-diagram"> whenever the topic involves any of:
+circles, graphs, CAST diagrams, triangles, vectors, transformations, trig curves, exponentials, logarithms, straight lines, normal distribution, kinematics, or any geometric concept.
+
+SVG rules — always follow these exactly:
+• viewBox: "0 0 320 260" for graphs/circles, "0 0 300 300" for CAST
+• width="100%" on every <svg> tag (no fixed pixel width)
+• Background: transparent (no <rect> background)
+• Axes: stroke="#8892A4" stroke-width="1.5"
+• Main curve/shape: stroke="#C9A84C" stroke-width="2.5" fill="none" (or fill="rgba(201,168,76,0.07)" for regions)
+• Secondary lines (radius, asymptote, dashed): stroke="#60A5FA" stroke-width="1.5" stroke-dasharray="5,3"
+• Text labels: fill="#F5F2EC" font-size="12" font-family="monospace"
+• Gold key-point labels: fill="#C9A84C" font-size="11" font-family="monospace"
+• Axis labels (x, y): fill="#8892A4" font-size="13" font-family="monospace"
+• Arrowheads: use marker-end="url(#ah)" — always define this defs block at the top of every SVG:
+  <defs><marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#8892A4"/></marker></defs>
+
+DIAGRAM TEMPLATES — use these as your starting patterns:
+
+1. CIRCLE $(x-a)^2+(y-b)^2=r^2$:
+<div class="lesson-diagram">
+<svg viewBox="0 0 320 260" xmlns="http://www.w3.org/2000/svg" width="100%">
+  <defs><marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#8892A4"/></marker></defs>
+  <line x1="20" y1="130" x2="300" y2="130" stroke="#8892A4" stroke-width="1.5" marker-end="url(#ah)"/>
+  <line x1="160" y1="240" x2="160" y2="20" stroke="#8892A4" stroke-width="1.5" marker-end="url(#ah)"/>
+  <circle cx="160" cy="130" r="75" stroke="#C9A84C" stroke-width="2.5" fill="rgba(201,168,76,0.07)"/>
+  <circle cx="160" cy="130" r="4" fill="#C9A84C"/>
+  <line x1="160" y1="130" x2="235" y2="130" stroke="#60A5FA" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="166" y="124" fill="#C9A84C" font-size="11" font-family="monospace">centre (a,b)</text>
+  <text x="192" y="124" fill="#60A5FA" font-size="11" font-family="monospace">r</text>
+  <text x="302" y="134" fill="#8892A4" font-size="13" font-family="monospace">x</text>
+  <text x="163" y="17" fill="#8892A4" font-size="13" font-family="monospace">y</text>
+</svg>
+<p class="diagram-caption">Circle with centre $(a,b)$ and radius $r$</p>
+</div>
+
+2. CAST DIAGRAM:
+<div class="lesson-diagram">
+<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" width="100%">
+  <line x1="150" y1="15" x2="150" y2="285" stroke="#8892A4" stroke-width="2"/>
+  <line x1="15" y1="150" x2="285" y2="150" stroke="#8892A4" stroke-width="2"/>
+  <text x="182" y="88" fill="#4ADE80" font-size="36" font-family="monospace" font-weight="bold">A</text>
+  <text x="52" y="88" fill="#60A5FA" font-size="36" font-family="monospace" font-weight="bold">S</text>
+  <text x="182" y="228" fill="#F472B6" font-size="36" font-family="monospace" font-weight="bold">C</text>
+  <text x="52" y="228" fill="#A78BFA" font-size="36" font-family="monospace" font-weight="bold">T</text>
+  <text x="165" y="118" fill="#4ADE80" font-size="10" font-family="monospace">all +ve</text>
+  <text x="32" y="118" fill="#60A5FA" font-size="10" font-family="monospace">sin +ve</text>
+  <text x="158" y="198" fill="#F472B6" font-size="10" font-family="monospace">cos +ve</text>
+  <text x="32" y="198" fill="#A78BFA" font-size="10" font-family="monospace">tan +ve</text>
+  <path d="M170 150 A 40 40 0 0 0 150 110" stroke="#C9A84C" stroke-width="1.5" fill="none"/>
+  <text x="172" y="135" fill="#C9A84C" font-size="13" font-family="monospace">θ</text>
+  <text x="110" y="295" fill="#8892A4" font-size="11" font-family="monospace">anticlockwise = +ve</text>
+</svg>
+<p class="diagram-caption">CAST diagram — shows which trig functions are positive in each quadrant</p>
+</div>
+
+3. GRAPH SKETCH (e.g. quadratic, cubic, trig, exponential) — draw the actual curve using a <polyline> or <path> with computed points, label key features (roots, turning points, intercepts, asymptotes). Always show axes with labels, label at least 3 key coordinates as dots + text.
+
+4. RIGHT TRIANGLE — draw with right-angle square, label all three sides and the angle.
+
+5. TRIG CURVES — draw sin/cos/tan with a full period shown, label the amplitude, period, key x-values (0, π/2, π, 3π/2, 2π).
+
+Adapt the templates for the actual values in the lesson. Generate realistic coordinates — if the circle has centre (3,-2) and r=5, place it accordingly in the SVG coordinate space.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 Return ONLY this HTML structure (fill in all [...] placeholders):
 
 <div class="lesson-section">
@@ -4593,10 +4662,11 @@ Return ONLY this HTML structure (fill in all [...] placeholders):
 <div class="lesson-section">
 <h3><i class="fas fa-book-open"></i> Key Theory</h3>
 <div style="color:var(--muted);line-height:2.1;font-size:1rem"><p>[intro: definition and context]</p><p>[main rules and properties with LaTeX — use $$...$$ for key equations]</p><p>[worked intuition or geometric meaning if relevant]</p><p>[common mistakes and exam tips]</p></div>
+[INSERT DIAGRAM HERE if topic is visual — use <div class="lesson-diagram">...</div>]
 </div>
 <div class="lesson-section">
 <h3><i class="fas fa-pencil"></i> Worked Examples</h3>
-<div class="worked-example"><div class="ex-problem">[problem]</div><div class="worked-step"><strong>Step 1:</strong> [step]</div><div class="worked-step"><strong>Step 2:</strong> [step]</div><div class="worked-step"><strong>Step 3:</strong> [step]</div></div>
+<div class="worked-example"><div class="ex-problem">[problem]</div><div class="worked-step"><strong>Step 1:</strong> [step]</div><div class="worked-step"><strong>Step 2:</strong> [step]</div><div class="worked-step"><strong>Step 3:</strong> [step]</div>[INSERT DIAGRAM if this example has a graph/shape]</div>
 <div class="worked-example"><div class="ex-problem">[problem 2]</div><div class="worked-step"><strong>Step 1:</strong> [step]</div><div class="worked-step"><strong>Step 2:</strong> [step]</div><div class="worked-step"><strong>Step 3:</strong> [step]</div></div>
 </div>
 <div class="lesson-section">
