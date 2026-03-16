@@ -2550,6 +2550,23 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="page-title">⚙️ Settings</div>
       <p class="page-subtitle">Manage your account and learning preferences</p>
       <div class="settings-section">
+        <h3>🌓 Appearance</h3>
+        <div class="setting-row">
+          <div class="setting-info">
+            <h4>Dark Mode</h4>
+            <p>Use a dark background — easier on the eyes at night</p>
+          </div>
+          <div class="toggle" id="tog-dark" onclick="setTheme('dark')"></div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <h4>Light Mode</h4>
+            <p>Use a light background — better in bright environments</p>
+          </div>
+          <div class="toggle" id="tog-light" onclick="setTheme('light')"></div>
+        </div>
+      </div>
+      <div class="settings-section">
         <h3>🎨 Accessibility Settings</h3>
         <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.25rem">Each setting works independently — enable any combination that helps you learn best.</p>
         <div class="a11y-full-card">
@@ -3226,21 +3243,27 @@ function setMode(mode, on) {
   }
 }
 
+function setTheme(mode) {
+  const isLight = mode === 'light';
+  document.body.classList.toggle('light', isLight);
+  localStorage.setItem('synaptiq_theme', mode);
+  const navBtn = document.getElementById('theme-toggle');
+  if (navBtn) navBtn.textContent = isLight ? '☀️' : '🌙';
+  const togDark = document.getElementById('tog-dark');
+  const togLight = document.getElementById('tog-light');
+  if (togDark) togDark.classList.toggle('on', !isLight);
+  if (togLight) togLight.classList.toggle('on', isLight);
+}
+
 function toggleTheme() {
-  const isLight = document.body.classList.toggle('light');
-  document.getElementById('theme-toggle').textContent = isLight ? '☀️' : '🌙';
-  localStorage.setItem('synaptiq_theme', isLight ? 'light' : 'dark');
+  setTheme(document.body.classList.contains('light') ? 'dark' : 'light');
 }
 
 function applyTheme() {
   const saved = localStorage.getItem('synaptiq_theme');
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const useLight = saved === 'light' || (!saved && !prefersDark);
-  if (useLight) {
-    document.body.classList.add('light');
-    const btn = document.getElementById('theme-toggle');
-    if (btn) btn.textContent = '☀️';
-  }
+  const mode = saved || (prefersDark ? 'dark' : 'light');
+  setTheme(mode);
 }
 
 function toggleMode(mode) {
@@ -3350,7 +3373,12 @@ async function callClaude(messages, system, max_tokens) {
 }
 
 function getReply(data) {
-  return data.content && data.content[0] ? data.content[0].text : '(no response)';
+  let text = data.content && data.content[0] ? data.content[0].text : '(no response)';
+  // Strip any AI self-identification references
+  text = text.replace(/\bClaude\s*Opus\s*[\d.-]*/gi, 'Synaptiq AI');
+  text = text.replace(/\bClaude\b(?!\s*Code)/g, 'Synaptiq AI');
+  text = text.replace(/powered by Anthropic/gi, 'powered by Synaptiq');
+  return text;
 }
 
 // ═══════════════════════════════════════
