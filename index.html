@@ -1649,6 +1649,13 @@ body.mode-adhd .adhd-break { display: block; }
 .graph-tool-iframe{width:100%;height:420px;border:none;border-radius:8px;background:#1a1a2e}
 .graph-draw-btn{align-self:flex-start;background:none;border:1px solid var(--blue);color:var(--blue);padding:.4rem 1rem;border-radius:8px;cursor:pointer;font-size:.85rem;transition:.15s}
 .graph-draw-btn:hover{background:rgba(96,165,250,0.1)}
+.check-btn{margin-top:.6rem;background:none;border:1px solid var(--gold);color:var(--gold);padding:.35rem .85rem;border-radius:6px;cursor:pointer;font-size:.8rem;transition:.15s;display:flex;align-items:center;gap:.4rem}
+.check-btn:hover{background:rgba(201,168,76,0.1)}
+.check-btn:disabled{opacity:.5;cursor:not-allowed}
+.ai-feedback{margin-top:.75rem;padding:1rem;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:8px;font-size:.875rem;line-height:1.8;display:none}
+.ai-feedback.show{display:block}
+.feedback-grade{font-size:1.1rem;font-weight:700;color:var(--gold);margin-bottom:.5rem}
+@media print{.sidebar,#mobile-nav,.geo-toggle-btn,.lesson-graph-tool,.show-answer-btn,.graph-draw-btn,header,.teacher-tabs,.teacher-chapter-list,.lesson-toolbar{display:none!important}.dashboard-layout{display:block!important}.teacher-content{padding:0!important}body{background:white!important;color:black!important}.lesson-section h3{color:black!important;border-color:#ccc!important}.worked-example,.practice-q,.key-formulas-box{border-color:#ccc!important;background:#f9f9f9!important}}
 </style>
 </head>
 <body>
@@ -3429,7 +3436,7 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
     let questions;
     try {
       const clean = reply.replace(/```json|```/g, '').trim();
-      questions = JSON.parse(clean);
+      questions = JSON.parse(sanitizeClaudeJson(clean));
     } catch (e) {
       qContainer.innerHTML = '<div class="msg bot" style="max-width:100%">⚠️ Could not parse questions. Raw response:<br>' + reply + '</div>';
       return;
@@ -3442,14 +3449,47 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
           <div class="question-num">Question ${i + 1} <span class="marks-badge">${q.marks || 4} marks</span></div>
           <div class="question-text">${q.question}</div>
           ${q.hint ? `<div style="font-size:.8rem;color:var(--gold);margin-bottom:.75rem">💡 Hint: ${q.hint}</div>` : ''}
-          <div class="answer-space" contenteditable="true" spellcheck="true" style="outline:none">Click here to write your working...</div>
-          ${q.solution ? `<div style="margin-top:.75rem"><button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent.includes('Show')?'Hide Mark Scheme':'Show Mark Scheme ✓'" style="background:transparent;border:1px solid rgba(74,222,128,0.3);color:var(--green);border-radius:6px;padding:.35rem .75rem;font-size:.75rem;cursor:pointer">Show Mark Scheme ✓</button><div id="${solId}" style="display:none;margin-top:.75rem;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:1rem;font-size:.85rem;white-space:pre-wrap">${q.solution}</div></div>` : ''}
+          <div class="answer-space" id="ans-${i}" contenteditable="true" spellcheck="true" style="outline:none">Click here to write your working...</div>
+          <button class="check-btn" onclick="checkAnswer(${i},this)" data-sol="${encodeURIComponent(q.solution||'')}">✦ Check My Answer</button>
+          <div class="ai-feedback" id="fb-${i}"></div>
+          ${q.solution ? `<div style="margin-top:.75rem"><button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent.includes('Show')?'Hide Mark Scheme':'Show Mark Scheme ✓';if(window.MathJax)MathJax.typesetPromise([this.nextElementSibling]).catch(()=>{})" style="background:transparent;border:1px solid rgba(74,222,128,0.3);color:var(--green);border-radius:6px;padding:.35rem .75rem;font-size:.75rem;cursor:pointer">Show Mark Scheme ✓</button><div id="${solId}" style="display:none;margin-top:.75rem;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:1rem;font-size:.85rem;white-space:pre-wrap">${q.solution}</div></div>` : ''}
         </div>`;
     });
+    if (window.MathJax) MathJax.typesetPromise([qContainer]).catch(() => {});
     addXP(20);
     showToast('✦ Questions generated!');
   } catch (e) {
     qContainer.innerHTML = `<div class="msg bot" style="max-width:100%">⚠️ Error: ${e.message}</div>`;
+  }
+}
+
+async function checkAnswer(idx, btn) {
+  const ansDiv = document.getElementById('ans-' + idx);
+  const fbDiv = document.getElementById('fb-' + idx);
+  const studentAnswer = ansDiv.innerText.trim();
+  if (!studentAnswer || studentAnswer === 'Click here to write your working...') {
+    showToast('Write your working first!'); return;
+  }
+  const markScheme = decodeURIComponent(btn.dataset.sol);
+  btn.disabled = true;
+  btn.innerHTML = '<span class="lesson-spin" style="width:14px;height:14px;border-width:2px;display:inline-block;margin-right:.3rem"></span>Marking…';
+  const sys = `You are an expert A-Level Maths examiner. Mark the student answer against the mark scheme.
+Reply with ONLY this HTML (no markdown, no extra text):
+<div class="feedback-grade">[X / Y marks]</div>
+<p><strong>✓ What you got right:</strong> [brief points]</p>
+<p><strong>✗ What's missing or wrong:</strong> [brief points, or "Nothing — full marks!"]</p>
+<p><strong>💡 Tip:</strong> [one actionable improvement]</p>`;
+  try {
+    const data = await callClaude([{role:'user', content:`Mark scheme:\n${markScheme}\n\nStudent answer:\n${studentAnswer}`}], sys, 1000);
+    fbDiv.innerHTML = getReply(data);
+    fbDiv.classList.add('show');
+    if (window.MathJax) MathJax.typesetPromise([fbDiv]).catch(() => {});
+    btn.innerHTML = '✦ Re-check';
+    btn.disabled = false;
+  } catch(e) {
+    btn.innerHTML = '✦ Check My Answer';
+    btn.disabled = false;
+    showToast('Could not mark: ' + e.message);
   }
 }
 
