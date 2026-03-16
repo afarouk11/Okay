@@ -4002,6 +4002,21 @@ function nav(page) {
     document.getElementById('user-menu').style.display = 'none';
     document.getElementById('a11y-bar').style.display = 'none';
     document.getElementById('xp-badge').style.display = 'none';
+    // Always reset to signup step 1
+    document.getElementById('signup-flow').style.display = 'block';
+    document.getElementById('login-form').classList.remove('active');
+    document.querySelectorAll('.auth-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step1').classList.add('active');
+    const pf = document.getElementById('auth-progress-fill');
+    if (pf) pf.style.width = '25%';
+    for (let i = 1; i <= 4; i++) {
+      const d = document.getElementById('dot' + i);
+      if (d) d.classList.toggle('active', i === 1);
+    }
+    // Clear signup inputs
+    ['reg-name','reg-email','reg-pass'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
   }
 
   if (page === 'home' && !state.user) {
@@ -4266,6 +4281,7 @@ async function loginUser() {
     safeSetItem('synaptiq_user', JSON.stringify({ ...state.user, _expiry: expiry }));
     trackEvent('login', {});
     applyLearningProfile();
+    resetStatsForNewUser();
     enterDashboard();
     updateXPDisplay();
   } catch(e) {
@@ -4320,7 +4336,8 @@ function showForgotPassword() {
 }
 
 async function sendPasswordReset() {
-  const email = document.getElementById('forgot-email').value.trim();
+  const emailEl = document.getElementById('forgot-email') || document.getElementById('reset-email');
+  const email = emailEl?.value.trim() || '';
   const btn   = document.getElementById('forgot-btn');
   const msg   = document.getElementById('forgot-msg');
   if (!email) { showToast('Please enter your email address'); return; }
@@ -4347,6 +4364,15 @@ async function sendPasswordReset() {
 function showSignup() {
   document.getElementById('signup-flow').style.display = 'block';
   document.getElementById('login-form').classList.remove('active');
+  // Reset to step 1
+  document.querySelectorAll('.auth-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('step1').classList.add('active');
+  const pf = document.getElementById('auth-progress-fill');
+  if (pf) pf.style.width = '25%';
+  for (let i = 1; i <= 4; i++) {
+    const d = document.getElementById('dot' + i);
+    if (d) d.classList.toggle('active', i === 1);
+  }
 }
 
 function showLogin() {
@@ -10023,8 +10049,6 @@ function shareViaEmail() {
   window.open(`mailto:?subject=Practice Question from Synaptiq&body=${encodeURIComponent(text)}`);
 }
 
-// ─── PASSWORD RESET ─── (handled by window.sendPasswordReset override below)
-
 // ─── WELSH LANGUAGE ───────────────────────────────────
 const welshTranslations = {
   'AI Tutor': 'Tiwtor AI',
@@ -10139,17 +10163,14 @@ window.sendTutor = function() {
   if (_v9TutorSend) _v9TutorSend();
 };
 
-// Zero all stats on first login for new users
-const _v9PrevLogin = window.handleLogin;
-window.handleLogin = function() {
-  if (_v9PrevLogin) _v9PrevLogin();
-  // Ensure stats display as zero for new users
+// Ensure stats display as zero for new users after login
+function resetStatsForNewUser() {
   const u = state.user;
   if (u && (u.questions === undefined || u.questions === 847)) {
     u.questions = 0; u.accuracy = 0; u.streak = 0; u.topics = 0; u.xp = 0; u.level = 1;
     try { localStorage.setItem('synaptiq_user', JSON.stringify(u)); } catch(e) {}
   }
-};
+}
 
 
 // ════════════════════════════════════════════════════
@@ -10241,34 +10262,6 @@ function showAuthLoading(on) { document.querySelectorAll('.auth-form').forEach(f
 function showAuthError(msg) { const el = document.querySelector('.auth-error'); if(el) { el.textContent = '⚠️ ' + msg; el.style.display='block'; } }
 function showAuthSuccess(msg) { const el = document.querySelector('.auth-success'); if(el) { el.textContent = '✅ ' + msg; el.style.display='block'; } }
 
-// Override existing login/signup handlers
-const _v10OrigLogin = window.handleLogin;
-window.handleLogin = function() {
-  const email = document.getElementById('login-email')?.value || '';
-  const password = document.getElementById('login-pass')?.value || '';
-  if (!email) { showAuthError('Please enter your email'); return; }
-  if (supabaseClient) { realLogin(email, password); }
-  else { if (_v10OrigLogin) _v10OrigLogin(); }
-};
-
-const _v10OrigSignup = window.handleSignup;
-window.handleSignup = function() {
-  const name = document.getElementById('signup-name')?.value || '';
-  const email = document.getElementById('signup-email')?.value || '';
-  const password = document.getElementById('signup-password')?.value || '';
-  const plan = document.getElementById('signup-plan')?.value || 'student';
-  if (!name || !email) { showAuthError('Please fill in all fields'); return; }
-  if (password && password.length < 8) { showAuthError('Password must be at least 8 characters'); return; }
-  if (supabaseClient) { realSignup(name, email, password, plan); }
-  else { if (_v10OrigSignup) _v10OrigSignup(); else fallbackSignup(name, email, plan); }
-};
-
-// Override password reset — reads from whichever input is present (inline panel or modal)
-window.sendPasswordReset = function() {
-  const email = (document.getElementById('forgot-email') || document.getElementById('reset-email'))?.value.trim();
-  if (!email) { showToast('Please enter your email'); return; }
-  realResetPassword(email);
-};
 
 // ─── SAVE PROGRESS TO SUPABASE ───────────────────────
 async function saveProgressDB(subject, topic, correct, total, xpEarned) {
