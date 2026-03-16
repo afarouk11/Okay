@@ -1022,6 +1022,33 @@ body.mode-adhd .adhd-break { display: block; }
 .sw-pct.good { color: var(--green); }
 .sw-pct.bad { color: var(--red); }
 
+/* ── AI Study Plan ── */
+.sp-meta { font-size:.75rem; color:var(--muted); margin-bottom:1.25rem; }
+.sp-week { display:grid; grid-template-columns:repeat(auto-fill,minmax(185px,1fr)); gap:.875rem; }
+.sp-day { background:var(--bg3); border-radius:12px; padding:.875rem 1rem; border:1px solid var(--border); }
+.sp-day.sp-today { border-color:var(--gold); box-shadow:0 0 0 1px rgba(201,168,76,.2); }
+.sp-day-name { font-size:.7rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-bottom:.15rem; }
+.sp-day-date { font-size:.75rem; color:var(--gold); font-weight:600; margin-bottom:.6rem; }
+.sp-chips { display:flex; flex-wrap:wrap; gap:.3rem; margin-bottom:.6rem; }
+.sp-chip { font-size:.72rem; padding:.2rem .6rem; border-radius:20px; font-weight:600; }
+.sp-chip.pure  { background:rgba(96,165,250,.12);  color:#93C5FD; }
+.sp-chip.stats { background:rgba(74,222,128,.12);  color:#86EFAC; }
+.sp-chip.mech  { background:rgba(201,168,76,.12);  color:var(--gold); }
+.sp-chip.rev   { background:rgba(248,113,113,.12); color:#FCA5A5; }
+.sp-chip.rest  { background:var(--bg4); color:var(--muted); }
+.sp-day-focus { font-size:.73rem; color:var(--muted); border-top:1px solid var(--border); padding-top:.5rem; font-style:italic; line-height:1.4; }
+.sp-priorities { margin-top:1.25rem; display:flex; flex-direction:column; gap:.5rem; }
+.sp-pri { display:flex; align-items:flex-start; gap:.75rem; padding:.75rem 1rem; background:var(--bg3); border-radius:10px; border-left:3px solid var(--red); font-size:.83rem; }
+.sp-pri.medium { border-left-color:var(--gold); }
+.sp-pri.low    { border-left-color:var(--blue); }
+.sp-pri-label { font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; min-width:3.5rem; margin-top:.1rem; }
+.sp-pri.medium .sp-pri-label { color:var(--gold); }
+.sp-pri.low    .sp-pri-label { color:var(--blue); }
+.sp-pri-label  { color:var(--red); }
+.sp-regenerate { font-size:.78rem; padding:.3rem .75rem; background:transparent; border:1px solid rgba(201,168,76,.3); color:var(--gold); border-radius:6px; cursor:pointer; }
+.sp-regenerate:hover { background:rgba(201,168,76,.08); }
+.sp-section-lbl { font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:1.25rem 0 .6rem; }
+
 /* ═══════════════════════════════════════
    ASSIGNMENTS PAGE
 ═══════════════════════════════════════ */
@@ -2335,6 +2362,22 @@ body.mode-adhd .adhd-break { display: block; }
         <div class="card-header"><span class="card-title">🤖 AI Recommendations</span></div>
         <div class="card-body" id="ai-recs-body"></div>
       </div>
+
+      <!-- AI STUDY PLAN -->
+      <div class="card" id="study-plan-card" style="margin-top:1.5rem">
+        <div class="card-header" style="justify-content:space-between;align-items:center">
+          <span class="card-title">📅 AI Study Plan</span>
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <span id="sp-generated-at" class="sp-meta" style="margin:0"></span>
+            <button class="sp-regenerate" id="sp-btn" onclick="generateStudyPlan()" aria-label="Generate personalised study plan">✦ Generate Plan</button>
+          </div>
+        </div>
+        <div class="card-body" id="study-plan-body">
+          <p style="color:var(--muted);font-size:.875rem;line-height:1.6">
+            Get a personalised 7-day study plan built from your actual progress — questions answered, topics explored, flashcard weak spots, and your target grade. Hit <strong style="color:var(--gold)">Generate Plan</strong> to start.
+          </p>
+        </div>
+      </div>
     </div>
 
     <!-- ASSIGNMENTS SUBPAGE -->
@@ -2926,6 +2969,7 @@ function _showDashCore(sub) {
   state.currentSubpage = sub;
 
   if (sub === 'progress') buildHeatmap();
+  if (sub === 'strengths') loadCachedStudyPlan();
   if (sub === 'content') buildContentPage();
   if (sub === 'resources') renderResourcesList();
   if (sub === 'home') {
@@ -3011,6 +3055,20 @@ async function createAccount() {
   }
   const name = document.getElementById('reg-name').value;
   const email = document.getElementById('reg-email').value;
+  const password = document.getElementById('reg-pass').value;
+  // Create the Supabase Auth user first (stores hashed password server-side)
+  try {
+    const ar = await fetch('/api/supabase-auth', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create_auth_user', payload: { email, password } })
+    });
+    const ad = await ar.json();
+    if (!ar.ok) {
+      // 422 = user already exists — allow continuing so they can re-register a profile
+      if (ar.status !== 422) { showToast('⚠️ ' + (ad.error || 'Could not create account')); return; }
+    }
+  } catch(e) { showToast('⚠️ Network error creating account — please try again.'); return; }
+
   state.user = {
     name, email,
     plan: state.selectedPlan,
@@ -3678,6 +3736,154 @@ ${getA11yInstructions()}`;
 // ═══════════════════════════════════════
 // ASSIGNMENTS
 // ═══════════════════════════════════════
+// ═══════════════════════════════════════
+// AI STUDY PLAN
+// ═══════════════════════════════════════
+async function generateStudyPlan() {
+  const body = document.getElementById('study-plan-body');
+  const btn  = document.getElementById('sp-btn');
+  const meta = document.getElementById('sp-generated-at');
+  btn.disabled = true;
+  btn.textContent = '⏳ Building…';
+  body.innerHTML = '<div class="msg bot" style="max-width:100%;margin:0">⏳ Synaptiq is building your personalised study plan…</div>';
+
+  // ── Gather all available real progress data ──────────────────────────────
+  const stats    = JSON.parse(localStorage.getItem('synaptiq_stats') || '{}');
+  const activity = JSON.parse(localStorage.getItem('synaptiq_activity') || '{}');
+  const board    = state.user?.board    || 'AQA';
+  const target   = state.user?.target   || 'A*';
+  const firstName = (state.user?.name || 'Student').split(' ')[0];
+
+  const totalDaysActive = Object.keys(activity).length;
+  const totalSessions   = Object.values(activity).reduce((a, b) => a + b, 0);
+  const avgPerDay = totalDaysActive > 0
+    ? (totalSessions / totalDaysActive).toFixed(1)
+    : 0;
+
+  // Recent 7-day activity pattern
+  const recentActivity = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const k = d.toISOString().slice(0, 10);
+    recentActivity.push(activity[k] || 0);
+  }
+
+  // SM-2 flashcard analysis — cards with low interval = struggling
+  const weakCards = fcCards
+    .filter(c => (c.interval || 1) <= 3 && c.repetitions !== undefined)
+    .sort((a, b) => (a.interval || 1) - (b.interval || 1))
+    .slice(0, 8)
+    .map(c => c.front || c.category || 'Unknown topic')
+    .filter(Boolean);
+
+  const strongCards = fcCards
+    .filter(c => (c.interval || 1) >= 14)
+    .slice(0, 5)
+    .map(c => c.front || c.category || 'Unknown topic')
+    .filter(Boolean);
+
+  const topicsExplored = (stats.topicsExplored || []).slice(-10);
+
+  const profileCtx = [
+    `Student: ${firstName}`,
+    `Exam Board: ${board}`,
+    `Target Grade: ${target}`,
+    `XP Level: ${state.level} (${state.xp} total XP)`,
+    `Questions Answered: ${stats.questionsAnswered || 0}`,
+    `Study Streak: ${stats.streak || 1} consecutive days`,
+    `Average Study Sessions Per Day (last 12 weeks): ${avgPerDay}`,
+    `Sessions last 7 days (Sun–Sat): ${recentActivity.join(', ')}`,
+    `Topics Explored So Far: ${topicsExplored.length > 0 ? topicsExplored.join(', ') : 'none yet'}`,
+    `Flashcard Weak Areas (low SM-2 interval — needs review): ${weakCards.length > 0 ? weakCards.join(', ') : 'none yet'}`,
+    `Flashcard Strong Areas (high SM-2 interval — good retention): ${strongCards.length > 0 ? strongCards.join(', ') : 'none yet'}`,
+    `Accessibility Modes Active: ${Object.entries(state.modes).filter(([, v]) => v).map(([k]) => k).join(', ') || 'none'}`,
+  ].join('\n');
+
+  const sys = `You are an expert A-Level Mathematics revision planner for ${board}.
+Create a personalised 7-day study plan for the student based on their real progress data.
+
+Output ONLY this exact HTML structure — no markdown, no explanation, no extra text:
+
+<p class="sp-meta">Personalised plan for ${firstName} · ${board} · Target: ${target}</p>
+
+<div class="sp-section-lbl">📅 7-Day Schedule</div>
+<div class="sp-week">
+  [7 .sp-day divs — one per day starting from tomorrow]
+  Each day:
+  <div class="sp-day">
+    <div class="sp-day-name">[Day name e.g. Monday]</div>
+    <div class="sp-day-date">[Short date e.g. 17 Mar]</div>
+    <div class="sp-chips">
+      [2-4 .sp-chip divs, each with class: pure/stats/mech/rev/rest]
+      Format: <div class="sp-chip pure">Topic · Xmin</div>
+    </div>
+    <div class="sp-day-focus">[One sentence focus goal]</div>
+  </div>
+</div>
+
+<div class="sp-section-lbl">⚡ Priority Actions</div>
+<div class="sp-priorities">
+  [3-5 .sp-pri divs with class: (default=high) / medium / low]
+  <div class="sp-pri [medium|low]">
+    <span class="sp-pri-label">[HIGH|MEDIUM|LOW]</span>
+    <span>[Specific action item with A-Level topic and technique]</span>
+  </div>
+</div>
+
+Rules:
+- Use actual weak topics from the student's data in the schedule
+- Mark REST or LIGHT REVIEW days on days with zero recent activity
+- Distribute Pure, Stats and Mechanics topics across the week
+- Keep chip text short (topic name + time, max 5 words)
+- Focus goals should be concrete and actionable
+- Priority actions should name specific A-Level techniques, not generic advice
+- Adapt total daily study time to match the student's average sessions per day
+${getA11yInstructions()}`;
+
+  try {
+    const data = await callClaude(
+      [{ role: 'user', content: `Here is my study profile:\n\n${profileCtx}\n\nPlease generate my 7-day study plan.` }],
+      sys, 1800
+    );
+    let html = getReply(data);
+    if (state.modes.dyscalculia) html = applyDyscalculiaColors(html);
+    body.innerHTML = sanitizeAIHTML(html);
+    // Highlight today's day card (first card = tomorrow; no highlight needed, but mark "today" if user opens plan same day)
+    const now = new Date();
+    const todayLabel = now.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    body.querySelectorAll('.sp-day-date').forEach(el => {
+      if (el.textContent.trim() === todayLabel) el.closest('.sp-day')?.classList.add('sp-today');
+    });
+    if (window.MathJax) MathJax.typesetPromise([body]).catch(() => {});
+    // Persist plan + timestamp
+    const generatedAt = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    safeSetItem('synaptiq_study_plan', JSON.stringify({ html, generatedAt }));
+    meta.textContent = 'Generated ' + generatedAt;
+    addXP(10, '📅 Study plan generated!');
+  } catch(e) {
+    body.innerHTML = `<p style="color:var(--red)">⚠️ Could not generate plan: ${e.message}</p>`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↺ Regenerate';
+  }
+}
+
+function loadCachedStudyPlan() {
+  try {
+    const cached = JSON.parse(localStorage.getItem('synaptiq_study_plan') || 'null');
+    if (!cached) return;
+    const body = document.getElementById('study-plan-body');
+    const meta = document.getElementById('sp-generated-at');
+    const btn  = document.getElementById('sp-btn');
+    if (body && cached.html) {
+      body.innerHTML = sanitizeAIHTML(cached.html);
+      if (window.MathJax) MathJax.typesetPromise([body]).catch(() => {});
+    }
+    if (meta && cached.generatedAt) meta.textContent = 'Generated ' + cached.generatedAt;
+    if (btn) btn.textContent = '↺ Regenerate';
+  } catch(e) {}
+}
+
 function switchAssign(view) {
   document.querySelectorAll('.assign-view').forEach(v => v.classList.remove('active'));
   document.getElementById('av-' + view).classList.add('active');
