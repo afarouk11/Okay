@@ -85,6 +85,29 @@ export default async function handler(req, res) {
         <p>Log in to Synaptiq and use the revision timetable, practice questions, and video explainers to make the most of your remaining time.</p>
         <a href="${siteUrl}" style="display:inline-block;background:#C9A84C;color:#08090E;padding:.875rem 2rem;border-radius:10px;font-weight:700;text-decoration:none;margin-top:1rem">Revise Now</a>
       </div>`
+    },
+    parent_report: {
+      subject: `${name}'s A-Level Maths progress report — Synaptiq`,
+      html: `<div style="font-family:'DM Sans',sans-serif;max-width:600px;margin:0 auto;background:#0D0F18;color:#F0EEF8;border-radius:16px;overflow:hidden">
+        <div style="background:linear-gradient(135deg,#C9A84C,#A07830);padding:2rem;text-align:center">
+          <h1 style="font-family:serif;font-size:1.5rem;margin:0;color:#08090E">Parent Progress Report</h1>
+          <p style="opacity:.8;color:#08090E;margin:.5rem 0 0">Synaptiq A-Level Maths · ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+        </div>
+        <div style="padding:2rem">
+          <h2 style="color:#C9A84C">${name}'s progress</h2>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0">
+            <div style="background:#181C2A;border-radius:10px;padding:1rem;text-align:center"><div style="font-size:2rem;font-weight:800;color:#C9A84C">${stats?.streak || 1} 🔥</div><div style="font-size:.8rem;color:#6B7394">Day streak</div></div>
+            <div style="background:#181C2A;border-radius:10px;padding:1rem;text-align:center"><div style="font-size:2rem;font-weight:800;color:#60A5FA">${stats?.questions || 0}</div><div style="font-size:.8rem;color:#6B7394">Questions answered</div></div>
+            <div style="background:#181C2A;border-radius:10px;padding:1rem;text-align:center"><div style="font-size:2rem;font-weight:800;color:#4ADE80">${stats?.topics || 0}</div><div style="font-size:.8rem;color:#6B7394">Topics explored</div></div>
+            <div style="background:#181C2A;border-radius:10px;padding:1rem;text-align:center"><div style="font-size:2rem;font-weight:800;color:#A78BFA">${stats?.xp || 0}</div><div style="font-size:.8rem;color:#6B7394">XP earned</div></div>
+          </div>
+          <p style="color:#6B7394;font-size:.85rem">Log in to Synaptiq to see the full progress dashboard, module breakdowns, and study heatmap.</p>
+          <a href="${siteUrl}" style="display:inline-block;background:#C9A84C;color:#08090E;padding:.875rem 2rem;border-radius:10px;font-weight:700;text-decoration:none;margin-top:1rem">View Full Dashboard</a>
+        </div>
+        <div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.07);font-size:.8rem;color:#6B7394;text-align:center">
+          Synaptiq &middot; A-Level Maths AI Tutor &middot; <a href="${siteUrl}/privacy" style="color:#6B7394">Privacy</a>
+        </div>
+      </div>`
     }
   };
 

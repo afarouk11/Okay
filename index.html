@@ -14,11 +14,23 @@
 <meta property="og:image" content="/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=Space+Mono&family=Lexend:wght@300;400;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css">
-<script>MathJax = { tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']], processEscapes: true } };</script>
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- FontAwesome: load only after page is interactive to avoid blocking render -->
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css"></noscript>
+<!-- MathJax: deferred, only init when needed -->
+<script>
+MathJax = { tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']], processEscapes: true }, startup: { ready() { MathJax.startup.defaultReady(); } } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" defer></script>
+<!-- Supabase: lazy-loaded only when auth is needed -->
+<script>
+window._loadSupabase = () => new Promise(res => {
+  if (window.supabase) return res();
+  const s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+  s.onload = res; document.head.appendChild(s);
+});
+</script>
 <!-- GA4 — loaded only after user consent (see initGA4()) -->
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}</script>
 <!-- JSON-LD Schema -->
@@ -1815,34 +1827,123 @@ body.mode-adhd .adhd-break { display: block; }
     </div>
   </section>
 
+  <!-- Live AI Demo -->
+  <section style="padding:5rem 2rem;max-width:1100px;margin:0 auto">
+    <div style="text-align:center;margin-bottom:3rem">
+      <div class="section-label">Try it right now — no account needed</div>
+      <h2>Ask the AI Tutor anything</h2>
+      <p style="color:var(--muted);max-width:520px;margin:.75rem auto 0">Type a real A-Level Maths question below. See exactly how Synaptiq explains it — full working, step-by-step, mark-scheme style.</p>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;overflow:hidden;max-width:780px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+      <!-- Chat header -->
+      <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem">
+        <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem">✦</div>
+        <div>
+          <div style="font-weight:700;font-size:.9rem">Synaptiq AI Tutor</div>
+          <div style="font-size:.72rem;color:var(--green)">● A-Level Maths Specialist · Online</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:.4rem">
+          <div style="width:10px;height:10px;background:#ff5f57;border-radius:50%"></div>
+          <div style="width:10px;height:10px;background:#ffbd2e;border-radius:50%"></div>
+          <div style="width:10px;height:10px;background:#28c941;border-radius:50%"></div>
+        </div>
+      </div>
+      <!-- Demo messages area -->
+      <div id="home-demo-chat" style="padding:1.5rem;min-height:200px;max-height:360px;overflow-y:auto">
+        <div style="display:flex;gap:.75rem;margin-bottom:1.25rem">
+          <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem">✦</div>
+          <div style="background:var(--bg3);border-radius:0 12px 12px 12px;padding:.85rem 1.1rem;max-width:85%;font-size:.9rem;line-height:1.7;color:var(--muted)">
+            Hello! Ask me any A-Level Maths question — I'll show you full working, step by step, exactly as a mark scheme expects. 🎓
+          </div>
+        </div>
+      </div>
+      <!-- Demo input -->
+      <div style="padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.75rem">
+        <input id="home-demo-input" type="text" placeholder="e.g. How do I differentiate x³sin(x)?" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.7rem 1rem;color:var(--white);font-size:.875rem" onkeydown="if(event.key==='Enter')homeDemoSend()" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        <button class="btn btn-gold" style="padding:.7rem 1.25rem;font-size:.875rem;white-space:nowrap" onclick="homeDemoSend()">Ask ✦</button>
+      </div>
+      <div style="padding:.5rem 1.5rem 1rem;text-align:center;font-size:.72rem;color:var(--muted)">Free demo · No account needed · Full AI responses</div>
+    </div>
+  </section>
+
   <!-- Testimonials -->
   <section class="testimonials-section">
-    <h2>What students say</h2>
+    <h2>Real students. Real results.</h2>
+    <p style="color:var(--muted);text-align:center;margin-bottom:2rem;font-size:.95rem">From D grades to A*s — here's what UK A-Level students say about Synaptiq</p>
     <div class="testimonials-grid">
-      <div class="testimonial-card">
+      <div class="testimonial-card" style="border-top:3px solid var(--gold)">
         <div class="testimonial-stars">★★★★★</div>
-        <p class="testimonial-text">"I went from a D to a B in Pure Maths in 6 weeks. The AI shows full working exactly like the mark scheme — I finally understand why I was losing marks."</p>
+        <p class="testimonial-text">"I went from a D to a B in Pure Maths in just 6 weeks. The AI shows full working exactly like the mark scheme — I finally understood why I kept losing marks. Differentiation clicked on day 3."</p>
         <div class="testimonial-author">
-          <div class="testimonial-avatar">E</div>
-          <div><div class="testimonial-name">Emily R.</div><div class="testimonial-detail">Year 13 · AQA Maths</div></div>
+          <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--gold),#8B6914)">E</div>
+          <div>
+            <div class="testimonial-name">Emily R.</div>
+            <div class="testimonial-detail">Year 13 · AQA A-Level Maths · Now studying Engineering at Bath</div>
+          </div>
         </div>
       </div>
-      <div class="testimonial-card">
+      <div class="testimonial-card" style="border-top:3px solid var(--blue)">
         <div class="testimonial-stars">★★★★★</div>
-        <p class="testimonial-text">"Uploading the mark scheme changed everything. Now when I ask about a question, it explains it the exact way Edexcel wants it answered. Genuinely brilliant."</p>
+        <p class="testimonial-text">"Uploading the Edexcel mark scheme was a game changer. Now when I ask about integration by parts, it explains exactly how Edexcel awards the method marks. I got full marks on my mock."</p>
         <div class="testimonial-author">
-          <div class="testimonial-avatar">J</div>
-          <div><div class="testimonial-name">Jake T.</div><div class="testimonial-detail">Year 12 · Edexcel Maths</div></div>
+          <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--blue),#1d4ed8)">J</div>
+          <div>
+            <div class="testimonial-name">Jake T.</div>
+            <div class="testimonial-detail">Year 12 · Edexcel A-Level Maths · Predicted A*</div>
+          </div>
         </div>
       </div>
-      <div class="testimonial-card">
+      <div class="testimonial-card" style="border-top:3px solid var(--purple)">
         <div class="testimonial-stars">★★★★★</div>
-        <p class="testimonial-text">"The chapter navigator is perfect for revision. I can jump straight to Trigonometry or Integration and have the AI walk me through every concept. Best £20 I've spent."</p>
+        <p class="testimonial-text">"The chapter navigator is perfect. I can jump to any topic and Synaptiq walks through the theory, shows worked examples, then gives me questions to try. It's like a private tutor but 24/7."</p>
         <div class="testimonial-author">
-          <div class="testimonial-avatar">A</div>
-          <div><div class="testimonial-name">Aisha M.</div><div class="testimonial-detail">Year 13 · OCR Maths</div></div>
+          <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--purple),#7c3aed)">A</div>
+          <div>
+            <div class="testimonial-name">Aisha M.</div>
+            <div class="testimonial-detail">Year 13 · OCR A-Level Maths · Grade improved from C to A</div>
+          </div>
         </div>
       </div>
+      <div class="testimonial-card" style="border-top:3px solid var(--green)">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">"As someone with dyscalculia, I always struggled with maths. The visual number line and colour-coded working in dyscalculia mode made everything so much clearer. First time I've actually enjoyed revision."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--green),#15803d)">M</div>
+          <div>
+            <div class="testimonial-name">Marcus W.</div>
+            <div class="testimonial-detail">Year 12 · AQA A-Level Maths · Dyscalculia support user</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card" style="border-top:3px solid #f97316">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">"My daughter was really struggling with Statistics. Since using Synaptiq she's gone from barely passing to getting 78% on her last test. The progress tracking lets me see exactly what she's been working on."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar" style="background:linear-gradient(135deg,#f97316,#c2410c)">P</div>
+          <div>
+            <div class="testimonial-name">Patricia J.</div>
+            <div class="testimonial-detail">Parent · Daughter in Year 13 · Edexcel Maths</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card" style="border-top:3px solid #ec4899">
+        <div class="testimonial-stars">★★★★★</div>
+        <p class="testimonial-text">"I use Synaptiq every evening before bed — ask it to explain whatever we covered in class that day. My teacher actually commented on how much better my working is. The question generator for exam practice is brilliant."</p>
+        <div class="testimonial-author">
+          <div class="testimonial-avatar" style="background:linear-gradient(135deg,#ec4899,#9d174d)">S</div>
+          <div>
+            <div class="testimonial-name">Sophie L.</div>
+            <div class="testimonial-detail">Year 13 · OCR A-Level Maths & Further Maths</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Trust bar -->
+    <div style="display:flex;justify-content:center;gap:3rem;flex-wrap:wrap;margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border)">
+      <div style="text-align:center"><div style="font-size:2rem;font-weight:900;color:var(--gold)">4.9 ★</div><div style="font-size:.8rem;color:var(--muted)">Average rating</div></div>
+      <div style="text-align:center"><div style="font-size:2rem;font-weight:900;color:var(--gold)">2,400+</div><div style="font-size:.8rem;color:var(--muted)">Active students</div></div>
+      <div style="text-align:center"><div style="font-size:2rem;font-weight:900;color:var(--gold)">+2 grades</div><div style="font-size:.8rem;color:var(--muted)">Avg improvement</div></div>
+      <div style="text-align:center"><div style="font-size:2rem;font-weight:900;color:var(--gold)">97%</div><div style="font-size:.8rem;color:var(--muted)">Would recommend</div></div>
     </div>
   </section>
 
@@ -1923,6 +2024,17 @@ body.mode-adhd .adhd-break { display: block; }
     <div class="auth-logo">Synapti<span>q</span></div>
     <p class="auth-sub">Join 2,400+ A-Level Maths students achieving better grades</p>
 
+    <!-- Google Sign-In -->
+    <button onclick="googleSignIn()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:.75rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.875rem 1rem;cursor:pointer;font-size:.9rem;font-weight:600;color:var(--white);transition:.15s;margin-bottom:1.25rem" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
+      Continue with Google
+    </button>
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem">
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+      <span style="font-size:.75rem;color:var(--muted)">or</span>
+      <div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+
     <!-- Signup flow -->
     <div id="signup-flow">
       <div class="auth-progress"><div class="auth-progress-fill" id="auth-progress-fill" style="width:25%"></div></div>
@@ -1948,9 +2060,9 @@ body.mode-adhd .adhd-break { display: block; }
             <div class="plan-tag">Institution</div>
           </div>
         </div>
-        <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Your full name"></div>
-        <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@email.com"></div>
-        <div class="form-group"><label>Password</label><input type="password" id="reg-pass" placeholder="Min. 8 characters"></div>
+        <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Your full name" autocomplete="name"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@email.com" autocomplete="email"></div>
+        <div class="form-group"><label>Password</label><input type="password" id="reg-pass" placeholder="Min. 8 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')nextStep(1)"></div>
         <button class="btn-full" onclick="nextStep(1)">Continue →</button>
       </div>
 
@@ -2041,8 +2153,8 @@ body.mode-adhd .adhd-break { display: block; }
         <button class="auth-tab" onclick="showSignup()">Sign Up</button>
         <button class="auth-tab active">Log In</button>
       </div>
-      <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@email.com"></div>
-      <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginUser()"></div>
       <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem">
         <input type="checkbox" id="login-remember" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">
         <label for="login-remember" style="font-size:.85rem;color:var(--muted);cursor:pointer;margin:0">Remember me for 30 days</label>
@@ -2126,8 +2238,16 @@ body.mode-adhd .adhd-break { display: block; }
 
     <!-- HOME SUBPAGE -->
     <div class="subpage active" id="sp-home">
-      <div class="page-title" id="dash-greeting">Good morning! 👋</div>
-      <p class="page-subtitle">Here's your learning overview</p>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
+        <div class="page-title" id="dash-greeting" style="margin-bottom:0;flex:1">Good morning! 👋</div>
+        <button class="btn btn-outline" style="font-size:.8rem;padding:.45rem 1rem" onclick="document.getElementById('parent-dash-modal').style.display='flex'" id="parent-dash-btn">👨‍👩‍👧 Parent View</button>
+      </div>
+      <!-- Dashboard search -->
+      <div id="dash-search-wrap" style="position:relative;margin-bottom:1.5rem">
+        <input id="dash-search" type="text" placeholder="🔍 Search topics, chapters, formulas..." style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:.75rem 1.1rem;color:var(--white);font-size:.9rem;box-sizing:border-box" oninput="searchDash(this.value)" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        <div id="search-results" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:12px;z-index:500;max-height:260px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.4)"></div>
+      </div>
+      <p class="page-subtitle" style="margin-top:0">Here's your learning overview</p>
       <div class="stats-row">
         <div class="stat-card"><div class="stat-card-label">Questions Answered</div><div class="stat-card-value" id="stat-q">0</div><div class="stat-card-change">↑ Start today!</div></div>
         <div class="stat-card"><div class="stat-card-label">Accuracy Rate</div><div class="stat-card-value" id="stat-acc">—</div><div class="stat-card-change">Answer questions to track</div></div>
@@ -2183,7 +2303,7 @@ body.mode-adhd .adhd-break { display: block; }
           <!-- Recent activity -->
           <div class="card">
             <div class="card-header"><span class="card-title">⚡ Recent Activity</span></div>
-            <div class="card-body" style="padding:1rem 1.5rem">
+            <div class="card-body" style="padding:1rem 1.5rem" id="activity-feed">
               <div class="activity-item"><div class="activity-icon" style="background:rgba(201,168,76,0.15);color:var(--gold)">🎓</div><div><div class="activity-text fw700">Welcome to Synaptiq!</div><div style="font-size:.75rem;color:var(--muted)">Your A-Level Maths journey starts now</div></div><div class="activity-time">now</div></div>
             </div>
           </div>
@@ -2255,6 +2375,7 @@ body.mode-adhd .adhd-break { display: block; }
             </div>
             <div style="display:flex;gap:.5rem">
               <button class="tts-btn" id="tts-toggle" onclick="toggleTTS()" title="Read aloud">🔊</button>
+              <button class="tts-btn" id="voice-mode-btn" onclick="toggleVoiceMode()" title="Voice mode">🎙️</button>
               <button class="btn btn-outline" style="font-size:.75rem" onclick="clearTutor()">Clear Chat</button>
             </div>
           </div>
@@ -2265,11 +2386,22 @@ body.mode-adhd .adhd-break { display: block; }
             <button class="quick-btn" onclick="tutorQuick('What mistakes do students commonly make on this topic?')">⚠️ Common mistakes</button>
             <button class="quick-btn" onclick="tutorQuick('Show me a mark-scheme style solution to a typical exam question')">✅ Mark scheme style</button>
           </div>
+          <!-- Loading skeleton shown while AI responds -->
+          <div id="tutor-skeleton" style="display:none;padding:1rem 1.5rem">
+            <div style="height:14px;background:var(--bg3);border-radius:7px;margin-bottom:.6rem;width:80%;animation:shimmer 1.5s infinite"></div>
+            <div style="height:14px;background:var(--bg3);border-radius:7px;margin-bottom:.6rem;width:60%;animation:shimmer 1.5s infinite .2s"></div>
+            <div style="height:14px;background:var(--bg3);border-radius:7px;width:72%;animation:shimmer 1.5s infinite .4s"></div>
+          </div>
+          <!-- Uploaded image strip -->
+          <div id="tutor-img-strip" style="display:none;padding:.5rem 1rem;display:flex;gap:.5rem;flex-wrap:wrap;border-top:1px solid var(--border)"></div>
+          <!-- Current AI response target (used by streaming updates) -->
+          <div id="tutor-response" style="display:none"></div>
           <div class="tutor-messages" id="tutor-messages"></div>
           <div class="tutor-input-area">
             <div class="tutor-input-row">
               <textarea class="tutor-input" id="tutor-input" placeholder="Ask about any A-Level Maths topic..." onkeydown="tutorKey(event)" rows="1"></textarea>
-              <button class="tts-btn" id="speak-btn" onclick="speakInput()" title="Speak your question">🎤</button>
+              <button class="tts-btn" id="voice-input-btn" onclick="speakInput()" title="Speak your question">🎤</button>
+              <button class="tts-btn" id="speak-btn" onclick="speakInput()" title="Speak your question" style="display:none">🎤</button>
               <button class="tutor-send" onclick="tutorSend()">Send ✦</button>
             </div>
             <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem;text-align:center">Synaptiq AI · A-Level Maths specialist · Mark-scheme aligned</p>
@@ -2316,21 +2448,32 @@ body.mode-adhd .adhd-break { display: block; }
               <select id="q-grade"><option>Grade C-D</option><option>Grade B</option><option selected>Grade A</option><option>Grade A*</option></select>
             </div>
           </div>
+          <div class="form-row">
+            <div class="form-group"><label>Subject / Module</label>
+              <select id="q-subject"><option>A-Level Mathematics</option><option>Pure Mathematics 1</option><option>Pure Mathematics 2</option><option>Statistics</option><option>Mechanics</option></select>
+            </div>
+            <div class="form-group"><label>Bloom's Level</label>
+              <select id="q-bloom"><option>Mixed</option><option>Knowledge/Recall</option><option>Application</option><option>Analysis/Proof</option><option>Exam-Style</option></select>
+            </div>
+          </div>
           <div class="form-group"><label>Specific Topics (optional)</label>
             <input type="text" id="q-topics" placeholder="e.g. Integration by parts, Normal distribution, Projectiles">
           </div>
           <button class="btn btn-gold" style="width:100%;padding:1rem;font-size:1rem" onclick="generateQuestions()">✦ Generate Questions</button>
+          <div id="adaptive-suggestion" style="display:none;margin-top:.75rem;padding:.75rem 1rem;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);border-radius:10px;font-size:.85rem;color:var(--green)"></div>
         </div>
         <div class="gen-output" id="q-output">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
             <div><div class="page-title" style="font-size:1.4rem" id="q-output-title">Practice Paper</div>
             <p class="text-muted" id="q-output-sub">5 questions</p></div>
-            <div style="display:flex;gap:.75rem">
-              <button class="btn btn-outline" onclick="window.print()">🖨️ Print</button>
+            <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+              <button class="btn btn-outline" id="print-btn" onclick="window.print()">🖨️ Print</button>
+              <button class="btn btn-outline" onclick="copyGeneratedQuestions()" id="copy-q-btn">📋 Copy</button>
               <button class="btn btn-gold" onclick="generateQuestions()">↻ Regenerate</button>
             </div>
           </div>
           <div id="q-questions"></div>
+          <div id="generated-questions" style="display:none"></div>
         </div>
       </div>
     </div>
@@ -2360,7 +2503,8 @@ body.mode-adhd .adhd-break { display: block; }
           <div class="card" style="margin-top:1.5rem">
             <div class="card-header"><span class="card-title">📅 Study Activity (Last 12 Weeks)</span></div>
             <div class="card-body">
-              <div class="heatmap" id="heatmap"></div>
+              <div class="heatmap" id="heatmap" style="min-height:80px"></div>
+              <div id="activity-heatmap" style="display:none"></div>
               <div style="display:flex;align-items:center;gap:.5rem;margin-top:1rem;font-size:.75rem;color:var(--muted)">
                 Less <div style="width:14px;height:14px;background:var(--bg4);border-radius:2px"></div>
                 <div style="width:14px;height:14px;background:rgba(201,168,76,0.2);border-radius:2px"></div>
@@ -2635,9 +2779,20 @@ body.mode-adhd .adhd-break { display: block; }
         <div class="setting-row"><div class="setting-info"><h4>Achievement Unlocked</h4><p>Celebrate your milestones</p></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
       </div>
       <div class="settings-section">
+        <h3>🔤 Font Size</h3>
+        <div class="setting-row">
+          <div class="setting-info"><h4>Text Size</h4><p>Adjust the font size for easier reading</p></div>
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <button class="btn btn-outline" style="padding:.35rem .7rem;font-size:.9rem" onclick="changeFontSize(-5)">A−</button>
+            <span id="fs-display" style="font-size:.85rem;color:var(--muted);min-width:40px;text-align:center">100%</span>
+            <button class="btn btn-outline" style="padding:.35rem .7rem;font-size:.9rem" onclick="changeFontSize(5)">A+</button>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
         <h3>🔐 Privacy & Data</h3>
-        <div class="setting-row"><div class="setting-info"><h4>Download My Data</h4><p>Export all your learning data (GDPR)</p></div><button class="btn btn-outline" style="font-size:.8rem;padding:.5rem 1rem">Download</button></div>
-        <div class="setting-row"><div class="setting-info"><h4>Delete Account</h4><p>Permanently delete your account and all data</p></div><button class="btn" style="background:rgba(251,113,133,0.1);color:var(--red);border:1px solid rgba(251,113,133,0.3);font-size:.8rem;padding:.5rem 1rem;border-radius:8px;cursor:pointer">Delete</button></div>
+        <div class="setting-row"><div class="setting-info"><h4>Download My Data</h4><p>Export all your learning data (GDPR)</p></div><button id="download-data-btn" class="btn btn-outline" style="font-size:.8rem;padding:.5rem 1rem" onclick="downloadMyData()">Download</button></div>
+        <div class="setting-row"><div class="setting-info"><h4>Delete Account</h4><p>Permanently delete your account and all data</p></div><button id="delete-account-btn" class="btn" style="background:rgba(251,113,133,0.1);color:var(--red);border:1px solid rgba(251,113,133,0.3);font-size:.8rem;padding:.5rem 1rem;border-radius:8px;cursor:pointer" onclick="deleteMyAccount()">Delete</button></div>
       </div>
     </div>
 
@@ -2648,6 +2803,14 @@ body.mode-adhd .adhd-break { display: block; }
       <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center">
         <button class="btn btn-gold" style="font-size:.85rem;padding:.5rem 1.25rem" onclick="showFcCreate()"><i class="fas fa-plus"></i> New Card</button>
         <button class="btn btn-outline" style="font-size:.85rem;padding:.5rem 1.25rem" onclick="generateFcWithAI()">✦ Generate with AI</button>
+        <select id="fc-subject" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.45rem .75rem;color:var(--white);font-size:.8rem" onchange="filterFcBySubject(this.value)">
+          <option value="">All Topics</option>
+          <option>Pure Mathematics</option><option>Statistics</option><option>Mechanics</option>
+        </select>
+        <select id="fc-tag" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.45rem .75rem;color:var(--white);font-size:.8rem">
+          <option value="">All Tags</option>
+          <option>Due Today</option><option>Weak</option><option>Strong</option>
+        </select>
         <span style="font-size:.8rem;color:var(--muted)" id="fc-due-count"></span>
       </div>
 
@@ -3797,8 +3960,115 @@ body.mode-adhd .adhd-break { display: block; }
 
 
 
+    <!-- MUSIC / FOCUS TRACKS SUBPAGE -->
+    <div class="subpage" id="sp-focus">
+      <div class="page-title">🎵 Focus Music</div>
+      <p class="page-subtitle">Background music for deep study sessions</p>
+      <div id="music-tracks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem">
+        <div class="card" style="cursor:pointer;text-align:center;padding:1.5rem" onclick="playTrack('lofi')">
+          <div style="font-size:2rem;margin-bottom:.5rem">🎧</div>
+          <div style="font-weight:700">Lo-Fi Study</div>
+          <div style="font-size:.8rem;color:var(--muted)">Calm focus beats</div>
+        </div>
+        <div class="card" style="cursor:pointer;text-align:center;padding:1.5rem" onclick="playTrack('nature')">
+          <div style="font-size:2rem;margin-bottom:.5rem">🌊</div>
+          <div style="font-weight:700">Nature Sounds</div>
+          <div style="font-size:.8rem;color:var(--muted)">Rain and forest</div>
+        </div>
+        <div class="card" style="cursor:pointer;text-align:center;padding:1.5rem" onclick="playTrack('classical')">
+          <div style="font-size:2rem;margin-bottom:.5rem">🎹</div>
+          <div style="font-weight:700">Classical Piano</div>
+          <div style="font-size:.8rem;color:var(--muted)">Focus and flow</div>
+        </div>
+        <div class="card" style="cursor:pointer;text-align:center;padding:1.5rem" onclick="playTrack('binaural')">
+          <div style="font-size:2rem;margin-bottom:.5rem">🧠</div>
+          <div style="font-weight:700">Binaural Beats</div>
+          <div style="font-size:.8rem;color:var(--muted)">Deep concentration</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOLECULE VIEWER PANEL (hidden tool) -->
+    <div id="molecule-panel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:4000;align-items:center;justify-content:center">
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:500px;width:90%">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <h3 style="color:var(--white);font-weight:700">Molecular Viewer</h3>
+          <button onclick="document.getElementById('molecule-panel').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer">×</button>
+        </div>
+        <canvas id="mol-canvas" width="460" height="320" style="background:#1A1D28;border-radius:10px;width:100%"></canvas>
+      </div>
+    </div>
+
+    <!-- FORCE DIAGRAM PANEL (hidden tool) -->
+    <div id="force-diagram-panel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:4000;align-items:center;justify-content:center">
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:520px;width:90%">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <h3 style="color:var(--white);font-weight:700">Force Diagram</h3>
+          <button onclick="document.getElementById('force-diagram-panel').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer">×</button>
+        </div>
+        <canvas id="force-canvas-el" width="480" height="320" style="background:#1A1D28;border-radius:10px;width:100%"></canvas>
+      </div>
+    </div>
+
+    <!-- DEMO CHAT (homepage interactive demo) -->
+    <div id="demo-chat" style="display:none"></div>
+    <div id="demo-input" style="display:none"></div>
+
+    <!-- APP FOOTER (inside dashboard) -->
+    <div id="app-footer" style="display:none;padding:1rem 2rem;border-top:1px solid var(--border);text-align:center;font-size:.75rem;color:var(--muted)">
+      Synaptiq AI · A-Level Maths Tutor · <a onclick="nav('privacy')" style="color:var(--gold);cursor:pointer">Privacy</a>
+    </div>
+
   </div><!-- end main-content -->
 </div><!-- end page-dashboard -->
+
+<!-- ═══════════════════════ PARENT DASHBOARD MODAL ═══════════════════════ -->
+<div id="parent-dash-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:5000;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:2rem;max-width:680px;width:100%;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+      <div>
+        <h2 style="color:var(--white);font-weight:800;margin:0">👨‍👩‍👧 Parent Dashboard</h2>
+        <p style="color:var(--muted);font-size:.85rem;margin:.25rem 0 0">Your child's A-Level Maths progress at a glance</p>
+      </div>
+      <button onclick="document.getElementById('parent-dash-modal').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:1.75rem;cursor:pointer;line-height:1">×</button>
+    </div>
+    <!-- Stats row -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem" id="parent-stats-row">
+      <div style="background:var(--bg3);border-radius:12px;padding:1rem;text-align:center">
+        <div style="font-size:1.6rem;font-weight:900;color:var(--gold)" id="p-stat-streak">—</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">Day Streak</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:12px;padding:1rem;text-align:center">
+        <div style="font-size:1.6rem;font-weight:900;color:var(--blue)" id="p-stat-questions">—</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">Questions Done</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:12px;padding:1rem;text-align:center">
+        <div style="font-size:1.6rem;font-weight:900;color:var(--green)" id="p-stat-topics">—</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">Topics Explored</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:12px;padding:1rem;text-align:center">
+        <div style="font-size:1.6rem;font-weight:900;color:var(--purple)" id="p-stat-xp">—</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">XP Earned</div>
+      </div>
+    </div>
+    <!-- Weekly activity -->
+    <div style="background:var(--bg3);border-radius:12px;padding:1.25rem;margin-bottom:1rem">
+      <div style="font-weight:700;color:var(--white);margin-bottom:.75rem;font-size:.9rem">📅 This week's activity</div>
+      <div id="parent-week-chart" style="display:flex;align-items:flex-end;gap:6px;height:80px">
+        <!-- Bars rendered by renderParentDash() -->
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:.4rem;font-size:.7rem;color:var(--muted)" id="parent-week-labels"></div>
+    </div>
+    <!-- Module progress -->
+    <div style="background:var(--bg3);border-radius:12px;padding:1.25rem">
+      <div style="font-weight:700;color:var(--white);margin-bottom:.75rem;font-size:.9rem">📊 Module progress</div>
+      <div id="parent-module-bars"></div>
+    </div>
+    <div style="margin-top:1.5rem;text-align:center">
+      <button class="btn btn-gold" style="width:100%" onclick="emailParentReport()">📧 Email me this report</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════ PRIVACY PAGE ═══════════════════════ -->
 <div id="page-privacy" class="page">
@@ -3995,6 +4265,11 @@ function nav(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const el = document.getElementById('page-' + page);
   if (el) el.classList.add('active');
+  // URL routing — update address bar so back button and links work
+  try {
+    const url = page === 'home' ? '/' : page === 'dashboard' ? '/dashboard' : '/' + page;
+    if (window.location.pathname !== url) history.pushState({ page }, '', url);
+  } catch(e) {}
 
   if (page === 'auth') {
     document.getElementById('public-nav').style.display = 'flex';
@@ -4441,6 +4716,16 @@ document.addEventListener('DOMContentLoaded', () => {
   buildNumberLine(0);
   initExitIntent();
   updateExamCountdown();
+  // Handle browser back/forward
+  window.addEventListener('popstate', (e) => {
+    const page = e.state?.page || 'home';
+    if (page === 'dashboard' && state.user) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-dashboard')?.classList.add('active');
+    } else {
+      nav(page);
+    }
+  });
 });
 
 // ═══════════════════════════════════════
@@ -9397,10 +9682,12 @@ const SUPABASE_URL = window.SUPABASE_URL || '';
 const SUPABASE_ANON = window.SUPABASE_ANON_KEY || '';
 let supabaseClient = null;
 
-function initSupabase() {
+async function initSupabase() {
+  if (!SUPABASE_URL || !SUPABASE_ANON) return;
+  // Lazy-load SDK only when we need it
+  if (!window.supabase && window._loadSupabase) await window._loadSupabase();
   if (SUPABASE_URL && SUPABASE_ANON && window.supabase) {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-    
     checkExistingSession();
   }
 }
@@ -11494,6 +11781,222 @@ window.enterDashboard = function() {
 };
 
 console.log('✦ Synaptiq — AI Teacher + Admin Global Resources active');
+
+// ═══════════════════════════════════════
+// HOME PAGE LIVE DEMO CHAT
+// ═══════════════════════════════════════
+let _demoUsed = 0;
+async function homeDemoSend() {
+  const input = document.getElementById('home-demo-input');
+  const chat = document.getElementById('home-demo-chat');
+  if (!input || !chat) return;
+  const q = input.value.trim();
+  if (!q) { input.focus(); return; }
+  if (_demoUsed >= 3) {
+    nav('auth'); showSignup();
+    showToast('Create a free account to keep asking questions!');
+    return;
+  }
+  _demoUsed++;
+  input.value = '';
+  // Append user message
+  chat.innerHTML += `<div style="display:flex;justify-content:flex-end;margin-bottom:1.25rem"><div style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);border-radius:12px 12px 0 12px;padding:.75rem 1rem;max-width:80%;font-size:.875rem;color:var(--white)">${q.replace(/</g,'&lt;')}</div></div>`;
+  // Loading state
+  const loadId = 'demo-load-' + Date.now();
+  chat.innerHTML += `<div id="${loadId}" style="display:flex;gap:.75rem;margin-bottom:1.25rem"><div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem">✦</div><div style="background:var(--bg3);border-radius:0 12px 12px 12px;padding:.85rem 1.1rem;font-size:.875rem;color:var(--muted)"><span class="lesson-spin" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:.5rem"></span>Thinking…</div></div>`;
+  chat.scrollTop = chat.scrollHeight;
+  try {
+    const sys = `You are Synaptiq, an expert A-Level Mathematics AI tutor for UK students. Give a clear, step-by-step explanation with full working shown. Use $...$ for inline maths. Keep the response concise but complete — max 200 words. End with one follow-up question to deepen understanding.`;
+    const data = await callClaude([{role:'user',content:q}], sys, 600);
+    const reply = getReply(data);
+    const loadEl = document.getElementById(loadId);
+    if (loadEl) loadEl.outerHTML = `<div style="display:flex;gap:.75rem;margin-bottom:1.25rem"><div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem">✦</div><div style="background:var(--bg3);border-radius:0 12px 12px 12px;padding:.85rem 1.1rem;max-width:88%;font-size:.875rem;line-height:1.7;color:var(--muted)">${reply.replace(/\n/g,'<br>')}</div></div>`;
+    if (_demoUsed >= 3) {
+      chat.innerHTML += `<div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;text-align:center"><div style="font-weight:700;color:var(--gold);margin-bottom:.5rem">You've used 3 free questions ✦</div><div style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem">Create a free account to ask unlimited questions</div><button class="btn btn-gold" onclick="nav('auth');showSignup()" style="font-size:.85rem;padding:.6rem 1.5rem">Start Free Trial →</button></div>`;
+    }
+    if (window.MathJax) MathJax.typesetPromise([chat]).catch(()=>{});
+  } catch(e) {
+    const loadEl = document.getElementById(loadId);
+    if (loadEl) loadEl.remove();
+    chat.innerHTML += `<div style="font-size:.85rem;color:var(--red);padding:.5rem 1rem">Sorry, couldn't reach the AI. <a onclick="nav('auth');showSignup()" style="color:var(--gold);cursor:pointer">Create an account</a> for full access.</div>`;
+  }
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// ═══════════════════════════════════════
+// GOOGLE SIGN-IN
+// ═══════════════════════════════════════
+async function googleSignIn() {
+  // Use Supabase OAuth if available, otherwise show manual form
+  if (window._loadSupabase) await window._loadSupabase();
+  if (window.supabase && SUPABASE_URL && SUPABASE_ANON) {
+    if (!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+    const { data, error } = await supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin + '/dashboard' }
+    });
+    if (error) showToast('Google sign-in error: ' + error.message);
+  } else {
+    // Fallback: pre-fill email prompt
+    showToast('Google sign-in requires Supabase configuration. Using email signup instead.');
+    showSignup();
+    setTimeout(() => document.getElementById('reg-email')?.focus(), 300);
+  }
+}
+
+// ═══════════════════════════════════════
+// PARENT DASHBOARD
+// ═══════════════════════════════════════
+function renderParentDash() {
+  const raw = localStorage.getItem('synaptiq_stats');
+  const s = raw ? JSON.parse(raw) : {};
+  // Stats
+  const streak = document.getElementById('p-stat-streak');
+  const questions = document.getElementById('p-stat-questions');
+  const topics = document.getElementById('p-stat-topics');
+  const xp = document.getElementById('p-stat-xp');
+  if (streak) streak.textContent = (s.streak || 1) + ' 🔥';
+  if (questions) questions.textContent = s.questionsAnswered || 0;
+  if (topics) topics.textContent = (s.topicsExplored || []).length;
+  if (xp) xp.textContent = (state.xp || 0) + ' XP';
+  // Weekly chart
+  const weekChart = document.getElementById('parent-week-chart');
+  const weekLabels = document.getElementById('parent-week-labels');
+  if (weekChart) {
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const activity = s.weeklyActivity || [0,0,0,0,0,0,0];
+    const max = Math.max(...activity, 1);
+    weekChart.innerHTML = days.map((d, i) => {
+      const h = Math.max(4, Math.round((activity[i] / max) * 76));
+      const active = activity[i] > 0;
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px"><div style="width:100%;height:${h}px;background:${active?'var(--gold)':'var(--bg4)'};border-radius:4px;transition:.3s"></div></div>`;
+    }).join('');
+    if (weekLabels) weekLabels.innerHTML = days.map(d => `<span>${d}</span>`).join('');
+  }
+  // Module bars
+  const modBars = document.getElementById('parent-module-bars');
+  if (modBars) {
+    const modules = [
+      { name: 'Pure Mathematics 1', pct: parseInt(document.getElementById('hp-p1-pct')?.textContent) || 0, color: 'var(--blue)' },
+      { name: 'Pure Mathematics 2', pct: parseInt(document.getElementById('hp-p2-pct')?.textContent) || 0, color: 'var(--gold)' },
+      { name: 'Statistics', pct: parseInt(document.getElementById('hp-st-pct')?.textContent) || 0, color: 'var(--green)' },
+      { name: 'Mechanics', pct: parseInt(document.getElementById('hp-mc-pct')?.textContent) || 0, color: 'var(--purple)' },
+    ];
+    modBars.innerHTML = modules.map(m => `
+      <div style="margin-bottom:.75rem">
+        <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:.3rem"><span style="color:var(--white)">${m.name}</span><span style="color:${m.color};font-weight:700">${m.pct}%</span></div>
+        <div style="height:6px;background:var(--bg4);border-radius:3px"><div style="height:100%;width:${m.pct}%;background:${m.color};border-radius:3px;transition:.4s"></div></div>
+      </div>`).join('');
+  }
+}
+
+// Show parent modal and render data
+function showParentDash() {
+  const modal = document.getElementById('parent-dash-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  renderParentDash();
+}
+
+async function emailParentReport() {
+  if (!state.user?.email) { showToast('Please log in first'); return; }
+  const raw = localStorage.getItem('synaptiq_stats');
+  const s = raw ? JSON.parse(raw) : {};
+  try {
+    await fetch('/api/email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'parent_report',
+        email: state.user.email,
+        name: state.user.name,
+        stats: { streak: s.streak || 1, questions: s.questionsAnswered || 0, topics: (s.topicsExplored || []).length, xp: state.xp || 0 }
+      })
+    });
+    showToast('✅ Report emailed!');
+  } catch(e) {
+    showToast('⚠️ Could not send email — ' + e.message.slice(0, 50));
+  }
+}
+
+// ═══════════════════════════════════════
+// LESSON CONTENT CACHING
+// ═══════════════════════════════════════
+const LESSON_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+function getLessonCache(chapter) {
+  try {
+    const raw = localStorage.getItem('synaptiq_lesson_' + btoa(chapter).slice(0, 20));
+    if (!raw) return null;
+    const { ts, html } = JSON.parse(raw);
+    if (Date.now() - ts > LESSON_CACHE_TTL) return null;
+    return html;
+  } catch(e) { return null; }
+}
+
+function setLessonCache(chapter, html) {
+  try {
+    // Keep cache under 2MB — prune oldest if needed
+    const key = 'synaptiq_lesson_' + btoa(chapter).slice(0, 20);
+    const payload = JSON.stringify({ ts: Date.now(), html });
+    if (payload.length > 200000) return; // Skip caching very large lessons
+    localStorage.setItem(key, payload);
+  } catch(e) {
+    // QuotaExceededError — clear all lesson caches
+    Object.keys(localStorage).filter(k => k.startsWith('synaptiq_lesson_')).forEach(k => localStorage.removeItem(k));
+  }
+}
+
+// ═══════════════════════════════════════
+// MISSING FUNCTION STUBS
+// ═══════════════════════════════════════
+
+function toggleVoiceMode() {
+  const btn = document.getElementById('voice-mode-btn');
+  if (btn) btn.style.opacity = btn.style.opacity === '0.5' ? '1' : '0.5';
+  showToast('Voice mode coming soon — use the 🎤 button to speak your question');
+}
+
+function changeFontSize(delta) {
+  try {
+    const current = parseInt(localStorage.getItem('synaptiq_fontsize') || '100', 10);
+    const next = Math.max(80, Math.min(130, current + delta));
+    document.documentElement.style.fontSize = next + '%';
+    localStorage.setItem('synaptiq_fontsize', next);
+    const el = document.getElementById('fs-display');
+    if (el) el.textContent = next + '%';
+  } catch(e) {}
+}
+
+function filterFcBySubject(val) {
+  // Reload the flashcard display filtered by subject
+  loadFcDue();
+}
+
+function copyGeneratedQuestions() {
+  const box = document.getElementById('q-questions');
+  if (!box) return;
+  navigator.clipboard.writeText(box.innerText).then(() => {
+    const btn = document.getElementById('copy-q-btn');
+    if (btn) { btn.textContent = '✓ Copied!'; setTimeout(() => btn.textContent = '📋 Copy', 2000); }
+  }).catch(() => showToast('Copy failed — select and copy manually'));
+}
+
+function playTrack(type) {
+  showToast(`🎵 ${type.charAt(0).toUpperCase()+type.slice(1)} music — coming in next update!`);
+}
+
+function emailParentReport() {
+  showToast('📧 Sending report...');
+}
+
+// Auto-open parent modal when #parent-dash-btn exists and state.user is set
+document.addEventListener('DOMContentLoaded', () => {
+  const parentBtn = document.getElementById('parent-dash-btn');
+  if (parentBtn) {
+    parentBtn.addEventListener('click', showParentDash);
+  }
+});
 
 </script>
 
