@@ -1663,9 +1663,9 @@ body.mode-adhd .adhd-break { display: block; }
   </div>
   <div class="nav-right">
     <div class="a11y-bar" id="a11y-bar" style="display:none">
-      <button class="a11y-btn" id="btn-adhd" onclick="toggleMode('adhd')">ADHD</button>
-      <button class="a11y-btn" id="btn-dyslexia" onclick="toggleMode('dyslexia')">Dyslexia</button>
-      <button class="a11y-btn" id="btn-dyscalculia" onclick="toggleMode('dyscalculia')">Dyscalculia</button>
+      <button class="a11y-btn" id="btn-adhd" onclick="toggleMode('adhd')" aria-label="Toggle ADHD mode" aria-pressed="false">ADHD</button>
+      <button class="a11y-btn" id="btn-dyslexia" onclick="toggleMode('dyslexia')" aria-label="Toggle Dyslexia mode" aria-pressed="false">Dyslexia</button>
+      <button class="a11y-btn" id="btn-dyscalculia" onclick="toggleMode('dyscalculia')" aria-label="Toggle Dyscalculia mode" aria-pressed="false">Dyscalculia</button>
     </div>
     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
     <div id="xp-badge"><i class="fas fa-star"></i><span id="xp-display">0 XP</span></div>
@@ -3029,7 +3029,7 @@ async function loginUser() {
       if (profile.stats) localStorage.setItem('synaptiq_stats', JSON.stringify(profile.stats));
       if (profile.flashcards && profile.flashcards.length) {
         fcCards = profile.flashcards;
-        localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+        safeSetItem('synaptiq_fc', JSON.stringify(fcCards));
       }
     } else {
       // Fall back to localStorage or create minimal profile
@@ -3142,12 +3142,12 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify({ action: 'get_profile', payload: { email: state.user.email } })
         }).then(r => r.json()).then(profile => {
           if (!profile || profile.error) return;
-          if (typeof profile.xp === 'number') { state.xp = profile.xp; localStorage.setItem('synaptiq_xp', profile.xp); }
-          if (typeof profile.level === 'number') { state.level = profile.level; localStorage.setItem('synaptiq_level', profile.level); }
-          if (profile.stats && typeof profile.stats === 'object') localStorage.setItem('synaptiq_stats', JSON.stringify(profile.stats));
+          if (typeof profile.xp === 'number') { state.xp = profile.xp; safeSetItem('synaptiq_xp', profile.xp); }
+          if (typeof profile.level === 'number') { state.level = profile.level; safeSetItem('synaptiq_level', profile.level); }
+          if (profile.stats && typeof profile.stats === 'object') safeSetItem('synaptiq_stats', JSON.stringify(profile.stats));
           if (Array.isArray(profile.flashcards) && profile.flashcards.length) {
             fcCards = profile.flashcards;
-            localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+            safeSetItem('synaptiq_fc', JSON.stringify(fcCards));
           }
           updateXPDisplay();
           updateDashboardStats();
@@ -3174,7 +3174,7 @@ function setMode(mode, on) {
   state.modes[mode] = on;
   document.body.classList.toggle('mode-' + mode, on);
   const btn = document.getElementById('btn-' + mode);
-  if (btn) btn.classList.toggle('on', on);
+  if (btn) { btn.classList.toggle('on', on); btn.setAttribute('aria-pressed', String(on)); }
   const tog = document.getElementById('tog-' + mode);
   if (tog) tog.classList.toggle('on', on);
   if (mode === 'dyscalculia') {
@@ -3327,7 +3327,7 @@ function getA11yInstructions() {
   const parts = [];
   if (state.modes.adhd) parts.push('ADHD MODE: Format all responses with clear numbered steps. Keep each step SHORT (max 2 sentences). Add "🎯 FOCUS:" before the most important point. After 4+ steps add "⏸️ QUICK BREAK — Stand up, stretch for 30 seconds, then continue."');
   if (state.modes.dyslexia) parts.push('DYSLEXIA MODE: Use very short sentences. Avoid long words where possible. Use bullet points. Add a "📢 Summary in one sentence:" at the end of every response.');
-  if (state.modes.dyscalculia) parts.push('DYSCALCULIA MODE: For ANY maths, always write it out in words first, then show the visual representation. Break every calculation into tiny steps. Use colours like [RED: subtract] [GREEN: add] [BLUE: multiply]. Show each step on its own line.');
+  if (state.modes.dyscalculia) parts.push('DYSCALCULIA MODE: For ANY maths, always write it out in words first, then show the visual representation. Break every calculation into tiny steps. Use colour tags like [RED: subtract] [GREEN: add] [BLUE: multiply] [ORANGE: divide] — these will be rendered as coloured text. Show each step on its own line.');
   return parts.join('\n\n');
 }
 
@@ -3390,6 +3390,15 @@ function setTopic(name) {
   trackEvent('chapter_opened', { topic: name });
 }
 
+function applyDyscalculiaColors(s) {
+  return s
+    .replace(/\[RED:\s*(.*?)\]/g,    '<span style="color:#F87171;font-weight:600">$1</span>')
+    .replace(/\[GREEN:\s*(.*?)\]/g,  '<span style="color:#4ADE80;font-weight:600">$1</span>')
+    .replace(/\[BLUE:\s*(.*?)\]/g,   '<span style="color:#60A5FA;font-weight:600">$1</span>')
+    .replace(/\[ORANGE:\s*(.*?)\]/g, '<span style="color:#FB923C;font-weight:600">$1</span>')
+    .replace(/\[YELLOW:\s*(.*?)\]/g, '<span style="color:#FBBF24;font-weight:600">$1</span>');
+}
+
 function formatTutorMsg(text) {
   let s = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   s = s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
@@ -3402,7 +3411,9 @@ function formatTutorMsg(text) {
     const items = blk.trim().split('\n').map(l=>`<li>${l.replace(/^[-•]\s+/,'')}</li>`).join('');
     return `<ul style="padding-left:1.25rem;margin:.5rem 0">${items}</ul>`;
   });
-  return s.replace(/\n/g,'<br>');
+  s = s.replace(/\n/g,'<br>');
+  if (state.modes.dyscalculia) s = applyDyscalculiaColors(s);
+  return s;
 }
 
 function addTutorMsg(role, text) {
@@ -3542,14 +3553,15 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
       const clean = reply.replace(/```json|```/g, '').trim();
       questions = JSON.parse(sanitizeClaudeJson(clean));
     } catch (e) {
-      qContainer.innerHTML = '<div class="msg bot" style="max-width:100%">⚠️ Could not parse questions. Raw response:<br>' + reply + '</div>';
+      qContainer.innerHTML = '<div class="msg bot" style="max-width:100%">⚠️ Could not parse questions. Please try again.</div>';
       return;
     }
     qContainer.innerHTML = '';
+    const frag = document.createDocumentFragment();
     questions.forEach((q, i) => {
       const solId = `sol-${i}`;
-      qContainer.innerHTML += `
-        <div class="question-block">
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = `<div class="question-block">
           <div class="question-num">Question ${i + 1} <span class="marks-badge">${q.marks || 4} marks</span></div>
           <div class="question-text">${q.question}</div>
           ${q.hint ? `<div style="font-size:.8rem;color:var(--gold);margin-bottom:.75rem">💡 Hint: ${q.hint}</div>` : ''}
@@ -3558,7 +3570,9 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
           <div class="ai-feedback" id="fb-${i}"></div>
           ${q.solution ? `<div style="margin-top:.75rem"><button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent.includes('Show')?'Hide Mark Scheme':'Show Mark Scheme ✓';if(window.MathJax)MathJax.typesetPromise([this.nextElementSibling]).catch(()=>{})" style="background:transparent;border:1px solid rgba(74,222,128,0.3);color:var(--green);border-radius:6px;padding:.35rem .75rem;font-size:.75rem;cursor:pointer">Show Mark Scheme ✓</button><div id="${solId}" style="display:none;margin-top:.75rem;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:1rem;font-size:.85rem;white-space:pre-wrap">${q.solution}</div></div>` : ''}
         </div>`;
+      frag.appendChild(wrapper.firstElementChild);
     });
+    qContainer.appendChild(frag);
     if (window.MathJax) MathJax.typesetPromise([qContainer]).catch(() => {});
     updateStats({ questions: questions.length });
     addXP(20);
@@ -3586,7 +3600,7 @@ Reply with ONLY this HTML (no markdown, no extra text):
 <p><strong>💡 Tip:</strong> [one actionable improvement]</p>`;
   try {
     const data = await callClaude([{role:'user', content:`Mark scheme:\n${markScheme}\n\nStudent answer:\n${studentAnswer}`}], sys, 1000);
-    fbDiv.innerHTML = getReply(data);
+    fbDiv.innerHTML = sanitizeAIHTML(getReply(data));
     fbDiv.classList.add('show');
     if (window.MathJax) MathJax.typesetPromise([fbDiv]).catch(() => {});
     btn.innerHTML = '✦ Re-check';
@@ -3615,7 +3629,7 @@ Use Priority: HIGH, MEDIUM, or LOW.
 ${getA11yInstructions()}`;
   try {
     const data = await callClaude([{ role: 'user', content: `I'm studying ${board} A-Level Maths. Based on common difficulty areas — integration, trigonometric identities, hypothesis testing, projectile motion, and binomial expansion — give me a personalised study plan with specific action items.` }], sys);
-    body.innerHTML = getReply(data);
+    body.innerHTML = sanitizeAIHTML(getReply(data));
     addXP(15);
   } catch (e) {
     body.innerHTML = `<p style="color:var(--red)">⚠️ ${e.message}</p>`;
@@ -3769,6 +3783,7 @@ function syncToCloud() {
 }
 
 function addXP(amount, msg) {
+  recordActivityToday();
   state.xp += amount;
   const newLevel = Math.floor(state.xp / 200) + 1;
   if (newLevel > state.level) {
@@ -3795,7 +3810,7 @@ function updateStats(delta) {
       s.streak = diff <= 1 ? (s.streak || 1) + 1 : 1;
     }
     s.lastSeen = today;
-    localStorage.setItem('synaptiq_stats', JSON.stringify(s));
+    safeSetItem('synaptiq_stats', JSON.stringify(s));
   } catch(e) {}
 }
 
@@ -3823,16 +3838,33 @@ function updateXPDisplay() {
 // ═══════════════════════════════════════
 // HEATMAP
 // ═══════════════════════════════════════
+function recordActivityToday() {
+  try {
+    const activity = JSON.parse(localStorage.getItem('synaptiq_activity') || '{}');
+    const key = new Date().toISOString().slice(0, 10);
+    activity[key] = (activity[key] || 0) + 1;
+    // Prune entries older than 84 days
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 84);
+    for (const k in activity) { if (new Date(k) < cutoff) delete activity[k]; }
+    safeSetItem('synaptiq_activity', JSON.stringify(activity));
+  } catch(e) {}
+}
+
 function buildHeatmap() {
   const el = document.getElementById('heatmap');
+  if (!el) return;
+  const activity = JSON.parse(localStorage.getItem('synaptiq_activity') || '{}');
   const levels = ['', 'l1', 'l2', 'l3', 'l4'];
   let html = '';
   for (let i = 0; i < 84; i++) {
-    const rand = Math.random();
-    const lvl = rand < 0.3 ? 0 : rand < 0.5 ? 1 : rand < 0.7 ? 2 : rand < 0.9 ? 3 : 4;
-    const date = new Date(); date.setDate(date.getDate() - (83 - i));
+    const date = new Date();
+    date.setDate(date.getDate() - (83 - i));
+    const key = date.toISOString().slice(0, 10);
+    const sessions = activity[key] || 0;
+    const lvl = sessions === 0 ? 0 : sessions < 3 ? 1 : sessions < 6 ? 2 : sessions < 10 ? 3 : 4;
     const label = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-    html += `<div class="heat-cell ${levels[lvl]}" data-tip="${label}: ${lvl * 3} sessions"></div>`;
+    html += `<div class="heat-cell ${levels[lvl]}" data-tip="${label}: ${sessions} session${sessions !== 1 ? 's' : ''}"></div>`;
   }
   el.innerHTML = html;
 }
@@ -3851,11 +3883,11 @@ const ALEVEL_CONTENT = {
   },
   statsY1: {
     label: 'Statistics', year: 'Year 12',
-    chapters: ['Statistical Sampling','Data Presentation & Interpretation','Probability','Statistical Distributions','Statistical Hypothesis Testing']
+    chapters: ['Statistical Sampling','Data Presentation & Interpretation','Probability','Statistical Distributions','The Binomial Distribution','The Poisson Distribution','Statistical Hypothesis Testing']
   },
   statsY2: {
     label: 'Statistics', year: 'Year 13',
-    chapters: ['Regression, Correlation & Hypothesis Testing','Conditional Probability','The Normal Distribution']
+    chapters: ['Regression, Correlation & Hypothesis Testing','Conditional Probability','The Normal Distribution','Chi-Squared Tests','Further Hypothesis Testing']
   },
   mechY1: {
     label: 'Mechanics', year: 'Year 12',
@@ -3863,7 +3895,7 @@ const ALEVEL_CONTENT = {
   },
   mechY2: {
     label: 'Mechanics', year: 'Year 13',
-    chapters: ['Moments','Forces & Friction','Projectiles','Applications of Forces','Further Kinematics']
+    chapters: ['Moments','Forces & Friction','Projectiles','Applications of Forces','Further Kinematics','Circular Motion','Simple Harmonic Motion']
   }
 };
 
@@ -4029,7 +4061,7 @@ function renderResourcesList() {
 function saveUploadsToStorage() {
   try {
     const light = state.uploads.map(u => ({ ...u, content: u.content ? u.content.slice(0, 500) : '' }));
-    localStorage.setItem('synaptiq_uploads', JSON.stringify(light));
+    safeSetItem('synaptiq_uploads', JSON.stringify(light));
   } catch(e) {}
 }
 
@@ -4126,11 +4158,11 @@ function updateGreeting() {
 <!-- ═══════════════ MOBILE BOTTOM NAV ═══════════════ -->
 <div id="mobile-nav">
   <div class="mob-nav-grid">
-    <button class="mob-nav-btn active" id="mn-home" onclick="showDash('home');setMobNav('home')"><i class="fas fa-house"></i>Home</button>
-    <button class="mob-nav-btn" id="mn-tutor" onclick="showDash('tutor');setMobNav('tutor')"><i class="fas fa-robot"></i>Tutor</button>
-    <button class="mob-nav-btn" id="mn-questions" onclick="showDash('questions');setMobNav('questions')"><i class="fas fa-file-lines"></i>Questions</button>
-    <button class="mob-nav-btn" id="mn-flashcards" onclick="showDash('flashcards');setMobNav('flashcards')"><i class="fas fa-clone"></i>Cards</button>
-    <button class="mob-nav-btn" id="mn-progress" onclick="showDash('progress');setMobNav('progress')"><i class="fas fa-chart-line"></i>Progress</button>
+    <button class="mob-nav-btn active" id="mn-home" onclick="showDash('home');setMobNav('home')" aria-label="Home dashboard"><i class="fas fa-house" aria-hidden="true"></i>Home</button>
+    <button class="mob-nav-btn" id="mn-tutor" onclick="showDash('tutor');setMobNav('tutor')" aria-label="AI Tutor"><i class="fas fa-robot" aria-hidden="true"></i>Tutor</button>
+    <button class="mob-nav-btn" id="mn-questions" onclick="showDash('questions');setMobNav('questions')" aria-label="Practice questions"><i class="fas fa-file-lines" aria-hidden="true"></i>Questions</button>
+    <button class="mob-nav-btn" id="mn-flashcards" onclick="showDash('flashcards');setMobNav('flashcards')" aria-label="Flashcards"><i class="fas fa-clone" aria-hidden="true"></i>Cards</button>
+    <button class="mob-nav-btn" id="mn-progress" onclick="showDash('progress');setMobNav('progress')" aria-label="View progress"><i class="fas fa-chart-line" aria-hidden="true"></i>Progress</button>
   </div>
 </div>
 
@@ -4331,7 +4363,7 @@ async function generateFcWithAI() {
       id: Date.now(), front: card.q, back: card.a, subject: 'Mathematics',
       nextReview: new Date().toISOString().split('T')[0], ease: 2
     });
-    localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+    safeSetItem('synaptiq_fc', JSON.stringify(fcCards));
     syncToCloud();
     loadFcDue();
     showToast('✅ AI flashcard added!');
@@ -4379,7 +4411,7 @@ function fcAnswer(correct) {
     fcCards[idx].nextReview = next.toISOString().split('T')[0];
     if (correct) fcCards[idx].ease = Math.min(fcCards[idx].ease + 1, 10);
     else fcCards[idx].ease = Math.max(1, fcCards[idx].ease - 1);
-    localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+    safeSetItem('synaptiq_fc', JSON.stringify(fcCards));
     syncToCloud();
   }
   fcCurrent++;
@@ -4487,9 +4519,8 @@ document.addEventListener('synaptiq-login', () => {
   updateMobileNav();
 
   updatePomBtn();
-  // Show admin panel if admin account
-  const adminEmail = 'Afarouk.wrk@gmail.com';
-  if (state.user?.email === adminEmail) {
+  // Show admin panel if admin account (email stored encoded to avoid plaintext harvesting)
+  if (state.user?.email === atob('QWZhcm91ay53cmtAZ21haWwuY29t')) {
     const adminItem = document.getElementById('si-admin');
     if (adminItem) adminItem.style.display = '';
   }
@@ -4545,6 +4576,46 @@ function initTeacher() {
 }
 
 // Escape unescaped LaTeX backslashes in Claude's JSON output (e.g. \frac → \\frac)
+// Sanitise AI-generated HTML before injecting into the DOM.
+// Allows safe structural/styling tags while stripping event handlers and
+// dangerous attributes so a misbehaving or prompt-injected response cannot
+// execute arbitrary JavaScript.
+function sanitizeAIHTML(html) {
+  const ALLOWED = new Set(['DIV','SPAN','P','STRONG','EM','B','I','U','S','UL','OL','LI',
+    'H1','H2','H3','H4','H5','H6','BR','HR','TABLE','THEAD','TBODY','TR','TD','TH',
+    'PRE','CODE','BLOCKQUOTE','SUP','SUB','SMALL','MARK','SVG','PATH','CIRCLE','LINE',
+    'POLYLINE','POLYGON','RECT','TEXT','DEFS','MARKER','G','ANIMATE']);
+  const BLOCKED_ATTR = /^on|^javascript:/i;
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    (function clean(node) {
+      if (node.nodeType === 3) return;
+      if (node.nodeType === 1) {
+        if (!ALLOWED.has(node.tagName)) { node.replaceWith(...node.childNodes); return; }
+        [...node.attributes].forEach(a => {
+          if (BLOCKED_ATTR.test(a.name) || BLOCKED_ATTR.test(a.value)) node.removeAttribute(a.name);
+        });
+        [...node.childNodes].forEach(clean);
+      }
+    }(doc.body));
+    return doc.body.innerHTML;
+  } catch(e) { return ''; }
+}
+
+// Safe localStorage wrapper — handles QuotaExceededError by pruning uploads first
+function safeSetItem(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch(e) {
+    if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
+      try { localStorage.removeItem('synaptiq_uploads'); } catch(_) {}
+      try { localStorage.setItem(key, value); } catch(_) {
+        console.warn('localStorage full even after pruning uploads — skipping save for', key);
+      }
+    }
+  }
+}
+
 function sanitizeClaudeJson(str) {
   // Fix literal newlines/tabs inside JSON string values (root cause of "Unterminated string" errors)
   let result = '';
