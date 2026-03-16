@@ -3890,6 +3890,21 @@ function initGA4() {
   gtag('config', GA_ID);
 }
 
+function safeSetItem(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch(e) {
+    if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
+      try { localStorage.removeItem('synaptiq_uploads'); } catch(_) {}
+      try { localStorage.setItem(key, value); } catch(_) {}
+    }
+  }
+}
+
+function safeGetItem(key) {
+  try { return localStorage.getItem(key); } catch(e) { return null; }
+}
+
 function cookieConsent(choice) {
   safeSetItem('synaptiq_consent', choice);
   const banner = document.getElementById('cookie-banner');
