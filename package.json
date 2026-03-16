@@ -5,11 +5,18 @@
   "engines": { "node": "24.x" },
   "scripts": {
     "build": "node scripts/build.mjs",
-    "health-check": "node scripts/health-check.mjs"
+    "health-check": "node scripts/health-check.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
     "stripe": "^16.0.0",
     "resend": "^4.0.0"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.0.0",
+    "vitest": "^2.0.0"
   }
 }
