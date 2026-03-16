@@ -1766,37 +1766,37 @@ body.mode-adhd .adhd-break { display: block; }
     <h2>Everything you need to ace A-Level Maths</h2>
     <p class="sub">From Pure 1 to Mechanics — Synaptiq covers every topic, every exam board, every mark scheme.</p>
     <div class="features-grid">
-      <div class="feature-card" onclick="nav('auth')">
+      <div class="feature-card" onclick="nav('auth');showSignup()">
         <div class="feature-icon">🤖</div>
         <h3>A-Level Maths AI Tutor</h3>
         <p>Ask anything. Get full working shown step by step — exactly how a mark scheme expects it. Covers Pure, Stats and Mechanics.</p>
         <span class="feature-tag">Synaptiq AI</span>
       </div>
-      <div class="feature-card" onclick="nav('auth')">
+      <div class="feature-card" onclick="nav('auth');showSignup()">
         <div class="feature-icon">📚</div>
         <h3>Complete Content Library</h3>
         <p>Every chapter organised by module — Pure 1, Pure 2, Statistics Year 1 & 2, Mechanics Year 1 & 2. Click any chapter to study with AI.</p>
         <span class="feature-tag">All Chapters</span>
       </div>
-      <div class="feature-card" onclick="nav('auth')">
+      <div class="feature-card" onclick="nav('auth');showSignup()">
         <div class="feature-icon">📄</div>
         <h3>Upload Mark Schemes & Past Papers</h3>
         <p>Upload your exam board's mark scheme. The AI reads it and gives answers aligned to exactly how your board awards marks.</p>
         <span class="feature-tag">AQA · Edexcel · OCR</span>
       </div>
-      <div class="feature-card" onclick="nav('auth')">
+      <div class="feature-card" onclick="nav('auth');showSignup()">
         <div class="feature-icon">📝</div>
         <h3>A-Level Question Generator</h3>
         <p>Generate exam-style A-Level Maths questions for any topic, difficulty, and exam board. Full working and hints included.</p>
         <span class="feature-tag">Exam-Style</span>
       </div>
-      <div class="feature-card" onclick="nav('auth')">
+      <div class="feature-card" onclick="nav('auth');showSignup()">
         <div class="feature-icon">🎯</div>
         <h3>Topic Strength Analysis</h3>
         <p>Claude identifies your weak spots across A-Level topics and builds you a personalised revision priority list.</p>
         <span class="feature-tag">AI Analysis</span>
       </div>
-      <div class="feature-card" onclick="nav('auth')">
+      <div class="feature-card" onclick="nav('auth');showSignup()">
         <div class="feature-icon">🧮</div>
         <h3>Visual Maths & Dyscalculia Support</h3>
         <p>Visual number lines, colour-coded working, step-by-step breakdowns. Full accessibility for ADHD and dyslexia too.</p>
@@ -7118,9 +7118,9 @@ document.addEventListener('DOMContentLoaded', () => { if (document.getElementByI
 // ═══════════════════════════════════════
 // QUESTION GENERATOR
 // ═══════════════════════════════════════
-async function generateQuestions() {
+async function generateQuestionsV2() {
   if (!canAskQuestion()) return;
-  const sub = document.getElementById('q-subject').value;
+  const sub = document.getElementById('q-subject')?.value;
   const board = document.getElementById('q-board').value;
   const level = document.getElementById('q-level').value;
   const num = document.getElementById('q-num').value;
