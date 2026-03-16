@@ -2046,7 +2046,18 @@ body.mode-adhd .adhd-break { display: block; }
         <label for="login-remember" style="font-size:.85rem;color:var(--muted);cursor:pointer;margin:0">Remember me for 30 days</label>
       </div>
       <button class="btn-full" onclick="loginUser()">Log In →</button>
-      <p style="text-align:center;margin-top:1rem;font-size:.8rem;color:var(--muted)">Don't have an account? <a onclick="showSignup()" style="color:var(--gold);cursor:pointer">Sign up free</a></p>
+      <p style="text-align:center;margin-top:.75rem;font-size:.8rem;color:var(--muted)">
+        <a onclick="showForgotPassword()" style="color:var(--gold);cursor:pointer">Forgot password?</a>
+      </p>
+      <p style="text-align:center;margin-top:.5rem;font-size:.8rem;color:var(--muted)">Don't have an account? <a onclick="showSignup()" style="color:var(--gold);cursor:pointer">Sign up free</a></p>
+
+      <!-- Forgot password inline panel -->
+      <div id="forgot-panel" style="display:none;margin-top:1.25rem;padding:1.25rem;background:var(--bg3,#151821);border:1px solid rgba(201,168,76,.2);border-radius:12px">
+        <p style="font-size:.875rem;margin-bottom:.75rem;color:var(--muted)">Enter your email and we'll send a password reset link.</p>
+        <div class="form-group" style="margin-bottom:.75rem"><input type="email" id="forgot-email" placeholder="you@email.com" style="width:100%"></div>
+        <button class="btn-full" id="forgot-btn" onclick="sendPasswordReset()" style="margin-top:0">Send Reset Link →</button>
+        <p id="forgot-msg" style="font-size:.8rem;margin-top:.75rem;text-align:center;display:none"></p>
+      </div>
     </div>
   </div>
 </div>
@@ -2121,10 +2132,10 @@ body.mode-adhd .adhd-break { display: block; }
           <div class="card">
             <div class="card-header"><span class="card-title">📊 A-Level Module Progress</span></div>
             <div class="card-body">
-              <div class="progress-item"><div class="progress-header"><span>Pure Mathematics 1</span><span>0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--blue)"></div></div></div>
-              <div class="progress-item"><div class="progress-header"><span>Pure Mathematics 2</span><span>0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--gold)"></div></div></div>
-              <div class="progress-item"><div class="progress-header"><span>Statistics Y1 & Y2</span><span>0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--green)"></div></div></div>
-              <div class="progress-item"><div class="progress-header"><span>Mechanics Y1 & Y2</span><span>0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--purple)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Pure Mathematics 1</span><span id="hp-p1-pct">0%</span></div><div class="progress-bar"><div class="progress-fill" id="hp-p1-fill" style="width:0%;background:var(--blue)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Pure Mathematics 2</span><span id="hp-p2-pct">0%</span></div><div class="progress-bar"><div class="progress-fill" id="hp-p2-fill" style="width:0%;background:var(--gold)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Statistics Y1 & Y2</span><span id="hp-st-pct">0%</span></div><div class="progress-bar"><div class="progress-fill" id="hp-st-fill" style="width:0%;background:var(--green)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Mechanics Y1 & Y2</span><span id="hp-mc-pct">0%</span></div><div class="progress-bar"><div class="progress-fill" id="hp-mc-fill" style="width:0%;background:var(--purple)"></div></div></div>
             </div>
           </div>
         </div>
@@ -2289,20 +2300,20 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="page-title">📊 Your Progress</div>
       <p class="page-subtitle">Track your improvement over time</p>
       <div class="stats-row">
-        <div class="stat-card"><div class="stat-card-label">Total Questions</div><div class="stat-card-value">1,247</div><div class="stat-card-change">↑ 12 today</div></div>
-        <div class="stat-card"><div class="stat-card-label">Accuracy</div><div class="stat-card-value">78%</div><div class="stat-card-change">↑ 3% this week</div></div>
-        <div class="stat-card"><div class="stat-card-label">Study Streak</div><div class="stat-card-value">14 🔥</div></div>
-        <div class="stat-card"><div class="stat-card-label">Topics Mastered</div><div class="stat-card-value">23</div></div>
+        <div class="stat-card"><div class="stat-card-label">Total Questions</div><div class="stat-card-value" id="pp-stat-q">0</div><div class="stat-card-change">Answer questions to track</div></div>
+        <div class="stat-card"><div class="stat-card-label">Topics Explored</div><div class="stat-card-value" id="pp-stat-topics">0</div><div class="stat-card-change">of all A-Level topics</div></div>
+        <div class="stat-card"><div class="stat-card-label">Study Streak</div><div class="stat-card-value" id="pp-stat-streak">1 🔥</div><div class="stat-card-change">Keep it going!</div></div>
+        <div class="stat-card"><div class="stat-card-label">XP Level</div><div class="stat-card-value" id="pp-stat-level">1</div><div class="stat-card-change" id="pp-stat-xp">0 XP</div></div>
       </div>
       <div class="dash-grid">
         <div>
           <div class="card">
             <div class="card-header"><span class="card-title">Subject Performance</span></div>
             <div class="card-body">
-              <div class="progress-item"><div class="progress-header"><span>Pure Mathematics 1</span><span class="fw700" style="color:var(--blue)">0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--blue)"></div></div></div>
-              <div class="progress-item"><div class="progress-header"><span>Pure Mathematics 2</span><span class="fw700" style="color:var(--gold)">0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--gold)"></div></div></div>
-              <div class="progress-item"><div class="progress-header"><span>Statistics Y1 & Y2</span><span class="fw700" style="color:var(--green)">0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--green)"></div></div></div>
-              <div class="progress-item"><div class="progress-header"><span>Mechanics Y1 & Y2</span><span class="fw700" style="color:var(--purple)">0%</span></div><div class="progress-bar"><div class="progress-fill" style="width:0%;background:var(--purple)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Pure Mathematics 1</span><span id="pp-p1-pct" class="fw700" style="color:var(--blue)">0%</span></div><div class="progress-bar"><div class="progress-fill" id="pp-p1-fill" style="width:0%;background:var(--blue)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Pure Mathematics 2</span><span id="pp-p2-pct" class="fw700" style="color:var(--gold)">0%</span></div><div class="progress-bar"><div class="progress-fill" id="pp-p2-fill" style="width:0%;background:var(--gold)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Statistics Y1 & Y2</span><span id="pp-st-pct" class="fw700" style="color:var(--green)">0%</span></div><div class="progress-bar"><div class="progress-fill" id="pp-st-fill" style="width:0%;background:var(--green)"></div></div></div>
+              <div class="progress-item"><div class="progress-header"><span>Mechanics Y1 & Y2</span><span id="pp-mc-pct" class="fw700" style="color:var(--purple)">0%</span></div><div class="progress-bar"><div class="progress-fill" id="pp-mc-fill" style="width:0%;background:var(--purple)"></div></div></div>
             </div>
           </div>
           <!-- Heatmap -->
@@ -2323,13 +2334,8 @@ body.mode-adhd .adhd-break { display: block; }
           <div class="card">
             <div class="card-header"><span class="card-title">🏆 Achievements</span></div>
             <div class="card-body">
-              <div class="achievements-grid">
-                <div class="ach-card earned"><div class="ach-icon">🔥</div><div class="ach-name">7-Day Streak</div><div class="ach-desc">Study 7 days in a row</div></div>
-                <div class="ach-card earned"><div class="ach-icon">💯</div><div class="ach-name">Perfect Score</div><div class="ach-desc">100% on a paper</div></div>
-                <div class="ach-card earned"><div class="ach-icon">🚀</div><div class="ach-name">Fast Learner</div><div class="ach-desc">Complete 100 questions</div></div>
-                <div class="ach-card locked"><div class="ach-icon">⭐</div><div class="ach-name">Star Student</div><div class="ach-desc">30-day streak</div></div>
-                <div class="ach-card locked"><div class="ach-icon">🎓</div><div class="ach-name">Graduate</div><div class="ach-desc">Master all topics</div></div>
-                <div class="ach-card locked"><div class="ach-icon">🏆</div><div class="ach-name">Top of Class</div><div class="ach-desc">Score 95%+ average</div></div>
+              <div class="achievements-grid" id="achievements-grid">
+                <p style="color:var(--muted);font-size:.85rem">Loading achievements…</p>
               </div>
             </div>
           </div>
@@ -3182,6 +3188,36 @@ function enterDashboard() {
   if (typeof updatePomBtn === 'function') updatePomBtn();
 }
 
+function showForgotPassword() {
+  const panel = document.getElementById('forgot-panel');
+  if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+async function sendPasswordReset() {
+  const email = document.getElementById('forgot-email').value.trim();
+  const btn   = document.getElementById('forgot-btn');
+  const msg   = document.getElementById('forgot-msg');
+  if (!email) { showToast('Please enter your email address'); return; }
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  try {
+    await fetch('/api/supabase-auth', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'forgot_password', payload: { email } })
+    });
+    msg.textContent = '✅ If that email is registered, a reset link has been sent. Check your inbox.';
+    msg.style.color = '#4ADE80';
+    msg.style.display = 'block';
+    btn.textContent = 'Sent!';
+  } catch(e) {
+    msg.textContent = '⚠️ Could not send reset email — please try again.';
+    msg.style.color = '#F87171';
+    msg.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Send Reset Link →';
+  }
+}
+
 function showSignup() {
   document.getElementById('signup-flow').style.display = 'block';
   document.getElementById('login-form').classList.remove('active');
@@ -3645,7 +3681,7 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
     let questions;
     try {
       const clean = reply.replace(/```json|```/g, '').trim();
-      questions = JSON.parse(sanitizeClaudeJson(clean));
+      questions = validateQuestions(JSON.parse(sanitizeClaudeJson(clean)));
     } catch (e) {
       qContainer.innerHTML = '<div class="msg bot" style="max-width:100%">⚠️ Could not parse questions. Please try again.</div>';
       return;
@@ -3659,7 +3695,7 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
           <div class="question-num">Question ${i + 1} <span class="marks-badge">${q.marks || 4} marks</span></div>
           <div class="question-text">${q.question}</div>
           ${q.hint ? `<div style="font-size:.8rem;color:var(--gold);margin-bottom:.75rem">💡 Hint: ${q.hint}</div>` : ''}
-          <div class="answer-space" id="ans-${i}" contenteditable="true" spellcheck="true" style="outline:none">Click here to write your working...</div>
+          <textarea class="answer-space" id="ans-${i}" placeholder="Write your working here..." rows="4" spellcheck="false" aria-label="Your answer for question ${i + 1}" style="width:100%;resize:vertical;background:transparent;border:1px solid var(--border);border-radius:8px;padding:.75rem;color:inherit;font-family:inherit;font-size:.875rem;outline:none"></textarea>
           <button class="check-btn" onclick="checkAnswer(${i},this)" data-sol="${encodeURIComponent(q.solution||'')}">✦ Check My Answer</button>
           <div class="ai-feedback" id="fb-${i}"></div>
           ${q.solution ? `<div style="margin-top:.75rem"><button onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.textContent=this.textContent.includes('Show')?'Hide Mark Scheme':'Show Mark Scheme ✓';if(window.MathJax)MathJax.typesetPromise([this.nextElementSibling]).catch(()=>{})" style="background:transparent;border:1px solid rgba(74,222,128,0.3);color:var(--green);border-radius:6px;padding:.35rem .75rem;font-size:.75rem;cursor:pointer">Show Mark Scheme ✓</button><div id="${solId}" style="display:none;margin-top:.75rem;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:1rem;font-size:.85rem;white-space:pre-wrap">${q.solution}</div></div>` : ''}
@@ -3679,8 +3715,8 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
 async function checkAnswer(idx, btn) {
   const ansDiv = document.getElementById('ans-' + idx);
   const fbDiv = document.getElementById('fb-' + idx);
-  const studentAnswer = ansDiv.innerText.trim();
-  if (!studentAnswer || studentAnswer === 'Click here to write your working...') {
+  const studentAnswer = (ansDiv.value || ansDiv.innerText || '').trim();
+  if (!studentAnswer) {
     showToast('Write your working first!'); return;
   }
   const markScheme = decodeURIComponent(btn.dataset.sol);
@@ -4063,12 +4099,82 @@ function updateDashboardStats() {
   try {
     const raw = localStorage.getItem('synaptiq_stats');
     const s = raw ? JSON.parse(raw) : {};
-    const qEl = document.getElementById('stat-q');
-    const topEl = document.getElementById('stat-topics');
+    const qEl      = document.getElementById('stat-q');
+    const topEl    = document.getElementById('stat-topics');
     const streakEl = document.getElementById('stat-streak');
-    if (qEl) qEl.textContent = s.questionsAnswered || 0;
-    if (topEl) topEl.textContent = (s.topicsExplored || []).length;
+    if (qEl)      qEl.textContent      = s.questionsAnswered || 0;
+    if (topEl)    topEl.textContent    = (s.topicsExplored || []).length;
     if (streakEl) streakEl.textContent = (s.streak || 1) + ' 🔥';
+    // Progress page stats
+    const ppQ      = document.getElementById('pp-stat-q');
+    const ppTop    = document.getElementById('pp-stat-topics');
+    const ppStreak = document.getElementById('pp-stat-streak');
+    const ppLevel  = document.getElementById('pp-stat-level');
+    const ppXp     = document.getElementById('pp-stat-xp');
+    if (ppQ)      ppQ.textContent      = s.questionsAnswered || 0;
+    if (ppTop)    ppTop.textContent    = (s.topicsExplored || []).length;
+    if (ppStreak) ppStreak.textContent = (s.streak || 1) + ' 🔥';
+    if (ppLevel)  ppLevel.textContent  = state.level;
+    if (ppXp)     ppXp.textContent     = state.xp + ' XP';
+  } catch(e) {}
+  updateProgressBars();
+  checkAchievements();
+}
+
+const ACHIEVEMENTS = [
+  { icon:'🔥', name:'On a Roll',       desc:'3-day streak',          earned: s => (s.streak||0) >= 3 },
+  { icon:'🔥', name:'7-Day Streak',    desc:'Study 7 days in a row', earned: s => (s.streak||0) >= 7 },
+  { icon:'⭐', name:'Star Student',    desc:'30-day streak',         earned: s => (s.streak||0) >= 30 },
+  { icon:'📝', name:'Getting Started', desc:'Answer 10 questions',   earned: s => (s.questionsAnswered||0) >= 10 },
+  { icon:'🚀', name:'Fast Learner',    desc:'Answer 100 questions',  earned: s => (s.questionsAnswered||0) >= 100 },
+  { icon:'💯', name:'Century',         desc:'Answer 500 questions',  earned: s => (s.questionsAnswered||0) >= 500 },
+  { icon:'🗺️', name:'Explorer',        desc:'Explore 5 topics',      earned: s => (s.topicsExplored||[]).length >= 5 },
+  { icon:'📚', name:'Broad Thinker',   desc:'Explore 20 topics',     earned: s => (s.topicsExplored||[]).length >= 20 },
+  { icon:'🎓', name:'Graduate',        desc:'Explore 50 topics',     earned: s => (s.topicsExplored||[]).length >= 50 },
+  { icon:'✨', name:'Rising Star',     desc:'Reach Level 5',         earned: (_,xp,lvl) => lvl >= 5 },
+  { icon:'🏆', name:'Top of Class',    desc:'Reach Level 10',        earned: (_,xp,lvl) => lvl >= 10 },
+  { icon:'💎', name:'Diamond',         desc:'Reach Level 20',        earned: (_,xp,lvl) => lvl >= 20 },
+];
+
+function checkAchievements() {
+  const grid = document.getElementById('achievements-grid');
+  if (!grid) return;
+  try {
+    const s = JSON.parse(localStorage.getItem('synaptiq_stats') || '{}');
+    grid.innerHTML = ACHIEVEMENTS.map(a => {
+      const earned = a.earned(s, state.xp, state.level);
+      return `<div class="ach-card ${earned ? 'earned' : 'locked'}" title="${earned ? '✅ Earned!' : '🔒 ' + a.desc}">
+        <div class="ach-icon">${a.icon}</div>
+        <div class="ach-name">${a.name}</div>
+        <div class="ach-desc">${a.desc}</div>
+      </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+function updateProgressBars() {
+  try {
+    const s = JSON.parse(localStorage.getItem('synaptiq_stats') || '{}');
+    const explored = new Set((s.topicsExplored || []).map(t => t.toLowerCase()));
+
+    // Map each module to its chapter list from ALEVEL_CONTENT
+    const modules = [
+      { key: 'p1', chapters: [...ALEVEL_CONTENT.pure1.chapters] },
+      { key: 'p2', chapters: [...ALEVEL_CONTENT.pure2.chapters] },
+      { key: 'st', chapters: [...ALEVEL_CONTENT.statsY1.chapters, ...ALEVEL_CONTENT.statsY2.chapters] },
+      { key: 'mc', chapters: [...ALEVEL_CONTENT.mechY1.chapters,  ...ALEVEL_CONTENT.mechY2.chapters] },
+    ];
+    modules.forEach(({ key, chapters }) => {
+      const done = chapters.filter(c => explored.has(c.toLowerCase())).length;
+      const pct  = chapters.length ? Math.round(done / chapters.length * 100) : 0;
+      const label = pct + '%';
+      ['hp', 'pp'].forEach(prefix => {
+        const fill = document.getElementById(`${prefix}-${key}-fill`);
+        const span = document.getElementById(`${prefix}-${key}-pct`);
+        if (fill) fill.style.width = label;
+        if (span) span.textContent  = label;
+      });
+    });
   } catch(e) {}
 }
 
@@ -4604,7 +4710,7 @@ async function generateFcWithAI() {
   try {
     const data = await callClaude([{role:'user',content:'Generate a challenging A-Level Maths flashcard on a random topic (Pure, Stats, or Mechanics).'}], sys);
     const raw = getReply(data).replace(/```json|```/g,'').trim();
-    const card = JSON.parse(sanitizeClaudeJson(raw));
+    const card = validateFlashcard(JSON.parse(sanitizeClaudeJson(raw)));
     fcCards.push({
       id: Date.now(), front: card.q, back: card.a, subject: 'Mathematics',
       nextReview: new Date().toISOString().split('T')[0], ease: 2
@@ -4750,7 +4856,7 @@ Score each criterion 0-100. Be specific and reference A-Level Maths marking conv
   try {
     const data = await callClaude(msgs, sys);
     const raw = getReply(data).replace(/```json|```/g,'').trim();
-    const result = JSON.parse(sanitizeClaudeJson(raw));
+    const result = validateEssayResult(JSON.parse(sanitizeClaudeJson(raw)));
 
     const gradeMap = {'A*':'a','A':'a','B':'b','C':'c','D':'d','E':'e','U':'e'};
     const gradeClass = gradeMap[result.grade] || 'c';
@@ -4773,7 +4879,6 @@ Score each criterion 0-100. Be specific and reference A-Level Maths marking conv
     if (typeof addXP === 'function') addXP(20, '✍️ Solution checked! +20 XP');
   } catch(e) {
     showToast('⚠️ Marking failed — please try again');
-    console.error(e);
   }
   btn.textContent = '✦ Check My Working';
   btn.disabled = false;
@@ -4882,11 +4987,39 @@ function safeSetItem(key, value) {
   } catch(e) {
     if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
       try { localStorage.removeItem('synaptiq_uploads'); } catch(_) {}
-      try { localStorage.setItem(key, value); } catch(_) {
-        console.warn('localStorage full even after pruning uploads — skipping save for', key);
-      }
+      try { localStorage.setItem(key, value); } catch(_) { /* storage full — skip */ }
     }
   }
+}
+
+// Validate schema of AI-returned JSON objects before use
+function validateQuestions(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) throw new Error('Expected a non-empty array of questions');
+  arr.forEach((q, i) => {
+    if (typeof q.question !== 'string' || !q.question.trim())
+      throw new Error(`Question ${i + 1} missing "question" field`);
+    if (q.marks !== undefined && (typeof q.marks !== 'number' || q.marks < 1))
+      q.marks = 4; // safe default
+  });
+  return arr;
+}
+
+function validateFlashcard(obj) {
+  if (!obj || typeof obj !== 'object') throw new Error('Expected a flashcard object');
+  if (typeof obj.q !== 'string' || !obj.q.trim()) throw new Error('Flashcard missing "q" field');
+  if (typeof obj.a !== 'string' || !obj.a.trim()) throw new Error('Flashcard missing "a" field');
+  return obj;
+}
+
+function validateEssayResult(obj) {
+  if (!obj || typeof obj !== 'object') throw new Error('Expected essay result object');
+  const validGrades = ['A*','A','B','C','D','E','U'];
+  if (!validGrades.includes(obj.grade)) obj.grade = 'C'; // safe default
+  if (typeof obj.score !== 'number') obj.score = 0;
+  if (!Array.isArray(obj.strengths)) obj.strengths = [];
+  if (!Array.isArray(obj.improvements)) obj.improvements = [];
+  if (typeof obj.examinerComment !== 'string') obj.examinerComment = '';
+  return obj;
 }
 
 function sanitizeClaudeJson(str) {
@@ -5172,7 +5305,7 @@ async function adminConfirmUpload() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'save_upload', upload: { ...resource, user_id: state.user.id } })
       });
-      if (!ur.ok) console.warn('Upload save failed:', ur.status);
+      if (!ur.ok) showToast('⚠️ Resource saved locally but could not sync to cloud.');
     } catch (e) { /* continue — resource saved locally */ }
   }
 
