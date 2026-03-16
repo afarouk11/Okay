@@ -1764,7 +1764,7 @@ body.mode-adhd .adhd-break { display: block; }
         <div class="feature-icon">🤖</div>
         <h3>A-Level Maths AI Tutor</h3>
         <p>Ask anything. Get full working shown step by step — exactly how a mark scheme expects it. Covers Pure, Stats and Mechanics.</p>
-        <span class="feature-tag">Claude Opus</span>
+        <span class="feature-tag">Synaptiq AI</span>
       </div>
       <div class="feature-card" onclick="nav('auth')">
         <div class="feature-icon">📚</div>
@@ -1865,7 +1865,7 @@ body.mode-adhd .adhd-break { display: block; }
         <div class="price-amount">£20<span>/month</span></div>
         <div class="price-desc">Perfect for A-Level Maths students in Year 12 or 13</div>
         <ul class="price-features">
-          <li><i class="fas fa-check"></i>Full AI Maths Tutor (Claude Opus)</li>
+          <li><i class="fas fa-check"></i>Full AI Maths Tutor</li>
           <li><i class="fas fa-check"></i>Complete A-Level content library</li>
           <li><i class="fas fa-check"></i>Upload mark schemes & past papers</li>
           <li><i class="fas fa-check"></i>Unlimited practice questions</li>
@@ -2213,7 +2213,7 @@ body.mode-adhd .adhd-break { display: block; }
               <button class="tts-btn" id="speak-btn" onclick="speakInput()" title="Speak your question">🎤</button>
               <button class="tutor-send" onclick="tutorSend()">Send ✦</button>
             </div>
-            <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem;text-align:center">Powered by Claude Opus · A-Level Maths specialist · Mark-scheme aligned</p>
+            <p style="font-size:.75rem;color:var(--muted);margin-top:.5rem;text-align:center">Synaptiq AI · A-Level Maths specialist · Mark-scheme aligned</p>
           </div>
         </div>
       </div>
@@ -2260,7 +2260,7 @@ body.mode-adhd .adhd-break { display: block; }
           <div class="form-group"><label>Specific Topics (optional)</label>
             <input type="text" id="q-topics" placeholder="e.g. Integration by parts, Normal distribution, Projectiles">
           </div>
-          <button class="btn btn-gold" style="width:100%;padding:1rem;font-size:1rem" onclick="generateQuestions()">✦ Generate with Claude Opus</button>
+          <button class="btn btn-gold" style="width:100%;padding:1rem;font-size:1rem" onclick="generateQuestions()">✦ Generate Questions</button>
         </div>
         <div class="gen-output" id="q-output">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
@@ -2334,7 +2334,7 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="page-title">🎯 Strengths & Weaknesses</div>
       <p class="page-subtitle">Know exactly what to focus on</p>
       <div style="margin-bottom:1.5rem">
-        <button class="btn btn-gold" onclick="analyseStrengths()">✦ Run AI Analysis with Claude Opus</button>
+        <button class="btn btn-gold" onclick="analyseStrengths()">✦ Run AI Analysis</button>
       </div>
       <div class="strengths-grid">
         <div class="card">
@@ -2403,7 +2403,7 @@ body.mode-adhd .adhd-break { display: block; }
           </div>
           <div class="form-group"><label>Instructions</label><textarea style="width:100%;padding:.875rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--white);font-family:var(--font-body);min-height:80px;resize:vertical" id="asgn-instructions" placeholder="What should students do?"></textarea></div>
           <div style="display:flex;gap:.75rem">
-            <button class="btn btn-gold" style="padding:.875rem 1.5rem" onclick="createAssignment()">✦ Generate with Claude Opus</button>
+            <button class="btn btn-gold" style="padding:.875rem 1.5rem" onclick="createAssignment()">✦ Generate Questions</button>
             <button class="btn btn-outline" style="padding:.875rem 1.5rem" onclick="saveAssignment()">💾 Save & Assign</button>
           </div>
         </div>
@@ -2905,7 +2905,7 @@ function _showDashCore(sub) {
     if (state.dashHistory.length === 0) addDashMsg('bot', "Hello! I'm your Synaptiq A-Level Maths tutor. Ask me anything — from Pure 1 algebra to Mechanics projectiles. What shall we work on? ✦");
   }
   if (sub === 'tutor') {
-    if (state.tutorHistory.length === 0) addTutorMsg('bot', `Hello! I'm your A-Level Maths tutor, powered by Claude Opus ✦\n\nI can explain any topic with full step-by-step working, generate practice questions, or help you understand mark scheme requirements.\n\nSelect a topic on the left, or just ask me anything!`);
+    if (state.tutorHistory.length === 0) addTutorMsg('bot', `Hello! I'm your A-Level Maths tutor, powered by Synaptiq AI ✦\n\nI can explain any topic with full step-by-step working, generate practice questions, or help you understand mark scheme requirements.\n\nSelect a topic on the left, or just ask me anything!`);
   }
 }
 
@@ -3474,7 +3474,7 @@ async function generateQuestions() {
   output.classList.add('show');
   document.getElementById('q-output-title').textContent = `A-Level Maths — ${module}`;
   document.getElementById('q-output-sub').textContent = `${num} questions · ${board} ${level} · Target: ${grade}`;
-  qContainer.innerHTML = '<div class="msg bot" style="max-width:100%">✦ Generating your A-Level Maths questions with Claude Opus...</div>';
+  qContainer.innerHTML = '<div class="msg bot" style="max-width:100%">✦ Generating your questions...</div>';
   const a11y = getA11yInstructions();
   let sys = `You are an expert A-Level Mathematics exam question writer specialising in ${board} ${level}, ${module}.
 Generate exactly ${num} exam-style questions at ${grade} target grade.
@@ -3556,7 +3556,7 @@ async function analyseStrengths() {
   const recs = document.getElementById('ai-recs');
   const body = document.getElementById('ai-recs-body');
   recs.style.display = 'block';
-  body.innerHTML = '<div class="msg bot" style="max-width:100%">⏳ Claude Opus is analysing your performance...</div>';
+  body.innerHTML = '<div class="msg bot" style="max-width:100%">⏳ Synaptiq is analysing your performance...</div>';
   const board = state.user?.board || 'AQA';
   const sys = `You are an expert A-Level Mathematics educational analyst for ${board}.
 Given a student's A-Level Maths profile, provide specific actionable recommendations.
@@ -3604,7 +3604,7 @@ async function createAssignment() {
   const year = document.getElementById('asgn-year').value;
   const board = state.user?.board || 'AQA';
   if (!title) { showToast('Please enter a title first'); return; }
-  showToast('✦ Generating assignment with Claude Opus...');
+  showToast('✦ Generating your assignment...');
   const sys = `You are an experienced A-Level Maths teacher creating a homework assignment. Write clear, exam-style instructions following ${board} conventions. Include mark scheme guidance.`;
   try {
     const data = await callClaude([{ role: 'user', content: `Create a detailed A-Level Maths homework assignment for ${year} titled "${title}" (module: ${subject}). Include: learning objectives, exam-style questions (3-5), mark allocations, and mark scheme hints. Follow ${board} style.` }], sys);
