@@ -2057,6 +2057,7 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="sidebar-item" id="si-assignments" onclick="showDash('assignments')"><i class="fas fa-clipboard-list"></i>Assignments<span class="sidebar-badge">2</span></div>
       <div class="sidebar-section-label">Tools</div>
       <div class="sidebar-item" id="si-flashcards" onclick="showDash('flashcards')"><i class="fas fa-clone"></i>Flashcards</div>
+      <div class="sidebar-item" id="si-formulas" onclick="showDash('formulas')"><i class="fas fa-square-root-variable"></i>Formula Sheet</div>
       <div class="sidebar-item" id="si-essay" onclick="showDash('essay')"><i class="fas fa-pen-nib"></i>Work Checker</div>
       <div class="sidebar-section-label">Account</div>
       <div class="sidebar-item" id="si-admin" onclick="showDash('admin')" style="display:none"><i class="fas fa-shield-halved"></i>Admin</div>
@@ -2076,6 +2077,26 @@ body.mode-adhd .adhd-break { display: block; }
         <div class="stat-card"><div class="stat-card-label">Accuracy Rate</div><div class="stat-card-value" id="stat-acc">—</div><div class="stat-card-change">Answer questions to track</div></div>
         <div class="stat-card"><div class="stat-card-label">Study Streak</div><div class="stat-card-value" id="stat-streak">1 🔥</div><div class="stat-card-change">Keep it going!</div></div>
         <div class="stat-card"><div class="stat-card-label">Topics Explored</div><div class="stat-card-value" id="stat-topics">0</div><div class="stat-card-change">of 180 A-Level topics</div></div>
+      </div>
+      <!-- Exam Countdown -->
+      <div id="exam-countdown-card" style="background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.04));border:1px solid rgba(201,168,76,0.3);border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+        <div style="display:flex;align-items:center;gap:1rem">
+          <div style="font-size:2rem">🎯</div>
+          <div>
+            <div style="font-weight:700;font-size:1rem;color:var(--white)" id="countdown-title">A-Level Maths Exam Countdown</div>
+            <div style="font-size:.85rem;color:var(--muted)" id="countdown-subtitle">Set your exam date to track your preparation</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+          <div id="countdown-display" style="display:none;text-align:center">
+            <div style="font-size:2.5rem;font-weight:900;color:var(--gold);line-height:1" id="countdown-days">—</div>
+            <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">days to go</div>
+          </div>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <input type="date" id="exam-date-input" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.5rem .75rem;color:var(--white);font-size:.85rem" onchange="saveExamDate(this.value)">
+            <button class="btn btn-outline" style="font-size:.8rem;padding:.5rem .9rem;white-space:nowrap" onclick="showDash('questions')">Practice Now →</button>
+          </div>
+        </div>
       </div>
       <div class="dash-grid">
         <div>
@@ -2263,10 +2284,10 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="page-title">📊 Your Progress</div>
       <p class="page-subtitle">Track your improvement over time</p>
       <div class="stats-row">
-        <div class="stat-card"><div class="stat-card-label">Total Questions</div><div class="stat-card-value">1,247</div><div class="stat-card-change">↑ 12 today</div></div>
-        <div class="stat-card"><div class="stat-card-label">Accuracy</div><div class="stat-card-value">78%</div><div class="stat-card-change">↑ 3% this week</div></div>
-        <div class="stat-card"><div class="stat-card-label">Study Streak</div><div class="stat-card-value">14 🔥</div></div>
-        <div class="stat-card"><div class="stat-card-label">Topics Mastered</div><div class="stat-card-value">23</div></div>
+        <div class="stat-card"><div class="stat-card-label">Total Questions</div><div class="stat-card-value" id="prog-stat-q">0</div><div class="stat-card-change" id="prog-stat-q-sub">Start answering!</div></div>
+        <div class="stat-card"><div class="stat-card-label">Accuracy</div><div class="stat-card-value" id="prog-stat-acc">—</div><div class="stat-card-change" id="prog-stat-acc-sub">Answer questions to track</div></div>
+        <div class="stat-card"><div class="stat-card-label">Study Streak</div><div class="stat-card-value" id="prog-stat-streak">1 🔥</div></div>
+        <div class="stat-card"><div class="stat-card-label">Topics Explored</div><div class="stat-card-value" id="prog-stat-topics">0</div></div>
       </div>
       <div class="dash-grid">
         <div>
@@ -2531,6 +2552,16 @@ body.mode-adhd .adhd-break { display: block; }
         </div>
       </div>
       <div class="settings-section">
+        <h3>🎓 Exam Settings</h3>
+        <div class="setting-row">
+          <div class="setting-info">
+            <h4>A-Level Maths Exam Date</h4>
+            <p>Set your exam date to see the countdown on your dashboard</p>
+          </div>
+          <input type="date" id="settings-exam-date" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.5rem .75rem;color:var(--white);font-size:.85rem" onchange="saveExamDate(this.value)">
+        </div>
+      </div>
+      <div class="settings-section">
         <h3>🔔 Notifications</h3>
         <div class="setting-row"><div class="setting-info"><h4>Study Reminders</h4><p>Get notified when it's time to study</p></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
         <div class="setting-row"><div class="setting-info"><h4>Assignment Due Dates</h4><p>Reminders 24h before deadlines</p></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
@@ -2638,6 +2669,19 @@ body.mode-adhd .adhd-break { display: block; }
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- FORMULA SHEET SUBPAGE -->
+    <div class="subpage" id="sp-formulas">
+      <div class="page-title">📐 Formula Reference Sheet</div>
+      <p class="page-subtitle">All A-Level Maths formulas in one place — Pure, Statistics &amp; Mechanics</p>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem" id="formula-tabs">
+        <button class="btn btn-gold" onclick="switchFormulaTab('pure1',this)" id="ftab-pure1">Pure 1</button>
+        <button class="btn btn-outline" onclick="switchFormulaTab('pure2',this)" id="ftab-pure2">Pure 2</button>
+        <button class="btn btn-outline" onclick="switchFormulaTab('stats',this)" id="ftab-stats">Statistics</button>
+        <button class="btn btn-outline" onclick="switchFormulaTab('mech',this)" id="ftab-mech">Mechanics</button>
+      </div>
+      <div id="formula-content"></div>
     </div>
 
     <!-- ADMIN SUBPAGE -->
@@ -2895,12 +2939,15 @@ function _showDashCore(sub) {
   document.querySelectorAll('#app-nav a').forEach(a => a.classList.remove('active'));
   state.currentSubpage = sub;
 
-  if (sub === 'progress') buildHeatmap();
+  if (sub === 'progress') { buildHeatmap(); updateDashboardStats(); }
   if (sub === 'content') buildContentPage();
   if (sub === 'resources') renderResourcesList();
+  if (sub === 'formulas') { renderFormulaTab('pure1'); document.querySelectorAll('#formula-tabs button').forEach((b,i) => b.className = i===0 ? 'btn btn-gold' : 'btn btn-outline'); }
+  if (sub === 'settings') { updateExamCountdown(); }
   if (sub === 'home') {
     updateGreeting();
     updateDashboardStats();
+    updateExamCountdown();
     if (state.dashHistory.length === 0) addDashMsg('bot', "Hello! I'm your Synaptiq A-Level Maths tutor. Ask me anything — from Pure 1 algebra to Mechanics projectiles. What shall we work on? ✦");
   }
   if (sub === 'tutor') {
@@ -3157,6 +3204,7 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch(e) {}
   buildNumberLine(0);
   initExitIntent();
+  updateExamCountdown();
 });
 
 // ═══════════════════════════════════════
@@ -3796,6 +3844,10 @@ function updateStats(delta) {
     }
     s.lastSeen = today;
     localStorage.setItem('synaptiq_stats', JSON.stringify(s));
+    // Track study days for heatmap
+    const days = JSON.parse(localStorage.getItem('synaptiq_study_days') || '{}');
+    days[today] = (days[today] || 0) + 1;
+    localStorage.setItem('synaptiq_study_days', JSON.stringify(days));
   } catch(e) {}
 }
 
@@ -3803,12 +3855,25 @@ function updateDashboardStats() {
   try {
     const raw = localStorage.getItem('synaptiq_stats');
     const s = raw ? JSON.parse(raw) : {};
+    const q = s.questionsAnswered || 0;
+    const topics = (s.topicsExplored || []).length;
+    const streak = s.streak || 1;
+    // Dashboard home stats
     const qEl = document.getElementById('stat-q');
     const topEl = document.getElementById('stat-topics');
     const streakEl = document.getElementById('stat-streak');
-    if (qEl) qEl.textContent = s.questionsAnswered || 0;
-    if (topEl) topEl.textContent = (s.topicsExplored || []).length;
-    if (streakEl) streakEl.textContent = (s.streak || 1) + ' 🔥';
+    if (qEl) qEl.textContent = q;
+    if (topEl) topEl.textContent = topics;
+    if (streakEl) streakEl.textContent = streak + ' 🔥';
+    // Progress page stats (same data, different IDs)
+    const pq = document.getElementById('prog-stat-q');
+    const ptop = document.getElementById('prog-stat-topics');
+    const pstr = document.getElementById('prog-stat-streak');
+    if (pq) pq.textContent = q;
+    if (ptop) ptop.textContent = topics;
+    if (pstr) pstr.textContent = streak + ' 🔥';
+    const psub = document.getElementById('prog-stat-q-sub');
+    if (psub) psub.textContent = q > 0 ? `Keep going!` : 'Start answering!';
   } catch(e) {}
 }
 
@@ -3827,12 +3892,19 @@ function buildHeatmap() {
   const el = document.getElementById('heatmap');
   const levels = ['', 'l1', 'l2', 'l3', 'l4'];
   let html = '';
+  // Load actual study days from localStorage
+  let studyDays = {};
+  try {
+    const raw = localStorage.getItem('synaptiq_study_days');
+    studyDays = raw ? JSON.parse(raw) : {};
+  } catch(e) {}
   for (let i = 0; i < 84; i++) {
-    const rand = Math.random();
-    const lvl = rand < 0.3 ? 0 : rand < 0.5 ? 1 : rand < 0.7 ? 2 : rand < 0.9 ? 3 : 4;
     const date = new Date(); date.setDate(date.getDate() - (83 - i));
+    const key = date.toDateString();
+    const count = studyDays[key] || 0;
+    const lvl = count === 0 ? 0 : count < 3 ? 1 : count < 6 ? 2 : count < 10 ? 3 : 4;
     const label = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-    html += `<div class="heat-cell ${levels[lvl]}" data-tip="${label}: ${lvl * 3} sessions"></div>`;
+    html += `<div class="heat-cell ${levels[lvl]}" data-tip="${label}: ${count} session${count !== 1 ? 's' : ''}"></div>`;
   }
   el.innerHTML = html;
 }
@@ -4838,6 +4910,226 @@ async function adminConfirmUpload() {
 
   adminCancelUpload();
   renderAdminResources();
+}
+
+// ═══════════════════════════════════════
+// EXAM COUNTDOWN
+// ═══════════════════════════════════════
+function saveExamDate(val) {
+  if (!val) return;
+  localStorage.setItem('synaptiq_exam_date', val);
+  updateExamCountdown();
+}
+
+function updateExamCountdown() {
+  const stored = localStorage.getItem('synaptiq_exam_date');
+  const inp = document.getElementById('exam-date-input');
+  const settingsInp = document.getElementById('settings-exam-date');
+  const display = document.getElementById('countdown-display');
+  const title = document.getElementById('countdown-title');
+  const subtitle = document.getElementById('countdown-subtitle');
+  const daysEl = document.getElementById('countdown-days');
+  if (!stored) return;
+  if (inp) inp.value = stored;
+  if (settingsInp) settingsInp.value = stored;
+  const examDate = new Date(stored);
+  const now = new Date();
+  const diff = Math.ceil((examDate - now) / 86400000);
+  if (display) display.style.display = 'block';
+  if (daysEl) daysEl.textContent = diff > 0 ? diff : 0;
+  if (title) title.textContent = diff > 0 ? 'Days Until Your A-Level Maths Exam' : 'Good luck in your exam! 🎓';
+  if (subtitle) subtitle.textContent = diff > 30 ? 'Plenty of time — build a strong foundation now.' : diff > 14 ? 'Final stretch — focus on weak areas and past papers.' : diff > 0 ? 'Last push — revise formulas and exam technique!' : examDate.toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'});
+}
+
+// ═══════════════════════════════════════
+// FORMULA SHEET
+// ═══════════════════════════════════════
+const FORMULAS = {
+  pure1: [
+    { title: 'Quadratic Formula', items: [
+      'x = \\dfrac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
+      '\\text{Discriminant: } \\Delta = b^2 - 4ac',
+      '\\Delta > 0 \\Rightarrow \\text{two real roots}; \\quad \\Delta = 0 \\Rightarrow \\text{repeated root}; \\quad \\Delta < 0 \\Rightarrow \\text{no real roots}'
+    ]},
+    { title: 'Laws of Indices', items: [
+      'a^m \\cdot a^n = a^{m+n}',
+      '\\dfrac{a^m}{a^n} = a^{m-n}',
+      '(a^m)^n = a^{mn}',
+      'a^0 = 1, \\quad a^{-n} = \\dfrac{1}{a^n}, \\quad a^{1/n} = \\sqrt[n]{a}'
+    ]},
+    { title: 'Binomial Expansion (Positive Integer n)', items: [
+      '(a+b)^n = \\sum_{r=0}^{n} \\binom{n}{r} a^{n-r} b^r',
+      '\\binom{n}{r} = \\dfrac{n!}{r!(n-r)!}',
+      '(1+x)^n = 1 + nx + \\dfrac{n(n-1)}{2!}x^2 + \\dfrac{n(n-1)(n-2)}{3!}x^3 + \\cdots'
+    ]},
+    { title: 'Straight Lines & Circles', items: [
+      'y - y_1 = m(x - x_1)',
+      'm = \\dfrac{y_2 - y_1}{x_2 - x_1}',
+      '\\text{Perpendicular: } m_1 m_2 = -1',
+      '(x-a)^2 + (y-b)^2 = r^2 \\quad \\text{centre }(a,b)\\text{, radius }r'
+    ]},
+    { title: 'Differentiation (Pure 1)', items: [
+      '\\dfrac{d}{dx}(x^n) = nx^{n-1}',
+      '\\dfrac{d}{dx}(kf(x)) = kf\'(x)',
+      '\\text{Chain rule: } \\dfrac{dy}{dx} = \\dfrac{dy}{du} \\cdot \\dfrac{du}{dx}'
+    ]},
+    { title: 'Integration (Pure 1)', items: [
+      '\\int x^n\\,dx = \\dfrac{x^{n+1}}{n+1} + C \\quad (n \\neq -1)',
+      '\\int_a^b f(x)\\,dx = F(b) - F(a)',
+      '\\text{Area} = \\int_a^b |f(x)|\\,dx'
+    ]},
+    { title: 'Trigonometry (Pure 1)', items: [
+      '\\sin^2\\theta + \\cos^2\\theta = 1',
+      '\\tan\\theta = \\dfrac{\\sin\\theta}{\\cos\\theta}',
+      '\\text{Sine rule: } \\dfrac{a}{\\sin A} = \\dfrac{b}{\\sin B} = \\dfrac{c}{\\sin C}',
+      '\\text{Cosine rule: } a^2 = b^2 + c^2 - 2bc\\cos A',
+      '\\text{Area} = \\tfrac{1}{2}ab\\sin C'
+    ]},
+    { title: 'Exponentials & Logarithms', items: [
+      '\\ln(ab) = \\ln a + \\ln b',
+      '\\ln\\!\\left(\\dfrac{a}{b}\\right) = \\ln a - \\ln b',
+      '\\ln(a^k) = k\\ln a',
+      'e^{\\ln x} = x, \\quad \\ln(e^x) = x',
+      'a^x = e^{x\\ln a}'
+    ]}
+  ],
+  pure2: [
+    { title: 'Functions', items: [
+      'fg(x) = f(g(x)) \\quad \\text{(composite)}',
+      'f^{-1}(x) \\text{ exists iff } f \\text{ is one-to-one}',
+      '|x| = a \\Rightarrow x = \\pm a'
+    ]},
+    { title: 'Sequences & Series', items: [
+      '\\text{AP: } u_n = a + (n-1)d, \\quad S_n = \\dfrac{n}{2}(2a + (n-1)d)',
+      '\\text{GP: } u_n = ar^{n-1}, \\quad S_n = \\dfrac{a(1-r^n)}{1-r}',
+      'S_\\infty = \\dfrac{a}{1-r} \\quad (|r|<1)',
+      '\\sum_{r=1}^n r = \\dfrac{n(n+1)}{2}'
+    ]},
+    { title: 'Radians', items: [
+      's = r\\theta, \\quad A = \\tfrac{1}{2}r^2\\theta',
+      '180° = \\pi \\text{ rad}'
+    ]},
+    { title: 'Trigonometry (Pure 2)', items: [
+      '\\sin 2A = 2\\sin A\\cos A',
+      '\\cos 2A = \\cos^2 A - \\sin^2 A = 2\\cos^2 A - 1 = 1 - 2\\sin^2 A',
+      '\\tan 2A = \\dfrac{2\\tan A}{1 - \\tan^2 A}',
+      '1 + \\tan^2\\theta = \\sec^2\\theta',
+      '1 + \\cot^2\\theta = \\csc^2\\theta',
+      'R\\sin(\\theta+\\alpha): R=\\sqrt{a^2+b^2},\\; \\tan\\alpha = b/a'
+    ]},
+    { title: 'Parametric Equations', items: [
+      '\\dfrac{dy}{dx} = \\dfrac{dy/dt}{dx/dt}',
+      '\\int y\\,dx = \\int y\\,\\dfrac{dx}{dt}\\,dt'
+    ]},
+    { title: 'Differentiation (Pure 2)', items: [
+      '\\dfrac{d}{dx}(e^x) = e^x, \\quad \\dfrac{d}{dx}(\\ln x) = \\dfrac{1}{x}',
+      '\\dfrac{d}{dx}(\\sin x) = \\cos x, \\quad \\dfrac{d}{dx}(\\cos x) = -\\sin x',
+      '\\text{Product rule: } (uv)' + "'" + ' = u' + "'" + 'v + uv' + "'",
+      '\\text{Quotient rule: } \\left(\\dfrac{u}{v}\\right)' + "'" + ' = \\dfrac{u' + "'" + 'v - uv' + "'" + '}{v^2}'
+    ]},
+    { title: 'Integration (Pure 2)', items: [
+      '\\int e^x\\,dx = e^x + C',
+      '\\int \\dfrac{1}{x}\\,dx = \\ln|x| + C',
+      '\\int \\sin x\\,dx = -\\cos x + C, \\quad \\int \\cos x\\,dx = \\sin x + C',
+      '\\text{By parts: } \\int u\\,dv = uv - \\int v\\,du',
+      '\\text{By substitution: } \\int f(g(x))g' + "'" + '(x)\\,dx'
+    ]},
+    { title: 'Numerical Methods', items: [
+      'x_{n+1} = x_n - \\dfrac{f(x_n)}{f' + "'" + '(x_n)} \\quad \\text{(Newton–Raphson)}',
+      '\\text{Trapezium rule: } \\int_a^b y\\,dx \\approx \\tfrac{h}{2}[y_0 + 2(y_1+\\cdots+y_{n-1})+y_n]'
+    ]}
+  ],
+  stats: [
+    { title: 'Descriptive Statistics', items: [
+      '\\bar{x} = \\dfrac{\\sum x}{n} \\quad \\text{(mean)}',
+      '\\sigma^2 = \\dfrac{\\sum x^2}{n} - \\bar{x}^2 \\quad \\text{(variance)}',
+      '\\text{IQR} = Q_3 - Q_1',
+      '\\text{Outlier if } x < Q_1 - 1.5\\cdot\\text{IQR} \\text{ or } x > Q_3 + 1.5\\cdot\\text{IQR}'
+    ]},
+    { title: 'Probability', items: [
+      'P(A \\cup B) = P(A) + P(B) - P(A \\cap B)',
+      'P(A|B) = \\dfrac{P(A \\cap B)}{P(B)}',
+      '\\text{Independent: } P(A \\cap B) = P(A)P(B)'
+    ]},
+    { title: 'Discrete Distributions', items: [
+      'X \\sim B(n,p): \\quad P(X=r) = \\binom{n}{r}p^r(1-p)^{n-r}',
+      'E(X) = np, \\quad \\text{Var}(X) = np(1-p)',
+      'X \\sim \\text{Po}(\\lambda): \\quad P(X=r) = \\dfrac{e^{-\\lambda}\\lambda^r}{r!}',
+      'E(X) = \\text{Var}(X) = \\lambda'
+    ]},
+    { title: 'Normal Distribution', items: [
+      'X \\sim N(\\mu, \\sigma^2)',
+      'Z = \\dfrac{X - \\mu}{\\sigma} \\sim N(0,1)',
+      '\\overline{X} \\sim N\\!\\left(\\mu, \\dfrac{\\sigma^2}{n}\\right) \\quad \\text{(sampling distribution)}'
+    ]},
+    { title: 'Hypothesis Testing', items: [
+      '\\text{Null hypothesis } H_0, \\text{ alternative } H_1',
+      '\\text{Reject } H_0 \\text{ if } p\\text{-value} < \\alpha \\text{ (significance level)}',
+      '\\text{Critical region: values that lead to rejection of } H_0'
+    ]},
+    { title: 'Correlation & Regression', items: [
+      'r = \\dfrac{S_{xy}}{\\sqrt{S_{xx}S_{yy}}}',
+      'S_{xy} = \\sum xy - \\dfrac{(\\sum x)(\\sum y)}{n}',
+      'y = a + bx, \\quad b = \\dfrac{S_{xy}}{S_{xx}}'
+    ]}
+  ],
+  mech: [
+    { title: 'Kinematics (constant acceleration)', items: [
+      'v = u + at',
+      's = ut + \\tfrac{1}{2}at^2',
+      'v^2 = u^2 + 2as',
+      's = \\tfrac{1}{2}(u+v)t'
+    ]},
+    { title: 'Projectiles', items: [
+      'x = V\\cos\\theta \\cdot t',
+      'y = V\\sin\\theta \\cdot t - \\tfrac{1}{2}gt^2',
+      'v_x = V\\cos\\theta \\quad (\\text{constant})',
+      'v_y = V\\sin\\theta - gt',
+      '\\text{Range} = \\dfrac{V^2\\sin 2\\theta}{g}'
+    ]},
+    { title: 'Forces & Newton\'s Laws', items: [
+      'F = ma',
+      'W = mg \\quad (g \\approx 9.8\\,\\text{ms}^{-2})',
+      'F_\\text{friction} \\leq \\mu R',
+      'F_\\text{friction} = \\mu R \\quad \\text{(limiting equilibrium)}'
+    ]},
+    { title: 'Moments', items: [
+      '\\text{Moment} = F \\times d \\quad \\text{(perpendicular distance)}',
+      '\\sum \\text{clockwise moments} = \\sum \\text{anticlockwise moments} \\quad \\text{(equilibrium)}'
+    ]},
+    { title: 'Energy, Work & Power', items: [
+      'W = Fd\\cos\\theta',
+      'KE = \\tfrac{1}{2}mv^2',
+      'GPE = mgh',
+      'P = Fv, \\quad P = \\dfrac{W}{t}',
+      '\\text{Work–energy theorem: } W_{\\text{net}} = \\Delta KE'
+    ]},
+    { title: 'Variable Acceleration', items: [
+      'v = \\dfrac{ds}{dt}, \\quad a = \\dfrac{dv}{dt} = v\\dfrac{dv}{ds}',
+      's = \\int v\\,dt, \\quad v = \\int a\\,dt'
+    ]}
+  ]
+};
+
+function switchFormulaTab(tab, btn) {
+  document.querySelectorAll('#formula-tabs button').forEach(b => {
+    b.className = 'btn btn-outline';
+  });
+  if (btn) btn.className = 'btn btn-gold';
+  renderFormulaTab(tab);
+}
+
+function renderFormulaTab(tab) {
+  const sections = FORMULAS[tab] || [];
+  const html = sections.map(sec => `
+    <div class="card" style="margin-bottom:1.25rem">
+      <div class="card-header"><span class="card-title">${sec.title}</span></div>
+      <div class="card-body">
+        ${sec.items.map(f => `<div style="padding:.6rem 0;border-bottom:1px solid var(--border);font-size:1rem;line-height:1.8">\\(${f}\\)</div>`).join('')}
+      </div>
+    </div>`).join('');
+  document.getElementById('formula-content').innerHTML = html;
+  if (window.MathJax) MathJax.typesetPromise([document.getElementById('formula-content')]).catch(()=>{});
 }
 
 function renderAdminResources() {
