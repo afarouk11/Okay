@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) return res.status(500).json({ error: 'Missing Resend key' });
 
-  const { to, type, name } = req.body;
+  const { to, type, name, stats } = req.body;
   if (!to) return res.status(400).json({ error: 'Missing recipient email' });
 
   const templates = {
@@ -38,6 +38,28 @@ export default async function handler(req, res) {
           <h1 style="font-size:1.8rem">Hi ${name || 'there'}, your trial ends soon ⏰</h1>
           <p style="color:#8892A4;line-height:1.7">Your 7-day free trial of Synaptiq ends in 2 days. Upgrade now to keep your progress, uploads, and access to all A-Level content.</p>
           <a href="${process.env.APP_URL || 'https://synaptiqai.co.uk'}?upgrade=true" style="display:inline-block;background:#C9A84C;color:#07080C;padding:1rem 2rem;border-radius:10px;text-decoration:none;font-weight:700">Upgrade Now — £60/month →</a>
+        </div>
+      `
+    },
+    weekly: {
+      subject: 'Your weekly Synaptiq progress report',
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0A0C12;color:#F5F2EC;border-radius:16px;overflow:hidden">
+          <div style="background:linear-gradient(135deg,#C9A84C,#9A7A2E);padding:2rem;text-align:center">
+            <h1 style="font-size:1.5rem;margin:0;color:#07080C">Weekly Report</h1>
+            <p style="opacity:.8;color:#07080C;margin:.5rem 0 0">Week ending ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+          </div>
+          <div style="padding:2rem">
+            <h2 style="color:#C9A84C;margin-bottom:1.5rem">Hi ${name || 'there'}!</h2>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+              <div style="background:#151821;border-radius:10px;padding:1rem;text-align:center"><div style="font-size:2rem;font-weight:800;color:#C9A84C">${stats?.questions || 0}</div><div style="font-size:.8rem;color:#8892A4">Questions answered</div></div>
+              <div style="background:#151821;border-radius:10px;padding:1rem;text-align:center"><div style="font-size:2rem;font-weight:800;color:#4ADE80">${stats?.accuracy || 0}%</div><div style="font-size:.8rem;color:#8892A4">Accuracy</div></div>
+              <div style="background:#151821;border-radius:10px;padding:1rem;text-align:center"><div style="font-size:2rem;font-weight:800;color:#60A5FA">${stats?.xp || 0}</div><div style="font-size:.8rem;color:#8892A4">XP earned</div></div>
+              <div style="background:#151821;border-radius:10px;padding:1rem;text-align:center"><div style="font-size:2rem;font-weight:800;color:#FB923C">${stats?.streak || 0}</div><div style="font-size:.8rem;color:#8892A4">Day streak</div></div>
+            </div>
+            <a href="${process.env.APP_URL || 'https://synaptiqai.co.uk'}" style="display:inline-block;background:#C9A84C;color:#07080C;padding:.875rem 2rem;border-radius:10px;font-weight:700;text-decoration:none">Keep Going →</a>
+            <p style="color:#8892A4;font-size:.8rem;margin-top:2rem">Synaptiq · A-Level Maths AI Tutor · <a href="#" style="color:#C9A84C">Unsubscribe</a></p>
+          </div>
         </div>
       `
     }
