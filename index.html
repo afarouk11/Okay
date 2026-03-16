@@ -11328,6 +11328,11 @@ function renderTeacherChapters() {
   list.innerHTML = html;
 }
 
+// Fix unescaped LaTeX backslashes in Claude's JSON output (e.g. \frac → \\frac)
+function fixJsonLatex(str) {
+  return str.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+}
+
 function initTeacher() {
   renderTeacherChapters();
 }
@@ -11360,9 +11365,10 @@ Return ONLY valid JSON (no markdown code fences, no extra text):
   "objectives": ["at least 3 learning objectives"],
   "theory": "full explanation with LaTeX math",
   "workedExamples": [{"problem": "...", "steps": ["step 1", "step 2", "..."]}],
-  "practiceQuestions": [{"q": "question text", "answer": "full worked answer with LaTeX"}],
+  "practiceQuestions": [{"q": "question text", "answer": "full worked answer with LaTeX", "requiresGraph": false}],
   "keyFormulas": ["formula 1", "formula 2", "..."]
 }
+Set "requiresGraph": true for any practice question where the student needs to sketch a graph, plot points, draw a diagram, or work with coordinate axes.
 Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice questions, 3 key formulas.${resourceCtx}`;
 
   try {
@@ -11399,12 +11405,30 @@ function renderTeacherLesson(chapter, year, L, box) {
     </div>
     <div class="lesson-section">
       <h3><i class="fas fa-question-circle"></i> Practice Questions</h3>
-      ${(L.practiceQuestions || []).map((pq, i) => `
+      ${(L.practiceQuestions || []).map((pq, i) => {
+        const needsCanvas = pq.requiresGraph || /graph|plot|circle|coordinat|sketch|draw|diagram|axes|curve|locus/i.test(pq.q);
+        const canvasHTML = needsCanvas ? `
+          <div style="margin-top:.85rem">
+            <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">📐 Drawing Space</div>
+            <canvas id="pqcanvas-${i}" width="420" height="260"
+              style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:crosshair;touch-action:none;display:block;max-width:100%"
+              onmousedown="qDrawStart(this,event)" onmousemove="qDrawMove(this,event)" onmouseup="qDrawStop()" onmouseleave="qDrawStop()"
+              ontouchstart="qDrawStart(this,event)" ontouchmove="qDrawMove(this,event)" ontouchend="qDrawStop()"></canvas>
+            <div style="display:flex;gap:.35rem;margin-top:.4rem;align-items:center;flex-wrap:wrap">
+              <button onclick="qClearCanvas('pqcanvas-${i}')" style="font-size:.72rem;background:none;border:1px solid var(--border);color:var(--muted);padding:.22rem .55rem;border-radius:6px;cursor:pointer">Clear</button>
+              <button onclick="qSetColor(this,'#C9A84C')" style="font-size:.72rem;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.35);color:var(--gold);padding:.22rem .55rem;border-radius:6px;cursor:pointer;font-weight:700">● Gold</button>
+              <button onclick="qSetColor(this,'#60A5FA')" style="font-size:.72rem;background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.3);color:#60A5FA;padding:.22rem .55rem;border-radius:6px;cursor:pointer">● Blue</button>
+              <button onclick="qSetColor(this,'#4ADE80')" style="font-size:.72rem;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);color:#4ade80;padding:.22rem .55rem;border-radius:6px;cursor:pointer">● Green</button>
+            </div>
+          </div>` : '';
+        return `
         <div class="practice-q">
           <div class="q-text">Q${i + 1}: ${pq.q}</div>
+          ${canvasHTML}
           <button class="show-answer-btn" onclick="toggleTeacherAnswer(this)">Show Answer</button>
           <div class="teacher-q-answer">${(pq.answer || '').replace(/\n/g, '<br>')}</div>
-        </div>`).join('')}
+        </div>`;
+      }).join('')}
     </div>
     <div class="lesson-section">
       <h3><i class="fas fa-star"></i> Key Formulas</h3>
@@ -11431,6 +11455,34 @@ if (_teacherOrigShowDash) {
     if (sub === 'content') initTeacher();
   };
 }
+
+// ── Practice question canvas (freehand drawing) ─────────
+let _qDrawActive = false, _qDrawCtx = null, _qDrawColor = '#C9A84C';
+function qDrawStart(canvas, e) {
+  _qDrawActive = true;
+  _qDrawCtx = canvas.getContext('2d');
+  const p = _qGetPos(canvas, e);
+  _qDrawCtx.beginPath(); _qDrawCtx.moveTo(p.x, p.y);
+  _qDrawCtx.strokeStyle = _qDrawColor; _qDrawCtx.lineWidth = 2; _qDrawCtx.lineCap = 'round'; _qDrawCtx.lineJoin = 'round';
+  e.preventDefault();
+}
+function qDrawMove(canvas, e) {
+  if (!_qDrawActive || !_qDrawCtx) return;
+  const p = _qGetPos(canvas, e);
+  _qDrawCtx.lineTo(p.x, p.y); _qDrawCtx.stroke();
+  e.preventDefault();
+}
+function qDrawStop() { _qDrawActive = false; _qDrawCtx = null; }
+function _qGetPos(canvas, e) {
+  const r = canvas.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return { x: (src.clientX - r.left) * (canvas.width / r.width), y: (src.clientY - r.top) * (canvas.height / r.height) };
+}
+function qClearCanvas(id) {
+  const c = document.getElementById(id);
+  if (c) { const ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height); }
+}
+function qSetColor(btn, color) { _qDrawColor = color; }
 
 // ═══════════════════════════════════════
 // ADMIN GLOBAL RESOURCES
