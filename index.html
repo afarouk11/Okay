@@ -17,9 +17,8 @@
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
 <!-- Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<!-- GA4 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXX"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-XXXXXXXX');</script>
+<!-- GA4 — loaded only after user consent (see initGA4()) -->
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}</script>
 <!-- JSON-LD Schema -->
 <script type="application/ld+json">
 {
@@ -2823,13 +2822,44 @@ body.mode-adhd .adhd-break { display: block; }
 <div id="cookie-banner">
   <p class="cookie-text">We use cookies to improve your experience and comply with GDPR. See our <a onclick="nav('privacy')">Privacy Policy</a>.</p>
   <div class="cookie-btns">
-    <button class="btn btn-outline" style="font-size:.8rem" onclick="document.getElementById('cookie-banner').remove()">Reject</button>
-    <button class="btn btn-gold" style="font-size:.8rem" onclick="document.getElementById('cookie-banner').remove()">Accept All</button>
+    <button class="btn btn-outline" style="font-size:.8rem" onclick="cookieConsent('reject')">Reject</button>
+    <button class="btn btn-gold" style="font-size:.8rem" onclick="cookieConsent('accept')">Accept All</button>
   </div>
 </div>
 
 <!-- ═══════════════════════ JAVASCRIPT ═══════════════════════ -->
 <script>
+// ═══════════════════════════════════════
+// GDPR / COOKIE CONSENT
+// ═══════════════════════════════════════
+function initGA4() {
+  const GA_ID = 'G-XXXXXXXX'; // Replace with real measurement ID before deploy
+  if (!GA_ID || GA_ID === 'G-XXXXXXXX') return; // Skip until real ID is set
+  const s = document.createElement('script');
+  s.async = true;
+  s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+  document.head.appendChild(s);
+  gtag('js', new Date());
+  gtag('config', GA_ID);
+}
+
+function cookieConsent(choice) {
+  safeSetItem('synaptiq_consent', choice);
+  const banner = document.getElementById('cookie-banner');
+  if (banner) banner.remove();
+  if (choice === 'accept') initGA4();
+}
+
+// Check consent on every page load — don't re-prompt if already answered
+(function bootConsent() {
+  const stored = localStorage.getItem('synaptiq_consent');
+  if (stored === 'accept') { initGA4(); }
+  if (stored) {
+    const b = document.getElementById('cookie-banner');
+    if (b) b.remove();
+  }
+}());
+
 // ═══════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════
@@ -2975,7 +3005,7 @@ function prevStep(to) {
   }
 }
 
-function createAccount() {
+async function createAccount() {
   if (!document.getElementById('gdpr-check').checked) {
     showToast('Please accept the privacy policy to continue'); return;
   }
@@ -2990,15 +3020,21 @@ function createAccount() {
     target: document.getElementById('reg-target').value,
     diffs: state.selectedDiffs
   };
-  try { localStorage.setItem('synaptiq_user', JSON.stringify(state.user)); } catch(e) {}
-  // Save profile to Supabase and store the returned id
-  fetch('/api/supabase-auth', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ action: 'upsert_profile', payload: { ...state.user, xp: 0, level: 1, stats: {}, flashcards: [] } })
-  }).then(r=>r.json()).then(d=>{
-    if (d && d.id) { state.user.id = d.id; localStorage.setItem('synaptiq_user', JSON.stringify(state.user)); }
-  }).catch(()=>{});
-  // Send welcome email via Resend
+  safeSetItem('synaptiq_user', JSON.stringify(state.user));
+  // Save profile to Supabase — must succeed before entering dashboard
+  try {
+    const pr = await fetch('/api/supabase-auth', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'upsert_profile', payload: { ...state.user, xp: 0, level: 1, stats: {}, flashcards: [] } })
+    });
+    if (!pr.ok) throw new Error('Profile save failed ' + pr.status);
+    const pd = await pr.json();
+    if (pd && pd.id) { state.user.id = pd.id; safeSetItem('synaptiq_user', JSON.stringify(state.user)); }
+  } catch(e) {
+    showToast('⚠️ Could not save your profile — check your connection and try again.');
+    return;
+  }
+  // Send welcome email (non-blocking — failure is acceptable)
   fetch('/api/resend', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -3019,26 +3055,25 @@ async function loginUser() {
     // Fetch profile from Supabase
     const r = await fetch('/api/supabase-auth', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ action: 'get_profile', payload: { email } })
+      body: JSON.stringify({ action: 'verify_login', payload: { email, password: pass } })
     });
+    if (!r.ok) throw new Error('Server error ' + r.status);
     const profile = await r.json();
-    if (profile && profile.email) {
-      state.user = profile;
-      state.xp = profile.xp || 0;
-      state.level = profile.level || 1;
-      if (profile.stats) localStorage.setItem('synaptiq_stats', JSON.stringify(profile.stats));
-      if (profile.flashcards && profile.flashcards.length) {
-        fcCards = profile.flashcards;
-        safeSetItem('synaptiq_fc', JSON.stringify(fcCards));
-      }
-    } else {
-      // Fall back to localStorage or create minimal profile
-      const saved = localStorage.getItem('synaptiq_user');
-      state.user = saved ? JSON.parse(saved) : { name: email.split('@')[0], email, plan: 'student', subject: 'A-Level Mathematics', diffs: [], board: 'AQA' };
+    if (!profile || profile.error || !profile.email) {
+      showToast('⚠️ Invalid email or password. Please try again.');
+      return;
+    }
+    state.user = profile;
+    state.xp = profile.xp || 0;
+    state.level = profile.level || 1;
+    if (profile.stats) safeSetItem('synaptiq_stats', JSON.stringify(profile.stats));
+    if (profile.flashcards && profile.flashcards.length) {
+      fcCards = profile.flashcards;
+      safeSetItem('synaptiq_fc', JSON.stringify(fcCards));
     }
   } catch(e) {
-    const saved = localStorage.getItem('synaptiq_user');
-    state.user = saved ? JSON.parse(saved) : { name: email.split('@')[0], email, plan: 'student', subject: 'A-Level Mathematics', diffs: [], board: 'AQA' };
+    showToast('⚠️ Could not sign in — please check your connection and try again.');
+    return;
   }
   const rememberMe = document.getElementById('login-remember')?.checked;
   const expiry = rememberMe ? Date.now() + 30 * 24 * 60 * 60 * 1000 : null;
@@ -3376,12 +3411,13 @@ When explaining concepts: Start with the core idea, then show a worked example, 
 // ═══════════════════════════════════════
 // TUTOR CHAT
 // ═══════════════════════════════════════
-function setTopic(name) {
+function setTopic(name, ev) {
   state.topic = name;
   state.tutorHistory = [];
   document.querySelectorAll('.subj-btn').forEach(b => b.classList.remove('active'));
-  // Highlight the clicked button
-  event && event.target && event.target.classList.add('active');
+  // Highlight the clicked button (ev passed explicitly; falls back to global event for inline handlers)
+  const src = (ev && ev.target) || (typeof event !== 'undefined' && event && event.target);
+  if (src && src.classList) src.classList.add('active');
   document.getElementById('tutor-subject-title').textContent = 'A-Level Maths Tutor';
   const subEl = document.getElementById('tutor-topic-sub');
   if (subEl) subEl.textContent = 'Topic: ' + name;
@@ -3600,7 +3636,10 @@ Reply with ONLY this HTML (no markdown, no extra text):
 <p><strong>💡 Tip:</strong> [one actionable improvement]</p>`;
   try {
     const data = await callClaude([{role:'user', content:`Mark scheme:\n${markScheme}\n\nStudent answer:\n${studentAnswer}`}], sys, 1000);
-    fbDiv.innerHTML = sanitizeAIHTML(getReply(data));
+    const fbRaw = state.modes.dyscalculia
+      ? applyDyscalculiaColors(getReply(data))
+      : getReply(data);
+    fbDiv.innerHTML = sanitizeAIHTML(fbRaw);
     fbDiv.classList.add('show');
     if (window.MathJax) MathJax.typesetPromise([fbDiv]).catch(() => {});
     btn.innerHTML = '✦ Re-check';
@@ -4123,6 +4162,7 @@ async function startCheckout(plan) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ plan, email })
     });
+    if (!r.ok) throw new Error('Stripe server error ' + r.status);
     const data = await r.json();
     if (data.url) {
       window.location.href = data.url;
@@ -4401,16 +4441,43 @@ function showFcCard() {
   prog.textContent = `Card ${fcCurrent + 1} of ${fcDue.length}`;
 }
 
+// SM-2 spaced repetition algorithm
+// quality: 5=perfect, 4=correct with hesitation, 3=correct with difficulty,
+//          2=incorrect but easy recall, 1=incorrect, 0=complete blackout
+function sm2Update(card, quality) {
+  // Initialise SM-2 fields on legacy cards that only have `ease`
+  if (card.interval === undefined) card.interval = 1;
+  if (card.repetitions === undefined) card.repetitions = 0;
+  if (card.ef === undefined) card.ef = Math.max(1.3, Math.min(2.5, (card.ease || 2) / 4)); // map old 1-10 to ~1.3–2.5
+
+  if (quality >= 3) {
+    // Correct response
+    if (card.repetitions === 0) card.interval = 1;
+    else if (card.repetitions === 1) card.interval = 6;
+    else card.interval = Math.round(card.interval * card.ef);
+    card.repetitions += 1;
+  } else {
+    // Incorrect — reset
+    card.repetitions = 0;
+    card.interval = 1;
+  }
+  // Update ease factor (bounded to [1.3, 2.5])
+  card.ef = Math.max(1.3, Math.min(2.5,
+    card.ef + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)
+  ));
+  const next = new Date();
+  next.setDate(next.getDate() + card.interval);
+  card.nextReview = next.toISOString().split('T')[0];
+  return card;
+}
+
 function fcAnswer(correct) {
   const c = fcDue[fcCurrent];
   const idx = fcCards.findIndex(x => x.id === c.id);
   if (idx >= 0) {
-    const days = correct ? fcCards[idx].ease * 2 : 1;
-    const next = new Date();
-    next.setDate(next.getDate() + days);
-    fcCards[idx].nextReview = next.toISOString().split('T')[0];
-    if (correct) fcCards[idx].ease = Math.min(fcCards[idx].ease + 1, 10);
-    else fcCards[idx].ease = Math.max(1, fcCards[idx].ease - 1);
+    // Map simple correct/incorrect to SM-2 quality score
+    const quality = correct ? 4 : 1;
+    fcCards[idx] = sm2Update(fcCards[idx], quality);
     safeSetItem('synaptiq_fc', JSON.stringify(fcCards));
     syncToCloud();
   }
@@ -4519,8 +4586,8 @@ document.addEventListener('synaptiq-login', () => {
   updateMobileNav();
 
   updatePomBtn();
-  // Show admin panel if admin account (email stored encoded to avoid plaintext harvesting)
-  if (state.user?.email === atob('QWZhcm91ay53cmtAZ21haWwuY29t')) {
+  // Show admin panel based on server-side is_admin flag (set in Supabase profiles table)
+  if (state.user?.is_admin === true) {
     const adminItem = document.getElementById('si-admin');
     if (adminItem) adminItem.style.display = '';
   }
@@ -4894,12 +4961,13 @@ async function adminConfirmUpload() {
   // Save to Supabase
   if (state.user?.id) {
     try {
-      await fetch('/api/supabase-auth', {
+      const ur = await fetch('/api/supabase-auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'save_upload', upload: { ...resource, user_id: state.user.id } })
       });
-    } catch (e) { /* continue */ }
+      if (!ur.ok) console.warn('Upload save failed:', ur.status);
+    } catch (e) { /* continue — resource saved locally */ }
   }
 
   // Also keep in local state
