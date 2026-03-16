@@ -1717,7 +1717,7 @@ body.mode-adhd .adhd-break { display: block; }
     <p>Step-by-step working, mark-scheme-aligned answers, and a complete A-Level content library — Pure 1 & 2, Statistics and Mechanics. Built for Year 12 & 13 students.</p>
     <div class="hero-actions">
       <button class="btn-hero-primary" onclick="nav('auth');trackEvent('cta_clicked',{location:'hero'})">Start Free Trial →</button>
-      <button class="btn-hero-secondary" onclick="document.querySelector('.video-section').scrollIntoView({behavior:'smooth'})">▶ See How It Works</button>
+      <button class="btn-hero-secondary" onclick="document.querySelector('.video-section')?.scrollIntoView({behavior:'smooth'})">▶ See How It Works</button>
     </div>
     <div class="trust-bar">
       <div class="trust-item"><i class="fas fa-credit-card"></i> 7-day free trial</div>
@@ -1766,37 +1766,37 @@ body.mode-adhd .adhd-break { display: block; }
     <h2>Everything you need to ace A-Level Maths</h2>
     <p class="sub">From Pure 1 to Mechanics — Synaptiq covers every topic, every exam board, every mark scheme.</p>
     <div class="features-grid">
-      <div class="feature-card" onclick="nav('auth')">
+      <div class="feature-card" onclick="nav('auth');showSignup()">
         <div class="feature-icon">🤖</div>
         <h3>A-Level Maths AI Tutor</h3>
         <p>Ask anything. Get full working shown step by step — exactly how a mark scheme expects it. Covers Pure, Stats and Mechanics.</p>
         <span class="feature-tag">Synaptiq AI</span>
       </div>
-      <div class="feature-card" onclick="nav('auth')">
+      <div class="feature-card" onclick="nav('auth');showSignup()">
         <div class="feature-icon">📚</div>
         <h3>Complete Content Library</h3>
         <p>Every chapter organised by module — Pure 1, Pure 2, Statistics Year 1 & 2, Mechanics Year 1 & 2. Click any chapter to study with AI.</p>
         <span class="feature-tag">All Chapters</span>
       </div>
-      <div class="feature-card" onclick="nav('auth')">
+      <div class="feature-card" onclick="nav('auth');showSignup()">
         <div class="feature-icon">📄</div>
         <h3>Upload Mark Schemes & Past Papers</h3>
         <p>Upload your exam board's mark scheme. The AI reads it and gives answers aligned to exactly how your board awards marks.</p>
         <span class="feature-tag">AQA · Edexcel · OCR</span>
       </div>
-      <div class="feature-card" onclick="nav('auth')">
+      <div class="feature-card" onclick="nav('auth');showSignup()">
         <div class="feature-icon">📝</div>
         <h3>A-Level Question Generator</h3>
         <p>Generate exam-style A-Level Maths questions for any topic, difficulty, and exam board. Full working and hints included.</p>
         <span class="feature-tag">Exam-Style</span>
       </div>
-      <div class="feature-card" onclick="nav('auth')">
+      <div class="feature-card" onclick="nav('auth');showSignup()">
         <div class="feature-icon">🎯</div>
         <h3>Topic Strength Analysis</h3>
         <p>Claude identifies your weak spots across A-Level topics and builds you a personalised revision priority list.</p>
         <span class="feature-tag">AI Analysis</span>
       </div>
-      <div class="feature-card" onclick="nav('auth')">
+      <div class="feature-card" onclick="nav('auth');showSignup()">
         <div class="feature-icon">🧮</div>
         <h3>Visual Maths & Dyscalculia Support</h3>
         <p>Visual number lines, colour-coded working, step-by-step breakdowns. Full accessibility for ADHD and dyslexia too.</p>
@@ -2102,6 +2102,8 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="sidebar-item" id="si-mindmap" onclick="showDash('mindmap')"><i class="fas fa-project-diagram"></i>Mind Map</div>
       <div class="sidebar-item" id="si-grade" onclick="showDash('grade')"><i class="fas fa-chart-bar"></i>Grade Predictor</div>
       <div class="sidebar-item" id="si-diagnostic" onclick="showDash('diagnostic')"><i class="fas fa-stethoscope"></i>Diagnostic Test</div>
+      <div class="sidebar-item" id="si-essay" onclick="showDash('essay')"><i class="fas fa-pen-nib"></i>Work Checker</div>
+      <div class="sidebar-item" id="si-resources" onclick="showDash('resources')"><i class="fas fa-upload"></i>Resources</div>
       <div class="sidebar-section-label">TRACK</div>
       <div class="sidebar-item" id="si-progress" onclick="showDash('progress')"><i class="fas fa-chart-line"></i>Progress</div>
       <div class="sidebar-item" id="si-goals" onclick="showDash('goals')"><i class="fas fa-bullseye"></i>Daily Goals</div>
@@ -2112,11 +2114,6 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="sidebar-item" id="si-mood" onclick="showDash('mood')"><i class="fas fa-smile"></i>Mood Check-in</div>
       <div class="sidebar-section-label">SCHOOL</div>
       <div class="sidebar-item" id="si-assignments" onclick="showDash('assignments')"><i class="fas fa-clipboard-list"></i>Assignments<span class="sidebar-badge">2</span></div>
-      <div class="sidebar-section-label">Tools</div>
-      <div class="sidebar-item" id="si-flashcards" onclick="showDash('flashcards')"><i class="fas fa-clone"></i>Flashcards</div>
-      <div class="sidebar-item" id="si-formulas" onclick="showDash('formulas')"><i class="fas fa-square-root-variable"></i>Formula Sheet</div>
-      <div class="sidebar-item" id="si-essay" onclick="showDash('essay')"><i class="fas fa-pen-nib"></i>Work Checker</div>
-      <div class="sidebar-item" id="si-resources" onclick="showDash('resources')"><i class="fas fa-upload"></i>Resources</div>
       <div class="sidebar-section-label">Account</div>
       <div class="sidebar-item" id="si-admin" onclick="showDash('admin')" style="display:none"><i class="fas fa-shield-halved"></i>Admin</div>
       <div class="sidebar-item" id="si-settings" onclick="showDash('settings')"><i class="fas fa-gear"></i>Settings</div>
@@ -2514,7 +2511,7 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="page-title">📄 Resources</div>
       <p class="page-subtitle">Upload mark schemes and past papers — the AI will refer to them for accurate, board-aligned answers</p>
 
-      <div id="upload-zone" class="upload-zone" onclick="document.getElementById('file-input').click()"
+      <div id="upload-zone" class="upload-zone" onclick="document.getElementById('file-input')?.click()"
            ondragover="event.preventDefault();this.classList.add('drag-over')"
            ondragleave="this.classList.remove('drag-over')"
            ondrop="handleFileDrop(event)">
@@ -2669,7 +2666,7 @@ body.mode-adhd .adhd-break { display: block; }
 
       <div id="fc-review-area" class="flashcard-area">
         <div class="fc-progress" id="fc-progress-text">Loading cards...</div>
-        <div class="flashcard" id="fc-card" onclick="document.getElementById('fc-card').classList.toggle('flipped')" style="display:none">
+        <div class="flashcard" id="fc-card" onclick="this.classList.toggle('flipped')" style="display:none">
           <div class="flashcard-inner">
             <div class="flashcard-front" id="fc-front-display">Front</div>
             <div class="flashcard-back" id="fc-back-display">Back</div>
@@ -2765,7 +2762,7 @@ body.mode-adhd .adhd-break { display: block; }
       </div>
 
       <!-- Upload zone -->
-      <div id="admin-upload-zone" class="upload-zone" onclick="document.getElementById('admin-file-input').click()"
+      <div id="admin-upload-zone" class="upload-zone" onclick="document.getElementById('admin-file-input')?.click()"
            ondragover="event.preventDefault();this.classList.add('drag-over')"
            ondragleave="this.classList.remove('drag-over')"
            ondrop="adminHandleFileDrop(event)">
@@ -2872,7 +2869,7 @@ body.mode-adhd .adhd-break { display: block; }
             </div>
             <div style="display:flex;gap:.75rem;margin-top:1rem">
               <button class="btn btn-gold" onclick="saveManualSRCard()">Save Card</button>
-              <button class="btn btn-outline" onclick="document.getElementById('sr-add-form').style.display='none'">Cancel</button>
+              <button class="btn btn-outline" onclick="const _f=document.getElementById('sr-add-form');if(_f)_f.style.display='none'">Cancel</button>
             </div>
           </div>
         </div>
@@ -3348,7 +3345,7 @@ body.mode-adhd .adhd-break { display: block; }
             </select>
           </div>
         </div>
-        <div class="photo-drop" id="photo-drop" onclick="document.getElementById('photo-file').click()">
+        <div class="photo-drop" id="photo-drop" onclick="document.getElementById('photo-file')?.click()">
           <input type="file" id="photo-file" accept="image/*" capture="environment" onchange="handlePhotoQuestion(event)">
           <div style="font-size:3rem;margin-bottom:.75rem">📷</div>
           <div style="font-weight:700;margin-bottom:.35rem">Tap to take a photo or upload an image</div>
@@ -3364,7 +3361,7 @@ body.mode-adhd .adhd-break { display: block; }
           <div style="display:flex;gap:.75rem;margin-top:1rem;flex-wrap:wrap">
             <button class="btn-gold" onclick="askFollowUp()">Ask follow-up question</button>
             <button class="vid-ctrl-btn" onclick="savePhotoToNotes()">📓 Save to Notes</button>
-            <button class="vid-ctrl-btn" onclick="document.getElementById('photo-answer').style.display='none';document.getElementById('photo-preview').style.display='none';document.getElementById('photo-solve-btn').style.display='none'">↺ New Question</button>
+            <button class="vid-ctrl-btn" onclick="['photo-answer','photo-preview','photo-solve-btn'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none'})">↺ New Question</button>
           </div>
         </div>
       </div>
@@ -3832,7 +3829,7 @@ body.mode-adhd .adhd-break { display: block; }
 <div id="calc-overlay">
   <div class="calc-title">
     🧮 Visual Calculator
-    <button onclick="document.getElementById('calc-overlay').classList.remove('show')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem">✕</button>
+    <button onclick="document.getElementById('calc-overlay')?.classList.remove('show')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem">✕</button>
   </div>
   <div class="calc-visual" id="calc-display">0</div>
   <div class="calc-btn-grid">
@@ -3936,16 +3933,6 @@ function initGA4() {
   gtag('config', GA_ID);
 }
 
-function safeSetItem(key, value) {
-  try {
-    localStorage.setItem(key, value);
-  } catch(e) {
-    if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
-      try { localStorage.removeItem('synaptiq_uploads'); } catch(_) {}
-      try { localStorage.setItem(key, value); } catch(_) {}
-    }
-  }
-}
 
 function safeGetItem(key) {
   try { return localStorage.getItem(key); } catch(e) { return null; }
@@ -4078,11 +4065,12 @@ function toggleDiff(d) {
   if (d === 'none') {
     state.selectedDiffs = [];
     document.querySelectorAll('.diff-card').forEach(c => c.classList.remove('selected'));
-    document.getElementById('diff-none').classList.add('selected');
+    document.getElementById('diff-none')?.classList.add('selected');
     return;
   }
-  document.getElementById('diff-none').classList.remove('selected');
+  document.getElementById('diff-none')?.classList.remove('selected');
   const el = document.getElementById('diff-' + d);
+  if (!el) return;
   if (state.selectedDiffs.includes(d)) {
     state.selectedDiffs = state.selectedDiffs.filter(x => x !== d);
     el.classList.remove('selected');
@@ -4100,21 +4088,21 @@ function nextStep(from) {
     if (!name || !email || !pass) { showToast('Please fill in all fields'); return; }
     if (pass.length < 8) { showToast('Password must be at least 8 characters'); return; }
   }
-  document.getElementById('step' + from).classList.remove('active');
-  document.getElementById('step' + (from + 1)).classList.add('active');
+  document.getElementById('step' + from)?.classList.remove('active');
+  document.getElementById('step' + (from + 1))?.classList.add('active');
   for (let i = 1; i <= 4; i++) {
     const dot = document.getElementById('dot' + i);
-    dot.classList.toggle('active', i <= from + 1);
+    if (dot) dot.classList.toggle('active', i <= from + 1);
   }
   if (from === 3) {
     const diffs = state.selectedDiffs.length ? state.selectedDiffs.join(', ') : 'No specific needs';
     const progressFill = document.getElementById('auth-progress-fill');
     if (progressFill) progressFill.style.width = '100%';
-    document.getElementById('profile-summary').innerHTML = `
+    const _ps = document.getElementById('profile-summary'); if (_ps) _ps.innerHTML = `
       <strong>Plan:</strong> ${state.selectedPlan === 'student' ? 'Student (£20/mo)' : 'School Enquiries (£200/mo)'}<br>
-      <strong>Year:</strong> ${document.getElementById('reg-year').value}<br>
-      <strong>Exam Board:</strong> ${document.getElementById('reg-board').value}<br>
-      <strong>Target Grade:</strong> ${document.getElementById('reg-target').value}<br>
+      <strong>Year:</strong> ${document.getElementById('reg-year')?.value || ''}<br>
+      <strong>Exam Board:</strong> ${document.getElementById('reg-board')?.value || ''}<br>
+      <strong>Target Grade:</strong> ${document.getElementById('reg-target')?.value || ''}<br>
       <strong>Learning needs:</strong> ${diffs}
     `;
   } else {
@@ -4133,7 +4121,7 @@ function prevStep(to) {
 }
 
 async function createAccount() {
-  if (!document.getElementById('gdpr-check').checked) {
+  if (!document.getElementById('gdpr-check')?.checked) {
     showToast('Please accept the privacy policy to continue'); return;
   }
   const name = document.getElementById('reg-name').value.trim();
@@ -4463,7 +4451,7 @@ function setMode(mode, on) {
   const tog = document.getElementById('tog-' + mode);
   if (tog) tog.classList.toggle('on', on);
   if (mode === 'dyscalculia') {
-    document.getElementById('calc-overlay').classList.toggle('show', on);
+    document.getElementById('calc-overlay')?.classList.toggle('show', on);
   }
 }
 
@@ -4500,44 +4488,8 @@ function toggleMode(mode) {
 // ═══════════════════════════════════════
 // CALCULATOR
 // ═══════════════════════════════════════
-function calcInput(val) {
-  const ops = ['+', '−', '×', '÷'];
-  if (ops.includes(val)) {
-    if (state.calcValue) {
-      state.calcPrev = state.calcValue;
-      state.calcOp = val;
-      state.calcValue = '';
-    }
-  } else {
-    if (state.calcValue === '0' && val !== '.') state.calcValue = val;
-    else state.calcValue += val;
-  }
-  updateCalcDisplay();
-}
 
-function calcEquals() {
-  if (!state.calcPrev || !state.calcOp || !state.calcValue) return;
-  const a = parseFloat(state.calcPrev), b = parseFloat(state.calcValue);
-  let result;
-  if (state.calcOp === '+') result = a + b;
-  else if (state.calcOp === '−') result = a - b;
-  else if (state.calcOp === '×') result = a * b;
-  else if (state.calcOp === '÷') result = b !== 0 ? a / b : 'Error';
-  const disp = document.getElementById('calc-display');
-  disp.innerHTML = `<span style="color:var(--muted);font-size:.9rem">${state.calcPrev} ${state.calcOp} ${state.calcValue} =</span><br><span style="font-size:1.5rem;color:var(--gold)">${result}</span>`;
-  buildNumberLine(result);
-  state.calcValue = String(result);
-  state.calcPrev = '';
-  state.calcOp = '';
-}
 
-function calcClear() {
-  state.calcValue = '';
-  state.calcPrev = '';
-  state.calcOp = '';
-  document.getElementById('calc-display').textContent = '0';
-  buildNumberLine(0);
-}
 
 function calcDelete() {
   state.calcValue = state.calcValue.slice(0, -1);
@@ -4904,26 +4856,6 @@ Reply with ONLY this HTML (no markdown, no extra text):
 // ═══════════════════════════════════════
 // STRENGTHS ANALYSER
 // ═══════════════════════════════════════
-async function analyseStrengths() {
-  const recs = document.getElementById('ai-recs');
-  const body = document.getElementById('ai-recs-body');
-  recs.style.display = 'block';
-  body.innerHTML = '<div class="msg bot" style="max-width:100%">⏳ Synaptiq is analysing your performance...</div>';
-  const board = state.user?.board || 'AQA';
-  const sys = `You are an expert A-Level Mathematics educational analyst for ${board}.
-Given a student's A-Level Maths profile, provide specific actionable recommendations.
-Format response as HTML with: <div class="weakness-item"><span class="sw-topic">Action item</span><span class="sw-pct bad">Priority</span></div>
-Provide 5 specific A-Level Maths study recommendations covering Pure, Stats and Mechanics topics.
-Use Priority: HIGH, MEDIUM, or LOW.
-${getA11yInstructions()}`;
-  try {
-    const data = await callClaude([{ role: 'user', content: `I'm studying ${board} A-Level Maths. Based on common difficulty areas — integration, trigonometric identities, hypothesis testing, projectile motion, and binomial expansion — give me a personalised study plan with specific action items.` }], sys);
-    body.innerHTML = sanitizeAIHTML(getReply(data));
-    addXP(15);
-  } catch (e) {
-    body.innerHTML = `<p style="color:var(--red)">⚠️ ${e.message}</p>`;
-  }
-}
 
 // ═══════════════════════════════════════
 // ASSIGNMENTS
@@ -5076,47 +5008,9 @@ function loadCachedStudyPlan() {
   } catch(e) {}
 }
 
-function switchAssign(view) {
-  document.querySelectorAll('.assign-view').forEach(v => v.classList.remove('active'));
-  document.getElementById('av-' + view).classList.add('active');
-  document.querySelectorAll('.assign-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('at-' + view).classList.add('active');
-}
 
-async function getHint(id) {
-  const hints = {
-    1: 'quadratics — try completing the square or the quadratic formula x = (-b ± √(b²-4ac)) / 2a. First check if it factorises.',
-    2: 'integration by parts — use the formula ∫u(dv/dx)dx = uv - ∫v(du/dx)dx. Choose u to be the function that simplifies when differentiated.'
-  };
-  showToast('💡 Asking Synaptiq for a hint...');
-  const sys = `You are a supportive A-Level Maths tutor helping a student with their homework. Give a helpful HINT that guides them WITHOUT giving the answer away. Reference the mark scheme approach where relevant. Keep it to 2-3 sentences. ${getA11yInstructions()}`;
-  try {
-    const data = await callClaude([{ role: 'user', content: `Give me a hint for: ${hints[id]}. Don't give me the answer, just guide me.` }], sys);
-    showToast('💡 ' + getReply(data).slice(0, 100) + '...');
-  } catch (e) {
-    showToast('⚠️ ' + e.message.slice(0, 80));
-  }
-}
 
-async function createAssignment() {
-  const title = document.getElementById('asgn-title').value;
-  const subject = document.getElementById('asgn-subject').value;
-  const year = document.getElementById('asgn-year').value;
-  const board = state.user?.board || 'AQA';
-  if (!title) { showToast('Please enter a title first'); return; }
-  showToast('✦ Generating your assignment...');
-  const sys = `You are an experienced A-Level Maths teacher creating a homework assignment. Write clear, exam-style instructions following ${board} conventions. Include mark scheme guidance.`;
-  try {
-    const data = await callClaude([{ role: 'user', content: `Create a detailed A-Level Maths homework assignment for ${year} titled "${title}" (module: ${subject}). Include: learning objectives, exam-style questions (3-5), mark allocations, and mark scheme hints. Follow ${board} style.` }], sys);
-    document.getElementById('asgn-instructions').value = getReply(data).slice(0, 500);
-    showToast('✦ Assignment generated!');
-  } catch (e) {
-    showToast('⚠️ ' + e.message.slice(0, 80));
-  }
-}
 
-function saveAssignment() { showToast('✅ Assignment saved and sent to students!'); }
-function openAssignment(id) { showToast('Opening assignment...'); showDash('tutor'); }
 
 // ═══════════════════════════════════════
 // VIDEO PLAYER (Interactive)
@@ -5128,77 +5022,16 @@ const videoChapters = [
   { title: 'A-Level Content', desc: 'Every chapter from Pure 1 to Mechanics, organised', q: null },
   { title: 'Accessibility', desc: 'ADHD, Dyslexia, and Dyscalculia support built in', q: { text: 'Which accessibility modes does Synaptiq offer?', opts: ['Only ADHD', 'Only dyslexia fonts', 'ADHD, Dyslexia AND Dyscalculia', 'Colour blindness only'], correct: 2 } }
 ];
-let currentChapter = 0;
 
-function playChapter(i) {
-  currentChapter = i;
-  document.querySelectorAll('.chapter-btn').forEach((b, j) => b.classList.toggle('active', j === i));
-  const chapter = videoChapters[i];
-  const main = document.getElementById('video-main');
-  const colors = ['#C9A84C', '#60A5FA', '#4ADE80', '#F472B6', '#A78BFA'];
-  main.style.background = `radial-gradient(ellipse at center, ${colors[i]}22 0%, var(--bg3) 70%)`;
-  main.querySelector('.video-preview-content h3').textContent = chapter.title;
-  main.querySelector('.video-preview-content p').textContent = chapter.desc;
-  const existing = main.querySelector('.video-question');
-  if (existing) existing.remove();
-  if (chapter.q) {
-    setTimeout(() => showVideoQuestion(chapter.q), 1500);
-  }
-}
 
-function startVideo() { playChapter(1); }
 
-function showVideoQuestion(q) {
-  const main = document.getElementById('video-main');
-  const el = document.createElement('div');
-  el.className = 'video-question show';
-  el.innerHTML = `<h4>📝 Quick Check: ${q.text}</h4><div class="vq-options">${q.opts.map((o, i) => `<button class="vq-opt" onclick="answerVQ(this,${i},${q.correct})">${o}</button>`).join('')}</div>`;
-  main.appendChild(el);
-}
 
-function answerVQ(btn, chosen, correct) {
-  btn.parentElement.querySelectorAll('.vq-opt').forEach(b => b.onclick = null);
-  if (chosen === correct) {
-    btn.classList.add('correct');
-    showToast('✅ Correct! +5 XP');
-    addXP(5);
-  } else {
-    btn.classList.add('wrong');
-    btn.parentElement.children[correct].classList.add('correct');
-    showToast('Not quite — the correct answer is highlighted');
-  }
-}
 
 // ═══════════════════════════════════════
 // TEXT TO SPEECH
 // ═══════════════════════════════════════
-function toggleTTS() {
-  state.ttsEnabled = !state.ttsEnabled;
-  document.getElementById('tts-toggle').classList.toggle('active', state.ttsEnabled);
-  showToast(state.ttsEnabled ? '🔊 Read-aloud enabled' : '🔇 Read-aloud disabled');
-}
 
-function speak(text) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text.slice(0, 500));
-  utt.rate = 0.9; utt.pitch = 1;
-  window.speechSynthesis.speak(utt);
-}
 
-function speakInput() {
-  if (!window.webkitSpeechRecognition && !window.SpeechRecognition) {
-    showToast('Speech recognition not supported in this browser');
-    return;
-  }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const recog = new SR();
-  recog.onresult = (e) => {
-    document.getElementById('tutor-input').value = e.results[0][0].transcript;
-  };
-  recog.start();
-  showToast('🎤 Listening...');
-}
 
 // ═══════════════════════════════════════
 // XP SYSTEM
@@ -5219,21 +5052,6 @@ function syncToCloud() {
   }, 3000);
 }
 
-function addXP(amount, msg) {
-  recordActivityToday();
-  state.xp += amount;
-  const newLevel = Math.floor(state.xp / 200) + 1;
-  if (newLevel > state.level) {
-    state.level = newLevel;
-    showToast(`🎉 Level Up! You're now Level ${newLevel}!`);
-  }
-  updateXPDisplay();
-  const popup = document.getElementById('xp-popup');
-  popup.textContent = (msg || `+${amount} XP ⭐`);
-  popup.classList.add('show');
-  setTimeout(() => popup.classList.remove('show'), 2000);
-  syncToCloud();
-}
 
 function updateStats(delta) {
   try {
@@ -5339,13 +5157,6 @@ function updateProgressBars() {
   } catch(e) {}
 }
 
-function updateXPDisplay() {
-  const xpInLevel = state.xp % 200;
-  document.getElementById('xp-display').textContent = state.xp + ' XP';
-  document.getElementById('xp-level-text').textContent = 'Level ' + state.level;
-  document.getElementById('xp-progress-text').textContent = xpInLevel + ' / 200 XP';
-  document.getElementById('xp-fill').style.width = (xpInLevel / 200 * 100) + '%';
-}
 
 // ═══════════════════════════════════════
 // HEATMAP
@@ -5363,29 +5174,6 @@ function recordActivityToday() {
   } catch(e) {}
 }
 
-function buildHeatmap() {
-  const el = document.getElementById('heatmap');
-  if (!el) return;
-  const activity = JSON.parse(localStorage.getItem('synaptiq_activity') || '{}');
-  const levels = ['', 'l1', 'l2', 'l3', 'l4'];
-  let html = '';
-  // Load actual study days from localStorage
-  let studyDays = {};
-  try {
-    const raw = localStorage.getItem('synaptiq_study_days');
-    studyDays = raw ? JSON.parse(raw) : {};
-  } catch(e) {}
-  for (let i = 0; i < 84; i++) {
-    const date = new Date();
-    date.setDate(date.getDate() - (83 - i));
-    const key = date.toISOString().slice(0, 10);
-    const sessions = activity[key] || studyDays[key] || 0;
-    const lvl = sessions === 0 ? 0 : sessions < 3 ? 1 : sessions < 6 ? 2 : sessions < 10 ? 3 : 4;
-    const label = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-    html += `<div class="heat-cell ${levels[lvl]}" data-tip="${label}: ${sessions} session${sessions !== 1 ? 's' : ''}"></div>`;
-  }
-  el.innerHTML = html;
-}
 
 // ═══════════════════════════════════════
 // A-LEVEL CONTENT BUILDER
@@ -5632,207 +5420,25 @@ function trackEvent(name, params) {
 // ═══════════════════════════════════════
 // STRIPE CHECKOUT
 // ═══════════════════════════════════════
-async function startCheckout(plan) {
-  const email = state.user?.email || '';
-  showToast('⏳ Opening secure checkout...');
-  try {
-    const r = await fetch('/api/stripe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan, email })
-    });
-    if (!r.ok) throw new Error('Stripe server error ' + r.status);
-    const data = await r.json();
-    if (data.url) {
-      window.location.href = data.url;
-    } else {
-      showToast('⚠️ Checkout error: ' + (data.error || 'Unknown error'));
-    }
-  } catch (e) {
-    showToast('⚠️ Could not open checkout. Try again.');
-  }
-}
 
 // ═══════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(window._toastTimer);
-  window._toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
-}
-
-function getGreeting() {
-  const h = new Date().getHours();
-  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
-}
-
-function updateGreeting() {
-  const el = document.getElementById('dash-greeting');
-  if (el && state.user) el.textContent = `${getGreeting()}, ${state.user.name.split(' ')[0]}! 👋`;
-}
-</script>
-
-<!-- ═══════════════ MOBILE BOTTOM NAV ═══════════════ -->
-<div id="mobile-nav">
-  <div class="mob-nav-grid">
-    <button class="mob-nav-btn active" id="mn-home" onclick="showDash('home');setMobNav('home')" aria-label="Home dashboard"><i class="fas fa-house" aria-hidden="true"></i>Home</button>
-    <button class="mob-nav-btn" id="mn-tutor" onclick="showDash('tutor');setMobNav('tutor')" aria-label="AI Tutor"><i class="fas fa-robot" aria-hidden="true"></i>Tutor</button>
-    <button class="mob-nav-btn" id="mn-questions" onclick="showDash('questions');setMobNav('questions')" aria-label="Practice questions"><i class="fas fa-file-lines" aria-hidden="true"></i>Questions</button>
-    <button class="mob-nav-btn" id="mn-flashcards" onclick="showDash('flashcards');setMobNav('flashcards')" aria-label="Flashcards"><i class="fas fa-clone" aria-hidden="true"></i>Cards</button>
-    <button class="mob-nav-btn" id="mn-progress" onclick="showDash('progress');setMobNav('progress')" aria-label="View progress"><i class="fas fa-chart-line" aria-hidden="true"></i>Progress</button>
-  </div>
-</div>
-
-<!-- ═══════════════ POMODORO WIDGET ═══════════════ -->
-<button class="pom-float-btn" id="pom-float" onclick="togglePomodoro()">
-  ⏱️ <span id="pom-float-time">25:00</span>
-</button>
-
-<div id="pomodoro-widget">
-  <div class="pom-label" id="pom-phase-label">Focus Session</div>
-  <div class="pom-ring">
-    <svg width="88" height="88" viewBox="0 0 88 88">
-      <circle cx="44" cy="44" r="40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="4"/>
-      <circle id="pom-ring-circle" cx="44" cy="44" r="40" fill="none" stroke="#C9A84C" stroke-width="4"
-        stroke-dasharray="251.2" stroke-dashoffset="0" stroke-linecap="round"/>
-    </svg>
-    <div class="pom-time" id="pom-display">25:00</div>
-  </div>
-  <div class="pom-phase" id="pom-phase-text">Stay focused — you've got this! 💪</div>
-  <div class="pom-controls">
-    <button class="pom-btn start" id="pom-start-btn" onclick="pomStart()">▶ Start</button>
-    <button class="pom-btn" onclick="pomReset()">↺ Reset</button>
-    <button class="pom-btn" onclick="togglePomodoro()">✕</button>
-  </div>
-  <div class="pom-sessions" id="pom-sessions">
-    <div class="pom-dot" id="pd0"></div>
-    <div class="pom-dot" id="pd1"></div>
-    <div class="pom-dot" id="pd2"></div>
-    <div class="pom-dot" id="pd3"></div>
-  </div>
-</div>
 
 
-<!-- ═══════════════ NEW FEATURE SCRIPTS ═══════════════ -->
-<script>
 // ═══════════════════════════════════════
 // MOBILE NAV
 // ═══════════════════════════════════════
-function setMobNav(active) {
-  document.querySelectorAll('.mob-nav-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('mn-' + active);
-  if (btn) btn.classList.add('active');
-}
 
 // Show mobile nav only when user is logged into dashboard
 function updateMobileNav() {
   const mn = document.getElementById('mobile-nav');
   if (mn) mn.style.display = state.user ? 'block' : 'none';
-}
 
-// ═══════════════════════════════════════
-// POMODORO TIMER
-// ═══════════════════════════════════════
-const pom = {
-  duration: 25 * 60,
-  breakDuration: 5 * 60,
-  longBreakDuration: 15 * 60,
-  timeLeft: 25 * 60,
-  isRunning: false,
-  isBreak: false,
-  session: 0,
-  interval: null,
-  totalSessions: 4
-};
 
-function togglePomodoro() {
-  const w = document.getElementById('pomodoro-widget');
-  w.classList.toggle('show');
-}
 
-function pomStart() {
-  if (pom.isRunning) {
-    clearInterval(pom.interval);
-    pom.isRunning = false;
-    document.getElementById('pom-start-btn').textContent = '▶ Resume';
-    return;
-  }
-  pom.isRunning = true;
-  document.getElementById('pom-start-btn').textContent = '⏸ Pause';
-  pom.interval = setInterval(() => {
-    pom.timeLeft--;
-    updatePomDisplay();
-    if (pom.timeLeft <= 0) {
-      clearInterval(pom.interval);
-      pom.isRunning = false;
-      pomPhaseEnd();
-    }
-  }, 1000);
-}
 
-function pomPhaseEnd() {
-  if (!pom.isBreak) {
-    pom.session++;
-    document.getElementById('pd' + (pom.session - 1))?.classList.add('done');
-    if (typeof addXP === 'function') addXP(25, '⏱️ Focus session complete! +25 XP');
-    if (pom.session >= pom.totalSessions) {
-      pom.timeLeft = pom.longBreakDuration;
-      pom.session = 0;
-      document.querySelectorAll('.pom-dot').forEach(d => d.classList.remove('done'));
-      document.getElementById('pom-phase-label').textContent = '🎉 Long Break';
-      document.getElementById('pom-phase-text').textContent = 'Amazing work! Take a 15 minute break.';
-      document.getElementById('pom-display').classList.add('break');
-    } else {
-      pom.timeLeft = pom.breakDuration;
-      document.getElementById('pom-phase-label').textContent = '☕ Short Break';
-      document.getElementById('pom-phase-text').textContent = 'Take a 5 minute break — stretch and breathe!';
-      document.getElementById('pom-display').classList.add('break');
-    }
-    pom.isBreak = true;
-    showToast('✅ Focus session done! Take a break.');
-  } else {
-    pom.timeLeft = pom.duration;
-    pom.isBreak = false;
-    document.getElementById('pom-phase-label').textContent = '🎯 Focus Session';
-    document.getElementById('pom-phase-text').textContent = "Stay focused — you've got this! 💪";
-    document.getElementById('pom-display').classList.remove('break');
-    showToast('🎯 Break over — back to studying!');
-  }
-  document.getElementById('pom-start-btn').textContent = '▶ Start';
-  updatePomDisplay();
-}
 
-function pomReset() {
-  clearInterval(pom.interval);
-  pom.isRunning = false;
-  pom.isBreak = false;
-  pom.timeLeft = pom.duration;
-  document.getElementById('pom-start-btn').textContent = '▶ Start';
-  document.getElementById('pom-phase-label').textContent = '🎯 Focus Session';
-  document.getElementById('pom-phase-text').textContent = "Stay focused — you've got this! 💪";
-  document.getElementById('pom-display').classList.remove('break', 'warning');
-  updatePomDisplay();
-}
-
-function updatePomDisplay() {
-  const m = Math.floor(pom.timeLeft / 60);
-  const s = pom.timeLeft % 60;
-  const str = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  document.getElementById('pom-display').textContent = str;
-  document.getElementById('pom-float-time').textContent = str;
-  const total = pom.isBreak ? (pom.session >= pom.totalSessions ? pom.longBreakDuration : pom.breakDuration) : pom.duration;
-  const pct = pom.timeLeft / total;
-  const circumference = 251.2;
-  document.getElementById('pom-ring-circle').style.strokeDashoffset = circumference * (1 - pct);
-  document.getElementById('pom-ring-circle').style.stroke = pom.isBreak ? '#4ADE80' : (pom.timeLeft < 60 ? '#FB923C' : '#C9A84C');
-  if (pom.timeLeft < 60 && !pom.isBreak) {
-    document.getElementById('pom-display').classList.add('warning');
-  } else {
-    document.getElementById('pom-display').classList.remove('warning');
-  }
-}
 
 
 // Pomodoro float btn visibility
@@ -5841,35 +5447,7 @@ function updatePomBtn() {
   if (btn) btn.classList.toggle('show', !!state.user);
 }
 
-// ═══════════════════════════════════════
-// FLASHCARDS
-// ═══════════════════════════════════════
-let fcCards = JSON.parse(localStorage.getItem('synaptiq_fc') || '[]');
-let fcCurrent = 0;
-let fcDue = [];
 
-function showFcCreate() {
-  const el = document.getElementById('fc-create');
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
-}
-
-function addFlashcard() {
-  const front = document.getElementById('fc-front').value.trim();
-  const back = document.getElementById('fc-back').value.trim();
-  if (!front || !back) { showToast('Please fill in both sides of the card'); return; }
-  fcCards.push({
-    id: Date.now(), front, back, subject: 'Mathematics',
-    nextReview: new Date().toISOString().split('T')[0],
-    ease: 2
-  });
-  localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
-  syncToCloud();
-  document.getElementById('fc-front').value = '';
-  document.getElementById('fc-back').value = '';
-  document.getElementById('fc-create').style.display = 'none';
-  loadFcDue();
-  showToast('✅ Flashcard added!');
-}
 
 async function generateFcWithAI() {
   showToast('✦ Generating a Maths flashcard...');
@@ -5891,34 +5469,7 @@ async function generateFcWithAI() {
   }
 }
 
-function loadFcDue() {
-  const today = new Date().toISOString().split('T')[0];
-  fcDue = fcCards.filter(c => c.nextReview <= today);
-  fcCurrent = 0;
-  const dueCount = document.getElementById('fc-due-count');
-  if (dueCount) dueCount.textContent = fcDue.length > 0 ? `${fcDue.length} card${fcDue.length !== 1 ? 's' : ''} due today` : '';
-  showFcCard();
-}
 
-function showFcCard() {
-  const card = document.getElementById('fc-card');
-  const actions = document.getElementById('fc-actions');
-  const prog = document.getElementById('fc-progress-text');
-  if (!card) return;
-  if (fcCurrent >= fcDue.length) {
-    card.style.display = 'none';
-    actions.style.display = 'none';
-    prog.textContent = fcDue.length === 0 ? 'No cards due today. Add some cards or use "Generate with AI"!' : '🎉 All done for today! Come back tomorrow.';
-    return;
-  }
-  const c = fcDue[fcCurrent];
-  document.getElementById('fc-front-display').textContent = c.front;
-  document.getElementById('fc-back-display').textContent = c.back;
-  card.style.display = 'block';
-  card.classList.remove('flipped');
-  actions.style.display = 'flex';
-  prog.textContent = `Card ${fcCurrent + 1} of ${fcDue.length}`;
-}
 
 // SM-2 spaced repetition algorithm
 // quality: 5=perfect, 4=correct with hesitation, 3=correct with difficulty,
@@ -5950,35 +5501,8 @@ function sm2Update(card, quality) {
   return card;
 }
 
-function fcAnswer(correct) {
-  const c = fcDue[fcCurrent];
-  const idx = fcCards.findIndex(x => x.id === c.id);
-  if (idx >= 0) {
-    // Map simple correct/incorrect to SM-2 quality score
-    const quality = correct ? 4 : 1;
-    fcCards[idx] = sm2Update(fcCards[idx], quality);
-    safeSetItem('synaptiq_fc', JSON.stringify(fcCards));
-    syncToCloud();
-  }
-  fcCurrent++;
-  showFcCard();
-}
 
-// ═══════════════════════════════════════
-// WORKED SOLUTION CHECKER (Essay Marker)
-// ═══════════════════════════════════════
-let essayImageBase64 = null;
 
-function handleEssayImage(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    essayImageBase64 = ev.target.result.split(',')[1];
-    document.getElementById('essay-img-drop').innerHTML = `<i class="fas fa-check-circle" style="color:var(--green)"></i><div style="color:var(--green);font-weight:600">Image uploaded — will be included in marking</div>`;
-  };
-  reader.readAsDataURL(file);
-}
 
 function renderFeedback(text) {
   return text
@@ -5988,68 +5512,6 @@ function renderFeedback(text) {
     .replace(/\*(.*?)\*/g,'<em>$1</em>');
 }
 
-async function markEssay() {
-  const topic = document.getElementById('essay-subject').value;
-  const board = document.getElementById('essay-board').value;
-  const question = document.getElementById('essay-question').value;
-  const text = document.getElementById('essay-text').value.trim();
-  if (text.length < 20) { showToast('Please write out your worked solution first'); return; }
-
-  const btn = document.getElementById('essay-submit-btn');
-  btn.textContent = '✦ Checking your working...';
-  btn.disabled = true;
-  document.getElementById('essay-results').style.display = 'none';
-
-  const rubric = [
-    {name: 'Method Marks (M)', weight: 40},
-    {name: 'Accuracy Marks (A)', weight: 35},
-    {name: 'Communication & Notation', weight: 15},
-    {name: 'Final Answer', weight: 10}
-  ];
-  const rubricStr = rubric.map(r => `{"name":"${r.name}","score":0}`).join(',');
-
-  const sys = `You are an experienced UK A-Level Mathematics examiner for ${board}. Mark the student's worked solution for the topic: ${topic}. Return ONLY valid JSON with NO markdown:
-{
-  "grade": "A*|A|B|C|D|E",
-  "marks": "e.g. 8/10",
-  "criteria": [${rubricStr}],
-  "feedback": "Detailed feedback on the working shown, referencing ${board} mark scheme conventions",
-  "improve": "Specific bullet points on how to improve the solution"
-}
-Score each criterion 0-100. Be specific and reference A-Level Maths marking conventions.`;
-
-  const msgs = [{role:'user', content:`Question: ${question || 'General A-Level Maths question'}\n\nWorked Solution:\n${text}`}];
-
-  try {
-    const data = await callClaude(msgs, sys);
-    const raw = getReply(data).replace(/```json|```/g,'').trim();
-    const result = validateEssayResult(JSON.parse(sanitizeClaudeJson(raw)));
-
-    const gradeMap = {'A*':'a','A':'a','B':'b','C':'c','D':'d','E':'e','U':'e'};
-    const gradeClass = gradeMap[result.grade] || 'c';
-    document.getElementById('essay-grade-circle').textContent = result.grade;
-    document.getElementById('essay-grade-circle').className = `essay-grade grade-${gradeClass}`;
-    document.getElementById('essay-grade-label').textContent = `Grade ${result.grade}`;
-    document.getElementById('essay-marks-label').textContent = result.marks;
-
-    const bars = document.getElementById('essay-criteria-bars');
-    bars.innerHTML = (result.criteria || []).map(c => `
-      <div class="essay-criteria-bar">
-        <div class="essay-criteria-label">${c.name}</div>
-        <div class="essay-criteria-track"><div class="essay-criteria-fill" style="width:${c.score}%"></div></div>
-        <div class="essay-criteria-score">${c.score}%</div>
-      </div>`).join('');
-
-    document.getElementById('essay-feedback-text').innerHTML = renderFeedback(result.feedback || '');
-    document.getElementById('essay-improve-text').innerHTML = renderFeedback(result.improve || '');
-    document.getElementById('essay-results').style.display = 'block';
-    if (typeof addXP === 'function') addXP(20, '✍️ Solution checked! +20 XP');
-  } catch(e) {
-    showToast('⚠️ Marking failed — please try again');
-  }
-  btn.textContent = '✦ Check My Working';
-  btn.disabled = false;
-}
 
 // showDash: navigate to a dashboard subpage and trigger side effects
 function showDash(sub) {
@@ -6084,41 +5546,9 @@ document.addEventListener('synaptiq-login', () => {
   }
 });
 
-// ═══════════════════════════════════════
-// AI TEACHER
-// ═══════════════════════════════════════
-let _teacherTab = 'pure1';
-const TEACHER_TABS = {
-  pure1: ['pure1'],
-  pure2: ['pure2'],
-  stats: ['statsY1', 'statsY2'],
-  mech: ['mechY1', 'mechY2']
-};
 
-function switchTeacherTab(tab, btn) {
-  _teacherTab = tab;
-  document.querySelectorAll('.teacher-tab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  renderTeacherChapters();
-}
 
-function renderTeacherChapters() {
-  const list = document.getElementById('teacher-chapter-list');
-  if (!list) return;
-  let html = '';
-  for (const mk of TEACHER_TABS[_teacherTab]) {
-    const m = ALEVEL_CONTENT[mk];
-    html += `<div style="padding:.4rem 1rem .2rem;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">${m.label} — ${m.year}</div>`;
-    m.chapters.forEach((ch, i) => {
-      html += `<button class="teacher-chapter-btn" onclick="teachChapter('${mk}',${i},this)">${ch}</button>`;
-    });
-  }
-  list.innerHTML = html;
-}
 
-function initTeacher() {
-  renderTeacherChapters();
-}
 
 // Escape unescaped LaTeX backslashes in Claude's JSON output (e.g. \frac → \\frac)
 // Sanitise AI-generated HTML before injecting into the DOM.
@@ -6210,139 +5640,6 @@ function sanitizeClaudeJson(str) {
 }
 
 
-async function teachChapter(mk, idx, btn) {
-  document.querySelectorAll('.teacher-chapter-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  const mod = ALEVEL_CONTENT[mk];
-  const chapter = mod.chapters[idx];
-  const board = state.user?.board || 'AQA';
-  const box = document.getElementById('teacher-content');
-  box.innerHTML = `<div class="lesson-loading"><div class="lesson-spin"></div><p>Teaching <strong>${chapter}</strong>…</p></div>`;
-
-  // Include uploaded resources for context
-  let resourceCtx = '';
-  if (state.uploads && state.uploads.length) {
-    const rel = state.uploads.slice(0, 4);
-    resourceCtx = '\n\nStudent has these uploaded resources — align marking terminology with them:\n' +
-      rel.map(u => `- ${u.category === 'mark-scheme' ? 'MARK SCHEME' : 'PAST PAPER'}: ${u.name} (${u.board || board}, ${u.year || ''}, ${u.module || ''})${u.content ? '\nContent snippet: ' + u.content.slice(0, 350) : ''}`).join('\n\n');
-  }
-
-  const sys = `You are an expert A-Level Mathematics teacher for UK students (${board} exam board).
-Deliver a complete lesson as HTML — no JSON, no markdown fences, just HTML elements.
-Use LaTeX math: inline $...$, display $$...$$. Example: $x^2+3x-4=0$, $$\\frac{d}{dx}(x^n)=nx^{n-1}$$. Never write maths in plain text.
-Each <p> tag must be a single self-contained idea. Never put all theory into one block.
-
-━━━ DIAGRAMS — MANDATORY ━━━
-You MUST include at least one inline SVG diagram wrapped in <div class="lesson-diagram"> whenever the topic involves any of:
-circles, graphs, CAST diagrams, triangles, vectors, transformations, trig curves, exponentials, logarithms, straight lines, normal distribution, kinematics, or any geometric concept.
-
-SVG rules — always follow these exactly:
-• viewBox: "0 0 320 260" for graphs/circles, "0 0 300 300" for CAST
-• width="100%" on every <svg> tag (no fixed pixel width)
-• Background: transparent (no <rect> background)
-• Axes: stroke="#8892A4" stroke-width="1.5"
-• Main curve/shape: stroke="#C9A84C" stroke-width="2.5" fill="none" (or fill="rgba(201,168,76,0.07)" for regions)
-• Secondary lines (radius, asymptote, dashed): stroke="#60A5FA" stroke-width="1.5" stroke-dasharray="5,3"
-• Text labels: fill="#F5F2EC" font-size="12" font-family="monospace"
-• Gold key-point labels: fill="#C9A84C" font-size="11" font-family="monospace"
-• Axis labels (x, y): fill="#8892A4" font-size="13" font-family="monospace"
-• Arrowheads: use marker-end="url(#ah)" — always define this defs block at the top of every SVG:
-  <defs><marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#8892A4"/></marker></defs>
-
-DIAGRAM TEMPLATES — use these as your starting patterns:
-
-1. CIRCLE $(x-a)^2+(y-b)^2=r^2$:
-<div class="lesson-diagram">
-<svg viewBox="0 0 320 260" xmlns="http://www.w3.org/2000/svg" width="100%">
-  <defs><marker id="ah" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#8892A4"/></marker></defs>
-  <line x1="20" y1="130" x2="300" y2="130" stroke="#8892A4" stroke-width="1.5" marker-end="url(#ah)"/>
-  <line x1="160" y1="240" x2="160" y2="20" stroke="#8892A4" stroke-width="1.5" marker-end="url(#ah)"/>
-  <circle cx="160" cy="130" r="75" stroke="#C9A84C" stroke-width="2.5" fill="rgba(201,168,76,0.07)"/>
-  <circle cx="160" cy="130" r="4" fill="#C9A84C"/>
-  <line x1="160" y1="130" x2="235" y2="130" stroke="#60A5FA" stroke-width="1.5" stroke-dasharray="5,3"/>
-  <text x="166" y="124" fill="#C9A84C" font-size="11" font-family="monospace">centre (a,b)</text>
-  <text x="192" y="124" fill="#60A5FA" font-size="11" font-family="monospace">r</text>
-  <text x="302" y="134" fill="#8892A4" font-size="13" font-family="monospace">x</text>
-  <text x="163" y="17" fill="#8892A4" font-size="13" font-family="monospace">y</text>
-</svg>
-<p class="diagram-caption">Circle with centre $(a,b)$ and radius $r$</p>
-</div>
-
-2. CAST DIAGRAM:
-<div class="lesson-diagram">
-<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg" width="100%">
-  <line x1="150" y1="15" x2="150" y2="285" stroke="#8892A4" stroke-width="2"/>
-  <line x1="15" y1="150" x2="285" y2="150" stroke="#8892A4" stroke-width="2"/>
-  <text x="182" y="88" fill="#4ADE80" font-size="36" font-family="monospace" font-weight="bold">A</text>
-  <text x="52" y="88" fill="#60A5FA" font-size="36" font-family="monospace" font-weight="bold">S</text>
-  <text x="182" y="228" fill="#F472B6" font-size="36" font-family="monospace" font-weight="bold">C</text>
-  <text x="52" y="228" fill="#A78BFA" font-size="36" font-family="monospace" font-weight="bold">T</text>
-  <text x="165" y="118" fill="#4ADE80" font-size="10" font-family="monospace">all +ve</text>
-  <text x="32" y="118" fill="#60A5FA" font-size="10" font-family="monospace">sin +ve</text>
-  <text x="158" y="198" fill="#F472B6" font-size="10" font-family="monospace">cos +ve</text>
-  <text x="32" y="198" fill="#A78BFA" font-size="10" font-family="monospace">tan +ve</text>
-  <path d="M170 150 A 40 40 0 0 0 150 110" stroke="#C9A84C" stroke-width="1.5" fill="none"/>
-  <text x="172" y="135" fill="#C9A84C" font-size="13" font-family="monospace">θ</text>
-  <text x="110" y="295" fill="#8892A4" font-size="11" font-family="monospace">anticlockwise = +ve</text>
-</svg>
-<p class="diagram-caption">CAST diagram — shows which trig functions are positive in each quadrant</p>
-</div>
-
-3. GRAPH SKETCH (e.g. quadratic, cubic, trig, exponential) — draw the actual curve using a <polyline> or <path> with computed points, label key features (roots, turning points, intercepts, asymptotes). Always show axes with labels, label at least 3 key coordinates as dots + text.
-
-4. RIGHT TRIANGLE — draw with right-angle square, label all three sides and the angle.
-
-5. TRIG CURVES — draw sin/cos/tan with a full period shown, label the amplitude, period, key x-values (0, π/2, π, 3π/2, 2π).
-
-Adapt the templates for the actual values in the lesson. Generate realistic coordinates — if the circle has centre (3,-2) and r=5, place it accordingly in the SVG coordinate space.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Return ONLY this HTML structure (fill in all [...] placeholders):
-
-<div class="lesson-section">
-<h3><i class="fas fa-bullseye"></i> Learning Objectives</h3>
-<ul><li>[objective 1]</li><li>[objective 2]</li><li>[objective 3]</li></ul>
-</div>
-<div class="lesson-section">
-<h3><i class="fas fa-book-open"></i> Key Theory</h3>
-<div style="color:var(--muted);line-height:2.1;font-size:1rem"><p>[intro: definition and context]</p><p>[main rules and properties with LaTeX — use $$...$$ for key equations]</p><p>[worked intuition or geometric meaning if relevant]</p><p>[common mistakes and exam tips]</p></div>
-[INSERT DIAGRAM HERE if topic is visual — use <div class="lesson-diagram">...</div>]
-</div>
-<div class="lesson-section">
-<h3><i class="fas fa-pencil"></i> Worked Examples</h3>
-<div class="worked-example"><div class="ex-problem">[problem]</div><div class="worked-step"><strong>Step 1:</strong> [step]</div><div class="worked-step"><strong>Step 2:</strong> [step]</div><div class="worked-step"><strong>Step 3:</strong> [step]</div>[INSERT DIAGRAM if this example has a graph/shape]</div>
-<div class="worked-example"><div class="ex-problem">[problem 2]</div><div class="worked-step"><strong>Step 1:</strong> [step]</div><div class="worked-step"><strong>Step 2:</strong> [step]</div><div class="worked-step"><strong>Step 3:</strong> [step]</div></div>
-</div>
-<div class="lesson-section">
-<h3><i class="fas fa-question-circle"></i> Practice Questions</h3>
-<div class="practice-q"><div class="q-text">Q1: [question]</div><button class="show-answer-btn" onclick="togglePracticeAnswer(this)">Show Answer</button><div class="q-answer">[full worked answer with LaTeX]</div></div>
-<div class="practice-q"><div class="q-text">Q2: [question]</div><button class="show-answer-btn" onclick="togglePracticeAnswer(this)">Show Answer</button><div class="q-answer">[full worked answer with LaTeX]</div></div>
-<div class="practice-q"><div class="q-text">Q3: [question]</div><button class="show-answer-btn" onclick="togglePracticeAnswer(this)">Show Answer</button><div class="q-answer">[full worked answer with LaTeX]</div></div>
-</div>
-<div class="lesson-section">
-<h3><i class="fas fa-star"></i> Key Formulas</h3>
-<div class="key-formulas-box"><div class="key-formula-item">[formula 1]</div><div class="key-formula-item">[formula 2]</div><div class="key-formula-item">[formula 3]</div></div>
-</div>
-${resourceCtx}`;
-
-  let raw = '';
-  try {
-    const data = await callClaude([{ role: 'user', content: `Teach me: ${chapter} (${mod.label}, ${mod.year})` }], sys, 8000);
-    raw = getReply(data).replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
-    box.innerHTML = `<div style="margin-bottom:2rem"><div class="lesson-year-badge">${mod.year}</div><h2 style="margin:.25rem 0;color:var(--white);font-size:1.5rem">${chapter}</h2></div>${raw}`;
-    const toolbar = document.createElement('div');
-    toolbar.className = 'lesson-toolbar';
-    toolbar.style.cssText = 'display:flex;gap:.6rem;margin-bottom:1.25rem;flex-wrap:wrap';
-    toolbar.innerHTML = `<button onclick="window.print()" style="background:none;border:1px solid var(--bg3);color:var(--muted);padding:.35rem .8rem;border-radius:6px;cursor:pointer;font-size:.8rem;transition:.15s" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--bg3)';this.style.color='var(--muted)'">🖨️ Print</button><button onclick="copyLesson(this)" style="background:none;border:1px solid var(--bg3);color:var(--muted);padding:.35rem .8rem;border-radius:6px;cursor:pointer;font-size:.8rem;transition:.15s" onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--bg3)';this.style.color='var(--muted)'">📋 Copy</button>`;
-    box.insertBefore(toolbar, box.firstChild);
-
-    if (window.MathJax) MathJax.typesetPromise([box]).catch(() => {});
-    updateStats({ topic: chapter });
-    if (typeof addXP === 'function') addXP(15, 'Completed a lesson');
-  } catch (e) {
-    box.innerHTML = `<div style="padding:2rem;color:var(--red)">⚠️ Could not generate lesson: ${e.message}</div>`;
-  }
-}
 
 function renderLesson(chapter, year, L, box) {
   box.innerHTML = `
@@ -6405,325 +5702,15 @@ function copyLesson(btn) {
 // ═══════════════════════════════════════
 let _adminPendingFile = null;
 
-function adminHandleFileSelect(e) {
-  if (e.target.files[0]) adminPrepareUpload(e.target.files[0]);
-}
-function adminHandleFileDrop(e) {
-  e.preventDefault();
-  document.getElementById('admin-upload-zone').classList.remove('drag-over');
-  if (e.dataTransfer.files[0]) adminPrepareUpload(e.dataTransfer.files[0]);
-}
-function adminPrepareUpload(file) {
-  _adminPendingFile = file;
-  document.getElementById('admin-upload-filename').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
-  document.getElementById('admin-upload-form').style.display = 'block';
-}
-function adminCancelUpload() {
-  _adminPendingFile = null;
-  document.getElementById('admin-upload-form').style.display = 'none';
-  document.getElementById('admin-upload-filename').textContent = '';
-}
-async function adminConfirmUpload() {
-  if (!_adminPendingFile) return;
-  const file = _adminPendingFile;
-  const category = document.getElementById('admin-upload-category').value;
-  const board = document.getElementById('admin-upload-board').value;
-  const year = document.getElementById('admin-upload-year').value;
-  const module = document.getElementById('admin-upload-module').value;
-  const isGlobal = document.getElementById('admin-is-global').checked;
-
-  // Read content
-  let content = '';
-  if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
-    content = await new Promise(res => {
-      const r = new FileReader();
-      r.onload = e => res(e.target.result.slice(0, 2000));
-      r.readAsText(file);
-    });
-  } else if (file.type.startsWith('image/')) {
-    content = await new Promise(res => {
-      const r = new FileReader();
-      r.onload = e => res(e.target.result.slice(0, 2000));
-      r.readAsDataURL(file);
-    });
-    content = '[IMAGE: ' + file.name + ']';
-  } else {
-    content = '[PDF: ' + file.name + ']';
-  }
-
-  const resource = {
-    id: Date.now(),
-    name: file.name,
-    category,
-    board,
-    year,
-    module,
-    content,
-    size: file.size,
-    uploadedAt: new Date().toISOString(),
-    is_global: isGlobal
-  };
-
-  // Save to Supabase
-  if (state.user?.id) {
-    try {
-      const ur = await fetch('/api/supabase-auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'save_upload', upload: { ...resource, user_id: state.user.id } })
-      });
-      if (!ur.ok) showToast('⚠️ Resource saved locally but could not sync to cloud.');
-    } catch (e) { /* continue — resource saved locally */ }
-  }
-
-  // Also keep in local state
-  if (!state.uploads) state.uploads = [];
-  state.uploads.push(resource);
-  if (typeof saveUploadsToStorage === 'function') saveUploadsToStorage();
-
-  adminCancelUpload();
-  renderAdminResources();
-}
 
 // ═══════════════════════════════════════
 // EXAM COUNTDOWN
 // ═══════════════════════════════════════
-function saveExamDate(val) {
-  if (!val) return;
-  localStorage.setItem('synaptiq_exam_date', val);
-  updateExamCountdown();
-}
 
-function updateExamCountdown() {
-  const stored = localStorage.getItem('synaptiq_exam_date');
-  const inp = document.getElementById('exam-date-input');
-  const settingsInp = document.getElementById('settings-exam-date');
-  const display = document.getElementById('countdown-display');
-  const title = document.getElementById('countdown-title');
-  const subtitle = document.getElementById('countdown-subtitle');
-  const daysEl = document.getElementById('countdown-days');
-  if (!stored) return;
-  if (inp) inp.value = stored;
-  if (settingsInp) settingsInp.value = stored;
-  const examDate = new Date(stored);
-  const now = new Date();
-  const diff = Math.ceil((examDate - now) / 86400000);
-  if (display) display.style.display = 'block';
-  if (daysEl) daysEl.textContent = diff > 0 ? diff : 0;
-  if (title) title.textContent = diff > 0 ? 'Days Until Your A-Level Maths Exam' : 'Good luck in your exam! 🎓';
-  if (subtitle) subtitle.textContent = diff > 30 ? 'Plenty of time — build a strong foundation now.' : diff > 14 ? 'Final stretch — focus on weak areas and past papers.' : diff > 0 ? 'Last push — revise formulas and exam technique!' : examDate.toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'});
-}
 
-// ═══════════════════════════════════════
-// FORMULA SHEET
-// ═══════════════════════════════════════
-const FORMULAS = {
-  pure1: [
-    { title: 'Quadratic Formula', items: [
-      'x = \\dfrac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
-      '\\text{Discriminant: } \\Delta = b^2 - 4ac',
-      '\\Delta > 0 \\Rightarrow \\text{two real roots}; \\quad \\Delta = 0 \\Rightarrow \\text{repeated root}; \\quad \\Delta < 0 \\Rightarrow \\text{no real roots}'
-    ]},
-    { title: 'Laws of Indices', items: [
-      'a^m \\cdot a^n = a^{m+n}',
-      '\\dfrac{a^m}{a^n} = a^{m-n}',
-      '(a^m)^n = a^{mn}',
-      'a^0 = 1, \\quad a^{-n} = \\dfrac{1}{a^n}, \\quad a^{1/n} = \\sqrt[n]{a}'
-    ]},
-    { title: 'Binomial Expansion (Positive Integer n)', items: [
-      '(a+b)^n = \\sum_{r=0}^{n} \\binom{n}{r} a^{n-r} b^r',
-      '\\binom{n}{r} = \\dfrac{n!}{r!(n-r)!}',
-      '(1+x)^n = 1 + nx + \\dfrac{n(n-1)}{2!}x^2 + \\dfrac{n(n-1)(n-2)}{3!}x^3 + \\cdots'
-    ]},
-    { title: 'Straight Lines & Circles', items: [
-      'y - y_1 = m(x - x_1)',
-      'm = \\dfrac{y_2 - y_1}{x_2 - x_1}',
-      '\\text{Perpendicular: } m_1 m_2 = -1',
-      '(x-a)^2 + (y-b)^2 = r^2 \\quad \\text{centre }(a,b)\\text{, radius }r'
-    ]},
-    { title: 'Differentiation (Pure 1)', items: [
-      '\\dfrac{d}{dx}(x^n) = nx^{n-1}',
-      '\\dfrac{d}{dx}(kf(x)) = kf\'(x)',
-      '\\text{Chain rule: } \\dfrac{dy}{dx} = \\dfrac{dy}{du} \\cdot \\dfrac{du}{dx}'
-    ]},
-    { title: 'Integration (Pure 1)', items: [
-      '\\int x^n\\,dx = \\dfrac{x^{n+1}}{n+1} + C \\quad (n \\neq -1)',
-      '\\int_a^b f(x)\\,dx = F(b) - F(a)',
-      '\\text{Area} = \\int_a^b |f(x)|\\,dx'
-    ]},
-    { title: 'Trigonometry (Pure 1)', items: [
-      '\\sin^2\\theta + \\cos^2\\theta = 1',
-      '\\tan\\theta = \\dfrac{\\sin\\theta}{\\cos\\theta}',
-      '\\text{Sine rule: } \\dfrac{a}{\\sin A} = \\dfrac{b}{\\sin B} = \\dfrac{c}{\\sin C}',
-      '\\text{Cosine rule: } a^2 = b^2 + c^2 - 2bc\\cos A',
-      '\\text{Area} = \\tfrac{1}{2}ab\\sin C'
-    ]},
-    { title: 'Exponentials & Logarithms', items: [
-      '\\ln(ab) = \\ln a + \\ln b',
-      '\\ln\\!\\left(\\dfrac{a}{b}\\right) = \\ln a - \\ln b',
-      '\\ln(a^k) = k\\ln a',
-      'e^{\\ln x} = x, \\quad \\ln(e^x) = x',
-      'a^x = e^{x\\ln a}'
-    ]}
-  ],
-  pure2: [
-    { title: 'Functions', items: [
-      'fg(x) = f(g(x)) \\quad \\text{(composite)}',
-      'f^{-1}(x) \\text{ exists iff } f \\text{ is one-to-one}',
-      '|x| = a \\Rightarrow x = \\pm a'
-    ]},
-    { title: 'Sequences & Series', items: [
-      '\\text{AP: } u_n = a + (n-1)d, \\quad S_n = \\dfrac{n}{2}(2a + (n-1)d)',
-      '\\text{GP: } u_n = ar^{n-1}, \\quad S_n = \\dfrac{a(1-r^n)}{1-r}',
-      'S_\\infty = \\dfrac{a}{1-r} \\quad (|r|<1)',
-      '\\sum_{r=1}^n r = \\dfrac{n(n+1)}{2}'
-    ]},
-    { title: 'Radians', items: [
-      's = r\\theta, \\quad A = \\tfrac{1}{2}r^2\\theta',
-      '180° = \\pi \\text{ rad}'
-    ]},
-    { title: 'Trigonometry (Pure 2)', items: [
-      '\\sin 2A = 2\\sin A\\cos A',
-      '\\cos 2A = \\cos^2 A - \\sin^2 A = 2\\cos^2 A - 1 = 1 - 2\\sin^2 A',
-      '\\tan 2A = \\dfrac{2\\tan A}{1 - \\tan^2 A}',
-      '1 + \\tan^2\\theta = \\sec^2\\theta',
-      '1 + \\cot^2\\theta = \\csc^2\\theta',
-      'R\\sin(\\theta+\\alpha): R=\\sqrt{a^2+b^2},\\; \\tan\\alpha = b/a'
-    ]},
-    { title: 'Parametric Equations', items: [
-      '\\dfrac{dy}{dx} = \\dfrac{dy/dt}{dx/dt}',
-      '\\int y\\,dx = \\int y\\,\\dfrac{dx}{dt}\\,dt'
-    ]},
-    { title: 'Differentiation (Pure 2)', items: [
-      '\\dfrac{d}{dx}(e^x) = e^x, \\quad \\dfrac{d}{dx}(\\ln x) = \\dfrac{1}{x}',
-      '\\dfrac{d}{dx}(\\sin x) = \\cos x, \\quad \\dfrac{d}{dx}(\\cos x) = -\\sin x',
-      '\\text{Product rule: } (uv)' + "'" + ' = u' + "'" + 'v + uv' + "'",
-      '\\text{Quotient rule: } \\left(\\dfrac{u}{v}\\right)' + "'" + ' = \\dfrac{u' + "'" + 'v - uv' + "'" + '}{v^2}'
-    ]},
-    { title: 'Integration (Pure 2)', items: [
-      '\\int e^x\\,dx = e^x + C',
-      '\\int \\dfrac{1}{x}\\,dx = \\ln|x| + C',
-      '\\int \\sin x\\,dx = -\\cos x + C, \\quad \\int \\cos x\\,dx = \\sin x + C',
-      '\\text{By parts: } \\int u\\,dv = uv - \\int v\\,du',
-      '\\text{By substitution: } \\int f(g(x))g' + "'" + '(x)\\,dx'
-    ]},
-    { title: 'Numerical Methods', items: [
-      'x_{n+1} = x_n - \\dfrac{f(x_n)}{f' + "'" + '(x_n)} \\quad \\text{(Newton–Raphson)}',
-      '\\text{Trapezium rule: } \\int_a^b y\\,dx \\approx \\tfrac{h}{2}[y_0 + 2(y_1+\\cdots+y_{n-1})+y_n]'
-    ]}
-  ],
-  stats: [
-    { title: 'Descriptive Statistics', items: [
-      '\\bar{x} = \\dfrac{\\sum x}{n} \\quad \\text{(mean)}',
-      '\\sigma^2 = \\dfrac{\\sum x^2}{n} - \\bar{x}^2 \\quad \\text{(variance)}',
-      '\\text{IQR} = Q_3 - Q_1',
-      '\\text{Outlier if } x < Q_1 - 1.5\\cdot\\text{IQR} \\text{ or } x > Q_3 + 1.5\\cdot\\text{IQR}'
-    ]},
-    { title: 'Probability', items: [
-      'P(A \\cup B) = P(A) + P(B) - P(A \\cap B)',
-      'P(A|B) = \\dfrac{P(A \\cap B)}{P(B)}',
-      '\\text{Independent: } P(A \\cap B) = P(A)P(B)'
-    ]},
-    { title: 'Discrete Distributions', items: [
-      'X \\sim B(n,p): \\quad P(X=r) = \\binom{n}{r}p^r(1-p)^{n-r}',
-      'E(X) = np, \\quad \\text{Var}(X) = np(1-p)',
-      'X \\sim \\text{Po}(\\lambda): \\quad P(X=r) = \\dfrac{e^{-\\lambda}\\lambda^r}{r!}',
-      'E(X) = \\text{Var}(X) = \\lambda'
-    ]},
-    { title: 'Normal Distribution', items: [
-      'X \\sim N(\\mu, \\sigma^2)',
-      'Z = \\dfrac{X - \\mu}{\\sigma} \\sim N(0,1)',
-      '\\overline{X} \\sim N\\!\\left(\\mu, \\dfrac{\\sigma^2}{n}\\right) \\quad \\text{(sampling distribution)}'
-    ]},
-    { title: 'Hypothesis Testing', items: [
-      '\\text{Null hypothesis } H_0, \\text{ alternative } H_1',
-      '\\text{Reject } H_0 \\text{ if } p\\text{-value} < \\alpha \\text{ (significance level)}',
-      '\\text{Critical region: values that lead to rejection of } H_0'
-    ]},
-    { title: 'Correlation & Regression', items: [
-      'r = \\dfrac{S_{xy}}{\\sqrt{S_{xx}S_{yy}}}',
-      'S_{xy} = \\sum xy - \\dfrac{(\\sum x)(\\sum y)}{n}',
-      'y = a + bx, \\quad b = \\dfrac{S_{xy}}{S_{xx}}'
-    ]}
-  ],
-  mech: [
-    { title: 'Kinematics (constant acceleration)', items: [
-      'v = u + at',
-      's = ut + \\tfrac{1}{2}at^2',
-      'v^2 = u^2 + 2as',
-      's = \\tfrac{1}{2}(u+v)t'
-    ]},
-    { title: 'Projectiles', items: [
-      'x = V\\cos\\theta \\cdot t',
-      'y = V\\sin\\theta \\cdot t - \\tfrac{1}{2}gt^2',
-      'v_x = V\\cos\\theta \\quad (\\text{constant})',
-      'v_y = V\\sin\\theta - gt',
-      '\\text{Range} = \\dfrac{V^2\\sin 2\\theta}{g}'
-    ]},
-    { title: 'Forces & Newton\'s Laws', items: [
-      'F = ma',
-      'W = mg \\quad (g \\approx 9.8\\,\\text{ms}^{-2})',
-      'F_\\text{friction} \\leq \\mu R',
-      'F_\\text{friction} = \\mu R \\quad \\text{(limiting equilibrium)}'
-    ]},
-    { title: 'Moments', items: [
-      '\\text{Moment} = F \\times d \\quad \\text{(perpendicular distance)}',
-      '\\sum \\text{clockwise moments} = \\sum \\text{anticlockwise moments} \\quad \\text{(equilibrium)}'
-    ]},
-    { title: 'Energy, Work & Power', items: [
-      'W = Fd\\cos\\theta',
-      'KE = \\tfrac{1}{2}mv^2',
-      'GPE = mgh',
-      'P = Fv, \\quad P = \\dfrac{W}{t}',
-      '\\text{Work–energy theorem: } W_{\\text{net}} = \\Delta KE'
-    ]},
-    { title: 'Variable Acceleration', items: [
-      'v = \\dfrac{ds}{dt}, \\quad a = \\dfrac{dv}{dt} = v\\dfrac{dv}{ds}',
-      's = \\int v\\,dt, \\quad v = \\int a\\,dt'
-    ]}
-  ]
-};
 
-function switchFormulaTab(tab, btn) {
-  document.querySelectorAll('#formula-tabs button').forEach(b => {
-    b.className = 'btn btn-outline';
-  });
-  if (btn) btn.className = 'btn btn-gold';
-  renderFormulaTab(tab);
-}
 
-function renderFormulaTab(tab) {
-  const sections = FORMULAS[tab] || [];
-  const html = sections.map(sec => `
-    <div class="card" style="margin-bottom:1.25rem">
-      <div class="card-header"><span class="card-title">${sec.title}</span></div>
-      <div class="card-body">
-        ${sec.items.map(f => `<div style="padding:.6rem 0;border-bottom:1px solid var(--border);font-size:1rem;line-height:1.8">\\(${f}\\)</div>`).join('')}
-      </div>
-    </div>`).join('');
-  document.getElementById('formula-content').innerHTML = html;
-  if (window.MathJax) MathJax.typesetPromise([document.getElementById('formula-content')]).catch(()=>{});
-}
 
-function renderAdminResources() {
-  const list = document.getElementById('admin-resources-list');
-  if (!list) return;
-  const global = (state.uploads || []).filter(u => u.is_global);
-  document.getElementById('admin-resource-count').textContent = global.length + ' resource' + (global.length !== 1 ? 's' : '');
-  if (!global.length) {
-    list.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);background:var(--bg2);border:1px solid var(--bg3);border-radius:10px">No shared resources yet. Upload your first mark scheme or past paper above.</div>';
-    return;
-  }
-  list.innerHTML = global.map(u => `
-    <div class="global-resource-item">
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:600;color:var(--white);font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${u.name}</div>
-        <div style="font-size:.75rem;color:var(--muted);margin-top:.2rem">${u.board} · ${u.year} · ${u.module}</div>
-      </div>
-      <span class="gr-badge">${u.category === 'mark-scheme' ? 'Mark Scheme' : 'Past Paper'}</span>
-      <span style="font-size:.75rem;color:var(--muted)">${(u.size / 1024).toFixed(0)} KB</span>
-    </div>`).join('');
-}
 
 // ═══════════════════════════════════════
 // PORTED FUNCTIONS FROM LUMINA AI
@@ -7121,9 +6108,9 @@ document.addEventListener('DOMContentLoaded', () => { if (document.getElementByI
 // ═══════════════════════════════════════
 // QUESTION GENERATOR
 // ═══════════════════════════════════════
-async function generateQuestions() {
+async function generateQuestionsV2() {
   if (!canAskQuestion()) return;
-  const sub = document.getElementById('q-subject').value;
+  const sub = document.getElementById('q-subject')?.value;
   const board = document.getElementById('q-board').value;
   const level = document.getElementById('q-level').value;
   const num = document.getElementById('q-num').value;
@@ -7756,6 +6743,9 @@ function initTutor() {
   }
 }
 
+
+</script>
+
 <!-- ═══════════════ MOBILE BOTTOM NAV ═══════════════ -->
 <div id="mobile-nav">
   <div class="mob-nav-grid">
@@ -7870,26 +6860,6 @@ function initTutor() {
 // ═══════════════════════════════════════
 // STRIPE PAYMENTS
 // ═══════════════════════════════════════
-async function startCheckout(plan) {
-  const email = state.user?.email || prompt('Enter your email to subscribe:');
-  if (!email) return;
-  showToast('⏳ Opening checkout...');
-  try {
-    const res = await fetch('/api/stripe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'checkout', plan, email,
-        successUrl: window.location.origin,
-        cancelUrl: window.location.origin
-      })
-    });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else showToast('⚠️ Checkout unavailable — add STRIPE keys to Vercel');
-  } catch(e) {
-    showToast('⚠️ Payment not configured yet — see SETUP.md');
-  }
-}
 
 // Subscription, heatmap, referral, reminders — see v10 Final section below
 
@@ -7950,6 +6920,8 @@ async function startCheckout(plan) {
 
 <!-- Feedback -->
 <div id="feedback-btn" onclick="showToast('Thank you for your feedback! 💛')">💬 Feedback</div>
+
+<script>
 // ═══════════════════════════════════════
 // GEOMETRY CANVAS ENGINE
 // ═══════════════════════════════════════
@@ -8491,6 +7463,28 @@ const subjectThemes = {
   'French': {color:'#34D399', class:'theme-geo', emoji:'🇫🇷'},
 };
 
+// Base setSubject — sets the active topic in state
+function setSubject(name, icon, color) {
+  if (name) state.topic = name;
+}
+
+// Show/re-check cookie consent banner
+function initCookieBanner() {
+  const banner = document.getElementById('cookie-banner');
+  if (!banner) return;
+  if (localStorage.getItem('synaptiq_cookies_accepted')) { banner.remove(); return; }
+  banner.style.display = 'flex';
+}
+
+// Track question generation count in localStorage (analytics)
+function incrementQuestionCount(n) {
+  try {
+    const key = 'synaptiq_total_questions';
+    const current = parseInt(localStorage.getItem(key) || '0', 10);
+    localStorage.setItem(key, current + (n || 1));
+  } catch(e) {}
+}
+
 // Override setSubject to also apply colour theme
 const _origSetSubject = window.setSubject;
 window.addEventListener('DOMContentLoaded', () => {
@@ -8926,6 +7920,7 @@ function toggleLightMode() {
 // ═══════════════════════════════════════
 function searchDash(query) {
   const results = document.getElementById('search-results');
+  if (!results) return;
   if (!query.trim()) { results.style.display = 'none'; return; }
   const q = query.toLowerCase();
   // Search notes
@@ -8952,7 +7947,7 @@ function searchDash(query) {
   if (featureMatches.length) {
     html += `<div style="padding:.5rem 1rem;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Pages</div>`;
     featureMatches.slice(0,4).forEach(f => {
-      html += `<div onclick="${f.action};document.getElementById('search-results').style.display='none';document.getElementById('dash-search').value=''" 
+      html += `<div onclick="${f.action};document.getElementById('search-results')?.style?.display='none';const _ds=document.getElementById('dash-search');if(_ds)_ds.value=''" 
         style="padding:.6rem 1rem;cursor:pointer;font-size:.875rem;transition:background .1s" 
         onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">${f.name}</div>`;
     });
@@ -8960,7 +7955,7 @@ function searchDash(query) {
   if (subjectMatches.length) {
     html += `<div style="padding:.5rem 1rem;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Subjects</div>`;
     subjectMatches.slice(0,3).forEach(s => {
-      html += `<div onclick="showDash('tutor');setSubject('${s}','','');document.getElementById('search-results').style.display='none'" 
+      html += `<div onclick="showDash('tutor');setSubject('${s}','','');document.getElementById('search-results')?.style?.display='none'" 
         style="padding:.6rem 1rem;cursor:pointer;font-size:.875rem" 
         onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">📚 ${s}</div>`;
     });
@@ -8968,7 +7963,7 @@ function searchDash(query) {
   if (noteMatches.length) {
     html += `<div style="padding:.5rem 1rem;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Notes</div>`;
     noteMatches.forEach(n => {
-      html += `<div onclick="showDash('notes');document.getElementById('search-results').style.display='none'" 
+      html += `<div onclick="showDash('notes');document.getElementById('search-results')?.style?.display='none'" 
         style="padding:.6rem 1rem;cursor:pointer;font-size:.85rem;border-bottom:1px solid var(--border)" 
         onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
         <div style="font-weight:600;color:var(--gold);font-size:.75rem">${n.subject}</div>
@@ -9077,7 +8072,7 @@ window.enterDashboard = function() {
   showMobileNav(true);
 
   // Show pom float btn and search
-  document.getElementById('pom-float').classList.add('show');
+  document.getElementById('pom-float')?.classList.add('show');
   const searchWrap = document.getElementById('dash-search-wrap');
   if (searchWrap) searchWrap.style.display = 'block';
 
@@ -11358,86 +10353,6 @@ function showElement(num) {
   detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// ─── FORMULA SHEETS ────────────────────────────────
-const FORMULAS = {
-  maths: [
-    { section: 'Algebra', items: [
-      { expr: 'x = (-b ± √(b²-4ac)) / 2a', desc: 'Quadratic formula — solves ax² + bx + c = 0' },
-      { expr: 'aⁿ × aᵐ = aⁿ⁺ᵐ', desc: 'Indices: multiplying same base — add powers' },
-      { expr: '(aⁿ)ᵐ = aⁿᵐ', desc: 'Indices: power of a power — multiply powers' },
-      { expr: 'a⁰ = 1', desc: 'Any number to the power 0 equals 1' },
-      { expr: 'a⁻ⁿ = 1/aⁿ', desc: 'Negative indices — reciprocal' },
-    ]},
-    { section: 'Geometry', items: [
-      { expr: 'A = πr²', desc: 'Area of a circle' },
-      { expr: 'C = 2πr', desc: 'Circumference of a circle' },
-      { expr: 'a² + b² = c²', desc: 'Pythagoras\' theorem (right-angled triangle)' },
-      { expr: 'A = ½bh', desc: 'Area of a triangle' },
-      { expr: 'V = (4/3)πr³', desc: 'Volume of a sphere' },
-      { expr: 'SA = 4πr²', desc: 'Surface area of a sphere' },
-    ]},
-    { section: 'Trigonometry', items: [
-      { expr: 'sin θ = opp/hyp', desc: 'Sine ratio (SOH)' },
-      { expr: 'cos θ = adj/hyp', desc: 'Cosine ratio (CAH)' },
-      { expr: 'tan θ = opp/adj', desc: 'Tangent ratio (TOA)' },
-      { expr: 'sin²θ + cos²θ = 1', desc: 'Pythagorean trig identity' },
-    ]},
-    { section: 'Statistics', items: [
-      { expr: 'mean = Σx / n', desc: 'Arithmetic mean — sum divided by count' },
-      { expr: 'P(A) = n(A) / n(S)', desc: 'Probability of event A' },
-      { expr: "P(A') = 1 - P(A)", desc: 'Probability of not A (complement)' },
-    ]}
-  ],
-  physics: [
-    { section: 'Forces & Motion', items: [
-      { expr: 'F = ma', desc: 'Newton\'s 2nd law — Force = mass × acceleration' },
-      { expr: 'v = u + at', desc: 'SUVAT: final velocity' },
-      { expr: 's = ut + ½at²', desc: 'SUVAT: displacement' },
-      { expr: 'v² = u² + 2as', desc: 'SUVAT: velocity without time' },
-      { expr: 'p = mv', desc: 'Momentum = mass × velocity' },
-      { expr: 'W = Fs', desc: 'Work done = Force × distance' },
-    ]},
-    { section: 'Energy', items: [
-      { expr: 'KE = ½mv²', desc: 'Kinetic energy' },
-      { expr: 'GPE = mgh', desc: 'Gravitational potential energy' },
-      { expr: 'P = W/t = Fv', desc: 'Power = work done ÷ time' },
-      { expr: 'efficiency = useful output / total input', desc: 'Efficiency (× 100 for %)' },
-    ]},
-    { section: 'Electricity', items: [
-      { expr: 'V = IR', desc: 'Ohm\'s law — Voltage = Current × Resistance' },
-      { expr: 'P = IV = I²R = V²/R', desc: 'Electrical power' },
-      { expr: 'E = Pt = VIt', desc: 'Electrical energy' },
-      { expr: 'Q = It', desc: 'Charge = Current × time' },
-    ]},
-    { section: 'Waves', items: [
-      { expr: 'v = fλ', desc: 'Wave speed = frequency × wavelength' },
-      { expr: 'T = 1/f', desc: 'Period = 1 ÷ frequency' },
-      { expr: 'n = sin(i)/sin(r)', desc: 'Snell\'s law — refractive index' },
-    ]}
-  ],
-  chemistry: [
-    { section: 'Calculations', items: [
-      { expr: 'n = m/Mr', desc: 'Moles = mass (g) ÷ relative formula mass' },
-      { expr: 'concentration = n/V', desc: 'Concentration (mol/dm³) = moles ÷ volume (dm³)' },
-      { expr: 'PV = nRT', desc: 'Ideal gas law (R = 8.314 J/mol·K)' },
-      { expr: 'n = It/F', desc: 'Moles in electrolysis (F = 96500 C/mol)' },
-    ]},
-    { section: 'Rates & Equilibrium', items: [
-      { expr: 'rate = Δ[conc] / Δt', desc: 'Rate of reaction' },
-      { expr: 'Kc = [products] / [reactants]', desc: 'Equilibrium constant expression' },
-    ]},
-    { section: 'Thermodynamics', items: [
-      { expr: 'ΔH = q / n', desc: 'Enthalpy change per mole' },
-      { expr: 'q = mcΔT', desc: 'Heat energy = mass × specific heat × temp change' },
-      { expr: 'ΔG = ΔH - TΔS', desc: 'Gibbs free energy (spontaneous if ΔG < 0)' },
-    ]},
-    { section: 'Acids & Electrochemistry', items: [
-      { expr: 'pH = -log[H⁺]', desc: 'pH definition' },
-      { expr: 'pH + pOH = 14', desc: 'pH/pOH relationship at 25°C' },
-      { expr: 'Kw = [H⁺][OH⁻] = 10⁻¹⁴', desc: 'Water dissociation constant (25°C)' },
-    ]}
-  ]
-};
 
 function showFormulas(btn, subject) {
   document.querySelectorAll('#sp-formulas .style-pill').forEach(b => b.classList.remove('active'));
@@ -12591,5 +11506,7 @@ window.enterDashboard = function() {
 console.log('✦ Synaptiq — AI Teacher + Admin Global Resources active');
 
 </script>
+
+
 </body>
 </html>
