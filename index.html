@@ -12,7 +12,7 @@
 <meta property="og:image" content="/og-image.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=Space+Mono&family=Lexend:wght@300;400;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css">
 <script>MathJax = { tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']], processEscapes: true } };</script>
 <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
 <!-- Supabase -->
@@ -1731,8 +1731,8 @@ body.mode-adhd .adhd-break { display: block; }
     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
     <div id="xp-badge"><i class="fas fa-star"></i><span id="xp-display">0 XP</span></div>
     <div id="auth-buttons">
-      <button class="btn btn-outline" onclick="nav('auth')">Log In</button>
-      <button class="btn btn-gold" onclick="nav('auth')">Sign Up</button>
+      <button class="btn btn-outline" onclick="nav('auth');showLogin()">Log In</button>
+      <button class="btn btn-gold" onclick="nav('auth');showSignup()">Sign Up</button>
     </div>
     <div id="user-menu" style="display:none">
       <button class="btn btn-outline" onclick="logout()">Log Out</button>
@@ -2076,6 +2076,10 @@ body.mode-adhd .adhd-break { display: block; }
       </div>
       <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@email.com"></div>
       <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password"></div>
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem">
+        <input type="checkbox" id="login-remember" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">
+        <label for="login-remember" style="font-size:.85rem;color:var(--muted);cursor:pointer;margin:0">Remember me for 30 days</label>
+      </div>
       <button class="btn-full" onclick="loginUser()">Log In →</button>
       <p style="text-align:center;margin-top:1rem;font-size:.8rem;color:var(--muted)">Don't have an account? <a onclick="showSignup()" style="color:var(--gold);cursor:pointer">Sign up free</a></p>
     </div>
@@ -3080,7 +3084,10 @@ async function loginUser() {
     const saved = localStorage.getItem('synaptiq_user');
     state.user = saved ? JSON.parse(saved) : { name: email.split('@')[0], email, plan: 'student', subject: 'A-Level Mathematics', diffs: [], board: 'AQA' };
   }
-  localStorage.setItem('synaptiq_user', JSON.stringify(state.user));
+  const rememberMe = document.getElementById('login-remember')?.checked;
+  const expiry = rememberMe ? Date.now() + 30 * 24 * 60 * 60 * 1000 : null;
+  const session = { ...state.user, _expiry: expiry };
+  localStorage.setItem('synaptiq_user', JSON.stringify(session));
   trackEvent('login', {});
   applyLearningProfile();
   enterDashboard();
@@ -3134,6 +3141,15 @@ function showSignup() {
 function showLogin() {
   document.getElementById('signup-flow').style.display = 'none';
   document.getElementById('login-form').classList.add('active');
+  // Pre-fill email if we have a saved session
+  try {
+    const saved = localStorage.getItem('synaptiq_user');
+    if (saved) {
+      const u = JSON.parse(saved);
+      const emailEl = document.getElementById('login-email');
+      if (emailEl && u.email) emailEl.value = u.email;
+    }
+  } catch(e) {}
 }
 
 // Apply saved theme immediately
@@ -3151,7 +3167,14 @@ document.addEventListener('DOMContentLoaded', () => {
   try {
     const saved = localStorage.getItem('synaptiq_user');
     if (saved) {
-      state.user = JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      // If session has an expiry, check it hasn't passed
+      if (parsed._expiry && Date.now() > parsed._expiry) {
+        localStorage.removeItem('synaptiq_user');
+        throw new Error('session expired');
+      }
+      delete parsed._expiry;
+      state.user = parsed;
       applyLearningProfile();
       loadUploadsFromStorage();
       enterDashboard();
