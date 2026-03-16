@@ -1,31 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
+import { applyHeaders, isRateLimited, getIp } from './_lib.js';
 
 let supabase = null;
 if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
   supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 }
 
-// Simple in-memory rate limiter
-const store = new Map();
-function isRateLimited(key, max = 5, windowMs = 60_000) {
-  const now = Date.now();
-  const entry = store.get(key) || { count: 0, reset: now + windowMs };
-  if (now > entry.reset) { entry.count = 0; entry.reset = now + windowMs; }
-  entry.count++;
-  store.set(key, entry);
-  return entry.count > max;
-}
-
-function getIp(req) {
-  return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || 'unknown';
-}
-
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', process.env.SITE_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin-key');
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
+  applyHeaders(res, 'POST, GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   if (!supabase) return res.status(503).json({ error: 'Database not configured' });
@@ -81,12 +63,12 @@ export default async function handler(req, res) {
     let failed = 0;
     for (const user of (users || [])) {
       try {
-        await fetch(`${process.env.SITE_URL}/api/resend`, {
+        await fetch(`${process.env.SITE_URL}/api/email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             type: 'weekly',
-            to: user.email,
+            email: user.email,
             name: user.name,
             stats: {
               questions: user.questions_answered,
