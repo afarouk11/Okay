@@ -23,11 +23,24 @@ export default async function handler(req, res) {
     if (action === 'upsert_profile') {
       const r = await fetch(`${supabaseUrl}/rest/v1/profiles`, {
         method: 'POST',
-        headers: { ...supabaseHeaders, 'Prefer': 'resolution=merge-duplicates' },
+        headers: { ...supabaseHeaders, 'Prefer': 'return=representation,resolution=merge-duplicates' },
         body: JSON.stringify(payload)
       });
       const data = await r.json();
-      return res.status(r.status).json(data);
+      // Supabase returns an array for POST — return the first record
+      return res.status(r.status).json(Array.isArray(data) ? (data[0] || {}) : data);
+    }
+
+    if (action === 'patch_profile') {
+      const { id, ...fields } = payload;
+      if (!id) return res.status(400).json({ error: 'id required' });
+      const r = await fetch(`${supabaseUrl}/rest/v1/profiles?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: { ...supabaseHeaders, 'Prefer': 'return=representation' },
+        body: JSON.stringify({ ...fields, updated_at: new Date().toISOString() })
+      });
+      const data = await r.json();
+      return res.status(r.status).json(Array.isArray(data) ? (data[0] || {}) : data);
     }
 
     if (action === 'get_profile') {
