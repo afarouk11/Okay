@@ -7468,6 +7468,23 @@ function setSubject(name, icon, color) {
   if (name) state.topic = name;
 }
 
+// Show/re-check cookie consent banner
+function initCookieBanner() {
+  const banner = document.getElementById('cookie-banner');
+  if (!banner) return;
+  if (localStorage.getItem('synaptiq_cookies_accepted')) { banner.remove(); return; }
+  banner.style.display = 'flex';
+}
+
+// Track question generation count in localStorage (analytics)
+function incrementQuestionCount(n) {
+  try {
+    const key = 'synaptiq_total_questions';
+    const current = parseInt(localStorage.getItem(key) || '0', 10);
+    localStorage.setItem(key, current + (n || 1));
+  } catch(e) {}
+}
+
 // Override setSubject to also apply colour theme
 const _origSetSubject = window.setSubject;
 window.addEventListener('DOMContentLoaded', () => {
