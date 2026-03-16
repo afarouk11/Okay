@@ -26,7 +26,7 @@ export default async function handler(req, res) {
             <p style="color:#8892A4;margin:.5rem 0">2️⃣ <strong style="color:#F5F2EC">Browse A-Level Content</strong> — Pure 1 & 2, Stats, Mechanics chapters</p>
             <p style="color:#8892A4;margin:.5rem 0">3️⃣ <strong style="color:#F5F2EC">Upload your mark scheme</strong> — AI answers aligned to your exam board</p>
           </div>
-          <a href="${process.env.APP_URL || 'https://synaptiq.co.uk'}" style="display:inline-block;background:#C9A84C;color:#07080C;padding:1rem 2rem;border-radius:10px;text-decoration:none;font-weight:700">Open Synaptiq →</a>
+          <a href="${process.env.APP_URL || 'https://synaptiqai.co.uk'}" style="display:inline-block;background:#C9A84C;color:#07080C;padding:1rem 2rem;border-radius:10px;text-decoration:none;font-weight:700">Open Synaptiq →</a>
           <p style="color:#8892A4;font-size:.8rem;margin-top:2rem">Synaptiq · A-Level Maths AI Tutor · <a href="#" style="color:#C9A84C">Unsubscribe</a></p>
         </div>
       `
@@ -37,7 +37,7 @@ export default async function handler(req, res) {
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0A0C12;color:#F5F2EC;padding:2rem;border-radius:16px">
           <h1 style="font-size:1.8rem">Hi ${name || 'there'}, your trial ends soon ⏰</h1>
           <p style="color:#8892A4;line-height:1.7">Your 7-day free trial of Synaptiq ends in 2 days. Upgrade now to keep your progress, uploads, and access to all A-Level content.</p>
-          <a href="${process.env.APP_URL || 'https://synaptiq.co.uk'}?upgrade=true" style="display:inline-block;background:#C9A84C;color:#07080C;padding:1rem 2rem;border-radius:10px;text-decoration:none;font-weight:700">Upgrade Now — £60/month →</a>
+          <a href="${process.env.APP_URL || 'https://synaptiqai.co.uk'}?upgrade=true" style="display:inline-block;background:#C9A84C;color:#07080C;padding:1rem 2rem;border-radius:10px;text-decoration:none;font-weight:700">Upgrade Now — £60/month →</a>
         </div>
       `
     }
@@ -53,7 +53,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'Synaptiq <hello@synaptiq.co.uk>',
+        from: 'Synaptiq <hello@synaptiqai.co.uk>',
         to: [to],
         subject: template.subject,
         html: template.html
