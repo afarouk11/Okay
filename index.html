@@ -5022,7 +5022,6 @@ const videoChapters = [
   { title: 'A-Level Content', desc: 'Every chapter from Pure 1 to Mechanics, organised', q: null },
   { title: 'Accessibility', desc: 'ADHD, Dyslexia, and Dyscalculia support built in', q: { text: 'Which accessibility modes does Synaptiq offer?', opts: ['Only ADHD', 'Only dyslexia fonts', 'ADHD, Dyslexia AND Dyscalculia', 'Colour blindness only'], correct: 2 } }
 ];
-let currentChapter = 0;
 
 
 
@@ -5427,51 +5426,6 @@ function trackEvent(name, params) {
 // ═══════════════════════════════════════
 
 
-</script>
-
-<!-- ═══════════════ MOBILE BOTTOM NAV ═══════════════ -->
-<div id="mobile-nav">
-  <div class="mob-nav-grid">
-    <button class="mob-nav-btn active" id="mn-home" onclick="showDash('home');setMobNav('home')" aria-label="Home dashboard"><i class="fas fa-house" aria-hidden="true"></i>Home</button>
-    <button class="mob-nav-btn" id="mn-tutor" onclick="showDash('tutor');setMobNav('tutor')" aria-label="AI Tutor"><i class="fas fa-robot" aria-hidden="true"></i>Tutor</button>
-    <button class="mob-nav-btn" id="mn-questions" onclick="showDash('questions');setMobNav('questions')" aria-label="Practice questions"><i class="fas fa-file-lines" aria-hidden="true"></i>Questions</button>
-    <button class="mob-nav-btn" id="mn-flashcards" onclick="showDash('flashcards');setMobNav('flashcards')" aria-label="Flashcards"><i class="fas fa-clone" aria-hidden="true"></i>Cards</button>
-    <button class="mob-nav-btn" id="mn-progress" onclick="showDash('progress');setMobNav('progress')" aria-label="View progress"><i class="fas fa-chart-line" aria-hidden="true"></i>Progress</button>
-  </div>
-</div>
-
-<!-- ═══════════════ POMODORO WIDGET ═══════════════ -->
-<button class="pom-float-btn" id="pom-float" onclick="togglePomodoro()">
-  ⏱️ <span id="pom-float-time">25:00</span>
-</button>
-
-<div id="pomodoro-widget">
-  <div class="pom-label" id="pom-phase-label">Focus Session</div>
-  <div class="pom-ring">
-    <svg width="88" height="88" viewBox="0 0 88 88">
-      <circle cx="44" cy="44" r="40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="4"/>
-      <circle id="pom-ring-circle" cx="44" cy="44" r="40" fill="none" stroke="#C9A84C" stroke-width="4"
-        stroke-dasharray="251.2" stroke-dashoffset="0" stroke-linecap="round"/>
-    </svg>
-    <div class="pom-time" id="pom-display">25:00</div>
-  </div>
-  <div class="pom-phase" id="pom-phase-text">Stay focused — you've got this! 💪</div>
-  <div class="pom-controls">
-    <button class="pom-btn start" id="pom-start-btn" onclick="pomStart()">▶ Start</button>
-    <button class="pom-btn" onclick="pomReset()">↺ Reset</button>
-    <button class="pom-btn" onclick="togglePomodoro()">✕</button>
-  </div>
-  <div class="pom-sessions" id="pom-sessions">
-    <div class="pom-dot" id="pd0"></div>
-    <div class="pom-dot" id="pd1"></div>
-    <div class="pom-dot" id="pd2"></div>
-    <div class="pom-dot" id="pd3"></div>
-  </div>
-</div>
-
-
-<!-- ═══════════════ NEW FEATURE SCRIPTS ═══════════════ -->
-<script>
 // ═══════════════════════════════════════
 // MOBILE NAV
 // ═══════════════════════════════════════
@@ -5480,22 +5434,6 @@ function trackEvent(name, params) {
 function updateMobileNav() {
   const mn = document.getElementById('mobile-nav');
   if (mn) mn.style.display = state.user ? 'block' : 'none';
-}
-
-// ═══════════════════════════════════════
-// POMODORO TIMER
-// ═══════════════════════════════════════
-const pom = {
-  duration: 25 * 60,
-  breakDuration: 5 * 60,
-  longBreakDuration: 15 * 60,
-  timeLeft: 25 * 60,
-  isRunning: false,
-  isBreak: false,
-  session: 0,
-  interval: null,
-  totalSessions: 4
-};
 
 
 
@@ -5508,13 +5446,6 @@ function updatePomBtn() {
   const btn = document.getElementById('pom-float');
   if (btn) btn.classList.toggle('show', !!state.user);
 }
-
-// ═══════════════════════════════════════
-// FLASHCARDS
-// ═══════════════════════════════════════
-let fcCards = JSON.parse(localStorage.getItem('synaptiq_fc') || '[]');
-let fcCurrent = 0;
-let fcDue = [];
 
 
 
@@ -5571,10 +5502,6 @@ function sm2Update(card, quality) {
 }
 
 
-// ═══════════════════════════════════════
-// WORKED SOLUTION CHECKER (Essay Marker)
-// ═══════════════════════════════════════
-let essayImageBase64 = null;
 
 
 function renderFeedback(text) {
@@ -5619,16 +5546,6 @@ document.addEventListener('synaptiq-login', () => {
   }
 });
 
-// ═══════════════════════════════════════
-// AI TEACHER
-// ═══════════════════════════════════════
-let _teacherTab = 'pure1';
-const TEACHER_TABS = {
-  pure1: ['pure1'],
-  pure2: ['pure2'],
-  stats: ['statsY1', 'statsY2'],
-  mech: ['mechY1', 'mechY2']
-};
 
 
 
@@ -5791,175 +5708,6 @@ let _adminPendingFile = null;
 // ═══════════════════════════════════════
 
 
-// ═══════════════════════════════════════
-// FORMULA SHEET
-// ═══════════════════════════════════════
-const FORMULAS = {
-  pure1: [
-    { title: 'Quadratic Formula', items: [
-      'x = \\dfrac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
-      '\\text{Discriminant: } \\Delta = b^2 - 4ac',
-      '\\Delta > 0 \\Rightarrow \\text{two real roots}; \\quad \\Delta = 0 \\Rightarrow \\text{repeated root}; \\quad \\Delta < 0 \\Rightarrow \\text{no real roots}'
-    ]},
-    { title: 'Laws of Indices', items: [
-      'a^m \\cdot a^n = a^{m+n}',
-      '\\dfrac{a^m}{a^n} = a^{m-n}',
-      '(a^m)^n = a^{mn}',
-      'a^0 = 1, \\quad a^{-n} = \\dfrac{1}{a^n}, \\quad a^{1/n} = \\sqrt[n]{a}'
-    ]},
-    { title: 'Binomial Expansion (Positive Integer n)', items: [
-      '(a+b)^n = \\sum_{r=0}^{n} \\binom{n}{r} a^{n-r} b^r',
-      '\\binom{n}{r} = \\dfrac{n!}{r!(n-r)!}',
-      '(1+x)^n = 1 + nx + \\dfrac{n(n-1)}{2!}x^2 + \\dfrac{n(n-1)(n-2)}{3!}x^3 + \\cdots'
-    ]},
-    { title: 'Straight Lines & Circles', items: [
-      'y - y_1 = m(x - x_1)',
-      'm = \\dfrac{y_2 - y_1}{x_2 - x_1}',
-      '\\text{Perpendicular: } m_1 m_2 = -1',
-      '(x-a)^2 + (y-b)^2 = r^2 \\quad \\text{centre }(a,b)\\text{, radius }r'
-    ]},
-    { title: 'Differentiation (Pure 1)', items: [
-      '\\dfrac{d}{dx}(x^n) = nx^{n-1}',
-      '\\dfrac{d}{dx}(kf(x)) = kf\'(x)',
-      '\\text{Chain rule: } \\dfrac{dy}{dx} = \\dfrac{dy}{du} \\cdot \\dfrac{du}{dx}'
-    ]},
-    { title: 'Integration (Pure 1)', items: [
-      '\\int x^n\\,dx = \\dfrac{x^{n+1}}{n+1} + C \\quad (n \\neq -1)',
-      '\\int_a^b f(x)\\,dx = F(b) - F(a)',
-      '\\text{Area} = \\int_a^b |f(x)|\\,dx'
-    ]},
-    { title: 'Trigonometry (Pure 1)', items: [
-      '\\sin^2\\theta + \\cos^2\\theta = 1',
-      '\\tan\\theta = \\dfrac{\\sin\\theta}{\\cos\\theta}',
-      '\\text{Sine rule: } \\dfrac{a}{\\sin A} = \\dfrac{b}{\\sin B} = \\dfrac{c}{\\sin C}',
-      '\\text{Cosine rule: } a^2 = b^2 + c^2 - 2bc\\cos A',
-      '\\text{Area} = \\tfrac{1}{2}ab\\sin C'
-    ]},
-    { title: 'Exponentials & Logarithms', items: [
-      '\\ln(ab) = \\ln a + \\ln b',
-      '\\ln\\!\\left(\\dfrac{a}{b}\\right) = \\ln a - \\ln b',
-      '\\ln(a^k) = k\\ln a',
-      'e^{\\ln x} = x, \\quad \\ln(e^x) = x',
-      'a^x = e^{x\\ln a}'
-    ]}
-  ],
-  pure2: [
-    { title: 'Functions', items: [
-      'fg(x) = f(g(x)) \\quad \\text{(composite)}',
-      'f^{-1}(x) \\text{ exists iff } f \\text{ is one-to-one}',
-      '|x| = a \\Rightarrow x = \\pm a'
-    ]},
-    { title: 'Sequences & Series', items: [
-      '\\text{AP: } u_n = a + (n-1)d, \\quad S_n = \\dfrac{n}{2}(2a + (n-1)d)',
-      '\\text{GP: } u_n = ar^{n-1}, \\quad S_n = \\dfrac{a(1-r^n)}{1-r}',
-      'S_\\infty = \\dfrac{a}{1-r} \\quad (|r|<1)',
-      '\\sum_{r=1}^n r = \\dfrac{n(n+1)}{2}'
-    ]},
-    { title: 'Radians', items: [
-      's = r\\theta, \\quad A = \\tfrac{1}{2}r^2\\theta',
-      '180° = \\pi \\text{ rad}'
-    ]},
-    { title: 'Trigonometry (Pure 2)', items: [
-      '\\sin 2A = 2\\sin A\\cos A',
-      '\\cos 2A = \\cos^2 A - \\sin^2 A = 2\\cos^2 A - 1 = 1 - 2\\sin^2 A',
-      '\\tan 2A = \\dfrac{2\\tan A}{1 - \\tan^2 A}',
-      '1 + \\tan^2\\theta = \\sec^2\\theta',
-      '1 + \\cot^2\\theta = \\csc^2\\theta',
-      'R\\sin(\\theta+\\alpha): R=\\sqrt{a^2+b^2},\\; \\tan\\alpha = b/a'
-    ]},
-    { title: 'Parametric Equations', items: [
-      '\\dfrac{dy}{dx} = \\dfrac{dy/dt}{dx/dt}',
-      '\\int y\\,dx = \\int y\\,\\dfrac{dx}{dt}\\,dt'
-    ]},
-    { title: 'Differentiation (Pure 2)', items: [
-      '\\dfrac{d}{dx}(e^x) = e^x, \\quad \\dfrac{d}{dx}(\\ln x) = \\dfrac{1}{x}',
-      '\\dfrac{d}{dx}(\\sin x) = \\cos x, \\quad \\dfrac{d}{dx}(\\cos x) = -\\sin x',
-      '\\text{Product rule: } (uv)' + "'" + ' = u' + "'" + 'v + uv' + "'",
-      '\\text{Quotient rule: } \\left(\\dfrac{u}{v}\\right)' + "'" + ' = \\dfrac{u' + "'" + 'v - uv' + "'" + '}{v^2}'
-    ]},
-    { title: 'Integration (Pure 2)', items: [
-      '\\int e^x\\,dx = e^x + C',
-      '\\int \\dfrac{1}{x}\\,dx = \\ln|x| + C',
-      '\\int \\sin x\\,dx = -\\cos x + C, \\quad \\int \\cos x\\,dx = \\sin x + C',
-      '\\text{By parts: } \\int u\\,dv = uv - \\int v\\,du',
-      '\\text{By substitution: } \\int f(g(x))g' + "'" + '(x)\\,dx'
-    ]},
-    { title: 'Numerical Methods', items: [
-      'x_{n+1} = x_n - \\dfrac{f(x_n)}{f' + "'" + '(x_n)} \\quad \\text{(Newton–Raphson)}',
-      '\\text{Trapezium rule: } \\int_a^b y\\,dx \\approx \\tfrac{h}{2}[y_0 + 2(y_1+\\cdots+y_{n-1})+y_n]'
-    ]}
-  ],
-  stats: [
-    { title: 'Descriptive Statistics', items: [
-      '\\bar{x} = \\dfrac{\\sum x}{n} \\quad \\text{(mean)}',
-      '\\sigma^2 = \\dfrac{\\sum x^2}{n} - \\bar{x}^2 \\quad \\text{(variance)}',
-      '\\text{IQR} = Q_3 - Q_1',
-      '\\text{Outlier if } x < Q_1 - 1.5\\cdot\\text{IQR} \\text{ or } x > Q_3 + 1.5\\cdot\\text{IQR}'
-    ]},
-    { title: 'Probability', items: [
-      'P(A \\cup B) = P(A) + P(B) - P(A \\cap B)',
-      'P(A|B) = \\dfrac{P(A \\cap B)}{P(B)}',
-      '\\text{Independent: } P(A \\cap B) = P(A)P(B)'
-    ]},
-    { title: 'Discrete Distributions', items: [
-      'X \\sim B(n,p): \\quad P(X=r) = \\binom{n}{r}p^r(1-p)^{n-r}',
-      'E(X) = np, \\quad \\text{Var}(X) = np(1-p)',
-      'X \\sim \\text{Po}(\\lambda): \\quad P(X=r) = \\dfrac{e^{-\\lambda}\\lambda^r}{r!}',
-      'E(X) = \\text{Var}(X) = \\lambda'
-    ]},
-    { title: 'Normal Distribution', items: [
-      'X \\sim N(\\mu, \\sigma^2)',
-      'Z = \\dfrac{X - \\mu}{\\sigma} \\sim N(0,1)',
-      '\\overline{X} \\sim N\\!\\left(\\mu, \\dfrac{\\sigma^2}{n}\\right) \\quad \\text{(sampling distribution)}'
-    ]},
-    { title: 'Hypothesis Testing', items: [
-      '\\text{Null hypothesis } H_0, \\text{ alternative } H_1',
-      '\\text{Reject } H_0 \\text{ if } p\\text{-value} < \\alpha \\text{ (significance level)}',
-      '\\text{Critical region: values that lead to rejection of } H_0'
-    ]},
-    { title: 'Correlation & Regression', items: [
-      'r = \\dfrac{S_{xy}}{\\sqrt{S_{xx}S_{yy}}}',
-      'S_{xy} = \\sum xy - \\dfrac{(\\sum x)(\\sum y)}{n}',
-      'y = a + bx, \\quad b = \\dfrac{S_{xy}}{S_{xx}}'
-    ]}
-  ],
-  mech: [
-    { title: 'Kinematics (constant acceleration)', items: [
-      'v = u + at',
-      's = ut + \\tfrac{1}{2}at^2',
-      'v^2 = u^2 + 2as',
-      's = \\tfrac{1}{2}(u+v)t'
-    ]},
-    { title: 'Projectiles', items: [
-      'x = V\\cos\\theta \\cdot t',
-      'y = V\\sin\\theta \\cdot t - \\tfrac{1}{2}gt^2',
-      'v_x = V\\cos\\theta \\quad (\\text{constant})',
-      'v_y = V\\sin\\theta - gt',
-      '\\text{Range} = \\dfrac{V^2\\sin 2\\theta}{g}'
-    ]},
-    { title: 'Forces & Newton\'s Laws', items: [
-      'F = ma',
-      'W = mg \\quad (g \\approx 9.8\\,\\text{ms}^{-2})',
-      'F_\\text{friction} \\leq \\mu R',
-      'F_\\text{friction} = \\mu R \\quad \\text{(limiting equilibrium)}'
-    ]},
-    { title: 'Moments', items: [
-      '\\text{Moment} = F \\times d \\quad \\text{(perpendicular distance)}',
-      '\\sum \\text{clockwise moments} = \\sum \\text{anticlockwise moments} \\quad \\text{(equilibrium)}'
-    ]},
-    { title: 'Energy, Work & Power', items: [
-      'W = Fd\\cos\\theta',
-      'KE = \\tfrac{1}{2}mv^2',
-      'GPE = mgh',
-      'P = Fv, \\quad P = \\dfrac{W}{t}',
-      '\\text{Work–energy theorem: } W_{\\text{net}} = \\Delta KE'
-    ]},
-    { title: 'Variable Acceleration', items: [
-      'v = \\dfrac{ds}{dt}, \\quad a = \\dfrac{dv}{dt} = v\\dfrac{dv}{ds}',
-      's = \\int v\\,dt, \\quad v = \\int a\\,dt'
-    ]}
-  ]
-};
 
 
 
@@ -6995,6 +6743,9 @@ function initTutor() {
   }
 }
 
+
+</script>
+
 <!-- ═══════════════ MOBILE BOTTOM NAV ═══════════════ -->
 <div id="mobile-nav">
   <div class="mob-nav-grid">
@@ -7169,6 +6920,8 @@ function initTutor() {
 
 <!-- Feedback -->
 <div id="feedback-btn" onclick="showToast('Thank you for your feedback! 💛')">💬 Feedback</div>
+
+<script>
 // ═══════════════════════════════════════
 // GEOMETRY CANVAS ENGINE
 // ═══════════════════════════════════════
@@ -7710,6 +7463,11 @@ const subjectThemes = {
   'French': {color:'#34D399', class:'theme-geo', emoji:'🇫🇷'},
 };
 
+// Base setSubject — sets the active topic in state
+function setSubject(name, icon, color) {
+  if (name) state.topic = name;
+}
+
 // Override setSubject to also apply colour theme
 const _origSetSubject = window.setSubject;
 window.addEventListener('DOMContentLoaded', () => {
@@ -8145,6 +7903,7 @@ function toggleLightMode() {
 // ═══════════════════════════════════════
 function searchDash(query) {
   const results = document.getElementById('search-results');
+  if (!results) return;
   if (!query.trim()) { results.style.display = 'none'; return; }
   const q = query.toLowerCase();
   // Search notes
@@ -8171,7 +7930,7 @@ function searchDash(query) {
   if (featureMatches.length) {
     html += `<div style="padding:.5rem 1rem;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Pages</div>`;
     featureMatches.slice(0,4).forEach(f => {
-      html += `<div onclick="${f.action};document.getElementById('search-results').style.display='none';document.getElementById('dash-search').value=''" 
+      html += `<div onclick="${f.action};document.getElementById('search-results')?.style?.display='none';const _ds=document.getElementById('dash-search');if(_ds)_ds.value=''" 
         style="padding:.6rem 1rem;cursor:pointer;font-size:.875rem;transition:background .1s" 
         onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">${f.name}</div>`;
     });
@@ -8179,7 +7938,7 @@ function searchDash(query) {
   if (subjectMatches.length) {
     html += `<div style="padding:.5rem 1rem;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Subjects</div>`;
     subjectMatches.slice(0,3).forEach(s => {
-      html += `<div onclick="showDash('tutor');setSubject('${s}','','');document.getElementById('search-results').style.display='none'" 
+      html += `<div onclick="showDash('tutor');setSubject('${s}','','');document.getElementById('search-results')?.style?.display='none'" 
         style="padding:.6rem 1rem;cursor:pointer;font-size:.875rem" 
         onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">📚 ${s}</div>`;
     });
@@ -8187,7 +7946,7 @@ function searchDash(query) {
   if (noteMatches.length) {
     html += `<div style="padding:.5rem 1rem;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Notes</div>`;
     noteMatches.forEach(n => {
-      html += `<div onclick="showDash('notes');document.getElementById('search-results').style.display='none'" 
+      html += `<div onclick="showDash('notes');document.getElementById('search-results')?.style?.display='none'" 
         style="padding:.6rem 1rem;cursor:pointer;font-size:.85rem;border-bottom:1px solid var(--border)" 
         onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
         <div style="font-weight:600;color:var(--gold);font-size:.75rem">${n.subject}</div>
@@ -8296,7 +8055,7 @@ window.enterDashboard = function() {
   showMobileNav(true);
 
   // Show pom float btn and search
-  document.getElementById('pom-float').classList.add('show');
+  document.getElementById('pom-float')?.classList.add('show');
   const searchWrap = document.getElementById('dash-search-wrap');
   if (searchWrap) searchWrap.style.display = 'block';
 
@@ -10577,86 +10336,6 @@ function showElement(num) {
   detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// ─── FORMULA SHEETS ────────────────────────────────
-const FORMULAS = {
-  maths: [
-    { section: 'Algebra', items: [
-      { expr: 'x = (-b ± √(b²-4ac)) / 2a', desc: 'Quadratic formula — solves ax² + bx + c = 0' },
-      { expr: 'aⁿ × aᵐ = aⁿ⁺ᵐ', desc: 'Indices: multiplying same base — add powers' },
-      { expr: '(aⁿ)ᵐ = aⁿᵐ', desc: 'Indices: power of a power — multiply powers' },
-      { expr: 'a⁰ = 1', desc: 'Any number to the power 0 equals 1' },
-      { expr: 'a⁻ⁿ = 1/aⁿ', desc: 'Negative indices — reciprocal' },
-    ]},
-    { section: 'Geometry', items: [
-      { expr: 'A = πr²', desc: 'Area of a circle' },
-      { expr: 'C = 2πr', desc: 'Circumference of a circle' },
-      { expr: 'a² + b² = c²', desc: 'Pythagoras\' theorem (right-angled triangle)' },
-      { expr: 'A = ½bh', desc: 'Area of a triangle' },
-      { expr: 'V = (4/3)πr³', desc: 'Volume of a sphere' },
-      { expr: 'SA = 4πr²', desc: 'Surface area of a sphere' },
-    ]},
-    { section: 'Trigonometry', items: [
-      { expr: 'sin θ = opp/hyp', desc: 'Sine ratio (SOH)' },
-      { expr: 'cos θ = adj/hyp', desc: 'Cosine ratio (CAH)' },
-      { expr: 'tan θ = opp/adj', desc: 'Tangent ratio (TOA)' },
-      { expr: 'sin²θ + cos²θ = 1', desc: 'Pythagorean trig identity' },
-    ]},
-    { section: 'Statistics', items: [
-      { expr: 'mean = Σx / n', desc: 'Arithmetic mean — sum divided by count' },
-      { expr: 'P(A) = n(A) / n(S)', desc: 'Probability of event A' },
-      { expr: "P(A') = 1 - P(A)", desc: 'Probability of not A (complement)' },
-    ]}
-  ],
-  physics: [
-    { section: 'Forces & Motion', items: [
-      { expr: 'F = ma', desc: 'Newton\'s 2nd law — Force = mass × acceleration' },
-      { expr: 'v = u + at', desc: 'SUVAT: final velocity' },
-      { expr: 's = ut + ½at²', desc: 'SUVAT: displacement' },
-      { expr: 'v² = u² + 2as', desc: 'SUVAT: velocity without time' },
-      { expr: 'p = mv', desc: 'Momentum = mass × velocity' },
-      { expr: 'W = Fs', desc: 'Work done = Force × distance' },
-    ]},
-    { section: 'Energy', items: [
-      { expr: 'KE = ½mv²', desc: 'Kinetic energy' },
-      { expr: 'GPE = mgh', desc: 'Gravitational potential energy' },
-      { expr: 'P = W/t = Fv', desc: 'Power = work done ÷ time' },
-      { expr: 'efficiency = useful output / total input', desc: 'Efficiency (× 100 for %)' },
-    ]},
-    { section: 'Electricity', items: [
-      { expr: 'V = IR', desc: 'Ohm\'s law — Voltage = Current × Resistance' },
-      { expr: 'P = IV = I²R = V²/R', desc: 'Electrical power' },
-      { expr: 'E = Pt = VIt', desc: 'Electrical energy' },
-      { expr: 'Q = It', desc: 'Charge = Current × time' },
-    ]},
-    { section: 'Waves', items: [
-      { expr: 'v = fλ', desc: 'Wave speed = frequency × wavelength' },
-      { expr: 'T = 1/f', desc: 'Period = 1 ÷ frequency' },
-      { expr: 'n = sin(i)/sin(r)', desc: 'Snell\'s law — refractive index' },
-    ]}
-  ],
-  chemistry: [
-    { section: 'Calculations', items: [
-      { expr: 'n = m/Mr', desc: 'Moles = mass (g) ÷ relative formula mass' },
-      { expr: 'concentration = n/V', desc: 'Concentration (mol/dm³) = moles ÷ volume (dm³)' },
-      { expr: 'PV = nRT', desc: 'Ideal gas law (R = 8.314 J/mol·K)' },
-      { expr: 'n = It/F', desc: 'Moles in electrolysis (F = 96500 C/mol)' },
-    ]},
-    { section: 'Rates & Equilibrium', items: [
-      { expr: 'rate = Δ[conc] / Δt', desc: 'Rate of reaction' },
-      { expr: 'Kc = [products] / [reactants]', desc: 'Equilibrium constant expression' },
-    ]},
-    { section: 'Thermodynamics', items: [
-      { expr: 'ΔH = q / n', desc: 'Enthalpy change per mole' },
-      { expr: 'q = mcΔT', desc: 'Heat energy = mass × specific heat × temp change' },
-      { expr: 'ΔG = ΔH - TΔS', desc: 'Gibbs free energy (spontaneous if ΔG < 0)' },
-    ]},
-    { section: 'Acids & Electrochemistry', items: [
-      { expr: 'pH = -log[H⁺]', desc: 'pH definition' },
-      { expr: 'pH + pOH = 14', desc: 'pH/pOH relationship at 25°C' },
-      { expr: 'Kw = [H⁺][OH⁻] = 10⁻¹⁴', desc: 'Water dissociation constant (25°C)' },
-    ]}
-  ]
-};
 
 function showFormulas(btn, subject) {
   document.querySelectorAll('#sp-formulas .style-pill').forEach(b => b.classList.remove('active'));
@@ -11810,5 +11489,7 @@ window.enterDashboard = function() {
 console.log('✦ Synaptiq — AI Teacher + Admin Global Resources active');
 
 </script>
+
+
 </body>
 </html>
