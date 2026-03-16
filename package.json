@@ -3,6 +3,10 @@
   "version": "7.0.0",
   "type": "module",
   "engines": { "node": "24.x" },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "health-check": "node scripts/health-check.mjs"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
     "stripe": "^16.0.0",
