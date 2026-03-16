@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Set GA4_MEASUREMENT_ID env var in Vercel; build pipeline replaces the content value below -->
+<meta name="ga4-id" content="G-XXXXXXXX">
 <title>Synaptiq — A-Level Maths AI Tutor | Master Your Exams</title>
 <meta name="description" content="Synaptiq is the UK's most focused A-Level Maths AI tutor. Get step-by-step explanations, past paper practice, and mark-scheme-aligned answers. Start free.">
 <meta name="robots" content="index, follow">
@@ -2882,8 +2884,11 @@ body.mode-adhd .adhd-break { display: block; }
 // GDPR / COOKIE CONSENT
 // ═══════════════════════════════════════
 function initGA4() {
-  const GA_ID = 'G-XXXXXXXX'; // Replace with real measurement ID before deploy
-  if (!GA_ID || GA_ID === 'G-XXXXXXXX') return; // Skip until real ID is set
+  // ID read from <meta name="ga4-id"> so it can be replaced by the build pipeline
+  // without touching JS. Set GA4_MEASUREMENT_ID in Vercel env vars and add a
+  // build step: sed -i 's/G-XXXXXXXX/$GA4_MEASUREMENT_ID/g' index.html
+  const GA_ID = document.querySelector('meta[name="ga4-id"]')?.content || '';
+  if (!GA_ID || GA_ID === 'G-XXXXXXXX') return; // Skip if not configured
   const s = document.createElement('script');
   s.async = true;
   s.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
