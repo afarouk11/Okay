@@ -1831,7 +1831,7 @@ body.mode-adhd .adhd-break { display: block; }
       </div>
       <div class="testimonial-card">
         <div class="testimonial-stars">★★★★★</div>
-        <p class="testimonial-text">"The chapter navigator is perfect for revision. I can jump straight to Trigonometry or Integration and have the AI walk me through every concept. Best £60 I've spent."</p>
+        <p class="testimonial-text">"The chapter navigator is perfect for revision. I can jump straight to Trigonometry or Integration and have the AI walk me through every concept. Best £20 I've spent."</p>
         <div class="testimonial-author">
           <div class="testimonial-avatar">A</div>
           <div><div class="testimonial-name">Aisha M.</div><div class="testimonial-detail">Year 13 · OCR Maths</div></div>
@@ -1862,7 +1862,7 @@ body.mode-adhd .adhd-break { display: block; }
     <div class="pricing-grid">
       <div class="price-card">
         <div class="price-name">Student Plan</div>
-        <div class="price-amount">£60<span>/month</span></div>
+        <div class="price-amount">£20<span>/month</span></div>
         <div class="price-desc">Perfect for A-Level Maths students in Year 12 or 13</div>
         <ul class="price-features">
           <li><i class="fas fa-check"></i>Full AI Maths Tutor (Claude Opus)</li>
@@ -1875,9 +1875,9 @@ body.mode-adhd .adhd-break { display: block; }
         <button class="btn-full" onclick="nav('auth');trackEvent('cta_clicked',{plan:'student',location:'pricing'})">Start Free Trial</button>
       </div>
       <div class="price-card featured">
-        <div class="price-name">Homeschool Plan</div>
+        <div class="price-name">School Enquiries</div>
         <div class="price-amount">£200<span>/month</span></div>
-        <div class="price-desc">Full A-Level Maths support for homeschool families</div>
+        <div class="price-desc">Full A-Level Maths support for schools and institutions</div>
         <ul class="price-features">
           <li><i class="fas fa-check"></i>Everything in Student Plan</li>
           <li><i class="fas fa-check"></i>Multiple student profiles</li>
@@ -1933,13 +1933,13 @@ body.mode-adhd .adhd-break { display: block; }
         <div class="plan-options">
           <div class="plan-opt selected" id="plan-student" onclick="selectPlan('student')">
             <div class="plan-name">Student</div>
-            <div class="plan-price">£60<span style="font-size:.75rem;font-weight:400">/mo</span></div>
+            <div class="plan-price">£20<span style="font-size:.75rem;font-weight:400">/mo</span></div>
             <div class="plan-tag">Individual</div>
           </div>
           <div class="plan-opt" id="plan-home" onclick="selectPlan('home')">
-            <div class="plan-name">Homeschool</div>
+            <div class="plan-name">School Enquiries</div>
             <div class="plan-price">£200<span style="font-size:.75rem;font-weight:400">/mo</span></div>
-            <div class="plan-tag">Family</div>
+            <div class="plan-tag">Institution</div>
           </div>
         </div>
         <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Your full name"></div>
@@ -2955,7 +2955,7 @@ function nextStep(from) {
     const progressFill = document.getElementById('auth-progress-fill');
     if (progressFill) progressFill.style.width = '100%';
     document.getElementById('profile-summary').innerHTML = `
-      <strong>Plan:</strong> ${state.selectedPlan === 'student' ? 'Student (£60/mo)' : 'Homeschool (£200/mo)'}<br>
+      <strong>Plan:</strong> ${state.selectedPlan === 'student' ? 'Student (£20/mo)' : 'School Enquiries (£200/mo)'}<br>
       <strong>Year:</strong> ${document.getElementById('reg-year').value}<br>
       <strong>Exam Board:</strong> ${document.getElementById('reg-board').value}<br>
       <strong>Target Grade:</strong> ${document.getElementById('reg-target').value}<br>
@@ -3042,7 +3042,7 @@ function enterDashboard() {
   // Update sidebar
   const u = state.user;
   document.getElementById('sb-name').textContent = u.name;
-  document.getElementById('sb-plan').textContent = u.plan === 'student' ? 'Student Plan' : 'Homeschool Plan';
+  document.getElementById('sb-plan').textContent = u.plan === 'student' ? 'Student Plan' : 'School Enquiries';
   document.getElementById('sb-avatar').textContent = u.name.charAt(0).toUpperCase();
   document.getElementById('dash-greeting').textContent = `${getGreeting()}, ${u.name.split(' ')[0]}! 👋`;
 
@@ -3080,19 +3080,14 @@ document.addEventListener('DOMContentLoaded', () => {
       else showLogin();
     });
   });
-  // Check for saved session
+  // Check for saved session — restore without requiring re-login
   try {
     const saved = localStorage.getItem('synaptiq_user');
     if (saved) {
       state.user = JSON.parse(saved);
       applyLearningProfile();
       loadUploadsFromStorage();
-      // Show new feature UI elements for resumed sessions
-      setTimeout(() => {
-        if (typeof updateMobileNav === 'function') updateMobileNav();
-        if (typeof updateGeoBtn === 'function') updateGeoBtn();
-        if (typeof updatePomBtn === 'function') updatePomBtn();
-      }, 100);
+      enterDashboard();
     }
   } catch(e) {}
   buildNumberLine(0);
