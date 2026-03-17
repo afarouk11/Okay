@@ -3553,7 +3553,7 @@ body.mode-adhd .adhd-break { display: block; }
             <div>Enter a topic and click Generate</div>
           </div>
         </div>
-        <div style="display:flex;gap:.75rem;margin-top:1rem;display:none" id="mindmap-actions">
+        <div style="gap:.75rem;margin-top:1rem;display:none" id="mindmap-actions">
           <button class="btn-gold" onclick="saveMindMapToNotes()">📓 Save to Notes</button>
           <button class="vid-ctrl-btn" onclick="downloadMindMap()">⬇ Download PNG</button>
         </div>
@@ -4481,8 +4481,11 @@ async function createAccount() {
     if (data.token) safeSetItem('synaptiq_token', data.token);
     safeSetItem('synaptiq_user', JSON.stringify(state.user));
     trackEvent('sign_up', { plan: state.selectedPlan, board: state.user.board });
+    // Clear any stale stats from a previous user on this device
+    try { localStorage.removeItem('synaptiq_stats'); } catch(e) {}
     applyLearningProfile();
     enterDashboard();
+    resetStatsForNewUser();
     addXP(100, '🎉 Welcome bonus!');
     setTimeout(() => showOnboarding(), 800);
   } catch(e) {
@@ -4553,6 +4556,8 @@ async function loginUser() {
     state.xp = state.user.xp;
     state.level = state.user.level;
     if (data.token) safeSetItem('synaptiq_token', data.token);
+    // Always reset stats on login — restore from server if available, else clear stale data
+    try { localStorage.removeItem('synaptiq_stats'); } catch(e) {}
     if (data.user.stats) safeSetItem('synaptiq_stats', JSON.stringify(data.user.stats));
     if (data.user.flashcards && data.user.flashcards.length) {
       fcCards = data.user.flashcards;
@@ -4577,7 +4582,14 @@ function logout() {
   state.user = null;
   state.tutorHistory = [];
   state.dashHistory = [];
-  try { localStorage.removeItem('synaptiq_user'); } catch(e) {}
+  state.xp = 0;
+  state.level = 1;
+  try {
+    localStorage.removeItem('synaptiq_user');
+    localStorage.removeItem('synaptiq_stats');
+    localStorage.removeItem('synaptiq_token');
+    localStorage.removeItem('synaptiq_fc');
+  } catch(e) {}
   document.getElementById('app-nav').style.display = 'none';
   document.getElementById('public-nav').style.display = 'flex';
   document.getElementById('auth-buttons').style.display = 'flex';
@@ -5742,23 +5754,30 @@ function updatePomBtn() {
 
 
 
-async function generateFcWithAI() {
-  showToast('✦ Generating a Maths flashcard...');
-  const sys = 'Create one spaced repetition flashcard for a UK A-Level Mathematics student. Return ONLY valid JSON: {"q":"question","a":"answer with key facts"}. No markdown, no explanation.';
+async function generateFcWithAI(topic) {
+  const subject = document.getElementById('fc-subject')?.value || '';
+  const topicLabel = topic || subject || 'A-Level Mathematics (Pure, Stats, or Mechanics)';
+  showToast(`✦ Generating flashcards for ${topicLabel}…`);
+  const sys = `Create 5 spaced-repetition flashcards for a UK A-Level Mathematics student on the topic: "${topicLabel}". Return ONLY valid JSON array: [{"q":"question","a":"full answer with key formula or steps"}]. No markdown, no explanation. Cover a range of question styles.`;
   try {
-    const data = await callClaude([{role:'user',content:'Generate a challenging A-Level Maths flashcard on a random topic (Pure, Stats, or Mechanics).'}], sys);
-    const raw = getReply(data).replace(/```json|```/g,'').trim();
-    const card = validateFlashcard(JSON.parse(sanitizeClaudeJson(raw)));
-    fcCards.push({
-      id: Date.now(), front: card.q, back: card.a, subject: 'Mathematics',
-      nextReview: new Date().toISOString().split('T')[0], ease: 2
-    });
+    const data = await callClaude([{ role: 'user', content: `Generate 5 A-Level Maths flashcards on: ${topicLabel}` }], sys);
+    const raw = getReply(data).replace(/```json|```/g, '').trim();
+    const cards = JSON.parse(sanitizeClaudeJson(raw));
+    let added = 0;
+    for (const card of (Array.isArray(cards) ? cards : [cards])) {
+      const q = card.q || card.question || card.front;
+      const a = card.a || card.answer || card.back;
+      if (q && a) {
+        fcCards.push({ id: Date.now() + added, front: q, back: a, subject: 'Mathematics', tags: topicLabel ? [topicLabel] : [], nextReview: new Date().toISOString().split('T')[0], ease: 2 });
+        added++;
+      }
+    }
     safeSetItem('synaptiq_fc', JSON.stringify(fcCards));
     syncToCloud();
     loadFcDue();
-    showToast('✅ AI flashcard added!');
+    showToast(`✅ ${added} flashcard${added !== 1 ? 's' : ''} added!`);
   } catch(e) {
-    showToast('⚠️ Could not generate card — try again');
+    showToast('⚠️ Could not generate cards — try again');
   }
 }
 
@@ -7023,6 +7042,15 @@ function updateGreeting() {
 function initTutor() {
   if (!document.getElementById('tutor-messages').children.length) {
     addTutorMsg('bot', `Hello! I'm your A-Level Maths tutor ✦\n\nI can explain any topic step by step — Pure, Stats, or Mechanics. Ask me about differentiation, integration, probability, vectors, or anything else.\n\nWhat would you like to work on today?`);
+  }
+}
+
+// Defined here (script block 1) so it is always available when login/signup call it
+function resetStatsForNewUser() {
+  const u = state.user;
+  if (u && (u.questions_answered === undefined || u.questions_answered === 847)) {
+    u.questions_answered = 0; u.accuracy = 0; u.streak = 0; u.xp = 0; u.level = 1;
+    try { localStorage.setItem('synaptiq_user', JSON.stringify(u)); } catch(e) {}
   }
 }
 
@@ -9790,15 +9818,6 @@ window.sendTutor = function() {
   if (_v9TutorSend) _v9TutorSend();
 };
 
-// Ensure stats display as zero for new users after login
-function resetStatsForNewUser() {
-  const u = state.user;
-  if (u && (u.questions === undefined || u.questions === 847)) {
-    u.questions = 0; u.accuracy = 0; u.streak = 0; u.topics = 0; u.xp = 0; u.level = 1;
-    try { localStorage.setItem('synaptiq_user', JSON.stringify(u)); } catch(e) {}
-  }
-}
-
 
 // ════════════════════════════════════════════════════
 // LUMINA AI V10 — ALL NEW FEATURES + REAL AUTH
@@ -10076,7 +10095,48 @@ function renderMindMap(map) {
 
 function downloadMindMap() {
   const wrap = document.getElementById('mindmap-wrap');
-  showToast('💡 Use your browser screenshot tool to save the mind map image');
+  if (!wrap) return;
+  // Export the SVG + overlay divs as a PNG via Canvas
+  try {
+    const W = wrap.offsetWidth || 800, H = wrap.offsetHeight || 500;
+    const canvas = document.createElement('canvas');
+    canvas.width = W * 2; canvas.height = H * 2;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(2, 2);
+    ctx.fillStyle = '#0D0F18';
+    ctx.fillRect(0, 0, W, H);
+    // Draw SVG
+    const svgEl = wrap.querySelector('svg');
+    if (svgEl) {
+      const svgData = new XMLSerializer().serializeToString(svgEl);
+      const img = new Image();
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0, W, H);
+        // Draw text nodes over SVG
+        wrap.querySelectorAll('.mindmap-node').forEach(node => {
+          const r = node.getBoundingClientRect();
+          const wr = wrap.getBoundingClientRect();
+          const x = r.left - wr.left + r.width / 2;
+          const y = r.top - wr.top + r.height / 2;
+          ctx.font = node.classList.contains('center') ? 'bold 13px sans-serif' : '11px sans-serif';
+          ctx.fillStyle = node.style.color || '#F0EEF8';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(node.textContent.trim(), x, y);
+        });
+        const link = document.createElement('a');
+        const topic = document.getElementById('mindmap-topic')?.value || 'mindmap';
+        link.download = `synaptiq-mindmap-${topic.replace(/\s+/g,'-').toLowerCase()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      };
+      img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
+    } else {
+      showToast('Generate a mind map first');
+    }
+  } catch (e) {
+    showToast('💡 Use your browser screenshot tool to save the mind map');
+  }
 }
 
 function saveMindMapToNotes() {
@@ -11456,17 +11516,22 @@ function switchTeacherTab(tab, btn) {
 }
 
 function renderTeacherChapters() {
-  const list = document.getElementById('teacher-chapter-list');
-  if (!list) return;
-  let html = '';
-  for (const mk of TEACHER_TABS[_teacherTab]) {
-    const m = TEACHER_CONTENT[mk];
-    html += `<div style="padding:.4rem 1rem .2rem;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">${m.label} — ${m.year}</div>`;
-    m.chapters.forEach((ch, i) => {
-      html += `<button class="teacher-chapter-btn" onclick="teachChapter('${mk}',${i},this)">${ch}</button>`;
-    });
-  }
-  list.innerHTML = html;
+  try {
+    const list = document.getElementById('teacher-chapter-list');
+    if (!list) return;
+    const tab = _teacherTab || 'pure1';
+    const mods = TEACHER_TABS[tab] || TEACHER_TABS['pure1'];
+    let html = '';
+    for (const mk of mods) {
+      const m = TEACHER_CONTENT[mk];
+      if (!m) continue;
+      html += `<div style="padding:.4rem 1rem .2rem;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">${m.label} — ${m.year}</div>`;
+      m.chapters.forEach((ch, i) => {
+        html += `<button class="teacher-chapter-btn" onclick="teachChapter('${mk}',${i},this)">${ch}</button>`;
+      });
+    }
+    list.innerHTML = html;
+  } catch(e) { console.error('renderTeacherChapters:', e); }
 }
 
 // Fix unescaped LaTeX backslashes in Claude's JSON output (e.g. \frac → \\frac)
@@ -11478,9 +11543,208 @@ function initTeacher() {
   renderTeacherChapters();
 }
 
-// Fix unescaped LaTeX backslashes in Claude's JSON output (e.g. \frac → \\frac)
-function fixJsonLatex(str) {
-  return str.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+// Pre-populate chapter list as soon as this script block loads
+// (covers cases where the user lands directly on the content page)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', renderTeacherChapters);
+} else {
+  renderTeacherChapters();
+}
+
+// ── Chapter-specific SVG diagrams ─────────────────────────────────────────────
+function getChapterDiagram(chapter) {
+  const ch = chapter.toLowerCase();
+
+  if (/circle/.test(ch)) {
+    return `<svg viewBox="0 0 260 200" width="260" height="200" style="display:block;margin:0 auto">
+      <circle cx="130" cy="100" r="70" fill="none" stroke="#C9A84C" stroke-width="2"/>
+      <line x1="130" y1="100" x2="200" y2="100" stroke="#60A5FA" stroke-width="1.5" stroke-dasharray="4"/>
+      <line x1="130" y1="100" x2="170" y2="41" stroke="#4ADE80" stroke-width="1.5" stroke-dasharray="4"/>
+      <circle cx="130" cy="100" r="3" fill="#C9A84C"/>
+      <circle cx="200" cy="100" r="3" fill="#60A5FA"/>
+      <circle cx="170" cy="41" r="3" fill="#4ADE80"/>
+      <text x="162" y="96" fill="#60A5FA" font-size="11" font-family="monospace">r</text>
+      <text x="148" y="72" fill="#4ADE80" font-size="11" font-family="monospace">r</text>
+      <text x="122" y="118" fill="#C9A84C" font-size="11" font-family="monospace">(a,b)</text>
+      <line x1="60" y1="60" x2="170" y2="155" stroke="#A78BFA" stroke-width="1.5" opacity=".6"/>
+      <text x="58" y="56" fill="#A78BFA" font-size="10" font-family="monospace">chord</text>
+      <text x="68" y="196" fill="#8892A4" font-size="10" font-family="monospace">(x−a)²+(y−b)²=r²</text>
+    </svg>`;
+  }
+
+  if (/trig|sin|cos|tan|ratio/.test(ch)) {
+    return `<svg viewBox="0 0 260 200" width="260" height="200" style="display:block;margin:0 auto">
+      <line x1="40" y1="160" x2="220" y2="160" stroke="#8892A4" stroke-width="1"/>
+      <line x1="40" y1="30" x2="40" y2="160" stroke="#8892A4" stroke-width="1"/>
+      <polygon points="40,30 220,160 40,160" fill="none" stroke="#C9A84C" stroke-width="2"/>
+      <text x="110" y="178" fill="#4ADE80" font-size="12" font-family="monospace">adjacent</text>
+      <text x="4" y="100" fill="#60A5FA" font-size="11" font-family="monospace">opp</text>
+      <line x1="220" y1="160" x2="200" y2="160" stroke="#A78BFA" stroke-width="1.5"/>
+      <line x1="200" y1="160" x2="200" y2="148" stroke="#A78BFA" stroke-width="1.5"/>
+      <text x="188" y="148" fill="#A78BFA" font-size="9" font-family="monospace">90°</text>
+      <path d="M 190 160 A 30 30 0 0 0 161 130" fill="none" stroke="#FB923C" stroke-width="1.5"/>
+      <text x="168" y="148" fill="#FB923C" font-size="11" font-family="monospace">θ</text>
+      <text x="50" y="196" fill="#8892A4" font-size="10" font-family="monospace">sin θ=O/H   cos θ=A/H   tan θ=O/A</text>
+    </svg>`;
+  }
+
+  if (/straight line|gradient|linear/.test(ch)) {
+    return `<svg viewBox="0 0 260 200" width="260" height="200" style="display:block;margin:0 auto">
+      <line x1="20" y1="100" x2="240" y2="100" stroke="#8892A4" stroke-width="1"/>
+      <line x1="130" y1="10" x2="130" y2="190" stroke="#8892A4" stroke-width="1"/>
+      <line x1="30" y1="170" x2="230" y2="30" stroke="#C9A84C" stroke-width="2"/>
+      <circle cx="130" cy="100" r="4" fill="#C9A84C"/>
+      <circle cx="80" cy="136" r="4" fill="#60A5FA"/>
+      <circle cx="180" cy="64" r="4" fill="#60A5FA"/>
+      <line x1="80" y1="136" x2="180" y2="136" stroke="#4ADE80" stroke-width="1.5" stroke-dasharray="4"/>
+      <line x1="180" y1="136" x2="180" y2="64" stroke="#A78BFA" stroke-width="1.5" stroke-dasharray="4"/>
+      <text x="120" y="152" fill="#4ADE80" font-size="11" font-family="monospace">run</text>
+      <text x="185" y="106" fill="#A78BFA" font-size="11" font-family="monospace">rise</text>
+      <text x="50" y="196" fill="#8892A4" font-size="10" font-family="monospace">y = mx + c   m = rise/run</text>
+    </svg>`;
+  }
+
+  if (/vector/.test(ch)) {
+    return `<svg viewBox="0 0 260 200" width="260" height="200" style="display:block;margin:0 auto">
+      <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#C9A84C"/></marker>
+      <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#4ADE80"/></marker>
+      <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#A78BFA"/></marker></defs>
+      <line x1="50" y1="150" x2="160" y2="70" stroke="#C9A84C" stroke-width="2" marker-end="url(#arr)"/>
+      <line x1="50" y1="150" x2="160" y2="150" stroke="#4ADE80" stroke-width="1.5" stroke-dasharray="4" marker-end="url(#arr2)"/>
+      <line x1="160" y1="150" x2="160" y2="70" stroke="#60A5FA" stroke-width="1.5" stroke-dasharray="4"/>
+      <line x1="160" y1="70" x2="210" y2="110" stroke="#A78BFA" stroke-width="2" marker-end="url(#arr3)"/>
+      <line x1="50" y1="150" x2="210" y2="110" stroke="#FB923C" stroke-width="1.5" stroke-dasharray="6,3"/>
+      <text x="90" y="96" fill="#C9A84C" font-size="12" font-family="monospace">a</text>
+      <text x="185" y="96" fill="#A78BFA" font-size="12" font-family="monospace">b</text>
+      <text x="115" y="168" fill="#4ADE80" font-size="10" font-family="monospace">x</text>
+      <text x="165" y="116" fill="#60A5FA" font-size="10" font-family="monospace">y</text>
+      <text x="120" y="140" fill="#FB923C" font-size="10" font-family="monospace">a+b</text>
+    </svg>`;
+  }
+
+  if (/differentiat/.test(ch)) {
+    return `<svg viewBox="0 0 260 200" width="260" height="200" style="display:block;margin:0 auto">
+      <line x1="20" y1="100" x2="240" y2="100" stroke="#8892A4" stroke-width="1"/>
+      <line x1="130" y1="10" x2="130" y2="190" stroke="#8892A4" stroke-width="1"/>
+      <path d="M 40 160 Q 130 20 220 100" fill="none" stroke="#C9A84C" stroke-width="2"/>
+      <circle cx="152" cy="62" r="4" fill="#4ADE80"/>
+      <line x1="100" y1="100" x2="210" y2="24" stroke="#60A5FA" stroke-width="1.5" stroke-dasharray="5"/>
+      <text x="155" y="58" fill="#4ADE80" font-size="10" font-family="monospace">P</text>
+      <text x="172" y="35" fill="#60A5FA" font-size="10" font-family="monospace">tangent</text>
+      <text x="40" y="196" fill="#8892A4" font-size="10" font-family="monospace">f'(x) = gradient of tangent at P</text>
+    </svg>`;
+  }
+
+  if (/integrat/.test(ch)) {
+    return `<svg viewBox="0 0 260 200" width="260" height="200" style="display:block;margin:0 auto">
+      <line x1="20" y1="160" x2="240" y2="160" stroke="#8892A4" stroke-width="1"/>
+      <path d="M 40 150 Q 130 40 220 130" fill="none" stroke="#C9A84C" stroke-width="2"/>
+      <path d="M 80 160 Q 80 100 130 70 Q 180 40 180 160 Z" fill="rgba(201,168,76,0.15)" stroke="none"/>
+      <line x1="80" y1="160" x2="80" y2="100" stroke="#60A5FA" stroke-width="1.5" stroke-dasharray="4"/>
+      <line x1="180" y1="160" x2="180" y2="100" stroke="#60A5FA" stroke-width="1.5" stroke-dasharray="4"/>
+      <text x="74" y="176" fill="#60A5FA" font-size="11" font-family="monospace">a</text>
+      <text x="174" y="176" fill="#60A5FA" font-size="11" font-family="monospace">b</text>
+      <text x="110" y="115" fill="#C9A84C" font-size="11" font-family="monospace">Area</text>
+      <text x="30" y="196" fill="#8892A4" font-size="10" font-family="monospace">∫ₐᵇ f(x) dx = area under curve</text>
+    </svg>`;
+  }
+
+  if (/binomial|expansion/.test(ch)) {
+    return `<svg viewBox="0 0 260 200" width="260" height="200" style="display:block;margin:0 auto">
+      <text x="120" y="22" fill="#C9A84C" font-size="13" font-family="monospace" text-anchor="middle">1</text>
+      <text x="106" y="46" fill="#60A5FA" font-size="13" font-family="monospace" text-anchor="middle">1</text>
+      <text x="134" y="46" fill="#60A5FA" font-size="13" font-family="monospace" text-anchor="middle">1</text>
+      <text x="92" y="70" fill="#4ADE80" font-size="13" font-family="monospace" text-anchor="middle">1</text>
+      <text x="120" y="70" fill="#4ADE80" font-size="13" font-family="monospace" text-anchor="middle">2</text>
+      <text x="148" y="70" fill="#4ADE80" font-size="13" font-family="monospace" text-anchor="middle">1</text>
+      <text x="78" y="94" fill="#A78BFA" font-size="13" font-family="monospace" text-anchor="middle">1</text>
+      <text x="106" y="94" fill="#A78BFA" font-size="13" font-family="monospace" text-anchor="middle">3</text>
+      <text x="134" y="94" fill="#A78BFA" font-size="13" font-family="monospace" text-anchor="middle">3</text>
+      <text x="162" y="94" fill="#A78BFA" font-size="13" font-family="monospace" text-anchor="middle">1</text>
+      <text x="64" y="118" fill="#FB923C" font-size="13" font-family="monospace" text-anchor="middle">1</text>
+      <text x="92" y="118" fill="#FB923C" font-size="13" font-family="monospace" text-anchor="middle">4</text>
+      <text x="120" y="118" fill="#FB923C" font-size="13" font-family="monospace" text-anchor="middle">6</text>
+      <text x="148" y="118" fill="#FB923C" font-size="13" font-family="monospace" text-anchor="middle">4</text>
+      <text x="176" y="118" fill="#FB923C" font-size="13" font-family="monospace" text-anchor="middle">1</text>
+      <text x="40" y="155" fill="#8892A4" font-size="10" font-family="monospace">Pascal's Triangle — ⁿCᵣ coefficients</text>
+      <text x="28" y="176" fill="#C9A84C" font-size="10" font-family="monospace">(a+b)ⁿ = Σ ⁿCᵣ aⁿ⁻ʳ bʳ</text>
+    </svg>`;
+  }
+
+  if (/graph|transform|function/.test(ch)) {
+    return `<svg viewBox="0 0 260 200" width="260" height="200" style="display:block;margin:0 auto">
+      <line x1="20" y1="100" x2="240" y2="100" stroke="#8892A4" stroke-width="1"/>
+      <line x1="130" y1="10" x2="130" y2="190" stroke="#8892A4" stroke-width="1"/>
+      <path d="M 40 180 Q 90 20 130 100 Q 170 180 220 20" fill="none" stroke="#C9A84C" stroke-width="2"/>
+      <path d="M 40 140 Q 90 60 130 100 Q 170 140 220 60" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-dasharray="5"/>
+      <text x="222" y="20" fill="#C9A84C" font-size="10" font-family="monospace">f(x)</text>
+      <text x="222" y="60" fill="#60A5FA" font-size="10" font-family="monospace">f(x)+2</text>
+      <text x="34" y="196" fill="#8892A4" font-size="10" font-family="monospace">Translation: f(x+a)+b shifts the graph</text>
+    </svg>`;
+  }
+
+  if (/quadratic/.test(ch)) {
+    return `<svg viewBox="0 0 260 200" width="260" height="200" style="display:block;margin:0 auto">
+      <line x1="20" y1="150" x2="240" y2="150" stroke="#8892A4" stroke-width="1"/>
+      <line x1="130" y1="10" x2="130" y2="190" stroke="#8892A4" stroke-width="1"/>
+      <path d="M 50 150 Q 130 20 210 150" fill="none" stroke="#C9A84C" stroke-width="2"/>
+      <circle cx="80" cy="150" r="4" fill="#4ADE80"/>
+      <circle cx="180" cy="150" r="4" fill="#4ADE80"/>
+      <circle cx="130" cy="20" r="4" fill="#60A5FA"/>
+      <line x1="130" y1="20" x2="130" y2="150" stroke="#60A5FA" stroke-width="1" stroke-dasharray="4"/>
+      <text x="64" y="168" fill="#4ADE80" font-size="10" font-family="monospace">root</text>
+      <text x="164" y="168" fill="#4ADE80" font-size="10" font-family="monospace">root</text>
+      <text x="138" y="35" fill="#60A5FA" font-size="10" font-family="monospace">vertex</text>
+      <text x="30" y="196" fill="#8892A4" font-size="10" font-family="monospace">y=ax²+bx+c   vertex at x=−b/2a</text>
+    </svg>`;
+  }
+
+  if (/statistic|normal distribution|probability|distribution/.test(ch)) {
+    return `<svg viewBox="0 0 260 200" width="260" height="200" style="display:block;margin:0 auto">
+      <line x1="20" y1="160" x2="240" y2="160" stroke="#8892A4" stroke-width="1"/>
+      <path d="M 30 158 Q 60 158 80 140 Q 100 90 130 50 Q 160 90 180 140 Q 200 158 230 158" fill="rgba(96,165,250,0.15)" stroke="#60A5FA" stroke-width="2"/>
+      <line x1="130" y1="50" x2="130" y2="160" stroke="#C9A84C" stroke-width="1.5" stroke-dasharray="4"/>
+      <line x1="96" y1="97" x2="96" y2="160" stroke="#4ADE80" stroke-width="1" stroke-dasharray="3"/>
+      <line x1="164" y1="97" x2="164" y2="160" stroke="#4ADE80" stroke-width="1" stroke-dasharray="3"/>
+      <text x="124" y="176" fill="#C9A84C" font-size="10" font-family="monospace">μ</text>
+      <text x="88" y="176" fill="#4ADE80" font-size="10" font-family="monospace">μ−σ</text>
+      <text x="156" y="176" fill="#4ADE80" font-size="10" font-family="monospace">μ+σ</text>
+      <text x="50" y="196" fill="#8892A4" font-size="10" font-family="monospace">68% of data within 1σ of mean</text>
+    </svg>`;
+  }
+
+  if (/kinematics|acceleration|suvat|velocity/.test(ch)) {
+    return `<svg viewBox="0 0 260 200" width="260" height="200" style="display:block;margin:0 auto">
+      <line x1="20" y1="160" x2="240" y2="160" stroke="#8892A4" stroke-width="1"/>
+      <line x1="40" y1="10" x2="40" y2="170" stroke="#8892A4" stroke-width="1"/>
+      <path d="M 40 140 L 220 60" fill="none" stroke="#C9A84C" stroke-width="2"/>
+      <path d="M 40 50 Q 130 150 220 140" fill="none" stroke="#60A5FA" stroke-width="2"/>
+      <text x="224" y="60" fill="#C9A84C" font-size="10" font-family="monospace">v-t</text>
+      <text x="224" y="140" fill="#60A5FA" font-size="10" font-family="monospace">s-t</text>
+      <text x="8" y="100" fill="#C9A84C" font-size="10" font-family="monospace">v</text>
+      <text x="8" y="160" fill="#8892A4" font-size="10" font-family="monospace">0</text>
+      <text x="130" y="176" fill="#8892A4" font-size="10" font-family="monospace">t</text>
+      <text x="20" y="196" fill="#8892A4" font-size="10" font-family="monospace">v=u+at   s=ut+½at²   v²=u²+2as</text>
+    </svg>`;
+  }
+
+  if (/projectile/.test(ch)) {
+    return `<svg viewBox="0 0 260 200" width="260" height="200" style="display:block;margin:0 auto">
+      <line x1="20" y1="160" x2="240" y2="160" stroke="#8892A4" stroke-width="1"/>
+      <path d="M 40 160 Q 130 30 220 160" fill="none" stroke="#C9A84C" stroke-width="2"/>
+      <defs><marker id="varrp" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#60A5FA"/></marker>
+      <marker id="varrp2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L7,3 z" fill="#4ADE80"/></marker></defs>
+      <line x1="40" y1="160" x2="80" y2="100" stroke="#60A5FA" stroke-width="1.5" marker-end="url(#varrp)"/>
+      <line x1="40" y1="160" x2="80" y2="160" stroke="#4ADE80" stroke-width="1.5" stroke-dasharray="4" marker-end="url(#varrp2)"/>
+      <text x="56" y="118" fill="#60A5FA" font-size="10" font-family="monospace">u sin θ</text>
+      <text x="42" y="176" fill="#4ADE80" font-size="10" font-family="monospace">u cos θ</text>
+      <circle cx="130" cy="30" r="3" fill="#C9A84C"/>
+      <text x="134" y="28" fill="#C9A84C" font-size="10" font-family="monospace">max height</text>
+    </svg>`;
+  }
+
+  // Default: no diagram
+  return null;
 }
 
 async function teachChapter(mk, idx, btn) {
@@ -11523,6 +11787,15 @@ Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice q
 }
 
 function renderTeacherLesson(chapter, year, L, box) {
+  const diagram = getChapterDiagram(chapter);
+  const diagramHTML = diagram ? `
+    <div class="lesson-section">
+      <h3><i class="fas fa-drafting-compass"></i> Visual Reference</h3>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.25rem;display:inline-block;max-width:100%">
+        ${diagram}
+      </div>
+    </div>` : '';
+
   box.innerHTML = `
     <div style="margin-bottom:2rem">
       <div class="lesson-year-badge">${year}</div>
@@ -11532,13 +11805,14 @@ function renderTeacherLesson(chapter, year, L, box) {
       <h3><i class="fas fa-bullseye"></i> Learning Objectives</h3>
       <ul>${(L.objectives || []).map(o => `<li>${o}</li>`).join('')}</ul>
     </div>
+    ${diagramHTML}
     <div class="lesson-section">
       <h3><i class="fas fa-book-open"></i> Key Theory</h3>
       <div style="color:var(--muted);line-height:1.9">${(L.theory || '').replace(/\n/g, '<br>')}</div>
     </div>
     <div class="lesson-section">
       <h3><i class="fas fa-pencil"></i> Worked Examples</h3>
-      ${(L.workedExamples || []).map(ex => `
+      ${(L.workedExamples || []).map((ex, ei) => `
         <div class="worked-example">
           <div class="ex-problem">${ex.problem}</div>
           ${(ex.steps || []).map((s, i) => `<div class="teacher-worked-step"><strong>Step ${i + 1}:</strong> ${s}</div>`).join('')}
@@ -11576,6 +11850,20 @@ function renderTeacherLesson(chapter, year, L, box) {
       <div class="key-formulas-box">
         ${(L.keyFormulas || []).map(f => `<div class="key-formula-item">${f}</div>`).join('')}
       </div>
+    </div>
+    <div class="lesson-section" style="border-top:1px solid var(--border);padding-top:1.25rem;margin-top:1rem">
+      <h3 style="font-size:.9rem;color:var(--muted);margin-bottom:.75rem"><i class="fas fa-bolt"></i> Quick Actions</h3>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+        <button class="btn btn-gold" style="font-size:.82rem;padding:.45rem 1rem" onclick="teacherGenerateQuestions('${chapter.replace(/'/g,"\\'")}')">
+          <i class="fas fa-list-ol"></i> Generate Practice Questions
+        </button>
+        <button class="btn btn-outline" style="font-size:.82rem;padding:.45rem 1rem" onclick="teacherGenerateFlashcards('${chapter.replace(/'/g,"\\'")}')">
+          <i class="fas fa-layer-group"></i> Generate Flashcards
+        </button>
+        <button class="btn btn-outline" style="font-size:.82rem;padding:.45rem 1rem" onclick="teacherGenerateMindMap('${chapter.replace(/'/g,"\\'")}')">
+          <i class="fas fa-project-diagram"></i> Mind Map This Topic
+        </button>
+      </div>
     </div>`;
   if (window.MathJax) MathJax.typesetPromise([box]).catch(() => {});
   if (typeof addXP === 'function') addXP(15, 'Completed a lesson');
@@ -11586,6 +11874,50 @@ function toggleTeacherAnswer(btn) {
   ans.classList.toggle('visible');
   btn.textContent = ans.classList.contains('visible') ? 'Hide Answer' : 'Show Answer';
   if (window.MathJax) MathJax.typesetPromise([ans]).catch(() => {});
+}
+
+// Quick-action handlers launched from lesson buttons
+function teacherGenerateQuestions(chapter) {
+  nav('questions');
+  setTimeout(() => {
+    const topicEl = document.getElementById('q-topics');
+    if (topicEl) topicEl.value = chapter;
+    showToast(`Generating questions for ${chapter}…`);
+    generateQuestions();
+  }, 300);
+}
+
+async function teacherGenerateFlashcards(chapter) {
+  showToast(`✦ Generating flashcards for ${chapter}…`);
+  const sys = `Create 5 spaced-repetition flashcards for a UK A-Level Mathematics student studying "${chapter}". Return ONLY valid JSON array: [{"q":"question","a":"full answer with key steps"}]. No markdown, no explanation. Cover different aspects of the topic.`;
+  try {
+    const data = await callClaude([{ role: 'user', content: `Generate 5 A-Level Maths flashcards for the topic: ${chapter}` }], sys);
+    const raw = getReply(data).replace(/```json|```/g, '').trim();
+    const cards = JSON.parse(sanitizeClaudeJson(raw));
+    let added = 0;
+    for (const card of (Array.isArray(cards) ? cards : [])) {
+      if (card.q && card.a) {
+        fcCards.push({ id: Date.now() + added, front: card.q, back: card.a, subject: 'Mathematics', tags: [chapter], nextReview: new Date().toISOString().split('T')[0], ease: 2 });
+        added++;
+      }
+    }
+    if (added > 0) {
+      safeSetItem('synaptiq_fc', JSON.stringify(fcCards));
+      syncToCloud();
+      loadFcDue();
+      showToast(`✅ ${added} flashcards added for ${chapter}! Go to Flashcards to review.`);
+    }
+  } catch (e) {
+    showToast('⚠️ Could not generate flashcards — try again');
+  }
+}
+
+function teacherGenerateMindMap(chapter) {
+  nav('mindmap');
+  setTimeout(() => {
+    const topicEl = document.getElementById('mindmap-topic');
+    if (topicEl) { topicEl.value = chapter; generateMindMap(); }
+  }, 300);
 }
 
 // Patch showDash to init teacher when navigating to 'content'

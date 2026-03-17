@@ -108,6 +108,47 @@ export default async function handler(req, res) {
           Synaptiq &middot; A-Level Maths AI Tutor &middot; <a href="${siteUrl}/privacy" style="color:#6B7394">Privacy</a>
         </div>
       </div>`
+    },
+    password_reset: {
+      subject: 'Reset your Synaptiq password',
+      html: `<div style="font-family:'DM Sans',sans-serif;max-width:600px;margin:0 auto;background:#0D0F18;color:#F0EEF8;border-radius:16px;overflow:hidden">
+        <div style="background:linear-gradient(135deg,#C9A84C,#A07830);padding:2rem;text-align:center">
+          <h1 style="font-family:'Syne',sans-serif;font-size:1.8rem;margin:0;color:#08090E">Password Reset</h1>
+          <p style="opacity:.8;margin:.5rem 0 0;color:#08090E">Synaptiq — A-Level Maths AI Tutor</p>
+        </div>
+        <div style="padding:2rem">
+          <h2 style="color:#C9A84C">Hi ${name},</h2>
+          <p style="line-height:1.7">We received a request to reset your Synaptiq password. Click the reset link sent to your inbox to set a new password.</p>
+          <div style="background:#181C2A;border-left:3px solid #C9A84C;border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin:1.5rem 0">
+            <p style="margin:0;font-size:.875rem;color:#6B7394">⏱ This link expires in <strong style="color:#F0EEF8">1 hour</strong> for your security.</p>
+          </div>
+          <p style="color:#6B7394;font-size:.875rem">If you didn't request a password reset, you can safely ignore this email — your account and password will remain unchanged.</p>
+          <a href="${siteUrl}" style="display:inline-block;background:#C9A84C;color:#08090E;padding:.875rem 2rem;border-radius:10px;font-weight:700;text-decoration:none;margin-top:1rem">Back to Synaptiq</a>
+        </div>
+        <div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.07);font-size:.8rem;color:#6B7394;text-align:center">
+          Synaptiq &middot; <a href="${siteUrl}/privacy" style="color:#6B7394">Privacy</a> &middot; <a href="${siteUrl}/terms" style="color:#6B7394">Terms</a>
+        </div>
+      </div>`
+    },
+    goodbye: {
+      subject: 'Your Synaptiq account has been deleted',
+      html: `<div style="font-family:'DM Sans',sans-serif;max-width:600px;margin:0 auto;background:#0D0F18;color:#F0EEF8;border-radius:16px;overflow:hidden">
+        <div style="background:linear-gradient(135deg,#3a3a4a,#1e1e2e);padding:2rem;text-align:center">
+          <h1 style="font-family:'Syne',sans-serif;font-size:1.8rem;margin:0;color:#F0EEF8">Account Deleted</h1>
+          <p style="opacity:.6;margin:.5rem 0 0;color:#F0EEF8">We'll miss you, ${name}</p>
+        </div>
+        <div style="padding:2rem">
+          <p style="line-height:1.7">Your Synaptiq account has been permanently deleted. All your data — flashcards, notes, progress history, and chat history — has been removed from our servers.</p>
+          <div style="background:#181C2A;border-radius:10px;padding:1.25rem;margin:1.5rem 0">
+            <p style="margin:0 0 .5rem;font-weight:700;color:#C9A84C">Changed your mind?</p>
+            <p style="margin:0;font-size:.875rem;color:#6B7394">You can create a new Synaptiq account at any time. We'd love to have you back.</p>
+          </div>
+          <a href="${siteUrl}" style="display:inline-block;background:#C9A84C;color:#08090E;padding:.875rem 2rem;border-radius:10px;font-weight:700;text-decoration:none;margin-top:.5rem">Create New Account</a>
+        </div>
+        <div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.07);font-size:.8rem;color:#6B7394;text-align:center">
+          Synaptiq &middot; <a href="${siteUrl}/privacy" style="color:#6B7394">Privacy</a>
+        </div>
+      </div>`
     }
   };
 

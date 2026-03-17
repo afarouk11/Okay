@@ -120,6 +120,20 @@ describe('template rendering', () => {
     expect(r.statusCode).toBe(200);
   });
 
+  it('sends a password_reset email', async () => {
+    const r = res();
+    await handler(req({ to: 'user@test.com', type: 'password_reset', name: 'Alice' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.id).toBe('email-sent-123');
+  });
+
+  it('sends a goodbye email', async () => {
+    const r = res();
+    await handler(req({ to: 'user@test.com', type: 'goodbye', name: 'Alice' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.id).toBe('email-sent-123');
+  });
+
   it('includes the recipient in the Resend request', async () => {
     let capturedBody;
     global.fetch = vi.fn().mockImplementationOnce((_url, opts) => {

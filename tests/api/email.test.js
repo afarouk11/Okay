@@ -121,6 +121,22 @@ describe('dev mode — no RESEND_API_KEY', () => {
     expect(r.statusCode).toBe(200);
     expect(r.body.preview).toContain('Alice');
   });
+
+  it('renders the password_reset template', async () => {
+    const r = res();
+    await handler(req({ ...VALID_BASE, type: 'password_reset' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.preview).toContain('Password Reset');
+    expect(r.body.preview).toContain('Alice');
+  });
+
+  it('renders the goodbye template', async () => {
+    const r = res();
+    await handler(req({ ...VALID_BASE, type: 'goodbye' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.preview).toContain('Account Deleted');
+    expect(r.body.preview).toContain('Alice');
+  });
 });
 
 // ─── Production mode (with RESEND_API_KEY) ───────────────────────────────────

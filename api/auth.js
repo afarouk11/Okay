@@ -4,6 +4,36 @@ import { applyHeaders, isRateLimited, getIp } from './_lib.js';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VALID_PLANS = ['student', 'home', 'homeschool'];
 
+// Send a branded transactional email via Resend (non-blocking helper)
+async function sendEmail(to, name, type) {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return;
+  const siteUrl = process.env.SITE_URL || 'https://synaptiq.co.uk';
+  const templates = {
+    welcome: {
+      subject: `Welcome to Synaptiq, ${name}!`,
+      html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0D0F18;color:#F0EEF8;border-radius:16px;overflow:hidden"><div style="background:linear-gradient(135deg,#C9A84C,#A07830);padding:2rem;text-align:center"><h1 style="font-size:2rem;margin:0;color:#08090E">Synapti<span>q</span></h1><p style="opacity:.8;margin:.5rem 0 0;color:#08090E">AI-Powered A-Level Maths</p></div><div style="padding:2rem"><h2 style="color:#C9A84C">Welcome, ${name}!</h2><p>You're all set. Here's what to try first:</p><ul style="line-height:2.2"><li><strong>AI Tutor</strong> — ask any A-Level Maths question</li><li><strong>Browse Chapters</strong> — Pure 1 &amp; 2, Stats, Mechanics</li><li><strong>Generate Flashcards</strong> — AI builds your revision deck</li><li><strong>Practice Questions</strong> — exam-style with mark schemes</li></ul><a href="${siteUrl}" style="display:inline-block;background:#C9A84C;color:#08090E;padding:.875rem 2rem;border-radius:10px;font-weight:700;text-decoration:none;margin-top:1rem">Start Learning →</a></div><div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.07);font-size:.8rem;color:#6B7394;text-align:center">Synaptiq · <a href="${siteUrl}/privacy" style="color:#6B7394">Privacy</a></div></div>`
+    },
+    password_reset: {
+      subject: 'Reset your Synaptiq password',
+      html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0D0F18;color:#F0EEF8;border-radius:16px;overflow:hidden"><div style="background:linear-gradient(135deg,#C9A84C,#A07830);padding:2rem;text-align:center"><h1 style="font-size:1.8rem;margin:0;color:#08090E">Password Reset</h1></div><div style="padding:2rem"><h2 style="color:#C9A84C">Hi ${name},</h2><p>We received a request to reset your Synaptiq password. Click the secure link sent separately to your inbox to set a new password.</p><div style="background:#181C2A;border-left:3px solid #C9A84C;border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin:1.5rem 0"><p style="margin:0;font-size:.875rem;color:#6B7394">⏱ This link expires in <strong style="color:#F0EEF8">1 hour</strong>.</p></div><p style="color:#6B7394;font-size:.875rem">If you didn't request this, you can safely ignore this email.</p><a href="${siteUrl}" style="display:inline-block;background:#C9A84C;color:#08090E;padding:.875rem 2rem;border-radius:10px;font-weight:700;text-decoration:none;margin-top:1rem">Back to Synaptiq →</a></div><div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.07);font-size:.8rem;color:#6B7394;text-align:center">Synaptiq · <a href="${siteUrl}/privacy" style="color:#6B7394">Privacy</a></div></div>`
+    },
+    goodbye: {
+      subject: 'Your Synaptiq account has been deleted',
+      html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0D0F18;color:#F0EEF8;border-radius:16px;overflow:hidden"><div style="background:linear-gradient(135deg,#2a2a3a,#1a1a2a);padding:2rem;text-align:center"><h1 style="font-size:1.8rem;margin:0;color:#F0EEF8">Account Deleted</h1><p style="opacity:.6;color:#F0EEF8;margin:.5rem 0 0">We'll miss you, ${name}</p></div><div style="padding:2rem"><p>Your Synaptiq account has been permanently deleted. All your data — flashcards, notes, progress, and chat history — has been removed.</p><div style="background:#181C2A;border-radius:10px;padding:1.25rem;margin:1.5rem 0"><p style="margin:0 0 .5rem;font-weight:700;color:#C9A84C">Changed your mind?</p><p style="margin:0;font-size:.875rem;color:#6B7394">You can create a new account at any time.</p></div><a href="${siteUrl}" style="display:inline-block;background:#C9A84C;color:#08090E;padding:.875rem 2rem;border-radius:10px;font-weight:700;text-decoration:none">Create New Account →</a></div><div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.07);font-size:.8rem;color:#6B7394;text-align:center">Synaptiq · <a href="${siteUrl}/privacy" style="color:#6B7394">Privacy</a></div></div>`
+    }
+  };
+  const t = templates[type];
+  if (!t) return;
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: 'Synaptiq <hello@synaptiq.co.uk>', to, subject: t.subject, html: t.html })
+    });
+  } catch (_) { /* non-blocking — never crash the main request */ }
+}
+
 // Safe Supabase init — won't crash if env vars are missing
 let supabase = null;
 try {
@@ -55,7 +85,7 @@ export default async function handler(req, res) {
       const { data, error } = await supabase.auth.admin.createUser({
         email: email.toLowerCase().trim(),
         password,
-        email_confirm: false,
+        email_confirm: true,
         user_metadata: { name: trimmedName, plan: chosenPlan }
       });
       if (error) {
@@ -85,6 +115,9 @@ export default async function handler(req, res) {
         const { data: session } = await supabase.auth.signInWithPassword({ email: email.toLowerCase().trim(), password });
         token = session?.session?.access_token || null;
       } catch (_) { /* token stays null — user can log in separately */ }
+
+      // Welcome email (non-blocking)
+      sendEmail(email.toLowerCase().trim(), trimmedName, 'welcome');
 
       return res.status(200).json({
         success: true, token,
@@ -141,6 +174,9 @@ export default async function handler(req, res) {
       const siteUrl = process.env.SITE_URL || 'https://synaptiq.vercel.app';
       const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), { redirectTo: `${siteUrl}/reset-password` });
       if (error) return res.status(400).json({ error: error.message });
+      // Fetch name for branded email (best-effort)
+      const { data: resetProfile } = await supabase.from('profiles').select('name').eq('email', email.toLowerCase().trim()).single();
+      sendEmail(email.toLowerCase().trim(), resetProfile?.name || 'there', 'password_reset');
       return res.status(200).json({ success: true });
     }
 
@@ -176,7 +212,9 @@ export default async function handler(req, res) {
       if (!token) return res.status(401).json({ error: 'No token' });
       const { data: authData, error: authErr } = await supabase.auth.getUser(token);
       if (authErr) return res.status(401).json({ error: 'Invalid token' });
-      // Delete profile data first, then auth user
+      // Fetch name + email before deleting for goodbye email
+      const { data: delProfile } = await supabase.from('profiles').select('name, email').eq('id', authData.user.id).single();
+      // Delete all user data, then auth user
       await supabase.from('activity_log').delete().eq('user_id', authData.user.id);
       await supabase.from('notes').delete().eq('user_id', authData.user.id);
       await supabase.from('progress').delete().eq('user_id', authData.user.id);
@@ -185,6 +223,8 @@ export default async function handler(req, res) {
       await supabase.from('mistakes').delete().eq('user_id', authData.user.id);
       await supabase.from('profiles').delete().eq('id', authData.user.id);
       await supabase.auth.admin.deleteUser(authData.user.id);
+      // Goodbye email (non-blocking, sent after deletion)
+      if (delProfile?.email) sendEmail(delProfile.email, delProfile.name || 'there', 'goodbye');
       return res.status(200).json({ success: true });
     }
 
