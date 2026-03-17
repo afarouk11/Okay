@@ -7193,6 +7193,26 @@ function initTutor() {
 <!-- SR float button -->
 <button class="sr-float-btn show" id="sr-float-btn" onclick="openSR()" style="display:none" title="Spaced Repetition Review">🧠</button>
 
+<!-- Upgrade / Paywall Modal -->
+<div id="upgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--gold);border-radius:20px;padding:2rem;max-width:460px;width:90%;text-align:center;position:relative">
+    <button onclick="closeUpgradeModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem">✕</button>
+    <div style="font-size:2.5rem;margin-bottom:1rem">🔒</div>
+    <h3 style="font-family:var(--font-head);font-weight:800;font-size:1.3rem;margin-bottom:.5rem">Upgrade to Unlock</h3>
+    <p id="upgrade-reason" style="color:var(--muted);margin-bottom:1.5rem;font-size:.9rem">This feature requires a subscription</p>
+    <div style="display:flex;flex-direction:column;gap:.75rem">
+      <button class="btn-gold" style="width:100%;padding:.875rem" onclick="startCheckoutFlow('student')">
+        Student Plan — £20/mo<br><span style="font-size:.75rem;font-weight:400">Unlimited AI tutoring for A-Level Maths</span>
+      </button>
+      <button class="btn-gold" style="width:100%;padding:.875rem;background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="startCheckoutFlow('school')">
+        School Enquiries — Contact Us<br><span style="font-size:.75rem;font-weight:400">Bulk licences for schools &amp; tutors</span>
+      </button>
+    </div>
+    <p style="font-size:.75rem;color:var(--muted);margin-top:1rem">7-day free trial. Cancel anytime.</p>
+  </div>
+</div>
+<style>#upgrade-modal.show { display:flex !important; }</style>
+
 <!-- Feedback -->
 <div id="feedback-btn" onclick="showToast('Thank you for your feedback! 💛')">💬 Feedback</div>
 
@@ -7751,12 +7771,16 @@ function initCookieBanner() {
   banner.style.display = 'flex';
 }
 
-// Track question generation count in localStorage (analytics)
+// Track question generation count in localStorage (analytics + daily subscription limit)
 function incrementQuestionCount(n) {
   try {
     const key = 'synaptiq_total_questions';
     const current = parseInt(localStorage.getItem(key) || '0', 10);
     localStorage.setItem(key, current + (n || 1));
+    // Also update daily question count for subscription gating
+    const today = new Date().toISOString().split('T')[0];
+    state.dailyQuestionCount = (state.dailyQuestionCount || 0) + (n || 1);
+    localStorage.setItem('synaptiq_daily_q', JSON.stringify({ date: today, count: state.dailyQuestionCount }));
   } catch(e) {}
 }
 
@@ -9350,6 +9374,101 @@ body.dyslexia-font * { font-family: 'OpenDyslexic', 'Comic Sans MS', cursive !im
   </body></html>`);
   printWindow.document.close();
   printWindow.print();
+}
+
+// ═══════════════════════════════════════
+// SUBSCRIPTION GATING
+// ═══════════════════════════════════════
+const FREE_DAILY_QUESTION_LIMIT = 5;
+const FREE_TRIAL_DAYS = 7;
+
+function getSubscriptionStatus() {
+  const u = state.user;
+  if (!u) return 'none';
+  if (u.subscription_status === 'active') return 'active';
+  if (u.plan === 'free' || !u.subscription_status || u.subscription_status === 'cancelled') {
+    const trialStart = u.trial_started_at || localStorage.getItem('synaptiq_trial_start');
+    if (trialStart) {
+      const elapsed = (Date.now() - new Date(trialStart).getTime()) / (1000 * 60 * 60 * 24);
+      if (elapsed <= FREE_TRIAL_DAYS) return 'trial';
+      return 'trial_expired';
+    }
+    return 'free';
+  }
+  if (u.subscription_status === 'past_due') return 'past_due';
+  return 'free';
+}
+
+function canAccessPremiumFeature(featureName) {
+  const status = getSubscriptionStatus();
+  if (status === 'active') return true;
+  if (status === 'trial' || status === 'free') {
+    const premiumOnly = ['essay', 'photo', 'video', 'grade-predictor'];
+    if (premiumOnly.includes(featureName)) {
+      showUpgradeModal(featureName);
+      return false;
+    }
+    return true;
+  }
+  if (status === 'trial_expired' || status === 'past_due') {
+    showUpgradeModal(featureName);
+    return false;
+  }
+  showUpgradeModal(featureName);
+  return false;
+}
+
+function canAskQuestion() {
+  const status = getSubscriptionStatus();
+  if (status === 'active') return true;
+  const today = new Date().toISOString().split('T')[0];
+  const stored = localStorage.getItem('synaptiq_daily_q');
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed.date === today) {
+        state.dailyQuestionCount = parsed.count;
+      } else {
+        state.dailyQuestionCount = 0;
+        localStorage.setItem('synaptiq_daily_q', JSON.stringify({ date: today, count: 0 }));
+      }
+    } catch(e) { state.dailyQuestionCount = 0; }
+  }
+  if ((state.dailyQuestionCount || 0) >= FREE_DAILY_QUESTION_LIMIT) {
+    showUpgradeModal('daily-limit');
+    return false;
+  }
+  return true;
+}
+
+function showUpgradeModal(reason) {
+  const reasons = {
+    'essay': 'Essay Marking is a premium feature',
+    'photo': 'Photo Solver is a premium feature',
+    'video': 'Video Explainer is a premium feature',
+    'grade-predictor': 'Grade Predictor is a premium feature',
+    'daily-limit': `You've used all ${FREE_DAILY_QUESTION_LIMIT} free questions today`,
+    'trial_expired': 'Your free trial has ended',
+    'default': 'This feature requires a subscription'
+  };
+  const msg = reasons[reason] || reasons['default'];
+  const modal = document.getElementById('upgrade-modal');
+  if (modal) {
+    document.getElementById('upgrade-reason').textContent = msg;
+    modal.classList.add('show');
+  } else {
+    showToast(msg + ' — Upgrade to continue!');
+  }
+}
+
+function closeUpgradeModal() {
+  const modal = document.getElementById('upgrade-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+function startCheckoutFlow(plan) {
+  closeUpgradeModal();
+  startCheckout(plan);
 }
 
 // ═══════════════════════════════════════
@@ -11328,6 +11447,11 @@ function renderTeacherChapters() {
   list.innerHTML = html;
 }
 
+// Fix unescaped LaTeX backslashes in Claude's JSON output (e.g. \frac → \\frac)
+function fixJsonLatex(str) {
+  return str.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+}
+
 function initTeacher() {
   renderTeacherChapters();
 }
@@ -11360,9 +11484,10 @@ Return ONLY valid JSON (no markdown code fences, no extra text):
   "objectives": ["at least 3 learning objectives"],
   "theory": "full explanation with LaTeX math",
   "workedExamples": [{"problem": "...", "steps": ["step 1", "step 2", "..."]}],
-  "practiceQuestions": [{"q": "question text", "answer": "full worked answer with LaTeX"}],
+  "practiceQuestions": [{"q": "question text", "answer": "full worked answer with LaTeX", "requiresGraph": false}],
   "keyFormulas": ["formula 1", "formula 2", "..."]
 }
+Set "requiresGraph": true for any practice question where the student needs to sketch a graph, plot points, draw a diagram, or work with coordinate axes.
 Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice questions, 3 key formulas.${resourceCtx}`;
 
   try {
@@ -11399,12 +11524,30 @@ function renderTeacherLesson(chapter, year, L, box) {
     </div>
     <div class="lesson-section">
       <h3><i class="fas fa-question-circle"></i> Practice Questions</h3>
-      ${(L.practiceQuestions || []).map((pq, i) => `
+      ${(L.practiceQuestions || []).map((pq, i) => {
+        const needsCanvas = pq.requiresGraph || /graph|plot|circle|coordinat|sketch|draw|diagram|axes|curve|locus/i.test(pq.q);
+        const canvasHTML = needsCanvas ? `
+          <div style="margin-top:.85rem">
+            <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">📐 Drawing Space</div>
+            <canvas id="pqcanvas-${i}" width="420" height="260"
+              style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:crosshair;touch-action:none;display:block;max-width:100%"
+              onmousedown="qDrawStart(this,event)" onmousemove="qDrawMove(this,event)" onmouseup="qDrawStop()" onmouseleave="qDrawStop()"
+              ontouchstart="qDrawStart(this,event)" ontouchmove="qDrawMove(this,event)" ontouchend="qDrawStop()"></canvas>
+            <div style="display:flex;gap:.35rem;margin-top:.4rem;align-items:center;flex-wrap:wrap">
+              <button onclick="qClearCanvas('pqcanvas-${i}')" style="font-size:.72rem;background:none;border:1px solid var(--border);color:var(--muted);padding:.22rem .55rem;border-radius:6px;cursor:pointer">Clear</button>
+              <button onclick="qSetColor(this,'#C9A84C')" style="font-size:.72rem;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.35);color:var(--gold);padding:.22rem .55rem;border-radius:6px;cursor:pointer;font-weight:700">● Gold</button>
+              <button onclick="qSetColor(this,'#60A5FA')" style="font-size:.72rem;background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.3);color:#60A5FA;padding:.22rem .55rem;border-radius:6px;cursor:pointer">● Blue</button>
+              <button onclick="qSetColor(this,'#4ADE80')" style="font-size:.72rem;background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);color:#4ade80;padding:.22rem .55rem;border-radius:6px;cursor:pointer">● Green</button>
+            </div>
+          </div>` : '';
+        return `
         <div class="practice-q">
           <div class="q-text">Q${i + 1}: ${pq.q}</div>
+          ${canvasHTML}
           <button class="show-answer-btn" onclick="toggleTeacherAnswer(this)">Show Answer</button>
           <div class="teacher-q-answer">${(pq.answer || '').replace(/\n/g, '<br>')}</div>
-        </div>`).join('')}
+        </div>`;
+      }).join('')}
     </div>
     <div class="lesson-section">
       <h3><i class="fas fa-star"></i> Key Formulas</h3>
@@ -11431,6 +11574,34 @@ if (_teacherOrigShowDash) {
     if (sub === 'content') initTeacher();
   };
 }
+
+// ── Practice question canvas (freehand drawing) ─────────
+let _qDrawActive = false, _qDrawCtx = null, _qDrawColor = '#C9A84C';
+function qDrawStart(canvas, e) {
+  _qDrawActive = true;
+  _qDrawCtx = canvas.getContext('2d');
+  const p = _qGetPos(canvas, e);
+  _qDrawCtx.beginPath(); _qDrawCtx.moveTo(p.x, p.y);
+  _qDrawCtx.strokeStyle = _qDrawColor; _qDrawCtx.lineWidth = 2; _qDrawCtx.lineCap = 'round'; _qDrawCtx.lineJoin = 'round';
+  e.preventDefault();
+}
+function qDrawMove(canvas, e) {
+  if (!_qDrawActive || !_qDrawCtx) return;
+  const p = _qGetPos(canvas, e);
+  _qDrawCtx.lineTo(p.x, p.y); _qDrawCtx.stroke();
+  e.preventDefault();
+}
+function qDrawStop() { _qDrawActive = false; _qDrawCtx = null; }
+function _qGetPos(canvas, e) {
+  const r = canvas.getBoundingClientRect();
+  const src = e.touches ? e.touches[0] : e;
+  return { x: (src.clientX - r.left) * (canvas.width / r.width), y: (src.clientY - r.top) * (canvas.height / r.height) };
+}
+function qClearCanvas(id) {
+  const c = document.getElementById(id);
+  if (c) { const ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height); }
+}
+function qSetColor(btn, color) { _qDrawColor = color; }
 
 // ═══════════════════════════════════════
 // ADMIN GLOBAL RESOURCES
