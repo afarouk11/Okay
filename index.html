@@ -1440,6 +1440,9 @@ body.mode-adhd .adhd-break { display: block; }
 .key-formulas-box{background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:1.25rem}
 .key-formula-item{color:var(--gold);padding:.35rem 0;border-bottom:1px solid rgba(201,168,76,0.1);font-size:1rem}
 .key-formula-item:last-child{border:none}
+.diagram-block{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1rem;margin:1rem 0;text-align:center;overflow-x:auto}
+.diagram-block svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.diagram-caption{font-size:.78rem;color:var(--muted);margin-top:.5rem;font-style:italic;text-align:center}
 .lesson-diagram{margin:1.25rem 0;background:var(--bg2);border:1px solid var(--bg3);border-radius:12px;padding:1.25rem;display:flex;flex-direction:column;align-items:center;gap:.6rem}
 .lesson-diagram svg{display:block;max-width:420px;width:100%;height:auto}
 .diagram-caption{font-size:.8rem;color:var(--muted);text-align:center;font-style:italic}
@@ -2328,7 +2331,7 @@ body.mode-adhd .adhd-break { display: block; }
         <div class="tutor-subjects">
           <h4>A-Level Topics</h4>
           <button class="subj-btn active" onclick="setTopic('A-Level Maths — General')">📐 General</button>
-          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Pure 1</div>
+          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Pure 1 — Year 12</div>
           <button class="subj-btn" onclick="setTopic('Algebraic Expressions')">Algebraic Expressions</button>
           <button class="subj-btn" onclick="setTopic('Quadratics')">Quadratics</button>
           <button class="subj-btn" onclick="setTopic('Equations & Inequalities')">Equations & Inequalities</button>
@@ -2336,36 +2339,49 @@ body.mode-adhd .adhd-break { display: block; }
           <button class="subj-btn" onclick="setTopic('Straight Line Graphs')">Straight Line Graphs</button>
           <button class="subj-btn" onclick="setTopic('Circles')">Circles</button>
           <button class="subj-btn" onclick="setTopic('Algebraic Methods')">Algebraic Methods</button>
-          <button class="subj-btn" onclick="setTopic('Binomial Expansion (Y1)')">Binomial Expansion</button>
+          <button class="subj-btn" onclick="setTopic('The Binomial Expansion')">Binomial Expansion</button>
           <button class="subj-btn" onclick="setTopic('Trigonometric Ratios')">Trigonometric Ratios</button>
-          <button class="subj-btn" onclick="setTopic('Trigonometric Identities')">Trig Identities</button>
-          <button class="subj-btn" onclick="setTopic('Vectors (Pure 1)')">Vectors</button>
-          <button class="subj-btn" onclick="setTopic('Differentiation (Pure 1)')">Differentiation</button>
-          <button class="subj-btn" onclick="setTopic('Integration (Pure 1)')">Integration</button>
-          <button class="subj-btn" onclick="setTopic('Exponentials & Logarithms')">Exponentials & Logs</button>
-          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Pure 2</div>
-          <button class="subj-btn" onclick="setTopic('Algebraic Methods (Pure 2)')">Algebraic Methods</button>
+          <button class="subj-btn" onclick="setTopic('Trigonometric Identities & Equations')">Trig Identities & Equations</button>
+          <button class="subj-btn" onclick="setTopic('Vectors')">Vectors</button>
+          <button class="subj-btn" onclick="setTopic('Differentiation')">Differentiation</button>
+          <button class="subj-btn" onclick="setTopic('Integration')">Integration</button>
+          <button class="subj-btn" onclick="setTopic('Exponentials & Logarithms')">Exponentials & Logarithms</button>
+          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Pure 2 — Year 13</div>
+          <button class="subj-btn" onclick="setTopic('Algebraic Methods (Year 13)')">Algebraic Methods</button>
           <button class="subj-btn" onclick="setTopic('Functions & Graphs')">Functions & Graphs</button>
           <button class="subj-btn" onclick="setTopic('Sequences & Series')">Sequences & Series</button>
+          <button class="subj-btn" onclick="setTopic('Binomial Expansion (Year 13)')">Binomial Expansion</button>
           <button class="subj-btn" onclick="setTopic('Radians')">Radians</button>
-          <button class="subj-btn" onclick="setTopic('Trigonometric Functions')">Trig Functions</button>
+          <button class="subj-btn" onclick="setTopic('Trigonometric Functions')">Trigonometric Functions</button>
+          <button class="subj-btn" onclick="setTopic('Trigonometry & Modelling')">Trigonometry & Modelling</button>
           <button class="subj-btn" onclick="setTopic('Parametric Equations')">Parametric Equations</button>
-          <button class="subj-btn" onclick="setTopic('Differentiation (Pure 2)')">Differentiation</button>
+          <button class="subj-btn" onclick="setTopic('Differentiation (Year 13)')">Differentiation</button>
           <button class="subj-btn" onclick="setTopic('Numerical Methods')">Numerical Methods</button>
-          <button class="subj-btn" onclick="setTopic('Integration (Pure 2)')">Integration</button>
-          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Statistics</div>
+          <button class="subj-btn" onclick="setTopic('Integration (Year 13)')">Integration</button>
+          <button class="subj-btn" onclick="setTopic('Vectors (3D)')">Vectors (3D)</button>
+          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Statistics — Year 12</div>
           <button class="subj-btn" onclick="setTopic('Statistical Sampling')">Statistical Sampling</button>
-          <button class="subj-btn" onclick="setTopic('Data Presentation')">Data Presentation</button>
+          <button class="subj-btn" onclick="setTopic('Data Presentation & Interpretation')">Data Presentation</button>
           <button class="subj-btn" onclick="setTopic('Probability')">Probability</button>
-          <button class="subj-btn" onclick="setTopic('Statistical Distributions')">Distributions</button>
-          <button class="subj-btn" onclick="setTopic('Hypothesis Testing')">Hypothesis Testing</button>
-          <button class="subj-btn" onclick="setTopic('Normal Distribution')">Normal Distribution</button>
-          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Mechanics</div>
-          <button class="subj-btn" onclick="setTopic('Kinematics')">Kinematics</button>
+          <button class="subj-btn" onclick="setTopic('Statistical Distributions')">Statistical Distributions</button>
+          <button class="subj-btn" onclick="setTopic('Statistical Hypothesis Testing')">Hypothesis Testing</button>
+          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Statistics — Year 13</div>
+          <button class="subj-btn" onclick="setTopic('Regression, Correlation & Hypothesis Testing')">Regression & Correlation</button>
+          <button class="subj-btn" onclick="setTopic('Conditional Probability')">Conditional Probability</button>
+          <button class="subj-btn" onclick="setTopic('The Normal Distribution')">Normal Distribution</button>
+          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Mechanics — Year 12</div>
+          <button class="subj-btn" onclick="setTopic('Quantities & Units in Mechanics')">Quantities & Units</button>
+          <button class="subj-btn" onclick="setTopic('Kinematics — Constant Acceleration')">Kinematics (SUVAT)</button>
           <button class="subj-btn" onclick="setTopic('Forces & Newton\'s Laws')">Forces & Newton's Laws</button>
+          <button class="subj-btn" onclick="setTopic('Variable Acceleration')">Variable Acceleration</button>
+          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Mechanics — Year 13</div>
           <button class="subj-btn" onclick="setTopic('Moments')">Moments</button>
+          <button class="subj-btn" onclick="setTopic('Forces & Friction')">Forces & Friction</button>
           <button class="subj-btn" onclick="setTopic('Projectiles')">Projectiles</button>
-          <button class="subj-btn" onclick="setTopic('Friction')">Friction</button>
+          <button class="subj-btn" onclick="setTopic('Applications of Forces')">Applications of Forces</button>
+          <button class="subj-btn" onclick="setTopic('Further Kinematics')">Further Kinematics</button>
+          <button class="subj-btn" onclick="setTopic('Circular Motion')">Circular Motion</button>
+          <button class="subj-btn" onclick="setTopic('Simple Harmonic Motion')">Simple Harmonic Motion</button>
         </div>
         <div class="tutor-chat">
           <div class="tutor-header">
@@ -4899,7 +4915,9 @@ When answering maths questions:
 4. Mention any common mistakes to avoid
 5. Reference mark scheme language where relevant (e.g. "B1 for...", "M1 for method...")
 
-When explaining concepts: Start with the core idea, then show a worked example, then give a practice question.${uploadsCtx}`;
+When explaining concepts: Start with the core idea, then show a worked example, then give a practice question.
+
+VISUAL DIAGRAMS: When a concept benefits from a diagram (graphs, circles, parabolas, curves, geometric shapes, transformations, vectors, histograms, probability trees, force diagrams, etc.), generate clean inline SVG directly in your response. Wrap each SVG in: <div class="diagram-block"><svg viewBox="0 0 500 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:500px;height:auto;display:block"><rect width="500" height="320" fill="#1A1D28" rx="8"/>...SVG content...</svg><p class="diagram-caption">Caption</p></div>. Use: #C9A84C for axes/key labels, #60A5FA for curves/lines, #4ADE80 for secondary curves, #F472B6 for special points, #F0EEF8 for text. Include labelled axes, annotations, and scale markers. Produce actual SVG markup — do not describe a diagram in text when you can draw it.${uploadsCtx}`;
 
   const a11y = getA11yInstructions();
   if (a11y) sys += '\n\n' + a11y;
@@ -11479,13 +11497,16 @@ async function teachChapter(mk, idx, btn) {
 
   const sys = `You are an expert A-Level Mathematics teacher for UK students (${board} exam board).
 Deliver a complete, thorough lesson. Use LaTeX math notation: inline with $...$ and display equations with $$...$$. For example: $x^2 + 3x - 4 = 0$, $$\\frac{d}{dx}(x^n) = nx^{n-1}$$. Never write x^2 in plain text — always use proper LaTeX so notation renders correctly.
+
+VISUAL DIAGRAMS: When a concept benefits from visual representation (coordinate graphs, circles, parabolas, curves, geometric shapes, transformations, vectors, histograms, probability trees, force diagrams, etc.), generate clean inline SVG code directly in the "theory" or workedExample "steps" HTML. Wrap each SVG in: <div class="diagram-block"><svg viewBox="0 0 500 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:500px;height:auto;display:block"><rect width="500" height="320" fill="#1A1D28" rx="8"/>...your SVG content...</svg><p class="diagram-caption">Caption describing the diagram</p></div>. Use: #C9A84C for axes/key labels, #60A5FA for primary curves/lines, #4ADE80 for secondary curves, #F472B6 for special points, #F0EEF8 for general text. Include labelled axes with tick marks, curve/shape labels, and coordinate annotations. ALWAYS produce actual SVG markup — never describe a diagram in text when you could draw it.
+
 Return ONLY valid JSON (no markdown code fences, no extra text):
 {
   "objectives": ["at least 3 learning objectives"],
-  "theory": "full explanation with LaTeX math",
-  "workedExamples": [{"problem": "...", "steps": ["step 1", "step 2", "..."]}],
+  "theory": "full HTML explanation with LaTeX math and inline SVG diagrams where helpful",
+  "workedExamples": [{"problem": "...", "steps": ["step 1 HTML with LaTeX and SVG if needed", "step 2", "..."]}],
   "practiceQuestions": [{"q": "question text", "answer": "full worked answer with LaTeX", "requiresGraph": false}],
-  "keyFormulas": ["formula 1", "formula 2", "..."]
+  "keyFormulas": ["formula 1 in LaTeX", "formula 2", "..."]
 }
 Set "requiresGraph": true for any practice question where the student needs to sketch a graph, plot points, draw a diagram, or work with coordinate axes.
 Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice questions, 3 key formulas.${resourceCtx}`;
