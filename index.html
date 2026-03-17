@@ -9800,8 +9800,8 @@ window.sendTutor = function() {
 // Ensure stats display as zero for new users after login
 function resetStatsForNewUser() {
   const u = state.user;
-  if (u && (u.questions === undefined || u.questions === 847)) {
-    u.questions = 0; u.accuracy = 0; u.streak = 0; u.topics = 0; u.xp = 0; u.level = 1;
+  if (u && (u.questions_answered === undefined || u.questions_answered === 847)) {
+    u.questions_answered = 0; u.accuracy = 0; u.streak = 0; u.xp = 0; u.level = 1;
     try { localStorage.setItem('synaptiq_user', JSON.stringify(u)); } catch(e) {}
   }
 }
