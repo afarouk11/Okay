@@ -2202,6 +2202,7 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="sidebar-section-label">LEARN</div>
       <div class="sidebar-item" id="si-tutor" onclick="showDash('tutor')"><i class="fas fa-robot"></i>AI Tutor</div>
       <div class="sidebar-item" id="si-content" onclick="showDash('content')"><i class="fas fa-chalkboard-teacher"></i>AI Teacher</div>
+      <div class="sidebar-item" id="si-lessons" onclick="window.location.href='/lessons.html'"><i class="fas fa-graduation-cap"></i>AI Lessons</div>
       <div class="sidebar-item" id="si-questions" onclick="showDash('questions')"><i class="fas fa-file-lines"></i>Practice Questions</div>
       <div class="sidebar-item" id="si-photo" onclick="showDash('photo')"><i class="fas fa-camera"></i>Photo Question</div>
       <div class="sidebar-section-label">REVISION</div>
@@ -5097,7 +5098,7 @@ Each question must be exam-quality, use UK spelling and ${board} notation style.
 For calculations, show all working steps in the solution field.
 ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility notes: ' + a11y : ''}`;
   try {
-    const data = await callClaude([{ role: 'user', content: `Generate ${num} A-Level Maths (${module}) questions for ${board} ${level}, grade ${grade} target. ${topics ? 'Topics: ' + topics : ''}` }], sys);
+    const data = await callClaude([{ role: 'user', content: `Generate ${num} A-Level Maths (${module}) questions for ${board} ${level}, grade ${grade} target. ${topics ? 'Topics: ' + topics : ''}` }], sys, 3000);
     const reply = getReply(data);
     trackEvent('question_generated', { module, board, num });
     let questions;
@@ -11512,7 +11513,7 @@ Set "requiresGraph": true for any practice question where the student needs to s
 Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice questions, 3 key formulas.${resourceCtx}`;
 
   try {
-    const data = await callClaude([{ role: 'user', content: `Teach me: ${chapter} (${mod.label}, ${mod.year})` }], sys);
+    const data = await callClaude([{ role: 'user', content: `Teach me: ${chapter} (${mod.label}, ${mod.year})` }], sys, 4000);
     let raw = getReply(data).replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
     const lesson = JSON.parse(fixJsonLatex(raw));
     renderTeacherLesson(chapter, mod.year, lesson, box);
