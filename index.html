@@ -4481,8 +4481,11 @@ async function createAccount() {
     if (data.token) safeSetItem('synaptiq_token', data.token);
     safeSetItem('synaptiq_user', JSON.stringify(state.user));
     trackEvent('sign_up', { plan: state.selectedPlan, board: state.user.board });
+    // Clear any stale stats from a previous user on this device
+    try { localStorage.removeItem('synaptiq_stats'); } catch(e) {}
     applyLearningProfile();
     enterDashboard();
+    resetStatsForNewUser();
     addXP(100, '🎉 Welcome bonus!');
     setTimeout(() => showOnboarding(), 800);
   } catch(e) {
@@ -4553,6 +4556,8 @@ async function loginUser() {
     state.xp = state.user.xp;
     state.level = state.user.level;
     if (data.token) safeSetItem('synaptiq_token', data.token);
+    // Always reset stats on login — restore from server if available, else clear stale data
+    try { localStorage.removeItem('synaptiq_stats'); } catch(e) {}
     if (data.user.stats) safeSetItem('synaptiq_stats', JSON.stringify(data.user.stats));
     if (data.user.flashcards && data.user.flashcards.length) {
       fcCards = data.user.flashcards;
@@ -4577,7 +4582,14 @@ function logout() {
   state.user = null;
   state.tutorHistory = [];
   state.dashHistory = [];
-  try { localStorage.removeItem('synaptiq_user'); } catch(e) {}
+  state.xp = 0;
+  state.level = 1;
+  try {
+    localStorage.removeItem('synaptiq_user');
+    localStorage.removeItem('synaptiq_stats');
+    localStorage.removeItem('synaptiq_token');
+    localStorage.removeItem('synaptiq_fc');
+  } catch(e) {}
   document.getElementById('app-nav').style.display = 'none';
   document.getElementById('public-nav').style.display = 'flex';
   document.getElementById('auth-buttons').style.display = 'flex';
