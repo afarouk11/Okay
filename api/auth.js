@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { applyHeaders, isRateLimited, getIp } from './_lib.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const VALID_PLANS = ['student'];
+const VALID_PLANS = ['student', 'home', 'homeschool'];
 
 // Safe Supabase init — won't crash if env vars are missing
 let supabase = null;
@@ -33,12 +33,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid request body' });
   }
 
-  const { action, email, password, name, plan, learning_difficulty, year_group, subjects } = body;
+  const { action, email, password, name, plan, learning_difficulty, year_group, subjects, board, target } = body;
 
   if (!action) return res.status(400).json({ error: 'Missing action parameter' });
 
   if (!supabase) {
-    return handleDemoMode(res, { action, email, password, name, plan, year_group, subjects, learning_difficulty });
+    return handleDemoMode(res, { action, email, password, name, plan, year_group, subjects, learning_difficulty, board, target });
   }
 
   try {
@@ -71,6 +71,7 @@ export default async function handler(req, res) {
         plan: chosenPlan, subscription_status: 'free',
         learning_difficulty: learning_difficulty || 'none',
         year_group: year_group || '', subjects: subjects || ['Mathematics'],
+        exam_board: board || '', target_grade: target || '',
         xp: 0, level: 1, streak: 1, longest_streak: 1,
         questions_answered: 0, accuracy: 0,
         last_active: new Date().toISOString().split('T')[0],
@@ -84,9 +85,6 @@ export default async function handler(req, res) {
         const { data: session } = await supabase.auth.signInWithPassword({ email: email.toLowerCase().trim(), password });
         token = session?.session?.access_token || null;
       } catch (_) { /* token stays null — user can log in separately */ }
-
-      // Send confirmation email (non-blocking)
-      try { await supabase.auth.admin.inviteUserByEmail(email); } catch (_) {}
 
       return res.status(200).json({
         success: true, token,
