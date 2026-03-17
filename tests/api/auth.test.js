@@ -190,6 +190,37 @@ describe('reset', () => {
   });
 });
 
+// ─── Home plan ────────────────────────────────────────────────────────────────
+
+describe('home plan signup', () => {
+  it('accepts home plan and creates user', async () => {
+    mocks.supabase.auth.admin.createUser.mockResolvedValueOnce({
+      data: { user: { id: 'u2', email: 'parent@home.com' } }, error: null,
+    });
+    const r = res();
+    await handler(req({ action: 'signup', email: 'parent@home.com', password: 'pass1234', name: 'Parent', plan: 'home' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.success).toBe(true);
+  });
+
+  it('accepts homeschool plan and creates user', async () => {
+    mocks.supabase.auth.admin.createUser.mockResolvedValueOnce({
+      data: { user: { id: 'u3', email: 'teacher@school.com' } }, error: null,
+    });
+    const r = res();
+    await handler(req({ action: 'signup', email: 'teacher@school.com', password: 'pass1234', name: 'Teacher', plan: 'homeschool' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.success).toBe(true);
+  });
+
+  it('rejects unknown plan values', async () => {
+    const r = res();
+    await handler(req({ action: 'signup', email: 'a@b.com', password: 'pass1234', name: 'Alice', plan: 'vip' }), r);
+    expect(r.statusCode).toBe(400);
+    expect(r.body.error).toMatch(/plan/i);
+  });
+});
+
 // ─── Verify ───────────────────────────────────────────────────────────────────
 
 describe('verify', () => {

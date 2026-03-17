@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { applyHeaders, isRateLimited, getIp } from './_lib.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const VALID_PLANS = ['student'];
+const VALID_PLANS = ['student', 'home', 'homeschool'];
 
 // Safe Supabase init — won't crash if env vars are missing
 let supabase = null;
