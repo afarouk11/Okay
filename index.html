@@ -7045,6 +7045,15 @@ function initTutor() {
   }
 }
 
+// Defined here (script block 1) so it is always available when login/signup call it
+function resetStatsForNewUser() {
+  const u = state.user;
+  if (u && (u.questions_answered === undefined || u.questions_answered === 847)) {
+    u.questions_answered = 0; u.accuracy = 0; u.streak = 0; u.xp = 0; u.level = 1;
+    try { localStorage.setItem('synaptiq_user', JSON.stringify(u)); } catch(e) {}
+  }
+}
+
 
 </script>
 
@@ -9808,15 +9817,6 @@ window.sendTutor = function() {
   }
   if (_v9TutorSend) _v9TutorSend();
 };
-
-// Ensure stats display as zero for new users after login
-function resetStatsForNewUser() {
-  const u = state.user;
-  if (u && (u.questions_answered === undefined || u.questions_answered === 847)) {
-    u.questions_answered = 0; u.accuracy = 0; u.streak = 0; u.xp = 0; u.level = 1;
-    try { localStorage.setItem('synaptiq_user', JSON.stringify(u)); } catch(e) {}
-  }
-}
 
 
 // ════════════════════════════════════════════════════
