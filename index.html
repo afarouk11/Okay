@@ -11516,17 +11516,22 @@ function switchTeacherTab(tab, btn) {
 }
 
 function renderTeacherChapters() {
-  const list = document.getElementById('teacher-chapter-list');
-  if (!list) return;
-  let html = '';
-  for (const mk of TEACHER_TABS[_teacherTab]) {
-    const m = TEACHER_CONTENT[mk];
-    html += `<div style="padding:.4rem 1rem .2rem;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">${m.label} — ${m.year}</div>`;
-    m.chapters.forEach((ch, i) => {
-      html += `<button class="teacher-chapter-btn" onclick="teachChapter('${mk}',${i},this)">${ch}</button>`;
-    });
-  }
-  list.innerHTML = html;
+  try {
+    const list = document.getElementById('teacher-chapter-list');
+    if (!list) return;
+    const tab = _teacherTab || 'pure1';
+    const mods = TEACHER_TABS[tab] || TEACHER_TABS['pure1'];
+    let html = '';
+    for (const mk of mods) {
+      const m = TEACHER_CONTENT[mk];
+      if (!m) continue;
+      html += `<div style="padding:.4rem 1rem .2rem;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">${m.label} — ${m.year}</div>`;
+      m.chapters.forEach((ch, i) => {
+        html += `<button class="teacher-chapter-btn" onclick="teachChapter('${mk}',${i},this)">${ch}</button>`;
+      });
+    }
+    list.innerHTML = html;
+  } catch(e) { console.error('renderTeacherChapters:', e); }
 }
 
 // Fix unescaped LaTeX backslashes in Claude's JSON output (e.g. \frac → \\frac)
@@ -11535,6 +11540,14 @@ function fixJsonLatex(str) {
 }
 
 function initTeacher() {
+  renderTeacherChapters();
+}
+
+// Pre-populate chapter list as soon as this script block loads
+// (covers cases where the user lands directly on the content page)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', renderTeacherChapters);
+} else {
   renderTeacherChapters();
 }
 
