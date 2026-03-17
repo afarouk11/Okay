@@ -7193,6 +7193,26 @@ function initTutor() {
 <!-- SR float button -->
 <button class="sr-float-btn show" id="sr-float-btn" onclick="openSR()" style="display:none" title="Spaced Repetition Review">🧠</button>
 
+<!-- Upgrade / Paywall Modal -->
+<div id="upgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--gold);border-radius:20px;padding:2rem;max-width:460px;width:90%;text-align:center;position:relative">
+    <button onclick="closeUpgradeModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem">✕</button>
+    <div style="font-size:2.5rem;margin-bottom:1rem">🔒</div>
+    <h3 style="font-family:var(--font-head);font-weight:800;font-size:1.3rem;margin-bottom:.5rem">Upgrade to Unlock</h3>
+    <p id="upgrade-reason" style="color:var(--muted);margin-bottom:1.5rem;font-size:.9rem">This feature requires a subscription</p>
+    <div style="display:flex;flex-direction:column;gap:.75rem">
+      <button class="btn-gold" style="width:100%;padding:.875rem" onclick="startCheckoutFlow('student')">
+        Student Plan — £20/mo<br><span style="font-size:.75rem;font-weight:400">Unlimited AI tutoring for A-Level Maths</span>
+      </button>
+      <button class="btn-gold" style="width:100%;padding:.875rem;background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="startCheckoutFlow('school')">
+        School Enquiries — Contact Us<br><span style="font-size:.75rem;font-weight:400">Bulk licences for schools &amp; tutors</span>
+      </button>
+    </div>
+    <p style="font-size:.75rem;color:var(--muted);margin-top:1rem">7-day free trial. Cancel anytime.</p>
+  </div>
+</div>
+<style>#upgrade-modal.show { display:flex !important; }</style>
+
 <!-- Feedback -->
 <div id="feedback-btn" onclick="showToast('Thank you for your feedback! 💛')">💬 Feedback</div>
 
@@ -7751,12 +7771,16 @@ function initCookieBanner() {
   banner.style.display = 'flex';
 }
 
-// Track question generation count in localStorage (analytics)
+// Track question generation count in localStorage (analytics + daily subscription limit)
 function incrementQuestionCount(n) {
   try {
     const key = 'synaptiq_total_questions';
     const current = parseInt(localStorage.getItem(key) || '0', 10);
     localStorage.setItem(key, current + (n || 1));
+    // Also update daily question count for subscription gating
+    const today = new Date().toISOString().split('T')[0];
+    state.dailyQuestionCount = (state.dailyQuestionCount || 0) + (n || 1);
+    localStorage.setItem('synaptiq_daily_q', JSON.stringify({ date: today, count: state.dailyQuestionCount }));
   } catch(e) {}
 }
 
@@ -9350,6 +9374,101 @@ body.dyslexia-font * { font-family: 'OpenDyslexic', 'Comic Sans MS', cursive !im
   </body></html>`);
   printWindow.document.close();
   printWindow.print();
+}
+
+// ═══════════════════════════════════════
+// SUBSCRIPTION GATING
+// ═══════════════════════════════════════
+const FREE_DAILY_QUESTION_LIMIT = 5;
+const FREE_TRIAL_DAYS = 7;
+
+function getSubscriptionStatus() {
+  const u = state.user;
+  if (!u) return 'none';
+  if (u.subscription_status === 'active') return 'active';
+  if (u.plan === 'free' || !u.subscription_status || u.subscription_status === 'cancelled') {
+    const trialStart = u.trial_started_at || localStorage.getItem('synaptiq_trial_start');
+    if (trialStart) {
+      const elapsed = (Date.now() - new Date(trialStart).getTime()) / (1000 * 60 * 60 * 24);
+      if (elapsed <= FREE_TRIAL_DAYS) return 'trial';
+      return 'trial_expired';
+    }
+    return 'free';
+  }
+  if (u.subscription_status === 'past_due') return 'past_due';
+  return 'free';
+}
+
+function canAccessPremiumFeature(featureName) {
+  const status = getSubscriptionStatus();
+  if (status === 'active') return true;
+  if (status === 'trial' || status === 'free') {
+    const premiumOnly = ['essay', 'photo', 'video', 'grade-predictor'];
+    if (premiumOnly.includes(featureName)) {
+      showUpgradeModal(featureName);
+      return false;
+    }
+    return true;
+  }
+  if (status === 'trial_expired' || status === 'past_due') {
+    showUpgradeModal(featureName);
+    return false;
+  }
+  showUpgradeModal(featureName);
+  return false;
+}
+
+function canAskQuestion() {
+  const status = getSubscriptionStatus();
+  if (status === 'active') return true;
+  const today = new Date().toISOString().split('T')[0];
+  const stored = localStorage.getItem('synaptiq_daily_q');
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed.date === today) {
+        state.dailyQuestionCount = parsed.count;
+      } else {
+        state.dailyQuestionCount = 0;
+        localStorage.setItem('synaptiq_daily_q', JSON.stringify({ date: today, count: 0 }));
+      }
+    } catch(e) { state.dailyQuestionCount = 0; }
+  }
+  if ((state.dailyQuestionCount || 0) >= FREE_DAILY_QUESTION_LIMIT) {
+    showUpgradeModal('daily-limit');
+    return false;
+  }
+  return true;
+}
+
+function showUpgradeModal(reason) {
+  const reasons = {
+    'essay': 'Essay Marking is a premium feature',
+    'photo': 'Photo Solver is a premium feature',
+    'video': 'Video Explainer is a premium feature',
+    'grade-predictor': 'Grade Predictor is a premium feature',
+    'daily-limit': `You've used all ${FREE_DAILY_QUESTION_LIMIT} free questions today`,
+    'trial_expired': 'Your free trial has ended',
+    'default': 'This feature requires a subscription'
+  };
+  const msg = reasons[reason] || reasons['default'];
+  const modal = document.getElementById('upgrade-modal');
+  if (modal) {
+    document.getElementById('upgrade-reason').textContent = msg;
+    modal.classList.add('show');
+  } else {
+    showToast(msg + ' — Upgrade to continue!');
+  }
+}
+
+function closeUpgradeModal() {
+  const modal = document.getElementById('upgrade-modal');
+  if (modal) modal.classList.remove('show');
+}
+
+function startCheckoutFlow(plan) {
+  closeUpgradeModal();
+  startCheckout(plan);
 }
 
 // ═══════════════════════════════════════
