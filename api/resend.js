@@ -62,6 +62,47 @@ export default async function handler(req, res) {
           </div>
         </div>
       `
+    },
+    password_reset: {
+      subject: 'Reset your Synaptiq password',
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0A0C12;color:#F5F2EC;border-radius:16px;overflow:hidden">
+          <div style="background:linear-gradient(135deg,#C9A84C,#9A7A2E);padding:2rem;text-align:center">
+            <h1 style="font-size:1.5rem;margin:0;color:#07080C">Password Reset</h1>
+            <p style="opacity:.8;color:#07080C;margin:.5rem 0 0">Synaptiq — A-Level Maths AI Tutor</p>
+          </div>
+          <div style="padding:2rem">
+            <h2 style="color:#C9A84C">Hi ${name || 'there'},</h2>
+            <p style="color:#8892A4;line-height:1.7">We received a request to reset your Synaptiq password. Check your inbox for the secure reset link we sent you.</p>
+            <div style="background:#151821;border-left:3px solid #C9A84C;border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin:1.5rem 0">
+              <p style="margin:0;font-size:.875rem;color:#8892A4">⏱ This link expires in <strong style="color:#F5F2EC">1 hour</strong> for your security.</p>
+            </div>
+            <p style="color:#8892A4;font-size:.875rem">If you didn't request this, you can safely ignore this email.</p>
+            <a href="${process.env.APP_URL || 'https://synaptiqai.co.uk'}" style="display:inline-block;background:#C9A84C;color:#07080C;padding:.875rem 2rem;border-radius:10px;font-weight:700;text-decoration:none;margin-top:1rem">Back to Synaptiq →</a>
+            <p style="color:#8892A4;font-size:.8rem;margin-top:2rem">Synaptiq · A-Level Maths AI Tutor</p>
+          </div>
+        </div>
+      `
+    },
+    goodbye: {
+      subject: 'Your Synaptiq account has been deleted',
+      html: `
+        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0A0C12;color:#F5F2EC;border-radius:16px;overflow:hidden">
+          <div style="background:linear-gradient(135deg,#2a2a3a,#1a1a2a);padding:2rem;text-align:center">
+            <h1 style="font-size:1.5rem;margin:0;color:#F5F2EC">Account Deleted</h1>
+            <p style="opacity:.6;color:#F5F2EC;margin:.5rem 0 0">We'll miss you, ${name || 'there'}</p>
+          </div>
+          <div style="padding:2rem">
+            <p style="color:#8892A4;line-height:1.7">Your Synaptiq account has been permanently deleted. All your data — flashcards, notes, progress history, and conversations — has been removed from our servers.</p>
+            <div style="background:#151821;border-radius:10px;padding:1.25rem;margin:1.5rem 0">
+              <p style="margin:0 0 .5rem;font-weight:700;color:#C9A84C">Changed your mind?</p>
+              <p style="margin:0;font-size:.875rem;color:#8892A4">You can create a new Synaptiq account at any time. We'd love to have you back.</p>
+            </div>
+            <a href="${process.env.APP_URL || 'https://synaptiqai.co.uk'}" style="display:inline-block;background:#C9A84C;color:#07080C;padding:.875rem 2rem;border-radius:10px;font-weight:700;text-decoration:none">Create New Account →</a>
+            <p style="color:#8892A4;font-size:.8rem;margin-top:2rem">Synaptiq · A-Level Maths AI Tutor</p>
+          </div>
+        </div>
+      `
     }
   };
 
