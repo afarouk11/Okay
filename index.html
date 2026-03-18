@@ -2454,7 +2454,7 @@ body.mode-adhd .adhd-break { display: block; }
               <select id="q-type"><option>Mixed</option><option>Short Calculation</option><option>Proof</option><option>Extended Problem</option><option>Multiple Choice</option></select>
             </div>
             <div class="form-group"><label>Target Grade</label>
-              <select id="q-grade"><option>Grade C-D</option><option>Grade B</option><option selected>Grade A</option><option>Grade A*</option></select>
+              <select id="q-grade"><option>E</option><option>D</option><option>C</option><option>B</option><option selected>A</option><option>A*</option></select>
             </div>
           </div>
           <div class="form-row">
@@ -3235,10 +3235,12 @@ body.mode-adhd .adhd-break { display: block; }
               <div class="form-group">
                 <label class="form-label">Difficulty</label>
                 <select class="form-select" id="sim-diff">
-                  <option value="Grade 4-5">Grade 4-5</option>
-                  <option value="Grade 6-7" selected>Grade 6-7</option>
-                  <option value="Grade 7-8">Grade 7-8</option>
-                  <option value="Grade 8-9">Grade 8-9</option>
+                  <option value="E">E</option>
+                  <option value="D">D</option>
+                  <option value="C">C</option>
+                  <option value="B">B</option>
+                  <option value="A" selected>A</option>
+                  <option value="A*">A*</option>
                 </select>
               </div>
             </div>
@@ -6473,8 +6475,8 @@ async function generateQuestionsV2() {
     const gradeEl = document.getElementById('q-grade');
     if (gradeEl) gradeEl.value = gradeSuggestion.grade;
     const msg = gradeSuggestion.direction === 'up'
-      ? `🚀 <strong>Adaptive:</strong> Your average accuracy is ${gradeSuggestion.acc}% — bumped to ${gradeSuggestion.grade} to keep challenging you!`
-      : `💪 <strong>Adaptive:</strong> Your average accuracy is ${gradeSuggestion.acc}% — dropped to ${gradeSuggestion.grade} to rebuild confidence.`;
+      ? `🚀 <strong>Adaptive:</strong> Your average accuracy is ${gradeSuggestion.acc}% — bumped to grade ${gradeSuggestion.grade} to keep challenging you!`
+      : `💪 <strong>Adaptive:</strong> Your average accuracy is ${gradeSuggestion.acc}% — dropped to grade ${gradeSuggestion.grade} to rebuild confidence.`;
     if (adaptiveBanner) { adaptiveBanner.innerHTML = (adaptiveBanner.innerHTML ? adaptiveBanner.innerHTML + '<br>' : '') + msg; adaptiveBanner.style.display = 'block'; }
   }
 
@@ -6607,7 +6609,7 @@ Use UK marking conventions. Award partial marks where appropriate.`;
       updateDashboardStats();
     }
     // Adaptive difficulty suggestion
-    showAdaptiveSuggestion(pct, state.currentQGrade || 'Grade 6-7');
+    showAdaptiveSuggestion(pct, state.currentQGrade || 'A');
   } catch(e) {
     showToast('⚠️ Could not mark answers: ' + e.message);
   }
@@ -6616,16 +6618,16 @@ Use UK marking conventions. Award partial marks where appropriate.`;
 function showAdaptiveSuggestion(accuracy, currentGrade) {
   const suggestion = document.getElementById('adaptive-suggestion');
   if (!suggestion) return;
-  const grades = ['Grade 4-5', 'Grade 6-7', 'Grade 7-8', 'Grade 8-9'];
+  const grades = ['E', 'D', 'C', 'B', 'A', 'A*'];
   const idx = grades.indexOf(currentGrade);
   if (accuracy >= 85 && idx < grades.length - 1) {
-    suggestion.textContent = `🚀 Great work! You scored ${accuracy}% — try ${grades[idx + 1]} next to push yourself further!`;
+    suggestion.textContent = `🚀 Great work! You scored ${accuracy}% — try grade ${grades[idx + 1]} next to push yourself further!`;
     suggestion.style.display = 'block';
     // Auto-suggest higher grade
     const gradeSelect = document.getElementById('q-grade');
     if (gradeSelect) gradeSelect.value = grades[idx + 1];
   } else if (accuracy < 50 && idx > 0) {
-    suggestion.textContent = `💪 ${accuracy}% — consider practising at ${grades[idx - 1]} to build confidence, then work back up.`;
+    suggestion.textContent = `💪 ${accuracy}% — consider practising at grade ${grades[idx - 1]} to build confidence, then work back up.`;
     suggestion.style.display = 'block';
     const gradeSelect = document.getElementById('q-grade');
     if (gradeSelect) gradeSelect.value = grades[idx - 1];
@@ -6698,7 +6700,7 @@ function getOverallAdaptiveAccuracy() {
 function getAdaptiveGradeSuggestion(currentGrade) {
   const avg = getOverallAdaptiveAccuracy();
   if (avg === null) return null;
-  const grades = ['Grade 4-5', 'Grade 6-7', 'Grade 7-8', 'Grade 8-9'];
+  const grades = ['E', 'D', 'C', 'B', 'A', 'A*'];
   const idx = grades.indexOf(currentGrade);
   if (avg >= 82 && idx < grades.length - 1) return { grade: grades[idx + 1], direction: 'up', acc: avg };
   if (avg < 50 && idx > 0) return { grade: grades[idx - 1], direction: 'down', acc: avg };
