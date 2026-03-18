@@ -2454,7 +2454,7 @@ body.mode-adhd .adhd-break { display: block; }
               <select id="q-type"><option>Mixed</option><option>Short Calculation</option><option>Proof</option><option>Extended Problem</option><option>Multiple Choice</option></select>
             </div>
             <div class="form-group"><label>Target Grade</label>
-              <select id="q-grade"><option>Grade C-D</option><option>Grade B</option><option selected>Grade A</option><option>Grade A*</option></select>
+              <select id="q-grade"><option>E</option><option>D</option><option>C</option><option>B</option><option selected>A</option><option>A*</option></select>
             </div>
           </div>
           <div class="form-row">
@@ -3235,10 +3235,12 @@ body.mode-adhd .adhd-break { display: block; }
               <div class="form-group">
                 <label class="form-label">Difficulty</label>
                 <select class="form-select" id="sim-diff">
-                  <option value="Grade 4-5">Grade 4-5</option>
-                  <option value="Grade 6-7" selected>Grade 6-7</option>
-                  <option value="Grade 7-8">Grade 7-8</option>
-                  <option value="Grade 8-9">Grade 8-9</option>
+                  <option value="E">E</option>
+                  <option value="D">D</option>
+                  <option value="C">C</option>
+                  <option value="B">B</option>
+                  <option value="A" selected>A</option>
+                  <option value="A*">A*</option>
                 </select>
               </div>
             </div>
@@ -6391,6 +6393,8 @@ function submitDiagnostic() {
   // Save results
   const diagResult = { date: new Date().toISOString(), pct, level, strengths, weaknesses, correctCount, total: topicResults.length };
   localStorage.setItem('synaptiq_diagnostic', JSON.stringify(diagResult));
+  // Seed per-topic accuracy from diagnostic so adaptive engine uses it immediately
+  topicResults.forEach(function(r) { recordTopicResult(r.topic, r.correct); });
   addXP(30, 'Diagnostic test completed!');
   renderPrevDiagnostic();
 }
@@ -6454,18 +6458,40 @@ async function generateQuestionsV2() {
     'OCR': 'Use OCR-style command terms and synoptic question approaches.',
     'WJEC': 'Use WJEC/Eduqas question formatting conventions.'
   };
+  // ── Adaptive: auto-fill weak topics and adjust grade ──
+  const weakTopics = getWeakTopics(5);
+  const topicsEl = document.getElementById('q-topics');
+  const adaptiveBanner = document.getElementById('adaptive-suggestion');
+  const effectiveTopics = topics || (weakTopics.length ? weakTopics.join(', ') : '');
+  if (!topics && weakTopics.length && topicsEl) {
+    topicsEl.value = weakTopics.join(', ');
+    if (adaptiveBanner) {
+      adaptiveBanner.innerHTML = `📊 <strong>Adaptive:</strong> Focusing on your weak topics: <em>${weakTopics.join(', ')}</em>. Clear the topics field to generate general questions.`;
+      adaptiveBanner.style.display = 'block';
+    }
+  }
+  const gradeSuggestion = getAdaptiveGradeSuggestion(grade);
+  if (gradeSuggestion) {
+    const gradeEl = document.getElementById('q-grade');
+    if (gradeEl) gradeEl.value = gradeSuggestion.grade;
+    const msg = gradeSuggestion.direction === 'up'
+      ? `🚀 <strong>Adaptive:</strong> Your average accuracy is ${gradeSuggestion.acc}% — bumped to grade ${gradeSuggestion.grade} to keep challenging you!`
+      : `💪 <strong>Adaptive:</strong> Your average accuracy is ${gradeSuggestion.acc}% — dropped to grade ${gradeSuggestion.grade} to rebuild confidence.`;
+    if (adaptiveBanner) { adaptiveBanner.innerHTML = (adaptiveBanner.innerHTML ? adaptiveBanner.innerHTML + '<br>' : '') + msg; adaptiveBanner.style.display = 'block'; }
+  }
+
   let sys = `You are an expert UK exam question writer specialising in ${board} ${level} ${sub}.
-Generate exactly ${num} exam-style questions for ${grade} target.
-Question types: ${type}. ${topics ? 'Focus on: ' + topics : 'Cover key topics.'}
+Generate exactly ${num} exam-style questions for ${gradeSuggestion ? gradeSuggestion.grade : grade} target.
+Question types: ${type}. ${effectiveTopics ? 'Focus on: ' + effectiveTopics : 'Cover key topics.'}
 ${bloomInstructions[bloom] || bloomInstructions['Mixed']}
 ${boardStyle[board] || ''}
 Format STRICTLY as JSON array with this structure:
-[{"question":"...","marks":3,"type":"short answer","hint":"...","bloom":"remember|understand|apply|analyse|evaluate|create"}]
+[{"question":"...","marks":3,"type":"short answer","hint":"...","topic":"specific topic name","bloom":"remember|understand|apply|analyse|evaluate|create"}]
 Each question must be exam-quality, use UK spelling, follow ${board} style and mark scheme conventions.
 ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility notes: ' + a11y : ''}`;
   sys += getSafeguardingPrompt();
   try {
-    const data = await callClaude([{ role: 'user', content: `Generate ${num} ${sub} questions for ${board} ${level}, ${grade} target. ${topics ? 'Topics: ' + topics : ''}` }], sys);
+    const data = await callClaude([{ role: 'user', content: `Generate ${num} ${sub} questions for ${board} ${level}, ${gradeSuggestion ? gradeSuggestion.grade : grade} target. ${effectiveTopics ? 'Topics: ' + effectiveTopics : ''}` }], sys);
     const reply = getReply(data);
     let questions;
     try {
@@ -6508,6 +6534,7 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
     state.currentQuestions = questions;
     state.currentQSubject = sub;
     state.currentQBoard = board;
+    state.currentQGrade = gradeSuggestion ? gradeSuggestion.grade : grade;
     addXP(20);
     incrementQuestionCount();
     showToast('✦ Questions generated!');
@@ -6547,6 +6574,9 @@ Use UK marking conventions. Award partial marks where appropriate.`;
       totalMarks += r.marksAwarded || 0;
       totalPossible += r.marksTotal || 3;
       if (r.correct) correct++;
+      // Record per-topic accuracy for adaptive difficulty
+      const q = state.currentQuestions && state.currentQuestions[r.questionNum - 1];
+      if (q && q.topic) recordTopicResult(q.topic, !!r.correct);
       const block = document.querySelectorAll('#q-questions .question-block')[r.questionNum - 1];
       if (block) {
         const existing = block.querySelector('.answer-feedback');
@@ -6579,7 +6609,7 @@ Use UK marking conventions. Award partial marks where appropriate.`;
       updateDashboardStats();
     }
     // Adaptive difficulty suggestion
-    showAdaptiveSuggestion(pct, grade);
+    showAdaptiveSuggestion(pct, state.currentQGrade || 'A');
   } catch(e) {
     showToast('⚠️ Could not mark answers: ' + e.message);
   }
@@ -6588,16 +6618,16 @@ Use UK marking conventions. Award partial marks where appropriate.`;
 function showAdaptiveSuggestion(accuracy, currentGrade) {
   const suggestion = document.getElementById('adaptive-suggestion');
   if (!suggestion) return;
-  const grades = ['Grade 4-5', 'Grade 6-7', 'Grade 7-8', 'Grade 8-9'];
+  const grades = ['E', 'D', 'C', 'B', 'A', 'A*'];
   const idx = grades.indexOf(currentGrade);
   if (accuracy >= 85 && idx < grades.length - 1) {
-    suggestion.textContent = `🚀 Great work! You scored ${accuracy}% — try ${grades[idx + 1]} next to push yourself further!`;
+    suggestion.textContent = `🚀 Great work! You scored ${accuracy}% — try grade ${grades[idx + 1]} next to push yourself further!`;
     suggestion.style.display = 'block';
     // Auto-suggest higher grade
     const gradeSelect = document.getElementById('q-grade');
     if (gradeSelect) gradeSelect.value = grades[idx + 1];
   } else if (accuracy < 50 && idx > 0) {
-    suggestion.textContent = `💪 ${accuracy}% — consider practising at ${grades[idx - 1]} to build confidence, then work back up.`;
+    suggestion.textContent = `💪 ${accuracy}% — consider practising at grade ${grades[idx - 1]} to build confidence, then work back up.`;
     suggestion.style.display = 'block';
     const gradeSelect = document.getElementById('q-grade');
     if (gradeSelect) gradeSelect.value = grades[idx - 1];
@@ -6623,6 +6653,58 @@ function trackMastery(subject, accuracy) {
     showToast(`🏆 ${subject} mastered! Average accuracy: ${avg}%`);
     addXP(50, `🏆 ${subject} mastery bonus!`);
   }
+}
+
+// ═══════════════════════════════════════
+// ADAPTIVE LEARNING ENGINE
+// ═══════════════════════════════════════
+function getTopicAccuracy() {
+  try { return JSON.parse(localStorage.getItem('synaptiq_topic_accuracy') || '{}'); } catch(e) { return {}; }
+}
+
+function recordTopicResult(topic, isCorrect) {
+  if (!topic || topic === 'General') return;
+  const acc = getTopicAccuracy();
+  if (!acc[topic]) acc[topic] = { correct: 0, total: 0, lastUpdated: null };
+  if (isCorrect) acc[topic].correct++;
+  acc[topic].total++;
+  acc[topic].lastUpdated = new Date().toISOString();
+  try { localStorage.setItem('synaptiq_topic_accuracy', JSON.stringify(acc)); } catch(e) {}
+}
+
+function getWeakTopics(limit) {
+  limit = limit || 5;
+  const acc = getTopicAccuracy();
+  // Seed from diagnostic weaknesses if not already tracked
+  try {
+    const diag = JSON.parse(localStorage.getItem('synaptiq_diagnostic') || 'null');
+    if (diag && diag.weaknesses) {
+      diag.weaknesses.forEach(function(t) {
+        if (!acc[t]) acc[t] = { correct: 0, total: 1, lastUpdated: diag.date };
+      });
+    }
+  } catch(e) {}
+  return Object.entries(acc)
+    .filter(function(e) { return e[1].total > 0 && (e[1].correct / e[1].total) < 0.6; })
+    .sort(function(a, b) { return (a[1].correct / a[1].total) - (b[1].correct / b[1].total); })
+    .slice(0, limit)
+    .map(function(e) { return e[0]; });
+}
+
+function getOverallAdaptiveAccuracy() {
+  const entries = Object.values(getTopicAccuracy()).filter(function(d) { return d.total > 0; });
+  if (!entries.length) return null;
+  return Math.round(entries.reduce(function(s, d) { return s + (d.correct / d.total) * 100; }, 0) / entries.length);
+}
+
+function getAdaptiveGradeSuggestion(currentGrade) {
+  const avg = getOverallAdaptiveAccuracy();
+  if (avg === null) return null;
+  const grades = ['E', 'D', 'C', 'B', 'A', 'A*'];
+  const idx = grades.indexOf(currentGrade);
+  if (avg >= 82 && idx < grades.length - 1) return { grade: grades[idx + 1], direction: 'up', acc: avg };
+  if (avg < 50 && idx > 0) return { grade: grades[idx - 1], direction: 'down', acc: avg };
+  return null;
 }
 
 // ═══════════════════════════════════════
@@ -11779,6 +11861,13 @@ async function teachChapter(mk, idx, btn) {
       rel.map(u => `- ${u.category === 'mark-scheme' ? 'MARK SCHEME' : 'PAST PAPER'}: ${u.name} (${u.board || board}, ${u.year || ''}, ${u.module || ''})${u.content ? '\nContent snippet: ' + u.content.slice(0, 350) : ''}`).join('\n\n');
   }
 
+  // Build adaptive context from student's performance data
+  const studentWeakTopics = getWeakTopics(8);
+  const overallAcc = getOverallAdaptiveAccuracy();
+  const adaptiveCtx = studentWeakTopics.length
+    ? `\n\nADAPTIVE CONTEXT: This student's performance data shows they struggle with: ${studentWeakTopics.join(', ')}. ${overallAcc !== null ? `Their overall accuracy is ${overallAcc}%.` : ''} If any of these relate to ${chapter}, give them extra attention — add a dedicated "Common Mistakes" callout, use more step-by-step worked examples for those sub-topics, and make sure the practice questions test them specifically.`
+    : '';
+
   const sys = `You are an expert A-Level Mathematics teacher for UK students (${board} exam board).
 Deliver a complete, thorough lesson. Use LaTeX math notation: inline with $...$ and display equations with $$...$$. For example: $x^2 + 3x - 4 = 0$, $$\\frac{d}{dx}(x^n) = nx^{n-1}$$. Never write x^2 in plain text — always use proper LaTeX so notation renders correctly.
 Return ONLY valid JSON (no markdown code fences, no extra text):
@@ -11790,7 +11879,7 @@ Return ONLY valid JSON (no markdown code fences, no extra text):
   "keyFormulas": ["formula 1", "formula 2", "..."]
 }
 Set "requiresGraph": true for any practice question where the student needs to sketch a graph, plot points, draw a diagram, or work with coordinate axes.
-Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice questions, 3 key formulas.${resourceCtx}`;
+Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice questions, 3 key formulas.${resourceCtx}${adaptiveCtx}`;
 
   try {
     const data = await callClaude([{ role: 'user', content: `Teach me: ${chapter} (${mod.label}, ${mod.year})` }], sys, 8000);
@@ -12521,8 +12610,29 @@ function playTrack(type) {
   showToast(`🎵 ${type.charAt(0).toUpperCase()+type.slice(1)} music — coming in next update!`);
 }
 
+// ═══════════════════════════════════════
+// LEVEL-UP: FIX emailParentReport stub
+// ═══════════════════════════════════════
 function emailParentReport() {
-  showToast('📧 Sending report...');
+  const s = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_stats') || '{}'); } catch(e) { return {}; } })();
+  const name = state.user?.name || 'Your child';
+  const email = state.user?.email || '';
+  const weakTopics = getWeakTopics(5).join(', ') || 'N/A';
+  const examDate = localStorage.getItem('synaptiq_exam_date') || 'Not set';
+  const body = encodeURIComponent(
+`Synaptiq Progress Report — ${new Date().toLocaleDateString('en-GB')}
+
+Student: ${name}
+Study Streak: ${s.streak || 1} days 🔥
+Questions Answered: ${s.questionsAnswered || 0}
+Topics Explored: ${(s.topicsExplored || []).length}
+XP Earned: ${state.xp || 0}
+Exam Date: ${examDate}
+
+Topics Needing Attention: ${weakTopics}
+
+View full dashboard at synaptiqai.co.uk`);
+  window.open(`mailto:?subject=${encodeURIComponent(`Synaptiq Progress Report — ${name}`)}&body=${body}`);
 }
 
 // Auto-open parent modal when #parent-dash-btn exists and state.user is set
@@ -12532,6 +12642,249 @@ document.addEventListener('DOMContentLoaded', () => {
     parentBtn.addEventListener('click', showParentDash);
   }
 });
+
+// ═══════════════════════════════════════
+// LEVEL-UP: ACTIVITY HEATMAP (proper grid)
+// ═══════════════════════════════════════
+(function() {
+  function buildHeatmapGrid() {
+    const container = document.getElementById('heatmap');
+    if (!container) return;
+    let activity = {};
+    try { const a = localStorage.getItem('synaptiq_activity'); if (a) activity = JSON.parse(a); } catch(e) {}
+
+    const today = new Date();
+    const totalDays = 84; // 12 weeks
+    // Build array of 84 days oldest→newest
+    const dayCells = [];
+    for (let i = totalDays - 1; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      const val = activity[key] || 0;
+      const intensity = val === 0 ? 0 : val < 15 ? 1 : val < 40 ? 2 : val < 80 ? 3 : 4;
+      const colors = ['var(--bg4)', 'rgba(201,168,76,0.2)', 'rgba(201,168,76,0.45)', 'rgba(201,168,76,0.72)', 'var(--gold)'];
+      const label = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+      dayCells.push({ key, val, intensity, color: colors[intensity], label });
+    }
+
+    // Layout: 12 columns (weeks) x 7 rows (Mon-Sun)
+    // Pad the start so column 0 starts on Monday
+    const startDow = new Date(today); startDow.setDate(today.getDate() - 83);
+    const padDays = (startDow.getDay() + 6) % 7; // days to skip at start (0=Mon)
+    const dayLabels = ['M','','W','','F','','S'];
+
+    let html = `<div style="display:flex;gap:2px">`;
+    // Day-of-week labels column
+    html += `<div style="display:grid;grid-template-rows:repeat(7,11px);gap:2px;margin-top:18px;margin-right:4px">`;
+    dayLabels.forEach(l => { html += `<div style="font-size:.6rem;color:var(--muted);height:11px;line-height:11px">${l}</div>`; });
+    html += `</div>`;
+
+    // Week columns with month labels
+    const totalCols = Math.ceil((padDays + totalDays) / 7);
+    let dayIdx = 0;
+    for (let col = 0; col < totalCols; col++) {
+      const colCells = [];
+      for (let row = 0; row < 7; row++) {
+        const flatIdx = col * 7 + row - padDays;
+        if (flatIdx < 0 || flatIdx >= totalDays) {
+          colCells.push('<div style="width:11px;height:11px"></div>');
+        } else {
+          const cell = dayCells[flatIdx];
+          colCells.push(`<div title="${cell.label}: ${cell.val} XP" style="width:11px;height:11px;border-radius:2px;background:${cell.color};cursor:default"></div>`);
+        }
+      }
+      // Month label above column (show if first day of month)
+      const flatFirst = col * 7 - padDays;
+      let monthLabel = '';
+      for (let row = 0; row < 7; row++) {
+        const fi = col * 7 + row - padDays;
+        if (fi >= 0 && fi < totalDays && dayCells[fi]) {
+          const d = new Date(dayCells[fi].key);
+          if (d.getDate() <= 7 && (col === 0 || fi === 0)) monthLabel = d.toLocaleDateString('en-GB', { month: 'short' });
+          else if (d.getDate() <= 7 && col > 0) monthLabel = d.toLocaleDateString('en-GB', { month: 'short' });
+          break;
+        }
+      }
+      html += `<div style="display:flex;flex-direction:column;gap:2px">`;
+      html += `<div style="font-size:.58rem;color:var(--muted);height:16px;line-height:16px;white-space:nowrap">${monthLabel}</div>`;
+      colCells.forEach(c => { html += c; });
+      html += `</div>`;
+    }
+    html += `</div>`;
+
+    const totalXP = Object.values(activity).reduce((s, v) => s + v, 0);
+    const activeDays = Object.keys(activity).filter(k => activity[k] > 0).length;
+    html += `<div style="font-size:.75rem;color:var(--muted);margin-top:.6rem">${activeDays} active days · ${totalXP.toLocaleString()} XP earned in the last 12 weeks</div>`;
+    container.innerHTML = html;
+  }
+
+  // Override the old function that targeted the wrong div
+  window.renderActivityHeatmap = buildHeatmapGrid;
+
+  // Patch showDash to render heatmap on home load
+  const _lvlShowDash = window.showDash;
+  if (_lvlShowDash) {
+    window.showDash = function(sub) {
+      _lvlShowDash(sub);
+      if (sub === 'home') {
+        setTimeout(buildHeatmapGrid, 50);
+        setTimeout(renderFlashcardDueWidget, 50);
+      }
+      if (sub === 'progress') {
+        setTimeout(buildHeatmapGrid, 50);
+      }
+    };
+  }
+  // Run on load
+  setTimeout(buildHeatmapGrid, 800);
+})();
+
+// ═══════════════════════════════════════
+// LEVEL-UP: EXAM COUNTDOWN with progress ring + urgency + focus topics
+// ═══════════════════════════════════════
+(function() {
+  const _lvlOrigCountdown = window.updateExamCountdown;
+  window.updateExamCountdown = function() {
+    if (_lvlOrigCountdown) _lvlOrigCountdown();
+    const stored = localStorage.getItem('synaptiq_exam_date');
+    if (!stored) return;
+
+    const now = new Date();
+    const examDate = new Date(stored);
+    const diff = Math.ceil((examDate - now) / 86400000);
+    if (diff <= 0) return;
+
+    // Progress ring
+    const firstSeen = localStorage.getItem('synaptiq_first_seen') || stored;
+    if (!localStorage.getItem('synaptiq_first_seen')) {
+      const d = new Date(); d.setDate(d.getDate() - 30);
+      localStorage.setItem('synaptiq_first_seen', d.toISOString().split('T')[0]);
+    }
+    const totalPrep = Math.ceil((examDate - new Date(firstSeen || stored)) / 86400000);
+    const elapsed = Math.max(0, totalPrep - diff);
+    const pct = totalPrep > 0 ? Math.min(100, Math.round(elapsed / totalPrep * 100)) : 0;
+    const urgencyColor = diff < 14 ? '#FB7185' : diff < 30 ? '#FBBF24' : '#4ADE80';
+    const circumference = 2 * Math.PI * 22;
+    const strokeDash = circumference - (pct / 100) * circumference;
+
+    // Weak topics recommendation
+    const weak = getWeakTopics(3);
+    const focusHTML = weak.length
+      ? `<div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">Focus this week: <span style="color:var(--gold)">${weak.join(' · ')}</span></div>`
+      : '';
+
+    // Inject ring next to the days number
+    const display = document.getElementById('countdown-display');
+    if (!display) return;
+    const existingRing = document.getElementById('countdown-ring');
+    if (!existingRing) {
+      const ring = document.createElement('div');
+      ring.id = 'countdown-ring';
+      ring.style.cssText = 'display:flex;flex-direction:column;align-items:center';
+      ring.innerHTML = `
+        <svg width="60" height="60" viewBox="0 0 60 60" style="transform:rotate(-90deg)">
+          <circle cx="30" cy="30" r="22" fill="none" stroke="var(--bg4)" stroke-width="5"/>
+          <circle id="countdown-ring-arc" cx="30" cy="30" r="22" fill="none" stroke="${urgencyColor}" stroke-width="5"
+            stroke-dasharray="${circumference}" stroke-dashoffset="${strokeDash}" stroke-linecap="round"
+            style="transition:stroke-dashoffset .6s ease"/>
+        </svg>
+        <div style="font-size:.65rem;color:var(--muted);margin-top:.2rem">${pct}% prep done</div>
+        ${focusHTML}`;
+      display.parentElement.insertBefore(ring, display);
+    } else {
+      const arc = document.getElementById('countdown-ring-arc');
+      if (arc) { arc.style.stroke = urgencyColor; arc.setAttribute('stroke-dashoffset', strokeDash); }
+      const focusEl = existingRing.querySelector('.ring-focus');
+      if (focusEl) focusEl.innerHTML = focusHTML;
+    }
+  };
+  setTimeout(window.updateExamCountdown, 900);
+})();
+
+// ═══════════════════════════════════════
+// LEVEL-UP: FLASHCARD DUE WIDGET on dashboard
+// ═══════════════════════════════════════
+function renderFlashcardDueWidget() {
+  const target = document.getElementById('exam-countdown-card');
+  if (!target) return;
+  const existing = document.getElementById('fc-due-widget');
+  if (existing) existing.remove();
+
+  let fcCards = [];
+  try { fcCards = JSON.parse(localStorage.getItem('synaptiq_fc') || '[]'); } catch(e) {}
+  const today = new Date().toISOString().split('T')[0];
+  const due = fcCards.filter(c => c.nextReview && c.nextReview <= today).length;
+  const total = fcCards.length;
+  if (total === 0) return; // No cards yet — don't show widget
+
+  const urgency = due > 10 ? '#FB7185' : due > 3 ? '#FBBF24' : '#4ADE80';
+  const widget = document.createElement('div');
+  widget.id = 'fc-due-widget';
+  widget.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap';
+  widget.innerHTML = `
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <div style="font-size:1.6rem">🃏</div>
+      <div>
+        <div style="font-weight:700;font-size:.95rem;color:var(--white)">
+          <span style="color:${urgency};font-size:1.25rem;font-weight:900">${due}</span>
+          flashcard${due !== 1 ? 's' : ''} due for review
+        </div>
+        <div style="font-size:.78rem;color:var(--muted)">${total} cards total · spaced repetition keeps it efficient</div>
+      </div>
+    </div>
+    <button class="btn btn-gold" style="font-size:.82rem;padding:.45rem 1rem;white-space:nowrap" onclick="showDash('flashcards')">
+      Review Now →
+    </button>`;
+  target.insertAdjacentElement('afterend', widget);
+}
+
+// ═══════════════════════════════════════
+// LEVEL-UP: ONBOARDING → DIAGNOSTIC
+// ═══════════════════════════════════════
+(function() {
+  const _lvlOrigClose = window.closeOnboarding;
+  window.closeOnboarding = function() {
+    if (_lvlOrigClose) _lvlOrigClose();
+    // Route new users to diagnostic so adaptive engine has data immediately
+    const hasDiag = localStorage.getItem('synaptiq_diagnostic');
+    if (!hasDiag) {
+      setTimeout(function() {
+        showDash('diagnostic');
+        showToast('✦ Let\'s start with a quick diagnostic to personalise your experience!');
+      }, 400);
+    }
+  };
+})();
+
+// ═══════════════════════════════════════
+// LEVEL-UP: "Save to Notes" on every tutor bot response
+// ═══════════════════════════════════════
+(function() {
+  const _lvlOrigTutorMsg = window.addTutorMsg;
+  if (!_lvlOrigTutorMsg || window._lvlSaveNotesPatched) return;
+  window._lvlSaveNotesPatched = true;
+  window.addTutorMsg = function(role, text) {
+    _lvlOrigTutorMsg(role, text);
+    if (role !== 'bot') return;
+    const msgs = document.getElementById('tutor-messages');
+    if (!msgs) return;
+    const last = msgs.lastElementChild;
+    if (!last || last.classList.contains('typing')) return;
+    const btn = document.createElement('button');
+    btn.style.cssText = 'display:block;margin-top:.5rem;background:none;border:1px solid var(--border);color:var(--muted);font-size:.72rem;padding:.25rem .65rem;border-radius:6px;cursor:pointer;transition:.15s';
+    btn.textContent = '📓 Save to Notes';
+    btn.onmouseover = function() { btn.style.borderColor = 'var(--gold)'; btn.style.color = 'var(--gold)'; };
+    btn.onmouseout = function() { btn.style.borderColor = 'var(--border)'; btn.style.color = 'var(--muted)'; };
+    btn.onclick = function() {
+      const noteInput = document.getElementById('note-text-input');
+      if (noteInput) noteInput.value = text;
+      showDash('notes');
+      showToast('📓 Copied to Notes — review and save!');
+    };
+    last.appendChild(btn);
+  };
+})();
 
 </script>
 
