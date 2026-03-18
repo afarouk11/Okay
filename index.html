@@ -5000,7 +5000,9 @@ function addTutorMsg(role, text) {
   }
   document.getElementById('tutor-messages').appendChild(el);
   document.getElementById('tutor-messages').scrollTop = 99999;
-  if (role === 'bot' && state.ttsEnabled) speak(text);
+  // Don't call speak() when the voice overlay is active — vcSpeak handles it
+  const voiceOverlayOpen = document.getElementById('voice-overlay')?.classList.contains('open');
+  if (role === 'bot' && state.ttsEnabled && !voiceOverlayOpen) speak(text);
 }
 
 function formatADHD(text) {
@@ -9462,26 +9464,31 @@ async function tvHandleInput(text) {
 }
 
 function tvSpeak(text) {
-  if (!window.speechSynthesis) { tvSetState('idle'); tvStartListening(); return; }
+  if (!window.speechSynthesis) { tvSetState('idle'); setTimeout(tvStartListening, 400); return; }
   window.speechSynthesis.cancel();
   tvSetState('speaking');
 
-  // Split into sentences for smooth delivery
   const sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
   let idx = 0;
+  let done = false;
+
+  function finish() {
+    if (done) return;
+    done = true;
+    tvSetState('idle');
+    setTimeout(tvStartListening, 500);
+  }
 
   function next() {
-    if (idx >= sentences.length || TV.state !== 'speaking') {
-      // Auto-listen again (hands-free loop)
-      tvSetState('idle');
-      setTimeout(tvStartListening, 500);
-      return;
-    }
+    if (idx >= sentences.length || TV.state !== 'speaking') { finish(); return; }
     const utt = new SpeechSynthesisUtterance(sentences[idx++].trim());
     utt.lang = 'en-GB'; utt.rate = 0.94; utt.pitch = 1.02;
     const v = tvPickVoice();
     if (v) utt.voice = v;
-    utt.onend = next;
+    utt.onerror = next; // skip on error, don't stall
+    // Chrome safety timeout
+    const guard = setTimeout(next, 15000);
+    utt.onend = () => { clearTimeout(guard); next(); };
     window.speechSynthesis.speak(utt);
   }
   next();
@@ -13118,19 +13125,28 @@ function vcSpeak(text, onEnd) {
   vcSetState('speaking');
   document.getElementById('voice-reply').textContent = text.replace(/[*_`#~>\[\]]/g, '');
 
-  // Split into natural sentences for more fluid speech
   const sentences = text.replace(/[*_`#~>\[\]]/g, '').match(/[^.!?]+[.!?]*/g) || [text];
   let idx = 0;
+  let done = false;
+
+  function finish() {
+    if (done) return;
+    done = true;
+    if (onEnd) onEnd();
+  }
 
   function speakNext() {
-    if (idx >= sentences.length || VC.state !== 'speaking') { if (onEnd) onEnd(); return; }
+    if (idx >= sentences.length || VC.state !== 'speaking') { finish(); return; }
     const utt = new SpeechSynthesisUtterance(sentences[idx++].trim());
-    utt.lang = 'en-GB';
-    utt.rate = 0.95;
-    utt.pitch = 1.0;
+    utt.lang = 'en-GB'; utt.rate = 0.95; utt.pitch = 1.0;
     const v = vcPickVoice();
     if (v) utt.voice = v;
-    utt.onend = speakNext;
+    utt.onend   = speakNext;
+    utt.onerror = speakNext; // don't stall on error
+    // Chrome safety: if onend never fires, force-advance after 15s
+    const guard = setTimeout(speakNext, 15000);
+    const origOnEnd = utt.onend;
+    utt.onend = () => { clearTimeout(guard); origOnEnd(); };
     window.speechSynthesis.speak(utt);
   }
   speakNext();
@@ -13196,9 +13212,10 @@ async function vcHandleInput(text) {
     addTutorMsg('bot', reply);
     addXP(10, '🎙️ Voice question +10 XP');
 
+    // Always auto-listen again after speaking — hands-free loop
     vcSpeak(reply, () => {
-      vcSetState(VC.handsfree ? 'idle' : 'idle');
-      if (VC.handsfree) setTimeout(voiceStartListening, 600);
+      vcSetState('idle');
+      setTimeout(voiceStartListening, 500);
     });
   } catch(e) {
     vcSetState('idle');
@@ -13218,7 +13235,6 @@ function voiceTapOrb() {
 }
 
 function toggleVoiceMode() {
-  // Preload voices (needed on some browsers)
   if (window.speechSynthesis) window.speechSynthesis.getVoices();
 
   const overlay = document.getElementById('voice-overlay');
@@ -13230,11 +13246,25 @@ function toggleVoiceMode() {
     overlay.classList.add('open');
     const btn = document.getElementById('voice-mode-btn');
     if (btn) btn.classList.add('active');
-    // Kick off voice list after a tick (Chrome needs this)
+
+    VC.handsfree = true; // enable hands-free loop
+
     setTimeout(() => {
       vcPickVoice();
       vcSetState('idle');
-    }, 200);
+
+      // Greet and immediately start listening
+      const subject = document.getElementById('tutor-subject-title')?.textContent || 'Maths';
+      const topic   = state.topic || 'your topic';
+      const greeting = `Hi! I'm your ${subject} tutor. We're covering ${topic}. What would you like help with?`;
+      const replyEl = document.getElementById('voice-reply');
+      if (replyEl) replyEl.textContent = greeting;
+      // Speak greeting, then auto-listen
+      vcSpeak(greeting, () => {
+        vcSetState('idle');
+        setTimeout(voiceStartListening, 400);
+      });
+    }, 250);
   }
 }
 
