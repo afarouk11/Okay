@@ -12610,8 +12610,29 @@ function playTrack(type) {
   showToast(`🎵 ${type.charAt(0).toUpperCase()+type.slice(1)} music — coming in next update!`);
 }
 
+// ═══════════════════════════════════════
+// LEVEL-UP: FIX emailParentReport stub
+// ═══════════════════════════════════════
 function emailParentReport() {
-  showToast('📧 Sending report...');
+  const s = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_stats') || '{}'); } catch(e) { return {}; } })();
+  const name = state.user?.name || 'Your child';
+  const email = state.user?.email || '';
+  const weakTopics = getWeakTopics(5).join(', ') || 'N/A';
+  const examDate = localStorage.getItem('synaptiq_exam_date') || 'Not set';
+  const body = encodeURIComponent(
+`Synaptiq Progress Report — ${new Date().toLocaleDateString('en-GB')}
+
+Student: ${name}
+Study Streak: ${s.streak || 1} days 🔥
+Questions Answered: ${s.questionsAnswered || 0}
+Topics Explored: ${(s.topicsExplored || []).length}
+XP Earned: ${state.xp || 0}
+Exam Date: ${examDate}
+
+Topics Needing Attention: ${weakTopics}
+
+View full dashboard at synaptiqai.co.uk`);
+  window.open(`mailto:?subject=${encodeURIComponent(`Synaptiq Progress Report — ${name}`)}&body=${body}`);
 }
 
 // Auto-open parent modal when #parent-dash-btn exists and state.user is set
@@ -12621,6 +12642,249 @@ document.addEventListener('DOMContentLoaded', () => {
     parentBtn.addEventListener('click', showParentDash);
   }
 });
+
+// ═══════════════════════════════════════
+// LEVEL-UP: ACTIVITY HEATMAP (proper grid)
+// ═══════════════════════════════════════
+(function() {
+  function buildHeatmapGrid() {
+    const container = document.getElementById('heatmap');
+    if (!container) return;
+    let activity = {};
+    try { const a = localStorage.getItem('synaptiq_activity'); if (a) activity = JSON.parse(a); } catch(e) {}
+
+    const today = new Date();
+    const totalDays = 84; // 12 weeks
+    // Build array of 84 days oldest→newest
+    const dayCells = [];
+    for (let i = totalDays - 1; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = d.toISOString().split('T')[0];
+      const val = activity[key] || 0;
+      const intensity = val === 0 ? 0 : val < 15 ? 1 : val < 40 ? 2 : val < 80 ? 3 : 4;
+      const colors = ['var(--bg4)', 'rgba(201,168,76,0.2)', 'rgba(201,168,76,0.45)', 'rgba(201,168,76,0.72)', 'var(--gold)'];
+      const label = d.toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
+      dayCells.push({ key, val, intensity, color: colors[intensity], label });
+    }
+
+    // Layout: 12 columns (weeks) x 7 rows (Mon-Sun)
+    // Pad the start so column 0 starts on Monday
+    const startDow = new Date(today); startDow.setDate(today.getDate() - 83);
+    const padDays = (startDow.getDay() + 6) % 7; // days to skip at start (0=Mon)
+    const dayLabels = ['M','','W','','F','','S'];
+
+    let html = `<div style="display:flex;gap:2px">`;
+    // Day-of-week labels column
+    html += `<div style="display:grid;grid-template-rows:repeat(7,11px);gap:2px;margin-top:18px;margin-right:4px">`;
+    dayLabels.forEach(l => { html += `<div style="font-size:.6rem;color:var(--muted);height:11px;line-height:11px">${l}</div>`; });
+    html += `</div>`;
+
+    // Week columns with month labels
+    const totalCols = Math.ceil((padDays + totalDays) / 7);
+    let dayIdx = 0;
+    for (let col = 0; col < totalCols; col++) {
+      const colCells = [];
+      for (let row = 0; row < 7; row++) {
+        const flatIdx = col * 7 + row - padDays;
+        if (flatIdx < 0 || flatIdx >= totalDays) {
+          colCells.push('<div style="width:11px;height:11px"></div>');
+        } else {
+          const cell = dayCells[flatIdx];
+          colCells.push(`<div title="${cell.label}: ${cell.val} XP" style="width:11px;height:11px;border-radius:2px;background:${cell.color};cursor:default"></div>`);
+        }
+      }
+      // Month label above column (show if first day of month)
+      const flatFirst = col * 7 - padDays;
+      let monthLabel = '';
+      for (let row = 0; row < 7; row++) {
+        const fi = col * 7 + row - padDays;
+        if (fi >= 0 && fi < totalDays && dayCells[fi]) {
+          const d = new Date(dayCells[fi].key);
+          if (d.getDate() <= 7 && (col === 0 || fi === 0)) monthLabel = d.toLocaleDateString('en-GB', { month: 'short' });
+          else if (d.getDate() <= 7 && col > 0) monthLabel = d.toLocaleDateString('en-GB', { month: 'short' });
+          break;
+        }
+      }
+      html += `<div style="display:flex;flex-direction:column;gap:2px">`;
+      html += `<div style="font-size:.58rem;color:var(--muted);height:16px;line-height:16px;white-space:nowrap">${monthLabel}</div>`;
+      colCells.forEach(c => { html += c; });
+      html += `</div>`;
+    }
+    html += `</div>`;
+
+    const totalXP = Object.values(activity).reduce((s, v) => s + v, 0);
+    const activeDays = Object.keys(activity).filter(k => activity[k] > 0).length;
+    html += `<div style="font-size:.75rem;color:var(--muted);margin-top:.6rem">${activeDays} active days · ${totalXP.toLocaleString()} XP earned in the last 12 weeks</div>`;
+    container.innerHTML = html;
+  }
+
+  // Override the old function that targeted the wrong div
+  window.renderActivityHeatmap = buildHeatmapGrid;
+
+  // Patch showDash to render heatmap on home load
+  const _lvlShowDash = window.showDash;
+  if (_lvlShowDash) {
+    window.showDash = function(sub) {
+      _lvlShowDash(sub);
+      if (sub === 'home') {
+        setTimeout(buildHeatmapGrid, 50);
+        setTimeout(renderFlashcardDueWidget, 50);
+      }
+      if (sub === 'progress') {
+        setTimeout(buildHeatmapGrid, 50);
+      }
+    };
+  }
+  // Run on load
+  setTimeout(buildHeatmapGrid, 800);
+})();
+
+// ═══════════════════════════════════════
+// LEVEL-UP: EXAM COUNTDOWN with progress ring + urgency + focus topics
+// ═══════════════════════════════════════
+(function() {
+  const _lvlOrigCountdown = window.updateExamCountdown;
+  window.updateExamCountdown = function() {
+    if (_lvlOrigCountdown) _lvlOrigCountdown();
+    const stored = localStorage.getItem('synaptiq_exam_date');
+    if (!stored) return;
+
+    const now = new Date();
+    const examDate = new Date(stored);
+    const diff = Math.ceil((examDate - now) / 86400000);
+    if (diff <= 0) return;
+
+    // Progress ring
+    const firstSeen = localStorage.getItem('synaptiq_first_seen') || stored;
+    if (!localStorage.getItem('synaptiq_first_seen')) {
+      const d = new Date(); d.setDate(d.getDate() - 30);
+      localStorage.setItem('synaptiq_first_seen', d.toISOString().split('T')[0]);
+    }
+    const totalPrep = Math.ceil((examDate - new Date(firstSeen || stored)) / 86400000);
+    const elapsed = Math.max(0, totalPrep - diff);
+    const pct = totalPrep > 0 ? Math.min(100, Math.round(elapsed / totalPrep * 100)) : 0;
+    const urgencyColor = diff < 14 ? '#FB7185' : diff < 30 ? '#FBBF24' : '#4ADE80';
+    const circumference = 2 * Math.PI * 22;
+    const strokeDash = circumference - (pct / 100) * circumference;
+
+    // Weak topics recommendation
+    const weak = getWeakTopics(3);
+    const focusHTML = weak.length
+      ? `<div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">Focus this week: <span style="color:var(--gold)">${weak.join(' · ')}</span></div>`
+      : '';
+
+    // Inject ring next to the days number
+    const display = document.getElementById('countdown-display');
+    if (!display) return;
+    const existingRing = document.getElementById('countdown-ring');
+    if (!existingRing) {
+      const ring = document.createElement('div');
+      ring.id = 'countdown-ring';
+      ring.style.cssText = 'display:flex;flex-direction:column;align-items:center';
+      ring.innerHTML = `
+        <svg width="60" height="60" viewBox="0 0 60 60" style="transform:rotate(-90deg)">
+          <circle cx="30" cy="30" r="22" fill="none" stroke="var(--bg4)" stroke-width="5"/>
+          <circle id="countdown-ring-arc" cx="30" cy="30" r="22" fill="none" stroke="${urgencyColor}" stroke-width="5"
+            stroke-dasharray="${circumference}" stroke-dashoffset="${strokeDash}" stroke-linecap="round"
+            style="transition:stroke-dashoffset .6s ease"/>
+        </svg>
+        <div style="font-size:.65rem;color:var(--muted);margin-top:.2rem">${pct}% prep done</div>
+        ${focusHTML}`;
+      display.parentElement.insertBefore(ring, display);
+    } else {
+      const arc = document.getElementById('countdown-ring-arc');
+      if (arc) { arc.style.stroke = urgencyColor; arc.setAttribute('stroke-dashoffset', strokeDash); }
+      const focusEl = existingRing.querySelector('.ring-focus');
+      if (focusEl) focusEl.innerHTML = focusHTML;
+    }
+  };
+  setTimeout(window.updateExamCountdown, 900);
+})();
+
+// ═══════════════════════════════════════
+// LEVEL-UP: FLASHCARD DUE WIDGET on dashboard
+// ═══════════════════════════════════════
+function renderFlashcardDueWidget() {
+  const target = document.getElementById('exam-countdown-card');
+  if (!target) return;
+  const existing = document.getElementById('fc-due-widget');
+  if (existing) existing.remove();
+
+  let fcCards = [];
+  try { fcCards = JSON.parse(localStorage.getItem('synaptiq_fc') || '[]'); } catch(e) {}
+  const today = new Date().toISOString().split('T')[0];
+  const due = fcCards.filter(c => c.nextReview && c.nextReview <= today).length;
+  const total = fcCards.length;
+  if (total === 0) return; // No cards yet — don't show widget
+
+  const urgency = due > 10 ? '#FB7185' : due > 3 ? '#FBBF24' : '#4ADE80';
+  const widget = document.createElement('div');
+  widget.id = 'fc-due-widget';
+  widget.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap';
+  widget.innerHTML = `
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <div style="font-size:1.6rem">🃏</div>
+      <div>
+        <div style="font-weight:700;font-size:.95rem;color:var(--white)">
+          <span style="color:${urgency};font-size:1.25rem;font-weight:900">${due}</span>
+          flashcard${due !== 1 ? 's' : ''} due for review
+        </div>
+        <div style="font-size:.78rem;color:var(--muted)">${total} cards total · spaced repetition keeps it efficient</div>
+      </div>
+    </div>
+    <button class="btn btn-gold" style="font-size:.82rem;padding:.45rem 1rem;white-space:nowrap" onclick="showDash('flashcards')">
+      Review Now →
+    </button>`;
+  target.insertAdjacentElement('afterend', widget);
+}
+
+// ═══════════════════════════════════════
+// LEVEL-UP: ONBOARDING → DIAGNOSTIC
+// ═══════════════════════════════════════
+(function() {
+  const _lvlOrigClose = window.closeOnboarding;
+  window.closeOnboarding = function() {
+    if (_lvlOrigClose) _lvlOrigClose();
+    // Route new users to diagnostic so adaptive engine has data immediately
+    const hasDiag = localStorage.getItem('synaptiq_diagnostic');
+    if (!hasDiag) {
+      setTimeout(function() {
+        showDash('diagnostic');
+        showToast('✦ Let\'s start with a quick diagnostic to personalise your experience!');
+      }, 400);
+    }
+  };
+})();
+
+// ═══════════════════════════════════════
+// LEVEL-UP: "Save to Notes" on every tutor bot response
+// ═══════════════════════════════════════
+(function() {
+  const _lvlOrigTutorMsg = window.addTutorMsg;
+  if (!_lvlOrigTutorMsg || window._lvlSaveNotesPatched) return;
+  window._lvlSaveNotesPatched = true;
+  window.addTutorMsg = function(role, text) {
+    _lvlOrigTutorMsg(role, text);
+    if (role !== 'bot') return;
+    const msgs = document.getElementById('tutor-messages');
+    if (!msgs) return;
+    const last = msgs.lastElementChild;
+    if (!last || last.classList.contains('typing')) return;
+    const btn = document.createElement('button');
+    btn.style.cssText = 'display:block;margin-top:.5rem;background:none;border:1px solid var(--border);color:var(--muted);font-size:.72rem;padding:.25rem .65rem;border-radius:6px;cursor:pointer;transition:.15s';
+    btn.textContent = '📓 Save to Notes';
+    btn.onmouseover = function() { btn.style.borderColor = 'var(--gold)'; btn.style.color = 'var(--gold)'; };
+    btn.onmouseout = function() { btn.style.borderColor = 'var(--border)'; btn.style.color = 'var(--muted)'; };
+    btn.onclick = function() {
+      const noteInput = document.getElementById('note-text-input');
+      if (noteInput) noteInput.value = text;
+      showDash('notes');
+      showToast('📓 Copied to Notes — review and save!');
+    };
+    last.appendChild(btn);
+  };
+})();
 
 </script>
 
