@@ -561,7 +561,7 @@ function renderSlides(rawText, subject, topic, level, board) {
 
   try {
     const clean = rawText.replace(/```json|```/g,'').trim();
-    const sanitized = clean.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+    const sanitized = clean.replace(/(?<!\\)\\(?!["\\/bfnrtu])/g, '\\\\');
     slides = JSON.parse(sanitized);
     if (!Array.isArray(slides) || slides.length === 0) throw new Error('empty');
   } catch(e) {
@@ -688,7 +688,7 @@ function renderQuiz(rawText, subject, topic, level, board) {
   let questions = [];
   try {
     const clean = rawText.replace(/```json|```/g,'').trim();
-    const sanitized = clean.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+    const sanitized = clean.replace(/(?<!\\)\\(?!["\\/bfnrtu])/g, '\\\\');
     questions = JSON.parse(sanitized);
   } catch(e) {
     renderLesson(rawText, subject, topic, level, board);
