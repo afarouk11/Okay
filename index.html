@@ -11929,33 +11929,7 @@ if (_teacherOrigShowDash) {
   };
 }
 
-// ── Practice question canvas (freehand drawing) ─────────
-let _qDrawActive = false, _qDrawCtx = null, _qDrawColor = '#C9A84C';
-function qDrawStart(canvas, e) {
-  _qDrawActive = true;
-  _qDrawCtx = canvas.getContext('2d');
-  const p = _qGetPos(canvas, e);
-  _qDrawCtx.beginPath(); _qDrawCtx.moveTo(p.x, p.y);
-  _qDrawCtx.strokeStyle = _qDrawColor; _qDrawCtx.lineWidth = 2; _qDrawCtx.lineCap = 'round'; _qDrawCtx.lineJoin = 'round';
-  e.preventDefault();
-}
-function qDrawMove(canvas, e) {
-  if (!_qDrawActive || !_qDrawCtx) return;
-  const p = _qGetPos(canvas, e);
-  _qDrawCtx.lineTo(p.x, p.y); _qDrawCtx.stroke();
-  e.preventDefault();
-}
-function qDrawStop() { _qDrawActive = false; _qDrawCtx = null; }
-function _qGetPos(canvas, e) {
-  const r = canvas.getBoundingClientRect();
-  const src = e.touches ? e.touches[0] : e;
-  return { x: (src.clientX - r.left) * (canvas.width / r.width), y: (src.clientY - r.top) * (canvas.height / r.height) };
-}
-function qClearCanvas(id) {
-  const c = document.getElementById(id);
-  if (c) { const ctx = c.getContext('2d'); ctx.clearRect(0, 0, c.width, c.height); }
-}
-function qSetColor(btn, color) { _qDrawColor = color; }
+
 
 // ═══════════════════════════════════════
 // ADMIN GLOBAL RESOURCES
