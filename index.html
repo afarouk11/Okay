@@ -6391,6 +6391,8 @@ function submitDiagnostic() {
   // Save results
   const diagResult = { date: new Date().toISOString(), pct, level, strengths, weaknesses, correctCount, total: topicResults.length };
   localStorage.setItem('synaptiq_diagnostic', JSON.stringify(diagResult));
+  // Seed per-topic accuracy from diagnostic so adaptive engine uses it immediately
+  topicResults.forEach(function(r) { recordTopicResult(r.topic, r.correct); });
   addXP(30, 'Diagnostic test completed!');
   renderPrevDiagnostic();
 }
@@ -6454,18 +6456,40 @@ async function generateQuestionsV2() {
     'OCR': 'Use OCR-style command terms and synoptic question approaches.',
     'WJEC': 'Use WJEC/Eduqas question formatting conventions.'
   };
+  // ── Adaptive: auto-fill weak topics and adjust grade ──
+  const weakTopics = getWeakTopics(5);
+  const topicsEl = document.getElementById('q-topics');
+  const adaptiveBanner = document.getElementById('adaptive-suggestion');
+  const effectiveTopics = topics || (weakTopics.length ? weakTopics.join(', ') : '');
+  if (!topics && weakTopics.length && topicsEl) {
+    topicsEl.value = weakTopics.join(', ');
+    if (adaptiveBanner) {
+      adaptiveBanner.innerHTML = `📊 <strong>Adaptive:</strong> Focusing on your weak topics: <em>${weakTopics.join(', ')}</em>. Clear the topics field to generate general questions.`;
+      adaptiveBanner.style.display = 'block';
+    }
+  }
+  const gradeSuggestion = getAdaptiveGradeSuggestion(grade);
+  if (gradeSuggestion) {
+    const gradeEl = document.getElementById('q-grade');
+    if (gradeEl) gradeEl.value = gradeSuggestion.grade;
+    const msg = gradeSuggestion.direction === 'up'
+      ? `🚀 <strong>Adaptive:</strong> Your average accuracy is ${gradeSuggestion.acc}% — bumped to ${gradeSuggestion.grade} to keep challenging you!`
+      : `💪 <strong>Adaptive:</strong> Your average accuracy is ${gradeSuggestion.acc}% — dropped to ${gradeSuggestion.grade} to rebuild confidence.`;
+    if (adaptiveBanner) { adaptiveBanner.innerHTML = (adaptiveBanner.innerHTML ? adaptiveBanner.innerHTML + '<br>' : '') + msg; adaptiveBanner.style.display = 'block'; }
+  }
+
   let sys = `You are an expert UK exam question writer specialising in ${board} ${level} ${sub}.
-Generate exactly ${num} exam-style questions for ${grade} target.
-Question types: ${type}. ${topics ? 'Focus on: ' + topics : 'Cover key topics.'}
+Generate exactly ${num} exam-style questions for ${gradeSuggestion ? gradeSuggestion.grade : grade} target.
+Question types: ${type}. ${effectiveTopics ? 'Focus on: ' + effectiveTopics : 'Cover key topics.'}
 ${bloomInstructions[bloom] || bloomInstructions['Mixed']}
 ${boardStyle[board] || ''}
 Format STRICTLY as JSON array with this structure:
-[{"question":"...","marks":3,"type":"short answer","hint":"...","bloom":"remember|understand|apply|analyse|evaluate|create"}]
+[{"question":"...","marks":3,"type":"short answer","hint":"...","topic":"specific topic name","bloom":"remember|understand|apply|analyse|evaluate|create"}]
 Each question must be exam-quality, use UK spelling, follow ${board} style and mark scheme conventions.
 ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility notes: ' + a11y : ''}`;
   sys += getSafeguardingPrompt();
   try {
-    const data = await callClaude([{ role: 'user', content: `Generate ${num} ${sub} questions for ${board} ${level}, ${grade} target. ${topics ? 'Topics: ' + topics : ''}` }], sys);
+    const data = await callClaude([{ role: 'user', content: `Generate ${num} ${sub} questions for ${board} ${level}, ${gradeSuggestion ? gradeSuggestion.grade : grade} target. ${effectiveTopics ? 'Topics: ' + effectiveTopics : ''}` }], sys);
     const reply = getReply(data);
     let questions;
     try {
@@ -6508,6 +6532,7 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
     state.currentQuestions = questions;
     state.currentQSubject = sub;
     state.currentQBoard = board;
+    state.currentQGrade = gradeSuggestion ? gradeSuggestion.grade : grade;
     addXP(20);
     incrementQuestionCount();
     showToast('✦ Questions generated!');
@@ -6547,6 +6572,9 @@ Use UK marking conventions. Award partial marks where appropriate.`;
       totalMarks += r.marksAwarded || 0;
       totalPossible += r.marksTotal || 3;
       if (r.correct) correct++;
+      // Record per-topic accuracy for adaptive difficulty
+      const q = state.currentQuestions && state.currentQuestions[r.questionNum - 1];
+      if (q && q.topic) recordTopicResult(q.topic, !!r.correct);
       const block = document.querySelectorAll('#q-questions .question-block')[r.questionNum - 1];
       if (block) {
         const existing = block.querySelector('.answer-feedback');
@@ -6579,7 +6607,7 @@ Use UK marking conventions. Award partial marks where appropriate.`;
       updateDashboardStats();
     }
     // Adaptive difficulty suggestion
-    showAdaptiveSuggestion(pct, grade);
+    showAdaptiveSuggestion(pct, state.currentQGrade || 'Grade 6-7');
   } catch(e) {
     showToast('⚠️ Could not mark answers: ' + e.message);
   }
@@ -6623,6 +6651,58 @@ function trackMastery(subject, accuracy) {
     showToast(`🏆 ${subject} mastered! Average accuracy: ${avg}%`);
     addXP(50, `🏆 ${subject} mastery bonus!`);
   }
+}
+
+// ═══════════════════════════════════════
+// ADAPTIVE LEARNING ENGINE
+// ═══════════════════════════════════════
+function getTopicAccuracy() {
+  try { return JSON.parse(localStorage.getItem('synaptiq_topic_accuracy') || '{}'); } catch(e) { return {}; }
+}
+
+function recordTopicResult(topic, isCorrect) {
+  if (!topic || topic === 'General') return;
+  const acc = getTopicAccuracy();
+  if (!acc[topic]) acc[topic] = { correct: 0, total: 0, lastUpdated: null };
+  if (isCorrect) acc[topic].correct++;
+  acc[topic].total++;
+  acc[topic].lastUpdated = new Date().toISOString();
+  try { localStorage.setItem('synaptiq_topic_accuracy', JSON.stringify(acc)); } catch(e) {}
+}
+
+function getWeakTopics(limit) {
+  limit = limit || 5;
+  const acc = getTopicAccuracy();
+  // Seed from diagnostic weaknesses if not already tracked
+  try {
+    const diag = JSON.parse(localStorage.getItem('synaptiq_diagnostic') || 'null');
+    if (diag && diag.weaknesses) {
+      diag.weaknesses.forEach(function(t) {
+        if (!acc[t]) acc[t] = { correct: 0, total: 1, lastUpdated: diag.date };
+      });
+    }
+  } catch(e) {}
+  return Object.entries(acc)
+    .filter(function(e) { return e[1].total > 0 && (e[1].correct / e[1].total) < 0.6; })
+    .sort(function(a, b) { return (a[1].correct / a[1].total) - (b[1].correct / b[1].total); })
+    .slice(0, limit)
+    .map(function(e) { return e[0]; });
+}
+
+function getOverallAdaptiveAccuracy() {
+  const entries = Object.values(getTopicAccuracy()).filter(function(d) { return d.total > 0; });
+  if (!entries.length) return null;
+  return Math.round(entries.reduce(function(s, d) { return s + (d.correct / d.total) * 100; }, 0) / entries.length);
+}
+
+function getAdaptiveGradeSuggestion(currentGrade) {
+  const avg = getOverallAdaptiveAccuracy();
+  if (avg === null) return null;
+  const grades = ['Grade 4-5', 'Grade 6-7', 'Grade 7-8', 'Grade 8-9'];
+  const idx = grades.indexOf(currentGrade);
+  if (avg >= 82 && idx < grades.length - 1) return { grade: grades[idx + 1], direction: 'up', acc: avg };
+  if (avg < 50 && idx > 0) return { grade: grades[idx - 1], direction: 'down', acc: avg };
+  return null;
 }
 
 // ═══════════════════════════════════════
@@ -11779,6 +11859,13 @@ async function teachChapter(mk, idx, btn) {
       rel.map(u => `- ${u.category === 'mark-scheme' ? 'MARK SCHEME' : 'PAST PAPER'}: ${u.name} (${u.board || board}, ${u.year || ''}, ${u.module || ''})${u.content ? '\nContent snippet: ' + u.content.slice(0, 350) : ''}`).join('\n\n');
   }
 
+  // Build adaptive context from student's performance data
+  const studentWeakTopics = getWeakTopics(8);
+  const overallAcc = getOverallAdaptiveAccuracy();
+  const adaptiveCtx = studentWeakTopics.length
+    ? `\n\nADAPTIVE CONTEXT: This student's performance data shows they struggle with: ${studentWeakTopics.join(', ')}. ${overallAcc !== null ? `Their overall accuracy is ${overallAcc}%.` : ''} If any of these relate to ${chapter}, give them extra attention — add a dedicated "Common Mistakes" callout, use more step-by-step worked examples for those sub-topics, and make sure the practice questions test them specifically.`
+    : '';
+
   const sys = `You are an expert A-Level Mathematics teacher for UK students (${board} exam board).
 Deliver a complete, thorough lesson. Use LaTeX math notation: inline with $...$ and display equations with $$...$$. For example: $x^2 + 3x - 4 = 0$, $$\\frac{d}{dx}(x^n) = nx^{n-1}$$. Never write x^2 in plain text — always use proper LaTeX so notation renders correctly.
 Return ONLY valid JSON (no markdown code fences, no extra text):
@@ -11790,7 +11877,7 @@ Return ONLY valid JSON (no markdown code fences, no extra text):
   "keyFormulas": ["formula 1", "formula 2", "..."]
 }
 Set "requiresGraph": true for any practice question where the student needs to sketch a graph, plot points, draw a diagram, or work with coordinate axes.
-Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice questions, 3 key formulas.${resourceCtx}`;
+Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice questions, 3 key formulas.${resourceCtx}${adaptiveCtx}`;
 
   try {
     const data = await callClaude([{ role: 'user', content: `Teach me: ${chapter} (${mod.label}, ${mod.year})` }], sys, 8000);
