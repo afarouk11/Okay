@@ -11777,7 +11777,7 @@ Set "requiresGraph": true for any practice question where the student needs to s
 Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice questions, 3 key formulas.${resourceCtx}`;
 
   try {
-    const data = await callClaude([{ role: 'user', content: `Teach me: ${chapter} (${mod.label}, ${mod.year})` }], sys);
+    const data = await callClaude([{ role: 'user', content: `Teach me: ${chapter} (${mod.label}, ${mod.year})` }], sys, 4000);
     let raw = getReply(data).replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
     const lesson = JSON.parse(fixJsonLatex(raw));
     renderTeacherLesson(chapter, mod.year, lesson, box);
