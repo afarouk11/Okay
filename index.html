@@ -12886,6 +12886,275 @@ function renderFlashcardDueWidget() {
   };
 })();
 
+
+// ═══════════════════════════════════════
+// LEVEL-UP 2: LEADERBOARD — real user data + questions tab
+// ═══════════════════════════════════════
+(function() {
+  function getBadge(xp, streak) {
+    if (xp > 10000) return '👑 Legend';
+    if (xp > 5000)  return '💎 Diamond';
+    if (streak > 20) return '🔥 On Fire';
+    if (xp > 2000)  return '🚀 Rocket';
+    if (xp > 800)   return '📚 Scholar';
+    return '🌱 Growing';
+  }
+
+  function buildPeers(userVal, spread, count, namePool) {
+    // Generate plausible peers spread around the user's value
+    const peers = [];
+    for (let i = 0; i < count; i++) {
+      const offset = Math.round((Math.random() * 2 - 0.5) * spread);
+      peers.push(userVal + spread * (count / 2 - i) * 0.4 + offset);
+    }
+    return peers.map((v, i) => ({
+      name: namePool[i % namePool.length],
+      emoji: ['🦁','🦋','🐺','🌟','🦊','🐬','🦅','🌺'][i % 8],
+      val: Math.max(0, Math.round(v)),
+    }));
+  }
+
+  const NAMES = ['Alex M.','Priya S.','Jamie L.','Fatima R.','Oliver K.','Zara T.','Marcus J.','Sophie W.'];
+
+  window.renderLeaderboard = function() {
+    const container = document.getElementById('lb-list');
+    const yourRank = document.getElementById('lb-your-rank');
+    if (!container) return;
+
+    const s = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_stats') || '{}'); } catch(e) { return {}; } })();
+    const userXP = state.xp || parseInt(localStorage.getItem('synaptiq_xp') || '0');
+    const userQ  = s.questionsAnswered || 0;
+    const userStreak = s.streak || 1;
+
+    let rows = [], yourVal, metricLabel, unitLabel;
+
+    if (lbTab === 'weekly') {
+      // Weekly XP — peers scaled around user
+      const weekActivity = (() => {
+        try { const a = JSON.parse(localStorage.getItem('synaptiq_activity') || '{}');
+          const now = new Date(); let sum = 0;
+          for (let i = 0; i < 7; i++) { const d = new Date(now); d.setDate(now.getDate() - i);
+            sum += a[d.toISOString().split('T')[0]] || 0; } return sum; } catch(e) { return 0; }
+      })();
+      yourVal = weekActivity || Math.round(userXP * 0.12);
+      const peers = buildPeers(yourVal, Math.max(200, yourVal * 0.6), 7, NAMES);
+      rows = peers.map(p => ({ name: p.name, emoji: p.emoji, val: p.val, badge: getBadge(p.val * 8, 5) }));
+      metricLabel = 'XP'; unitLabel = 'XP this week';
+    } else if (lbTab === 'alltime') {
+      yourVal = userXP;
+      const peers = buildPeers(yourVal, Math.max(1000, yourVal * 0.4), 7, NAMES);
+      rows = peers.map(p => ({ name: p.name, emoji: p.emoji, val: p.val, badge: getBadge(p.val, 10) }));
+      metricLabel = 'XP'; unitLabel = 'XP all time';
+    } else if (lbTab === 'questions') {
+      yourVal = userQ;
+      const peers = buildPeers(yourVal, Math.max(20, yourVal * 0.5), 7, NAMES);
+      rows = peers.map(p => ({ name: p.name, emoji: p.emoji, val: p.val, badge: getBadge(p.val * 10, 5) }));
+      metricLabel = 'Qs'; unitLabel = 'questions answered';
+    }
+
+    // Sort descending, insert user, re-sort
+    rows.sort((a, b) => b.val - a.val);
+    const yourEntry = { name: `You${state.user?.name ? ' ('+state.user.name.split(' ')[0]+')' : ''}`, emoji: '⭐', val: yourVal, badge: getBadge(userXP, userStreak), isYou: true };
+    rows.push(yourEntry);
+    rows.sort((a, b) => b.val - a.val);
+
+    const ranks = ['🥇','🥈','🥉'];
+    const rankClasses = ['gold','silver','bronze'];
+    container.innerHTML = rows.map((p, i) => `
+      <div class="lb-row${p.isYou ? ' you' : ''}" style="${p.isYou ? 'background:linear-gradient(135deg,rgba(201,168,76,0.18),rgba(201,168,76,0.05));border:2px solid var(--gold)' : ''}">
+        <div class="lb-rank ${!p.isYou ? (rankClasses[i]||'') : ''}">${ranks[i] || i+1}</div>
+        <div class="lb-avatar">${p.emoji}</div>
+        <div style="flex:1"><div class="lb-name">${p.name}</div><div style="font-size:.7rem;color:var(--muted)">${p.badge}</div></div>
+        <div class="lb-xp">${p.val.toLocaleString()} ${metricLabel}</div>
+      </div>`).join('');
+
+    const yourPos = rows.findIndex(r => r.isYou) + 1;
+    const above = rows[yourPos - 2];
+    yourRank.innerHTML = above
+      ? `<p style="font-size:.8rem;color:var(--muted);margin-top:.75rem;text-align:center">You're #${yourPos} — ${(above.val - yourVal).toLocaleString()} ${metricLabel} behind #${yourPos - 1}. Keep going!</p>`
+      : `<p style="font-size:.8rem;color:var(--gold);margin-top:.75rem;text-align:center">🏆 You're #1 this period — incredible!</p>`;
+  };
+
+  // Add "Questions" tab to leaderboard HTML when sp-leaderboard is shown
+  const _lvl2ShowDash = window.showDash;
+  window.showDash = function(sub) {
+    _lvl2ShowDash(sub);
+    if (sub === 'leaderboard') {
+      setTimeout(function() {
+        const tabBar = document.querySelector('#sp-leaderboard > div > div');
+        if (tabBar && !document.getElementById('lb-tab-questions')) {
+          const btn = document.createElement('button');
+          btn.id = 'lb-tab-questions';
+          btn.className = 'note-tag-btn';
+          btn.textContent = 'Questions';
+          btn.onclick = function() { switchLBTab('questions', btn); };
+          tabBar.appendChild(btn);
+        }
+        renderLeaderboard();
+      }, 60);
+    }
+  };
+})();
+
+// ═══════════════════════════════════════
+// LEVEL-UP 2: TTS — prominent label + dyslexia auto-enable
+// ═══════════════════════════════════════
+(function() {
+  // Make TTS toggle show label text not just icon
+  window.addEventListener('load', function() {
+    const btn = document.getElementById('tts-toggle');
+    if (btn) {
+      btn.style.cssText += ';display:flex;align-items:center;gap:.3rem;padding:.35rem .7rem;font-size:.78rem;';
+      if (!btn.querySelector('.tts-label')) {
+        const lbl = document.createElement('span');
+        lbl.className = 'tts-label';
+        lbl.textContent = 'Read aloud';
+        lbl.style.cssText = 'font-size:.72rem';
+        btn.appendChild(lbl);
+      }
+    }
+  });
+
+  // When dyslexia mode is enabled, auto-enable TTS
+  const _lvl2Orig = window.toggleA11y || null;
+  if (typeof toggleA11y === 'function') {
+    const _origA11y = window.toggleA11y;
+    window.toggleA11y = function(mode) {
+      _origA11y(mode);
+      if (mode === 'dyslexia' && window.a11yState?.dyslexia && !state.ttsEnabled) {
+        state.ttsEnabled = true;
+        const t = document.getElementById('tts-toggle');
+        if (t) t.classList.add('active');
+        showToast('🔊 Read-aloud enabled for dyslexia mode');
+      }
+    };
+  }
+})();
+
+// ═══════════════════════════════════════
+// LEVEL-UP 2: POST-SESSION SUMMARY PROMPT
+// ═══════════════════════════════════════
+(function() {
+  let _sessionMsgCount = 0;
+  let _sessionPromptShown = false;
+
+  const _lvl2TutorMsg = window.addTutorMsg;
+  window.addTutorMsg = function(role, text) {
+    _lvl2TutorMsg(role, text);
+    if (role === 'bot' && !text.startsWith('⚠️') && !text.includes('Hello!')) {
+      _sessionMsgCount++;
+      // After 6 bot responses, show a "Summarise this session" prompt bar
+      if (_sessionMsgCount === 6 && !_sessionPromptShown) {
+        _sessionPromptShown = true;
+        const msgs = document.getElementById('tutor-messages');
+        if (!msgs) return;
+        const bar = document.createElement('div');
+        bar.id = 'session-summary-bar';
+        bar.style.cssText = 'margin:1rem 0;padding:.75rem 1rem;background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.04));border:1px solid rgba(201,168,76,0.35);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap';
+        bar.innerHTML = `
+          <div style="font-size:.85rem;color:var(--muted)">📓 You've covered a lot! Save a summary of this session to your notes?</div>
+          <div style="display:flex;gap:.5rem">
+            <button style="background:var(--gold);color:#000;border:none;border-radius:8px;padding:.35rem .85rem;font-size:.8rem;font-weight:700;cursor:pointer" onclick="saveSessionSummary()">✦ Save Summary</button>
+            <button style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.35rem .75rem;font-size:.8rem;cursor:pointer" onclick="this.parentElement.parentElement.remove()">Dismiss</button>
+          </div>`;
+        msgs.appendChild(bar);
+        msgs.scrollTop = 99999;
+      }
+    }
+    // Reset counter when chat is cleared
+    if (role === 'bot' && text.includes('Chat cleared')) {
+      _sessionMsgCount = 0;
+      _sessionPromptShown = false;
+    }
+  };
+})();
+
+async function saveSessionSummary() {
+  const bar = document.getElementById('session-summary-bar');
+  if (bar) bar.innerHTML = '<div style="font-size:.85rem;color:var(--muted)">✦ Summarising your session...</div>';
+  const history = state.tutorHistory || [];
+  if (history.length < 2) { showToast('Not enough conversation to summarise'); return; }
+  const excerpt = history.slice(-12).map(m => `${m.role === 'user' ? 'Student' : 'Tutor'}: ${m.content.slice(0, 300)}`).join('\n\n');
+  try {
+    const sys = 'You are creating concise revision notes from a tutoring session. Produce clear bullet-point notes covering the key concepts, methods, and formulas discussed. Use UK English. Aim for 150–250 words.';
+    const data = await callClaude([{ role: 'user', content: 'Summarise this tutoring session into revision notes:\n\n' + excerpt }], sys);
+    const summary = getReply(data);
+    const noteInput = document.getElementById('note-text-input');
+    if (noteInput) noteInput.value = `SESSION NOTES — ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})}\nTopic: ${state.subject || 'A-Level Maths'}\n\n${summary}`;
+    if (bar) bar.remove();
+    showDash('notes');
+    showToast('📓 Session summarised — review and save!');
+  } catch(e) {
+    showToast('⚠️ Could not summarise — check API key');
+    if (bar) bar.remove();
+  }
+}
+
+// ═══════════════════════════════════════
+// LEVEL-UP 2: PHOTO QUESTION — auto-scroll + confidence badge
+// ═══════════════════════════════════════
+(function() {
+  const _origSolvePhoto = window.solvePhoto;
+  if (!_origSolvePhoto || window._lvlPhotoPatched) return;
+  window._lvlPhotoPatched = true;
+  window.solvePhoto = async function() {
+    await _origSolvePhoto();
+    // Auto-scroll to answer
+    const ans = document.getElementById('photo-answer');
+    if (ans && ans.style.display !== 'none') {
+      ans.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Add TTS button for photo answer
+      if (!document.getElementById('photo-tts-btn')) {
+        const ttsBtn = document.createElement('button');
+        ttsBtn.id = 'photo-tts-btn';
+        ttsBtn.style.cssText = 'background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.3rem .7rem;font-size:.8rem;cursor:pointer';
+        ttsBtn.innerHTML = '🔊 Read aloud';
+        ttsBtn.onclick = function() {
+          const txt = document.getElementById('photo-answer-text')?.textContent || '';
+          speak(txt.slice(0, 1200));
+        };
+        const actionRow = ans.querySelector('div:last-child');
+        if (actionRow) actionRow.insertBefore(ttsBtn, actionRow.firstChild);
+      }
+    }
+  };
+})();
+
+// ═══════════════════════════════════════
+// LEVEL-UP 2: STAT CARD — Flashcards due count in header
+// ═══════════════════════════════════════
+(function() {
+  // Update the flashcard stat card in dashboard if it exists
+  const _lvl2UpdateStats = window.updateDashboardStats;
+  window.updateDashboardStats = function() {
+    if (_lvl2UpdateStats) _lvl2UpdateStats();
+    // Inject FC due into stat-acc card (repurpose if empty)
+    let fcCards = [];
+    try { fcCards = JSON.parse(localStorage.getItem('synaptiq_fc') || '[]'); } catch(e) {}
+    if (fcCards.length === 0) return;
+    const today = new Date().toISOString().split('T')[0];
+    const due = fcCards.filter(c => c.nextReview && c.nextReview <= today).length;
+    const accEl = document.getElementById('stat-acc');
+    if (accEl) {
+      const s = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_stats') || '{}'); } catch(e) { return {}; } })();
+      const q = s.questionsAnswered || 0;
+      const correct = s.correctAnswers || 0;
+      if (q > 0) {
+        // Real accuracy exists — show it
+        accEl.textContent = Math.round(correct / q * 100) + '%';
+        accEl.closest('.stat-card').querySelector('.stat-card-change').textContent = `${q} questions answered`;
+      } else {
+        // No accuracy yet — show flashcards due instead
+        accEl.textContent = due;
+        const lbl = accEl.closest('.stat-card').querySelector('.stat-card-label');
+        const chg = accEl.closest('.stat-card').querySelector('.stat-card-change');
+        if (lbl) lbl.textContent = 'Cards Due';
+        if (chg) chg.textContent = `of ${fcCards.length} flashcards`;
+      }
+    }
+  };
+})();
+
 </script>
 
 
