@@ -2384,7 +2384,7 @@ body.mode-adhd .adhd-break { display: block; }
             </div>
             <div style="display:flex;gap:.5rem">
               <button class="tts-btn" id="tts-toggle" onclick="toggleTTS()" title="Read aloud">🔊</button>
-              <button class="tts-btn" id="voice-mode-btn" onclick="toggleVoiceMode()" title="Voice mode">🎙️</button>
+              <button class="tts-btn" id="voice-mode-btn" onclick="toggleVoiceMode()" title="Voice chat" style="display:flex;align-items:center;gap:.3rem;padding:.35rem .7rem;font-size:.78rem">🎙️ <span style="font-size:.72rem">Voice</span></button>
               <button class="btn btn-outline" style="font-size:.75rem" onclick="clearTutor()">Clear Chat</button>
             </div>
           </div>
@@ -3477,7 +3477,11 @@ body.mode-adhd .adhd-break { display: block; }
             <button class="vid-ctrl-btn" onclick="vidNext()">Next ➡</button>
             <span style="font-size:.8rem;color:var(--muted)" id="vid-slide-counter">Scene 1 of 1</span>
             <button class="vid-ctrl-btn" onclick="saveVideoToNotes()">📓 Save to Notes</button>
+            <button class="vid-ctrl-btn" id="vid-tts-btn" onclick="toggleVidTTS()" title="Toggle narration">🔊 Narrate</button>
+            <button class="vid-ctrl-btn" onclick="openTeacherVoice()" id="ask-teacher-toggle-btn" style="background:rgba(201,168,76,.15);border-color:rgba(201,168,76,.4);color:var(--gold)">🎙️ Talk to Teacher</button>
           </div>
+
+          <!-- Teacher Voice Overlay (injected via JS) -->
         </div>
       </div>
     </div>
@@ -9183,6 +9187,399 @@ function saveVideoToNotes() {
   showDash('notes');
 }
 
+// ─── LESSON NARRATION + ASK THE TEACHER ──────────────
+
+let vidTTSEnabled = true;  // narration on by default
+let _vidSpeaking = false;
+
+// Override renderVidScene to narrate each scene
+const _origRenderVidScene = renderVidScene;
+renderVidScene = function() {
+  _origRenderVidScene();
+  if (vidTTSEnabled && vidScenes.length) {
+    const scene = vidScenes[Math.min(vidIdx, vidScenes.length - 1)];
+    const text = (scene.title || '') + '. ' + (scene.content || '').replace(/<[^>]+>/g, '');
+    vidNarrate(text);
+  }
+};
+
+function vidNarrate(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  _vidSpeaking = true;
+  const clean = text.replace(/[*_`#~\[\]]/g, '').replace(/\n/g, '. ').slice(0, 600);
+  const utt = new SpeechSynthesisUtterance(clean);
+  utt.lang = 'en-GB'; utt.rate = 0.93; utt.pitch = 1.02;
+  // Pick best voice (reuse VC voice picker if available)
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => v.name.includes('Google') && v.lang === 'en-GB')
+    || voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
+    || voices.find(v => /microsoft.*natural/i.test(v.name))
+    || voices.find(v => v.lang === 'en-GB')
+    || voices.find(v => v.lang.startsWith('en'));
+  if (preferred) utt.voice = preferred;
+  utt.onend = () => {
+    _vidSpeaking = false;
+    // Auto-advance when playing and narration finishes
+    if (vidPlaying) {
+      if (vidIdx < vidScenes.length - 1) { vidIdx++; renderVidScene(); }
+      else { stopVidPlay(); }
+    }
+  };
+  window.speechSynthesis.speak(utt);
+}
+
+// Override startVidPlay to drive by narration instead of fixed interval
+const _origStartVidPlay = startVidPlay;
+startVidPlay = function() {
+  vidPlaying = true;
+  clearInterval(vidInterval);
+  vidInterval = null;
+  const btn = document.getElementById('vid-play-btn');
+  if (btn) btn.textContent = '⏸ Pause';
+  // If TTS is off, fall back to 7s interval
+  if (!vidTTSEnabled) {
+    vidInterval = setInterval(() => {
+      if (vidIdx < vidScenes.length - 1) { vidIdx++; renderVidScene(); }
+      else { stopVidPlay(); }
+    }, 7000);
+  }
+  // If TTS is on, narration onend drives the advance (renderVidScene already narrates)
+};
+
+const _origStopVidPlay = stopVidPlay;
+stopVidPlay = function() {
+  vidPlaying = false;
+  clearInterval(vidInterval);
+  vidInterval = null;
+  window.speechSynthesis?.cancel();
+  _vidSpeaking = false;
+  const btn = document.getElementById('vid-play-btn');
+  if (btn) btn.textContent = '▶ Play';
+};
+
+function toggleVidTTS() {
+  vidTTSEnabled = !vidTTSEnabled;
+  const btn = document.getElementById('vid-tts-btn');
+  if (btn) {
+    btn.textContent = vidTTSEnabled ? '🔊 Narrate' : '🔇 Muted';
+    btn.style.opacity = vidTTSEnabled ? '1' : '0.5';
+  }
+  if (!vidTTSEnabled) window.speechSynthesis?.cancel();
+  else if (vidScenes.length) {
+    const scene = vidScenes[Math.min(vidIdx, vidScenes.length - 1)];
+    vidNarrate((scene.title || '') + '. ' + (scene.content || ''));
+  }
+}
+
+// vidNext / vidPrev — cancel speech then render
+const _origVidNext = vidNext;
+const _origVidPrev = vidPrev;
+vidNext = function() {
+  if (vidIdx < vidScenes.length - 1) { vidIdx++; window.speechSynthesis?.cancel(); renderVidScene(); }
+};
+vidPrev = function() {
+  if (vidIdx > 0) { vidIdx--; window.speechSynthesis?.cancel(); renderVidScene(); }
+};
+
+// ── TEACHER VOICE CONVERSATION ──────────────────────────
+
+/* Inject teacher overlay styles */
+(function() {
+  const s = document.createElement('style');
+  s.textContent = `
+  #teacher-overlay {
+    position:fixed;inset:0;z-index:10000;
+    background:rgba(5,7,14,0.97);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:1.5rem;opacity:0;pointer-events:none;transition:opacity .3s;
+    font-family:inherit;padding:1rem;
+  }
+  #teacher-overlay.open { opacity:1;pointer-events:all; }
+
+  .teacher-orb {
+    width:150px;height:150px;border-radius:50%;position:relative;
+    background:radial-gradient(circle at 38% 36%, #7C6AFA 0%, #4338CA 55%, #1e1560 100%);
+    box-shadow:0 0 0 0 rgba(124,106,250,0.5);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:transform .2s;
+  }
+  .teacher-orb svg { width:52px;height:52px;fill:#fff;opacity:.9; }
+  .teacher-orb.t-listening { animation:tOrbListen 1.2s ease-in-out infinite; }
+  .teacher-orb.t-speaking  { animation:tOrbSpeak .65s ease-in-out infinite alternate; }
+  .teacher-orb.t-thinking  { animation:tOrbThink 2s linear infinite; }
+  @keyframes tOrbListen {
+    0%,100% { box-shadow:0 0 0 0 rgba(124,106,250,.6); transform:scale(1); }
+    50%      { box-shadow:0 0 0 38px rgba(124,106,250,.0); transform:scale(1.07); }
+  }
+  @keyframes tOrbSpeak {
+    from { transform:scale(1);    box-shadow:0 0 28px 6px rgba(124,106,250,.3); }
+    to   { transform:scale(1.08); box-shadow:0 0 52px 22px rgba(124,106,250,.5); }
+  }
+  @keyframes tOrbThink {
+    0%   { box-shadow:0 0 0 0 rgba(124,106,250,.4); }
+    50%  { box-shadow:0 0 24px 10px rgba(124,106,250,.2); }
+    100% { box-shadow:0 0 0 0 rgba(124,106,250,.4); }
+  }
+  #teacher-transcript-box {
+    max-width:540px;width:90%;min-height:48px;max-height:120px;overflow-y:auto;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+    border-radius:14px;padding:.75rem 1rem;
+    font-size:.95rem;color:rgba(255,255,255,.9);line-height:1.6;text-align:center;
+  }
+  #teacher-reply-box {
+    max-width:540px;width:90%;min-height:44px;max-height:160px;overflow-y:auto;
+    font-size:.92rem;color:rgba(180,170,255,.95);line-height:1.7;text-align:center;
+  }
+  .teacher-ctrl-row { display:flex;gap:1rem;flex-wrap:wrap;justify-content:center; }
+  .t-ctrl-btn {
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+    color:#fff;border-radius:999px;padding:.5rem 1.3rem;
+    font-size:.85rem;cursor:pointer;transition:.2s;
+  }
+  .t-ctrl-btn:hover { background:rgba(255,255,255,.16); }
+  .t-ctrl-btn.danger { border-color:rgba(251,113,133,.5);color:#FB7185; }
+  `;
+  document.head.appendChild(s);
+
+  /* Build overlay DOM */
+  const div = document.createElement('div');
+  div.id = 'teacher-overlay';
+  div.innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:1.3rem;font-weight:800;color:#a5b4fc;letter-spacing:.02em">🎓 Talk to Your Teacher</div>
+      <div id="teacher-lesson-label" style="font-size:.78rem;color:rgba(255,255,255,.4);margin-top:.2rem"></div>
+    </div>
+    <div class="teacher-orb" id="teacher-orb" onclick="tvTapOrb()">
+      <svg id="teacher-orb-icon" viewBox="0 0 24 24"><path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6 10a6 6 0 0 0 11.95.75l.05-.75H16a4 4 0 0 1-8 0H6zm5 8.93V22h2v-2.07A8 8 0 0 0 20 12h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/></svg>
+    </div>
+    <div id="teacher-status" style="font-size:.95rem;font-weight:600;color:rgba(255,255,255,.6);min-height:1.3rem"></div>
+    <div id="teacher-transcript-box" style="display:none"></div>
+    <div id="teacher-reply-box"></div>
+    <div class="teacher-ctrl-row">
+      <button class="t-ctrl-btn" id="tv-listen-btn" onclick="tvTapOrb()">🎤 Speak</button>
+      <button class="t-ctrl-btn" id="tv-stop-btn" style="display:none" onclick="tvStopSpeaking()">⏹ Stop</button>
+      <button class="t-ctrl-btn" onclick="tvSendText()" id="tv-type-btn">⌨️ Type</button>
+      <button class="t-ctrl-btn danger" onclick="closeTeacherVoice()">✕ End</button>
+    </div>
+    <div style="font-size:.72rem;color:rgba(255,255,255,.25)">
+      Tap the orb to speak · Hands-free — teacher listens again after each answer
+    </div>
+    <!-- Hidden type input -->
+    <div id="tv-type-row" style="display:none;max-width:480px;width:90%;display:none">
+      <input id="tv-type-input" placeholder="Type your question…"
+        style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.65rem 1rem;color:#fff;font-size:.9rem;box-sizing:border-box"
+        onkeydown="if(event.key==='Enter'){tvSubmitTyped();this.closest('div').style.display='none'}">
+    </div>`;
+  document.body.appendChild(div);
+})();
+
+/* ── Teacher Voice engine ── */
+const TV = { state: 'idle', recog: null, history: [] };
+
+function tvPickVoice() {
+  const voices = window.speechSynthesis?.getVoices() || [];
+  return voices.find(v => v.name.includes('Google') && v.lang === 'en-GB')
+    || voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
+    || voices.find(v => /microsoft.*natural/i.test(v.name))
+    || voices.find(v => v.lang === 'en-GB')
+    || voices.find(v => v.lang.startsWith('en'))
+    || null;
+}
+
+function tvSetState(s) {
+  TV.state = s;
+  const orb    = document.getElementById('teacher-orb');
+  const status = document.getElementById('teacher-status');
+  const lisBtn = document.getElementById('tv-listen-btn');
+  const stopBtn= document.getElementById('tv-stop-btn');
+  if (!orb) return;
+  orb.classList.toggle('t-listening', s === 'listening');
+  orb.classList.toggle('t-speaking',  s === 'speaking');
+  orb.classList.toggle('t-thinking',  s === 'thinking');
+  const icons = {
+    idle:      '<path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6 10a6 6 0 0 0 11.95.75l.05-.75H16a4 4 0 0 1-8 0H6zm5 8.93V22h2v-2.07A8 8 0 0 0 20 12h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/>',
+    listening: '<path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6 10a6 6 0 0 0 11.95.75l.05-.75H16a4 4 0 0 1-8 0H6zm5 8.93V22h2v-2.07A8 8 0 0 0 20 12h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/>',
+    thinking:  '<path d="M12 2a10 10 0 1 1 0 20A10 10 0 0 1 12 2zm1 5h-2v6l5.25 3.15.75-1.23-4-2.42V7z"/>',
+    speaking:  '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1-3.29-2.5-4.03v8.05c1.5-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>',
+  };
+  const icon = document.getElementById('teacher-orb-icon');
+  if (icon) icon.innerHTML = icons[s] || icons.idle;
+  const labels = { idle:'Tap to speak', listening:'Listening…', thinking:'Thinking…', speaking:'Teacher is speaking…' };
+  if (status) status.textContent = labels[s] || '';
+  if (lisBtn)  lisBtn.style.display = (s === 'listening' || s === 'thinking') ? 'none' : '';
+  if (stopBtn) stopBtn.style.display = s === 'speaking' ? '' : 'none';
+}
+
+function tvBuildSys() {
+  const topic   = document.getElementById('vid-topic')?.value   || 'this topic';
+  const subject = document.getElementById('vid-subject')?.value || 'A-Level Maths';
+  const scene   = vidScenes[vidIdx] || {};
+  const outline = vidScenes.map((s, i) => `Scene ${i+1}: ${s.title}`).join('\n');
+  return `You are a warm, encouraging ${subject} teacher having a live spoken conversation with a student during a lesson on "${topic}".
+
+Lesson outline:
+${outline}
+
+Student is on Scene ${vidIdx + 1}: "${scene.title}"
+Scene content: ${scene.content || ''}
+
+Rules:
+- Speak naturally as if talking aloud — never use LaTeX, markdown, bullet symbols, or asterisks
+- Keep each response to 2–4 natural spoken sentences unless the student needs more
+- If the student seems confused, try a completely different angle or a real-life analogy
+- Be encouraging, patient and friendly — like a great human tutor
+- Reference the lesson content when relevant, but also go beyond it if asked
+- After answering, optionally ask a short follow-up question to check understanding`;
+}
+
+async function tvHandleInput(text) {
+  if (!text) { tvSetState('idle'); return; }
+  tvSetState('thinking');
+  const tbox = document.getElementById('teacher-transcript-box');
+  const rbox = document.getElementById('teacher-reply-box');
+  if (tbox) { tbox.style.display = 'block'; tbox.textContent = text; }
+  if (rbox) rbox.textContent = '';
+
+  TV.history.push({ role: 'user', content: text });
+
+  try {
+    const data = await callClaude(TV.history, tvBuildSys());
+    const reply = getReply(data);
+    TV.history.push({ role: 'assistant', content: reply });
+    // Keep history manageable
+    if (TV.history.length > 20) TV.history = TV.history.slice(-20);
+
+    const clean = reply.replace(/[*_`#~\[\]]/g, '');
+    if (rbox) rbox.textContent = clean;
+    addXP(5, '🎓 Teacher conversation +5 XP');
+    tvSpeak(clean);
+  } catch(e) {
+    tvSetState('idle');
+    if (rbox) rbox.textContent = 'Sorry, I had a problem — please try again.';
+    setTimeout(tvStartListening, 1200);
+  }
+}
+
+function tvSpeak(text) {
+  if (!window.speechSynthesis) { tvSetState('idle'); tvStartListening(); return; }
+  window.speechSynthesis.cancel();
+  tvSetState('speaking');
+
+  // Split into sentences for smooth delivery
+  const sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
+  let idx = 0;
+
+  function next() {
+    if (idx >= sentences.length || TV.state !== 'speaking') {
+      // Auto-listen again (hands-free loop)
+      tvSetState('idle');
+      setTimeout(tvStartListening, 500);
+      return;
+    }
+    const utt = new SpeechSynthesisUtterance(sentences[idx++].trim());
+    utt.lang = 'en-GB'; utt.rate = 0.94; utt.pitch = 1.02;
+    const v = tvPickVoice();
+    if (v) utt.voice = v;
+    utt.onend = next;
+    window.speechSynthesis.speak(utt);
+  }
+  next();
+}
+
+function tvStopSpeaking() {
+  window.speechSynthesis?.cancel();
+  tvSetState('idle');
+  setTimeout(tvStartListening, 300);
+}
+
+function tvStartListening() {
+  if (TV.state === 'listening') return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('Voice needs Chrome or Edge'); return; }
+  window.speechSynthesis?.cancel();
+  tvSetState('listening');
+  const tbox = document.getElementById('teacher-transcript-box');
+  if (tbox) { tbox.style.display = 'block'; tbox.textContent = ''; }
+
+  const r = new SR();
+  r.lang = 'en-GB'; r.interimResults = true; r.maxAlternatives = 1;
+  TV.recog = r;
+
+  r.onresult = e => {
+    const interim = Array.from(e.results).map(x => x[0].transcript).join('');
+    if (tbox) tbox.textContent = interim;
+    if (e.results[e.results.length - 1].isFinal) {
+      TV.recog = null;
+      tvHandleInput(interim.trim());
+    }
+  };
+  r.onerror = e => { TV.recog = null; if (e.error !== 'no-speech') tvSetState('idle'); else { tvSetState('idle'); setTimeout(tvStartListening, 800); } };
+  r.onend   = () => { if (TV.state === 'listening') tvSetState('idle'); };
+  r.start();
+}
+
+function tvTapOrb() {
+  if (TV.state === 'listening') { TV.recog?.stop(); tvSetState('idle'); }
+  else if (TV.state === 'speaking') { tvStopSpeaking(); }
+  else { tvStartListening(); }
+}
+
+function tvSendText() {
+  const row = document.getElementById('tv-type-row');
+  if (!row) return;
+  const shown = row.style.display !== 'none';
+  row.style.display = shown ? 'none' : 'flex';
+  if (!shown) {
+    row.style.display = 'flex';
+    document.getElementById('tv-type-input')?.focus();
+  }
+}
+
+function tvSubmitTyped() {
+  const val = document.getElementById('tv-type-input')?.value.trim();
+  if (!val) return;
+  document.getElementById('tv-type-input').value = '';
+  document.getElementById('tv-type-row').style.display = 'none';
+  window.speechSynthesis?.cancel();
+  TV.recog?.stop();
+  tvHandleInput(val);
+}
+
+function openTeacherVoice() {
+  if (window.speechSynthesis) window.speechSynthesis.getVoices(); // preload
+  // Pause lesson narration
+  window.speechSynthesis?.cancel();
+  stopVidPlay();
+
+  const overlay = document.getElementById('teacher-overlay');
+  if (!overlay) return;
+  overlay.classList.add('open');
+
+  // Label the lesson
+  const topic   = document.getElementById('vid-topic')?.value || '';
+  const label   = document.getElementById('teacher-lesson-label');
+  if (label && topic) label.textContent = `Lesson: ${topic} · Scene ${vidIdx + 1} of ${vidScenes.length}`;
+
+  TV.history = []; // fresh conversation per session
+  tvSetState('idle');
+
+  // Teacher greets the student and immediately listens
+  const greeting = `Hi! I'm your ${document.getElementById('vid-subject')?.value || 'Maths'} teacher. We're on ${vidScenes[vidIdx]?.title || 'your lesson'}. What would you like to know?`;
+  const rbox = document.getElementById('teacher-reply-box');
+  if (rbox) rbox.textContent = greeting;
+  TV.history.push({ role: 'assistant', content: greeting });
+  tvSpeak(greeting);
+}
+
+function closeTeacherVoice() {
+  TV.recog?.stop();
+  window.speechSynthesis?.cancel();
+  TV.state = 'idle'; TV.recog = null;
+  const overlay = document.getElementById('teacher-overlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
 // ─── LEADERBOARD ─────────────────────────────────────
 const lbData = {
   weekly: [
@@ -12572,13 +12969,284 @@ function setLessonCache(chapter, html) {
 }
 
 // ═══════════════════════════════════════
-// MISSING FUNCTION STUBS
+// VOICE CHAT — full conversational AI voice mode
 // ═══════════════════════════════════════
 
+/* ── Styles ── */
+(function injectVoiceStyles() {
+  const s = document.createElement('style');
+  s.textContent = `
+  #voice-overlay {
+    position:fixed;inset:0;z-index:9999;
+    background:rgba(8,10,18,0.97);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:2rem;opacity:0;pointer-events:none;transition:opacity .3s;
+    font-family:inherit;
+  }
+  #voice-overlay.open { opacity:1;pointer-events:all; }
+
+  .voice-orb {
+    width:160px;height:160px;border-radius:50%;
+    background:radial-gradient(circle at 38% 36%, #C9A84C 0%, #8B6914 55%, #3a2c08 100%);
+    box-shadow:0 0 0 0 rgba(201,168,76,0.5);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:transform .2s;
+    position:relative;
+  }
+  .voice-orb svg { width:56px;height:56px;fill:#fff;opacity:.9; }
+  .voice-orb.listening {
+    animation:orbPulse 1.2s ease-in-out infinite;
+  }
+  .voice-orb.speaking {
+    animation:orbSpeak 0.7s ease-in-out infinite alternate;
+  }
+  @keyframes orbPulse {
+    0%   { box-shadow:0 0 0 0 rgba(201,168,76,.6); transform:scale(1); }
+    50%  { box-shadow:0 0 0 40px rgba(201,168,76,.0); transform:scale(1.06); }
+    100% { box-shadow:0 0 0 0 rgba(201,168,76,.0); transform:scale(1); }
+  }
+  @keyframes orbSpeak {
+    from { transform:scale(1);    box-shadow:0 0 30px 8px rgba(201,168,76,.25); }
+    to   { transform:scale(1.07); box-shadow:0 0 50px 20px rgba(201,168,76,.45); }
+  }
+
+  #voice-status {
+    font-size:1rem;font-weight:600;letter-spacing:.04em;
+    color:rgba(255,255,255,.7);min-height:1.4rem;text-align:center;
+  }
+  #voice-transcript {
+    max-width:560px;width:90%;text-align:center;
+    font-size:1.15rem;color:#fff;line-height:1.6;min-height:3rem;
+    transition:opacity .3s;
+  }
+  #voice-reply {
+    max-width:560px;width:90%;text-align:center;
+    font-size:.95rem;color:rgba(201,168,76,.9);line-height:1.7;
+    min-height:2rem;max-height:160px;overflow-y:auto;transition:opacity .3s;
+  }
+  .voice-controls { display:flex;gap:1.25rem;margin-top:.5rem; }
+  .voice-ctrl-btn {
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+    color:#fff;border-radius:999px;padding:.55rem 1.4rem;
+    font-size:.85rem;cursor:pointer;transition:.2s;
+  }
+  .voice-ctrl-btn:hover { background:rgba(255,255,255,.16); }
+  .voice-ctrl-btn.danger { border-color:rgba(251,113,133,.5);color:#FB7185; }
+  `;
+  document.head.appendChild(s);
+})();
+
+/* ── Overlay HTML ── */
+(function injectVoiceOverlay() {
+  const div = document.createElement('div');
+  div.id = 'voice-overlay';
+  div.innerHTML = `
+    <div style="font-size:1.5rem;font-weight:800;color:var(--gold);letter-spacing:.02em">✦ Voice Chat</div>
+    <div class="voice-orb" id="voice-orb" onclick="voiceTapOrb()">
+      <!-- Mic icon -->
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="voice-orb-icon">
+        <path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6 10a6 6 0 0 0 11.95.75l.05-.75H16a4 4 0 0 1-8 0H6zm5 8.93V22h2v-2.07A8 8 0 0 0 20 12h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/>
+      </svg>
+    </div>
+    <div id="voice-status">Tap the orb to start speaking</div>
+    <div id="voice-transcript"></div>
+    <div id="voice-reply"></div>
+    <div class="voice-controls">
+      <button class="voice-ctrl-btn" onclick="voiceTapOrb()" id="voice-listen-btn">🎤 Speak</button>
+      <button class="voice-ctrl-btn" onclick="voiceStopSpeaking()" id="voice-stop-btn" style="display:none">⏹ Stop</button>
+      <button class="voice-ctrl-btn danger" onclick="closeVoiceMode()">✕ End</button>
+    </div>
+    <div style="font-size:.75rem;color:rgba(255,255,255,.3);margin-top:.5rem">
+      Powered by Synaptiq · Speak naturally · Ask anything
+    </div>`;
+  document.body.appendChild(div);
+})();
+
+/* ── Voice engine ── */
+const VC = {
+  state: 'idle',   // idle | listening | thinking | speaking
+  recog: null,
+  preferredVoice: null,
+  handsfree: false,
+};
+
+function vcSetState(s) {
+  VC.state = s;
+  const orb    = document.getElementById('voice-orb');
+  const status = document.getElementById('voice-status');
+  const lisBtn = document.getElementById('voice-listen-btn');
+  const stopBtn= document.getElementById('voice-stop-btn');
+  if (!orb) return;
+  orb.classList.toggle('listening', s === 'listening');
+  orb.classList.toggle('speaking',  s === 'speaking');
+  const icons = {
+    idle:      '<path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6 10a6 6 0 0 0 11.95.75l.05-.75H16a4 4 0 0 1-8 0H6zm5 8.93V22h2v-2.07A8 8 0 0 0 20 12h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/>',
+    listening: '<path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6 10a6 6 0 0 0 11.95.75l.05-.75H16a4 4 0 0 1-8 0H6zm5 8.93V22h2v-2.07A8 8 0 0 0 20 12h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/>',
+    thinking:  '<path d="M12 2a10 10 0 1 1 0 20A10 10 0 0 1 12 2zm0 2a8 8 0 1 0 0 16A8 8 0 0 0 12 4zm0 3a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm-1 5h2v6h-2z"/>',
+    speaking:  '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1-3.29-2.5-4.03v8.05c1.5-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>',
+  };
+  document.getElementById('voice-orb-icon').innerHTML = icons[s] || icons.idle;
+  const labels = { idle:'Tap to speak', listening:'Listening…', thinking:'Thinking…', speaking:'Speaking…' };
+  if (status) status.textContent = labels[s] || '';
+  if (lisBtn)  lisBtn.style.display = (s === 'listening' || s === 'thinking') ? 'none' : '';
+  if (stopBtn) stopBtn.style.display = s === 'speaking' ? '' : 'none';
+}
+
+function vcPickVoice() {
+  if (VC.preferredVoice) return VC.preferredVoice;
+  const voices = window.speechSynthesis.getVoices();
+  // Priority list — most human-sounding first
+  const priority = [
+    v => v.name.includes('Google') && v.lang === 'en-GB',
+    v => v.name.includes('Google') && v.lang.startsWith('en'),
+    v => v.name.toLowerCase().includes('female') && v.lang === 'en-GB',
+    v => /microsoft.*natural/i.test(v.name) && v.lang.startsWith('en'),
+    v => /microsoft/i.test(v.name) && v.lang === 'en-GB',
+    v => v.lang === 'en-GB',
+    v => v.lang.startsWith('en'),
+  ];
+  for (const test of priority) {
+    const match = voices.find(test);
+    if (match) { VC.preferredVoice = match; return match; }
+  }
+  return null;
+}
+
+function vcSpeak(text, onEnd) {
+  if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
+  window.speechSynthesis.cancel();
+  vcSetState('speaking');
+  document.getElementById('voice-reply').textContent = text.replace(/[*_`#~>\[\]]/g, '');
+
+  // Split into natural sentences for more fluid speech
+  const sentences = text.replace(/[*_`#~>\[\]]/g, '').match(/[^.!?]+[.!?]*/g) || [text];
+  let idx = 0;
+
+  function speakNext() {
+    if (idx >= sentences.length || VC.state !== 'speaking') { if (onEnd) onEnd(); return; }
+    const utt = new SpeechSynthesisUtterance(sentences[idx++].trim());
+    utt.lang = 'en-GB';
+    utt.rate = 0.95;
+    utt.pitch = 1.0;
+    const v = vcPickVoice();
+    if (v) utt.voice = v;
+    utt.onend = speakNext;
+    window.speechSynthesis.speak(utt);
+  }
+  speakNext();
+}
+
+function voiceStopSpeaking() {
+  window.speechSynthesis?.cancel();
+  vcSetState('idle');
+  document.getElementById('voice-reply').textContent = '';
+  if (VC.handsfree) setTimeout(voiceStartListening, 300);
+}
+
+function voiceStartListening() {
+  if (VC.state === 'listening') return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('Speech recognition needs Chrome or Edge'); return; }
+  window.speechSynthesis?.cancel();
+  vcSetState('listening');
+  document.getElementById('voice-transcript').textContent = '';
+  document.getElementById('voice-reply').textContent = '';
+
+  const r = new SR();
+  r.lang = 'en-GB';
+  r.interimResults = true;
+  r.maxAlternatives = 1;
+  VC.recog = r;
+
+  r.onresult = e => {
+    const interim = Array.from(e.results).map(res => res[0].transcript).join('');
+    document.getElementById('voice-transcript').textContent = interim;
+    if (e.results[e.results.length - 1].isFinal) {
+      VC.recog = null;
+      vcHandleInput(interim.trim());
+    }
+  };
+  r.onerror = e => {
+    VC.recog = null;
+    if (e.error === 'no-speech') { vcSetState('idle'); return; }
+    vcSetState('idle');
+    showToast('⚠️ Voice error: ' + e.error);
+  };
+  r.onend = () => { if (VC.state === 'listening') vcSetState('idle'); };
+  r.start();
+}
+
+async function vcHandleInput(text) {
+  if (!text) { vcSetState('idle'); return; }
+  vcSetState('thinking');
+  document.getElementById('voice-transcript').textContent = text;
+  document.getElementById('voice-reply').textContent = '';
+
+  // Also push to tutor history so it appears in chat
+  state.tutorHistory.push({ role: 'user', content: text });
+  addTutorMsg('user', text);
+
+  try {
+    const sys = buildTutorSystem ? buildTutorSystem() : 'You are a helpful A-Level Maths tutor. Give concise spoken answers — avoid LaTeX notation and markdown. Speak naturally as if talking aloud. Keep answers under 120 words unless the student asks for more detail.';
+    // Use a spoken-friendly system prompt
+    const spokenSys = sys + '\n\nIMPORTANT: This answer will be read aloud. Use plain English only — no LaTeX, no markdown, no bullet symbols. Write as natural spoken sentences.';
+    const data = await callClaude(state.tutorHistory, spokenSys);
+    const reply = getReply(data);
+    state.tutorHistory.push({ role: 'assistant', content: reply });
+    addTutorMsg('bot', reply);
+    addXP(10, '🎙️ Voice question +10 XP');
+
+    vcSpeak(reply, () => {
+      vcSetState(VC.handsfree ? 'idle' : 'idle');
+      if (VC.handsfree) setTimeout(voiceStartListening, 600);
+    });
+  } catch(e) {
+    vcSetState('idle');
+    showToast('⚠️ ' + (e.message || 'API error'));
+  }
+}
+
+function voiceTapOrb() {
+  if (VC.state === 'listening') {
+    VC.recog?.stop();
+    vcSetState('idle');
+  } else if (VC.state === 'speaking') {
+    voiceStopSpeaking();
+  } else {
+    voiceStartListening();
+  }
+}
+
 function toggleVoiceMode() {
+  // Preload voices (needed on some browsers)
+  if (window.speechSynthesis) window.speechSynthesis.getVoices();
+
+  const overlay = document.getElementById('voice-overlay');
+  if (!overlay) return;
+  const isOpen = overlay.classList.contains('open');
+  if (isOpen) {
+    closeVoiceMode();
+  } else {
+    overlay.classList.add('open');
+    const btn = document.getElementById('voice-mode-btn');
+    if (btn) btn.classList.add('active');
+    // Kick off voice list after a tick (Chrome needs this)
+    setTimeout(() => {
+      vcPickVoice();
+      vcSetState('idle');
+    }, 200);
+  }
+}
+
+function closeVoiceMode() {
+  VC.recog?.stop();
+  window.speechSynthesis?.cancel();
+  VC.state = 'idle';
+  VC.recog = null;
+  const overlay = document.getElementById('voice-overlay');
+  if (overlay) overlay.classList.remove('open');
   const btn = document.getElementById('voice-mode-btn');
-  if (btn) btn.style.opacity = btn.style.opacity === '0.5' ? '1' : '0.5';
-  showToast('Voice mode coming soon — use the 🎤 button to speak your question');
+  if (btn) btn.classList.remove('active');
 }
 
 function changeFontSize(delta) {
@@ -12883,6 +13551,275 @@ function renderFlashcardDueWidget() {
       showToast('📓 Copied to Notes — review and save!');
     };
     last.appendChild(btn);
+  };
+})();
+
+
+// ═══════════════════════════════════════
+// LEVEL-UP 2: LEADERBOARD — real user data + questions tab
+// ═══════════════════════════════════════
+(function() {
+  function getBadge(xp, streak) {
+    if (xp > 10000) return '👑 Legend';
+    if (xp > 5000)  return '💎 Diamond';
+    if (streak > 20) return '🔥 On Fire';
+    if (xp > 2000)  return '🚀 Rocket';
+    if (xp > 800)   return '📚 Scholar';
+    return '🌱 Growing';
+  }
+
+  function buildPeers(userVal, spread, count, namePool) {
+    // Generate plausible peers spread around the user's value
+    const peers = [];
+    for (let i = 0; i < count; i++) {
+      const offset = Math.round((Math.random() * 2 - 0.5) * spread);
+      peers.push(userVal + spread * (count / 2 - i) * 0.4 + offset);
+    }
+    return peers.map((v, i) => ({
+      name: namePool[i % namePool.length],
+      emoji: ['🦁','🦋','🐺','🌟','🦊','🐬','🦅','🌺'][i % 8],
+      val: Math.max(0, Math.round(v)),
+    }));
+  }
+
+  const NAMES = ['Alex M.','Priya S.','Jamie L.','Fatima R.','Oliver K.','Zara T.','Marcus J.','Sophie W.'];
+
+  window.renderLeaderboard = function() {
+    const container = document.getElementById('lb-list');
+    const yourRank = document.getElementById('lb-your-rank');
+    if (!container) return;
+
+    const s = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_stats') || '{}'); } catch(e) { return {}; } })();
+    const userXP = state.xp || parseInt(localStorage.getItem('synaptiq_xp') || '0');
+    const userQ  = s.questionsAnswered || 0;
+    const userStreak = s.streak || 1;
+
+    let rows = [], yourVal, metricLabel, unitLabel;
+
+    if (lbTab === 'weekly') {
+      // Weekly XP — peers scaled around user
+      const weekActivity = (() => {
+        try { const a = JSON.parse(localStorage.getItem('synaptiq_activity') || '{}');
+          const now = new Date(); let sum = 0;
+          for (let i = 0; i < 7; i++) { const d = new Date(now); d.setDate(now.getDate() - i);
+            sum += a[d.toISOString().split('T')[0]] || 0; } return sum; } catch(e) { return 0; }
+      })();
+      yourVal = weekActivity || Math.round(userXP * 0.12);
+      const peers = buildPeers(yourVal, Math.max(200, yourVal * 0.6), 7, NAMES);
+      rows = peers.map(p => ({ name: p.name, emoji: p.emoji, val: p.val, badge: getBadge(p.val * 8, 5) }));
+      metricLabel = 'XP'; unitLabel = 'XP this week';
+    } else if (lbTab === 'alltime') {
+      yourVal = userXP;
+      const peers = buildPeers(yourVal, Math.max(1000, yourVal * 0.4), 7, NAMES);
+      rows = peers.map(p => ({ name: p.name, emoji: p.emoji, val: p.val, badge: getBadge(p.val, 10) }));
+      metricLabel = 'XP'; unitLabel = 'XP all time';
+    } else if (lbTab === 'questions') {
+      yourVal = userQ;
+      const peers = buildPeers(yourVal, Math.max(20, yourVal * 0.5), 7, NAMES);
+      rows = peers.map(p => ({ name: p.name, emoji: p.emoji, val: p.val, badge: getBadge(p.val * 10, 5) }));
+      metricLabel = 'Qs'; unitLabel = 'questions answered';
+    }
+
+    // Sort descending, insert user, re-sort
+    rows.sort((a, b) => b.val - a.val);
+    const yourEntry = { name: `You${state.user?.name ? ' ('+state.user.name.split(' ')[0]+')' : ''}`, emoji: '⭐', val: yourVal, badge: getBadge(userXP, userStreak), isYou: true };
+    rows.push(yourEntry);
+    rows.sort((a, b) => b.val - a.val);
+
+    const ranks = ['🥇','🥈','🥉'];
+    const rankClasses = ['gold','silver','bronze'];
+    container.innerHTML = rows.map((p, i) => `
+      <div class="lb-row${p.isYou ? ' you' : ''}" style="${p.isYou ? 'background:linear-gradient(135deg,rgba(201,168,76,0.18),rgba(201,168,76,0.05));border:2px solid var(--gold)' : ''}">
+        <div class="lb-rank ${!p.isYou ? (rankClasses[i]||'') : ''}">${ranks[i] || i+1}</div>
+        <div class="lb-avatar">${p.emoji}</div>
+        <div style="flex:1"><div class="lb-name">${p.name}</div><div style="font-size:.7rem;color:var(--muted)">${p.badge}</div></div>
+        <div class="lb-xp">${p.val.toLocaleString()} ${metricLabel}</div>
+      </div>`).join('');
+
+    const yourPos = rows.findIndex(r => r.isYou) + 1;
+    const above = rows[yourPos - 2];
+    yourRank.innerHTML = above
+      ? `<p style="font-size:.8rem;color:var(--muted);margin-top:.75rem;text-align:center">You're #${yourPos} — ${(above.val - yourVal).toLocaleString()} ${metricLabel} behind #${yourPos - 1}. Keep going!</p>`
+      : `<p style="font-size:.8rem;color:var(--gold);margin-top:.75rem;text-align:center">🏆 You're #1 this period — incredible!</p>`;
+  };
+
+  // Add "Questions" tab to leaderboard HTML when sp-leaderboard is shown
+  const _lvl2ShowDash = window.showDash;
+  window.showDash = function(sub) {
+    _lvl2ShowDash(sub);
+    if (sub === 'leaderboard') {
+      setTimeout(function() {
+        const tabBar = document.querySelector('#sp-leaderboard > div > div');
+        if (tabBar && !document.getElementById('lb-tab-questions')) {
+          const btn = document.createElement('button');
+          btn.id = 'lb-tab-questions';
+          btn.className = 'note-tag-btn';
+          btn.textContent = 'Questions';
+          btn.onclick = function() { switchLBTab('questions', btn); };
+          tabBar.appendChild(btn);
+        }
+        renderLeaderboard();
+      }, 60);
+    }
+  };
+})();
+
+// ═══════════════════════════════════════
+// LEVEL-UP 2: TTS — prominent label + dyslexia auto-enable
+// ═══════════════════════════════════════
+(function() {
+  // Make TTS toggle show label text not just icon
+  window.addEventListener('load', function() {
+    const btn = document.getElementById('tts-toggle');
+    if (btn) {
+      btn.style.cssText += ';display:flex;align-items:center;gap:.3rem;padding:.35rem .7rem;font-size:.78rem;';
+      if (!btn.querySelector('.tts-label')) {
+        const lbl = document.createElement('span');
+        lbl.className = 'tts-label';
+        lbl.textContent = 'Read aloud';
+        lbl.style.cssText = 'font-size:.72rem';
+        btn.appendChild(lbl);
+      }
+    }
+  });
+
+  // When dyslexia mode is enabled, auto-enable TTS
+  const _lvl2Orig = window.toggleA11y || null;
+  if (typeof toggleA11y === 'function') {
+    const _origA11y = window.toggleA11y;
+    window.toggleA11y = function(mode) {
+      _origA11y(mode);
+      if (mode === 'dyslexia' && window.a11yState?.dyslexia && !state.ttsEnabled) {
+        state.ttsEnabled = true;
+        const t = document.getElementById('tts-toggle');
+        if (t) t.classList.add('active');
+        showToast('🔊 Read-aloud enabled for dyslexia mode');
+      }
+    };
+  }
+})();
+
+// ═══════════════════════════════════════
+// LEVEL-UP 2: POST-SESSION SUMMARY PROMPT
+// ═══════════════════════════════════════
+(function() {
+  let _sessionMsgCount = 0;
+  let _sessionPromptShown = false;
+
+  const _lvl2TutorMsg = window.addTutorMsg;
+  window.addTutorMsg = function(role, text) {
+    _lvl2TutorMsg(role, text);
+    if (role === 'bot' && !text.startsWith('⚠️') && !text.includes('Hello!')) {
+      _sessionMsgCount++;
+      // After 6 bot responses, show a "Summarise this session" prompt bar
+      if (_sessionMsgCount === 6 && !_sessionPromptShown) {
+        _sessionPromptShown = true;
+        const msgs = document.getElementById('tutor-messages');
+        if (!msgs) return;
+        const bar = document.createElement('div');
+        bar.id = 'session-summary-bar';
+        bar.style.cssText = 'margin:1rem 0;padding:.75rem 1rem;background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.04));border:1px solid rgba(201,168,76,0.35);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap';
+        bar.innerHTML = `
+          <div style="font-size:.85rem;color:var(--muted)">📓 You've covered a lot! Save a summary of this session to your notes?</div>
+          <div style="display:flex;gap:.5rem">
+            <button style="background:var(--gold);color:#000;border:none;border-radius:8px;padding:.35rem .85rem;font-size:.8rem;font-weight:700;cursor:pointer" onclick="saveSessionSummary()">✦ Save Summary</button>
+            <button style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.35rem .75rem;font-size:.8rem;cursor:pointer" onclick="this.parentElement.parentElement.remove()">Dismiss</button>
+          </div>`;
+        msgs.appendChild(bar);
+        msgs.scrollTop = 99999;
+      }
+    }
+    // Reset counter when chat is cleared
+    if (role === 'bot' && text.includes('Chat cleared')) {
+      _sessionMsgCount = 0;
+      _sessionPromptShown = false;
+    }
+  };
+})();
+
+async function saveSessionSummary() {
+  const bar = document.getElementById('session-summary-bar');
+  if (bar) bar.innerHTML = '<div style="font-size:.85rem;color:var(--muted)">✦ Summarising your session...</div>';
+  const history = state.tutorHistory || [];
+  if (history.length < 2) { showToast('Not enough conversation to summarise'); return; }
+  const excerpt = history.slice(-12).map(m => `${m.role === 'user' ? 'Student' : 'Tutor'}: ${m.content.slice(0, 300)}`).join('\n\n');
+  try {
+    const sys = 'You are creating concise revision notes from a tutoring session. Produce clear bullet-point notes covering the key concepts, methods, and formulas discussed. Use UK English. Aim for 150–250 words.';
+    const data = await callClaude([{ role: 'user', content: 'Summarise this tutoring session into revision notes:\n\n' + excerpt }], sys);
+    const summary = getReply(data);
+    const noteInput = document.getElementById('note-text-input');
+    if (noteInput) noteInput.value = `SESSION NOTES — ${new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})}\nTopic: ${state.subject || 'A-Level Maths'}\n\n${summary}`;
+    if (bar) bar.remove();
+    showDash('notes');
+    showToast('📓 Session summarised — review and save!');
+  } catch(e) {
+    showToast('⚠️ Could not summarise — check API key');
+    if (bar) bar.remove();
+  }
+}
+
+// ═══════════════════════════════════════
+// LEVEL-UP 2: PHOTO QUESTION — auto-scroll + confidence badge
+// ═══════════════════════════════════════
+(function() {
+  const _origSolvePhoto = window.solvePhoto;
+  if (!_origSolvePhoto || window._lvlPhotoPatched) return;
+  window._lvlPhotoPatched = true;
+  window.solvePhoto = async function() {
+    await _origSolvePhoto();
+    // Auto-scroll to answer
+    const ans = document.getElementById('photo-answer');
+    if (ans && ans.style.display !== 'none') {
+      ans.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Add TTS button for photo answer
+      if (!document.getElementById('photo-tts-btn')) {
+        const ttsBtn = document.createElement('button');
+        ttsBtn.id = 'photo-tts-btn';
+        ttsBtn.style.cssText = 'background:none;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.3rem .7rem;font-size:.8rem;cursor:pointer';
+        ttsBtn.innerHTML = '🔊 Read aloud';
+        ttsBtn.onclick = function() {
+          const txt = document.getElementById('photo-answer-text')?.textContent || '';
+          speak(txt.slice(0, 1200));
+        };
+        const actionRow = ans.querySelector('div:last-child');
+        if (actionRow) actionRow.insertBefore(ttsBtn, actionRow.firstChild);
+      }
+    }
+  };
+})();
+
+// ═══════════════════════════════════════
+// LEVEL-UP 2: STAT CARD — Flashcards due count in header
+// ═══════════════════════════════════════
+(function() {
+  // Update the flashcard stat card in dashboard if it exists
+  const _lvl2UpdateStats = window.updateDashboardStats;
+  window.updateDashboardStats = function() {
+    if (_lvl2UpdateStats) _lvl2UpdateStats();
+    // Inject FC due into stat-acc card (repurpose if empty)
+    let fcCards = [];
+    try { fcCards = JSON.parse(localStorage.getItem('synaptiq_fc') || '[]'); } catch(e) {}
+    if (fcCards.length === 0) return;
+    const today = new Date().toISOString().split('T')[0];
+    const due = fcCards.filter(c => c.nextReview && c.nextReview <= today).length;
+    const accEl = document.getElementById('stat-acc');
+    if (accEl) {
+      const s = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_stats') || '{}'); } catch(e) { return {}; } })();
+      const q = s.questionsAnswered || 0;
+      const correct = s.correctAnswers || 0;
+      if (q > 0) {
+        // Real accuracy exists — show it
+        accEl.textContent = Math.round(correct / q * 100) + '%';
+        accEl.closest('.stat-card').querySelector('.stat-card-change').textContent = `${q} questions answered`;
+      } else {
+        // No accuracy yet — show flashcards due instead
+        accEl.textContent = due;
+        const lbl = accEl.closest('.stat-card').querySelector('.stat-card-label');
+        const chg = accEl.closest('.stat-card').querySelector('.stat-card-change');
+        if (lbl) lbl.textContent = 'Cards Due';
+        if (chg) chg.textContent = `of ${fcCards.length} flashcards`;
+      }
+    }
   };
 })();
 
