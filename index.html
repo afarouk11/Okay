@@ -9377,28 +9377,25 @@ vidPrev = function() {
 })();
 
 /* ── Shared TTS engine ─────────────────────────────────────────────────────
-   Tries /api/tts (OpenAI neural voices) first.
-   Falls back to Web Speech API with the best available browser voice.
+   Uses the best available browser voice (Web Speech API).
+   Picks Microsoft Neural/Natural (Edge) or Google (Chrome) voices first.
    ────────────────────────────────────────────────────────────────────── */
-const TTS = {
-  apiAvailable: null,   // null = untested, true/false after first check
-  currentAudio: null,   // Audio element when using API
-  onEndCallback: null,
-};
 
-/** Best Web Speech API voice, cached after first call. */
+/** Pick the best available voice — cached after first successful call. */
 let _wsBestVoice = null;
 function wsBestVoice() {
   if (_wsBestVoice) return _wsBestVoice;
   const vv = window.speechSynthesis?.getVoices() || [];
-  // Priority: Microsoft Neural/Natural Online (Edge) → Google (Chrome) → en-GB → en-*
+  // Priority: Microsoft Neural Online (Edge) → Google UK (Chrome) → en-GB → en-*
   const pick =
     vv.find(v => /microsoft.*(online \(natural\))/i.test(v.name) && v.lang === 'en-GB') ||
     vv.find(v => /microsoft.*(online \(natural\))/i.test(v.name) && v.lang.startsWith('en')) ||
+    vv.find(v => /microsoft.*sonia/i.test(v.name)) ||   // Sonia = best UK female on Edge
+    vv.find(v => /microsoft.*ryan/i.test(v.name))  ||   // Ryan = best UK male on Edge
     vv.find(v => /microsoft.*online/i.test(v.name) && v.lang === 'en-GB') ||
     vv.find(v => /microsoft.*online/i.test(v.name) && v.lang.startsWith('en')) ||
     vv.find(v => v.name === 'Google UK English Female') ||
-    vv.find(v => v.name === 'Google UK English Male') ||
+    vv.find(v => v.name === 'Google UK English Male')   ||
     vv.find(v => v.name.startsWith('Google') && v.lang === 'en-GB') ||
     vv.find(v => v.name.startsWith('Google') && v.lang.startsWith('en')) ||
     vv.find(v => v.lang === 'en-GB') ||
@@ -9409,93 +9406,50 @@ function wsBestVoice() {
 }
 
 /**
- * Speak `text` aloud. Tries OpenAI TTS (/api/tts) first for natural voice;
- * gracefully falls back to Web Speech API if API is unavailable.
- * Calls `onEnd()` when finished (or on error).
- *
- * Returns a cancel function: call it to stop speech immediately.
+ * Speak text aloud using the best available browser voice.
+ * Splits into sentences for smooth, natural pacing.
+ * Returns a cancel() function that stops speech immediately.
  */
 function ttsSpeak(text, onEnd) {
   const clean = text.replace(/[*_`#~>\[\]]/g, '').replace(/\s+/g, ' ').trim();
   if (!clean) { if (onEnd) onEnd(); return () => {}; }
 
-  // Stop any currently playing audio
-  if (TTS.currentAudio) { TTS.currentAudio.pause(); TTS.currentAudio = null; }
   if (window.speechSynthesis) window.speechSynthesis.cancel();
-  TTS.onEndCallback = onEnd;
 
   let cancelled = false;
   const cancel = () => {
     cancelled = true;
-    if (TTS.currentAudio) { TTS.currentAudio.pause(); TTS.currentAudio = null; }
     if (window.speechSynthesis) window.speechSynthesis.cancel();
   };
 
-  // ── Try API TTS ──
-  if (TTS.apiAvailable !== false) {
-    fetch('/api/tts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: clean.slice(0, 4096), voice: 'nova' }),
-    })
-    .then(r => {
-      if (!r.ok) throw new Error('tts api ' + r.status);
-      TTS.apiAvailable = true;
-      return r.blob();
-    })
-    .then(blob => {
-      if (cancelled) return;
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      TTS.currentAudio = audio;
-      audio.playbackRate = 1.05; // slightly faster than 1× feels natural
-      audio.onended = () => {
-        URL.revokeObjectURL(url);
-        TTS.currentAudio = null;
-        if (!cancelled && onEnd) onEnd();
-      };
-      audio.onerror = () => {
-        URL.revokeObjectURL(url);
-        TTS.currentAudio = null;
-        if (!cancelled && onEnd) onEnd();
-      };
-      audio.play().catch(() => { if (!cancelled && onEnd) onEnd(); });
-    })
-    .catch(() => {
-      TTS.apiAvailable = false;
-      if (!cancelled) ttsSpeakFallback(clean, onEnd);
-    });
-    return cancel;
-  }
+  if (!window.speechSynthesis) { if (onEnd) onEnd(); return cancel; }
 
-  // ── Web Speech fallback ──
-  ttsSpeakFallback(clean, onEnd);
-  return cancel;
-}
+  // Re-pick voice each call in case voices loaded after page start
+  _wsBestVoice = null;
+  const voice = wsBestVoice();
 
-/** Web Speech API fallback — splits into sentences for smoother delivery. */
-function ttsSpeakFallback(text, onEnd) {
-  if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
-  const sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
+  const sentences = clean.match(/[^.!?]+[.!?]*/g) || [clean];
   let idx = 0;
   let done = false;
 
-  function finish() { if (!done) { done = true; if (onEnd) onEnd(); } }
+  function finish() { if (!done) { done = true; if (!cancelled && onEnd) onEnd(); } }
 
   function next() {
-    if (idx >= sentences.length) { finish(); return; }
-    const utt = new SpeechSynthesisUtterance(sentences[idx++].trim());
+    if (cancelled || idx >= sentences.length) { finish(); return; }
+    const s = sentences[idx++].trim();
+    if (!s) { next(); return; }
+    const utt = new SpeechSynthesisUtterance(s);
     utt.lang  = 'en-GB';
-    utt.rate  = 0.9;   // slightly slower than default = more natural
+    utt.rate  = 0.88;  // slightly slower = clearer, more natural
     utt.pitch = 1.0;
-    const v = wsBestVoice();
-    if (v) utt.voice = v;
+    if (voice) utt.voice = voice;
     utt.onerror = next;
-    const guard = setTimeout(next, 15000); // Chrome stall safety
+    const guard = setTimeout(next, 12000); // Chrome stall safety
     utt.onend = () => { clearTimeout(guard); next(); };
     window.speechSynthesis.speak(utt);
   }
   next();
+  return cancel;
 }
 
 /* ── Teacher Voice engine ── */
