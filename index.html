@@ -3478,31 +3478,10 @@ body.mode-adhd .adhd-break { display: block; }
             <span style="font-size:.8rem;color:var(--muted)" id="vid-slide-counter">Scene 1 of 1</span>
             <button class="vid-ctrl-btn" onclick="saveVideoToNotes()">📓 Save to Notes</button>
             <button class="vid-ctrl-btn" id="vid-tts-btn" onclick="toggleVidTTS()" title="Toggle narration">🔊 Narrate</button>
-            <button class="vid-ctrl-btn" onclick="toggleAskTeacher()" id="ask-teacher-toggle-btn" style="background:rgba(201,168,76,.15);border-color:rgba(201,168,76,.4);color:var(--gold)">💬 Ask Teacher</button>
+            <button class="vid-ctrl-btn" onclick="openTeacherVoice()" id="ask-teacher-toggle-btn" style="background:rgba(201,168,76,.15);border-color:rgba(201,168,76,.4);color:var(--gold)">🎙️ Talk to Teacher</button>
           </div>
 
-          <!-- Ask the Teacher Panel -->
-          <div id="ask-teacher-panel" style="display:none;margin-top:1.5rem;background:var(--bg3);border:1px solid var(--border);border-radius:16px;overflow:hidden">
-            <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-              <div>
-                <div style="font-weight:700;font-size:.95rem">💬 Ask the Teacher</div>
-                <div style="font-size:.75rem;color:var(--muted)">Your AI teacher has full context of this lesson — ask anything</div>
-              </div>
-              <div style="display:flex;align-items:center;gap:.5rem">
-                <div id="teacher-voice-indicator" style="display:none;font-size:.75rem;color:var(--gold);animation:pulse 1.2s infinite">🎤 Listening…</div>
-                <button id="teacher-voice-btn" onclick="teacherVoiceInput()" style="background:var(--bg4);border:1px solid var(--border);color:var(--white);border-radius:8px;padding:.35rem .75rem;font-size:.8rem;cursor:pointer">🎤 Speak</button>
-              </div>
-            </div>
-            <div id="teacher-chat" style="padding:1rem;min-height:80px;max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:.75rem">
-              <div style="align-self:flex-start;background:var(--bg4);border-radius:12px 12px 12px 4px;padding:.75rem 1rem;font-size:.88rem;max-width:85%;color:var(--muted)">
-                Hi! I'm your lesson teacher. Ask me anything about this topic — I'll explain it in a different way, give examples, or go deeper. 🎓
-              </div>
-            </div>
-            <div style="padding:.75rem 1rem;border-top:1px solid var(--border);display:flex;gap:.5rem">
-              <input id="teacher-input" type="text" placeholder="Ask a question about this lesson…" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:.6rem .9rem;color:var(--white);font-size:.88rem" onkeydown="if(event.key==='Enter')sendTeacherQuestion()">
-              <button onclick="sendTeacherQuestion()" style="background:var(--gold);color:#000;border:none;border-radius:10px;padding:.6rem 1.1rem;font-weight:700;cursor:pointer;font-size:.88rem">Send</button>
-            </div>
-          </div>
+          <!-- Teacher Voice Overlay (injected via JS) -->
         </div>
       </div>
     </div>
@@ -9303,118 +9282,302 @@ vidPrev = function() {
   if (vidIdx > 0) { vidIdx--; window.speechSynthesis?.cancel(); renderVidScene(); }
 };
 
-// ── Ask the Teacher ────────────────────────────────────
+// ── TEACHER VOICE CONVERSATION ──────────────────────────
 
-function toggleAskTeacher() {
-  const panel = document.getElementById('ask-teacher-panel');
-  if (!panel) return;
-  const open = panel.style.display !== 'none';
-  panel.style.display = open ? 'none' : 'block';
-  if (!open) document.getElementById('teacher-input')?.focus();
-}
-
-function teacherAddMsg(role, text) {
-  const chat = document.getElementById('teacher-chat');
-  if (!chat) return;
-  const isTeacher = role === 'teacher';
-  const msg = document.createElement('div');
-  msg.style.cssText = `align-self:${isTeacher ? 'flex-start' : 'flex-end'};max-width:88%;background:${isTeacher ? 'var(--bg4)' : 'linear-gradient(135deg,rgba(201,168,76,.25),rgba(201,168,76,.1))'};border:${isTeacher ? 'none' : '1px solid rgba(201,168,76,.3)'};border-radius:${isTeacher ? '12px 12px 12px 4px' : '12px 12px 4px 12px'};padding:.75rem 1rem;font-size:.88rem;line-height:1.6`;
-  msg.innerHTML = isTeacher ? renderAIResponse(text) : `<span style="color:var(--white)">${text}</span>`;
-  chat.appendChild(msg);
-  chat.scrollTop = 99999;
-  // Read teacher response aloud
-  if (isTeacher && vidTTSEnabled) {
-    window.speechSynthesis?.cancel();
-    const utt = new SpeechSynthesisUtterance(text.replace(/[*_`#~\[\]]/g, '').slice(0, 500));
-    utt.lang = 'en-GB'; utt.rate = 0.93;
-    const voices = window.speechSynthesis?.getVoices() || [];
-    const v = voices.find(v => v.name.includes('Google') && v.lang === 'en-GB') || voices.find(v => v.lang === 'en-GB');
-    if (v) utt.voice = v;
-    window.speechSynthesis?.speak(utt);
+/* Inject teacher overlay styles */
+(function() {
+  const s = document.createElement('style');
+  s.textContent = `
+  #teacher-overlay {
+    position:fixed;inset:0;z-index:10000;
+    background:rgba(5,7,14,0.97);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:1.5rem;opacity:0;pointer-events:none;transition:opacity .3s;
+    font-family:inherit;padding:1rem;
   }
+  #teacher-overlay.open { opacity:1;pointer-events:all; }
+
+  .teacher-orb {
+    width:150px;height:150px;border-radius:50%;position:relative;
+    background:radial-gradient(circle at 38% 36%, #7C6AFA 0%, #4338CA 55%, #1e1560 100%);
+    box-shadow:0 0 0 0 rgba(124,106,250,0.5);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:transform .2s;
+  }
+  .teacher-orb svg { width:52px;height:52px;fill:#fff;opacity:.9; }
+  .teacher-orb.t-listening { animation:tOrbListen 1.2s ease-in-out infinite; }
+  .teacher-orb.t-speaking  { animation:tOrbSpeak .65s ease-in-out infinite alternate; }
+  .teacher-orb.t-thinking  { animation:tOrbThink 2s linear infinite; }
+  @keyframes tOrbListen {
+    0%,100% { box-shadow:0 0 0 0 rgba(124,106,250,.6); transform:scale(1); }
+    50%      { box-shadow:0 0 0 38px rgba(124,106,250,.0); transform:scale(1.07); }
+  }
+  @keyframes tOrbSpeak {
+    from { transform:scale(1);    box-shadow:0 0 28px 6px rgba(124,106,250,.3); }
+    to   { transform:scale(1.08); box-shadow:0 0 52px 22px rgba(124,106,250,.5); }
+  }
+  @keyframes tOrbThink {
+    0%   { box-shadow:0 0 0 0 rgba(124,106,250,.4); }
+    50%  { box-shadow:0 0 24px 10px rgba(124,106,250,.2); }
+    100% { box-shadow:0 0 0 0 rgba(124,106,250,.4); }
+  }
+  #teacher-transcript-box {
+    max-width:540px;width:90%;min-height:48px;max-height:120px;overflow-y:auto;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+    border-radius:14px;padding:.75rem 1rem;
+    font-size:.95rem;color:rgba(255,255,255,.9);line-height:1.6;text-align:center;
+  }
+  #teacher-reply-box {
+    max-width:540px;width:90%;min-height:44px;max-height:160px;overflow-y:auto;
+    font-size:.92rem;color:rgba(180,170,255,.95);line-height:1.7;text-align:center;
+  }
+  .teacher-ctrl-row { display:flex;gap:1rem;flex-wrap:wrap;justify-content:center; }
+  .t-ctrl-btn {
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+    color:#fff;border-radius:999px;padding:.5rem 1.3rem;
+    font-size:.85rem;cursor:pointer;transition:.2s;
+  }
+  .t-ctrl-btn:hover { background:rgba(255,255,255,.16); }
+  .t-ctrl-btn.danger { border-color:rgba(251,113,133,.5);color:#FB7185; }
+  `;
+  document.head.appendChild(s);
+
+  /* Build overlay DOM */
+  const div = document.createElement('div');
+  div.id = 'teacher-overlay';
+  div.innerHTML = `
+    <div style="text-align:center">
+      <div style="font-size:1.3rem;font-weight:800;color:#a5b4fc;letter-spacing:.02em">🎓 Talk to Your Teacher</div>
+      <div id="teacher-lesson-label" style="font-size:.78rem;color:rgba(255,255,255,.4);margin-top:.2rem"></div>
+    </div>
+    <div class="teacher-orb" id="teacher-orb" onclick="tvTapOrb()">
+      <svg id="teacher-orb-icon" viewBox="0 0 24 24"><path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6 10a6 6 0 0 0 11.95.75l.05-.75H16a4 4 0 0 1-8 0H6zm5 8.93V22h2v-2.07A8 8 0 0 0 20 12h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/></svg>
+    </div>
+    <div id="teacher-status" style="font-size:.95rem;font-weight:600;color:rgba(255,255,255,.6);min-height:1.3rem"></div>
+    <div id="teacher-transcript-box" style="display:none"></div>
+    <div id="teacher-reply-box"></div>
+    <div class="teacher-ctrl-row">
+      <button class="t-ctrl-btn" id="tv-listen-btn" onclick="tvTapOrb()">🎤 Speak</button>
+      <button class="t-ctrl-btn" id="tv-stop-btn" style="display:none" onclick="tvStopSpeaking()">⏹ Stop</button>
+      <button class="t-ctrl-btn" onclick="tvSendText()" id="tv-type-btn">⌨️ Type</button>
+      <button class="t-ctrl-btn danger" onclick="closeTeacherVoice()">✕ End</button>
+    </div>
+    <div style="font-size:.72rem;color:rgba(255,255,255,.25)">
+      Tap the orb to speak · Hands-free — teacher listens again after each answer
+    </div>
+    <!-- Hidden type input -->
+    <div id="tv-type-row" style="display:none;max-width:480px;width:90%;display:none">
+      <input id="tv-type-input" placeholder="Type your question…"
+        style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.65rem 1rem;color:#fff;font-size:.9rem;box-sizing:border-box"
+        onkeydown="if(event.key==='Enter'){tvSubmitTyped();this.closest('div').style.display='none'}">
+    </div>`;
+  document.body.appendChild(div);
+})();
+
+/* ── Teacher Voice engine ── */
+const TV = { state: 'idle', recog: null, history: [] };
+
+function tvPickVoice() {
+  const voices = window.speechSynthesis?.getVoices() || [];
+  return voices.find(v => v.name.includes('Google') && v.lang === 'en-GB')
+    || voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
+    || voices.find(v => /microsoft.*natural/i.test(v.name))
+    || voices.find(v => v.lang === 'en-GB')
+    || voices.find(v => v.lang.startsWith('en'))
+    || null;
 }
 
-async function sendTeacherQuestion() {
-  const input = document.getElementById('teacher-input');
-  const q = input?.value.trim();
-  if (!q) return;
-  input.value = '';
-  teacherAddMsg('student', q);
+function tvSetState(s) {
+  TV.state = s;
+  const orb    = document.getElementById('teacher-orb');
+  const status = document.getElementById('teacher-status');
+  const lisBtn = document.getElementById('tv-listen-btn');
+  const stopBtn= document.getElementById('tv-stop-btn');
+  if (!orb) return;
+  orb.classList.toggle('t-listening', s === 'listening');
+  orb.classList.toggle('t-speaking',  s === 'speaking');
+  orb.classList.toggle('t-thinking',  s === 'thinking');
+  const icons = {
+    idle:      '<path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6 10a6 6 0 0 0 11.95.75l.05-.75H16a4 4 0 0 1-8 0H6zm5 8.93V22h2v-2.07A8 8 0 0 0 20 12h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/>',
+    listening: '<path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6 10a6 6 0 0 0 11.95.75l.05-.75H16a4 4 0 0 1-8 0H6zm5 8.93V22h2v-2.07A8 8 0 0 0 20 12h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/>',
+    thinking:  '<path d="M12 2a10 10 0 1 1 0 20A10 10 0 0 1 12 2zm1 5h-2v6l5.25 3.15.75-1.23-4-2.42V7z"/>',
+    speaking:  '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1-3.29-2.5-4.03v8.05c1.5-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>',
+  };
+  const icon = document.getElementById('teacher-orb-icon');
+  if (icon) icon.innerHTML = icons[s] || icons.idle;
+  const labels = { idle:'Tap to speak', listening:'Listening…', thinking:'Thinking…', speaking:'Teacher is speaking…' };
+  if (status) status.textContent = labels[s] || '';
+  if (lisBtn)  lisBtn.style.display = (s === 'listening' || s === 'thinking') ? 'none' : '';
+  if (stopBtn) stopBtn.style.display = s === 'speaking' ? '' : 'none';
+}
 
-  // Build context from current lesson
-  const topic = document.getElementById('vid-topic')?.value || 'this topic';
-  const subject = document.getElementById('vid-subject')?.value || 'A-Level';
-  const currentScene = vidScenes[vidIdx] || {};
-  const lessonOutline = vidScenes.map((s, i) => `Scene ${i+1}: ${s.title}`).join('\n');
+function tvBuildSys() {
+  const topic   = document.getElementById('vid-topic')?.value   || 'this topic';
+  const subject = document.getElementById('vid-subject')?.value || 'A-Level Maths';
+  const scene   = vidScenes[vidIdx] || {};
+  const outline = vidScenes.map((s, i) => `Scene ${i+1}: ${s.title}`).join('\n');
+  return `You are a warm, encouraging ${subject} teacher having a live spoken conversation with a student during a lesson on "${topic}".
 
-  const sys = `You are a warm, encouraging ${subject} teacher who has just been teaching a lesson on "${topic}".
+Lesson outline:
+${outline}
 
-Current lesson outline:
-${lessonOutline}
+Student is on Scene ${vidIdx + 1}: "${scene.title}"
+Scene content: ${scene.content || ''}
 
-The student is currently on Scene ${vidIdx + 1}: "${currentScene.title}".
-Scene content: ${currentScene.content || ''}
+Rules:
+- Speak naturally as if talking aloud — never use LaTeX, markdown, bullet symbols, or asterisks
+- Keep each response to 2–4 natural spoken sentences unless the student needs more
+- If the student seems confused, try a completely different angle or a real-life analogy
+- Be encouraging, patient and friendly — like a great human tutor
+- Reference the lesson content when relevant, but also go beyond it if asked
+- After answering, optionally ask a short follow-up question to check understanding`;
+}
 
-Answer the student's question in a clear, conversational teaching style. Be concise (2–4 sentences unless they need more).
-Use simple language and a real-world example where helpful. Do not use LaTeX — write maths in plain text (e.g. "x squared" not "x²").
-If they're confused, try explaining it a completely different way. Be encouraging and patient.`;
+async function tvHandleInput(text) {
+  if (!text) { tvSetState('idle'); return; }
+  tvSetState('thinking');
+  const tbox = document.getElementById('teacher-transcript-box');
+  const rbox = document.getElementById('teacher-reply-box');
+  if (tbox) { tbox.style.display = 'block'; tbox.textContent = text; }
+  if (rbox) rbox.textContent = '';
 
-  // Typing indicator
-  const chat = document.getElementById('teacher-chat');
-  const typing = document.createElement('div');
-  typing.style.cssText = 'align-self:flex-start;background:var(--bg4);border-radius:12px 12px 12px 4px;padding:.75rem 1rem;font-size:.88rem;color:var(--muted)';
-  typing.textContent = '…';
-  chat.appendChild(typing);
-  chat.scrollTop = 99999;
+  TV.history.push({ role: 'user', content: text });
 
   try {
-    const data = await callClaude([{ role: 'user', content: q }], sys);
-    typing.remove();
+    const data = await callClaude(TV.history, tvBuildSys());
     const reply = getReply(data);
-    teacherAddMsg('teacher', reply);
-    addXP(5, '💬 Asked the teacher +5 XP');
+    TV.history.push({ role: 'assistant', content: reply });
+    // Keep history manageable
+    if (TV.history.length > 20) TV.history = TV.history.slice(-20);
+
+    const clean = reply.replace(/[*_`#~\[\]]/g, '');
+    if (rbox) rbox.textContent = clean;
+    addXP(5, '🎓 Teacher conversation +5 XP');
+    tvSpeak(clean);
   } catch(e) {
-    typing.remove();
-    teacherAddMsg('teacher', '⚠️ Sorry, I had a problem answering that. Please try again.');
+    tvSetState('idle');
+    if (rbox) rbox.textContent = 'Sorry, I had a problem — please try again.';
+    setTimeout(tvStartListening, 1200);
   }
 }
 
-let _teacherRecog = null;
-function teacherVoiceInput() {
+function tvSpeak(text) {
+  if (!window.speechSynthesis) { tvSetState('idle'); tvStartListening(); return; }
+  window.speechSynthesis.cancel();
+  tvSetState('speaking');
+
+  // Split into sentences for smooth delivery
+  const sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
+  let idx = 0;
+
+  function next() {
+    if (idx >= sentences.length || TV.state !== 'speaking') {
+      // Auto-listen again (hands-free loop)
+      tvSetState('idle');
+      setTimeout(tvStartListening, 500);
+      return;
+    }
+    const utt = new SpeechSynthesisUtterance(sentences[idx++].trim());
+    utt.lang = 'en-GB'; utt.rate = 0.94; utt.pitch = 1.02;
+    const v = tvPickVoice();
+    if (v) utt.voice = v;
+    utt.onend = next;
+    window.speechSynthesis.speak(utt);
+  }
+  next();
+}
+
+function tvStopSpeaking() {
+  window.speechSynthesis?.cancel();
+  tvSetState('idle');
+  setTimeout(tvStartListening, 300);
+}
+
+function tvStartListening() {
+  if (TV.state === 'listening') return;
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { showToast('Voice input needs Chrome or Edge'); return; }
-  if (_teacherRecog) { _teacherRecog.stop(); _teacherRecog = null; return; }
+  if (!SR) { showToast('Voice needs Chrome or Edge'); return; }
+  window.speechSynthesis?.cancel();
+  tvSetState('listening');
+  const tbox = document.getElementById('teacher-transcript-box');
+  if (tbox) { tbox.style.display = 'block'; tbox.textContent = ''; }
 
-  const indicator = document.getElementById('teacher-voice-indicator');
-  const btn = document.getElementById('teacher-voice-btn');
-  if (indicator) indicator.style.display = 'block';
-  if (btn) btn.textContent = '⏹ Stop';
+  const r = new SR();
+  r.lang = 'en-GB'; r.interimResults = true; r.maxAlternatives = 1;
+  TV.recog = r;
 
-  _teacherRecog = new SR();
-  _teacherRecog.lang = 'en-GB';
-  _teacherRecog.interimResults = true;
-  _teacherRecog.onresult = e => {
-    const text = Array.from(e.results).map(r => r[0].transcript).join('');
-    const input = document.getElementById('teacher-input');
-    if (input) input.value = text;
+  r.onresult = e => {
+    const interim = Array.from(e.results).map(x => x[0].transcript).join('');
+    if (tbox) tbox.textContent = interim;
     if (e.results[e.results.length - 1].isFinal) {
-      _teacherRecog = null;
-      if (indicator) indicator.style.display = 'none';
-      if (btn) btn.textContent = '🎤 Speak';
-      sendTeacherQuestion();
+      TV.recog = null;
+      tvHandleInput(interim.trim());
     }
   };
-  _teacherRecog.onerror = () => {
-    _teacherRecog = null;
-    if (indicator) indicator.style.display = 'none';
-    if (btn) btn.textContent = '🎤 Speak';
-  };
-  _teacherRecog.onend = () => {
-    _teacherRecog = null;
-    if (indicator) indicator.style.display = 'none';
-    if (btn) btn.textContent = '🎤 Speak';
-  };
-  _teacherRecog.start();
+  r.onerror = e => { TV.recog = null; if (e.error !== 'no-speech') tvSetState('idle'); else { tvSetState('idle'); setTimeout(tvStartListening, 800); } };
+  r.onend   = () => { if (TV.state === 'listening') tvSetState('idle'); };
+  r.start();
+}
+
+function tvTapOrb() {
+  if (TV.state === 'listening') { TV.recog?.stop(); tvSetState('idle'); }
+  else if (TV.state === 'speaking') { tvStopSpeaking(); }
+  else { tvStartListening(); }
+}
+
+function tvSendText() {
+  const row = document.getElementById('tv-type-row');
+  if (!row) return;
+  const shown = row.style.display !== 'none';
+  row.style.display = shown ? 'none' : 'flex';
+  if (!shown) {
+    row.style.display = 'flex';
+    document.getElementById('tv-type-input')?.focus();
+  }
+}
+
+function tvSubmitTyped() {
+  const val = document.getElementById('tv-type-input')?.value.trim();
+  if (!val) return;
+  document.getElementById('tv-type-input').value = '';
+  document.getElementById('tv-type-row').style.display = 'none';
+  window.speechSynthesis?.cancel();
+  TV.recog?.stop();
+  tvHandleInput(val);
+}
+
+function openTeacherVoice() {
+  if (window.speechSynthesis) window.speechSynthesis.getVoices(); // preload
+  // Pause lesson narration
+  window.speechSynthesis?.cancel();
+  stopVidPlay();
+
+  const overlay = document.getElementById('teacher-overlay');
+  if (!overlay) return;
+  overlay.classList.add('open');
+
+  // Label the lesson
+  const topic   = document.getElementById('vid-topic')?.value || '';
+  const label   = document.getElementById('teacher-lesson-label');
+  if (label && topic) label.textContent = `Lesson: ${topic} · Scene ${vidIdx + 1} of ${vidScenes.length}`;
+
+  TV.history = []; // fresh conversation per session
+  tvSetState('idle');
+
+  // Teacher greets the student and immediately listens
+  const greeting = `Hi! I'm your ${document.getElementById('vid-subject')?.value || 'Maths'} teacher. We're on ${vidScenes[vidIdx]?.title || 'your lesson'}. What would you like to know?`;
+  const rbox = document.getElementById('teacher-reply-box');
+  if (rbox) rbox.textContent = greeting;
+  TV.history.push({ role: 'assistant', content: greeting });
+  tvSpeak(greeting);
+}
+
+function closeTeacherVoice() {
+  TV.recog?.stop();
+  window.speechSynthesis?.cancel();
+  TV.state = 'idle'; TV.recog = null;
+  const overlay = document.getElementById('teacher-overlay');
+  if (overlay) overlay.classList.remove('open');
 }
 
 // ─── LEADERBOARD ─────────────────────────────────────
