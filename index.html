@@ -6992,21 +6992,34 @@ function toggleTTS() {
   showToast(state.ttsEnabled ? '🔊 Read-aloud enabled' : '🔇 Read-aloud disabled');
 }
 
+// Shared ElevenLabs TTS helper — returns a cancel function
+let _elAudio = null;
+function elSpeak(text, onEnd) {
+  if (_elAudio) { _elAudio.pause(); _elAudio = null; }
+  let cancelled = false;
+  const cancel = () => { cancelled = true; if (_elAudio) { _elAudio.pause(); _elAudio = null; } if (onEnd) onEnd(); };
+  fetch('/api/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  }).then(r => {
+    if (!r.ok || cancelled) { if (onEnd && !cancelled) onEnd(); return; }
+    return r.blob();
+  }).then(blob => {
+    if (!blob || cancelled) return;
+    const url = URL.createObjectURL(blob);
+    _elAudio = new Audio(url);
+    _elAudio.onended = () => { URL.revokeObjectURL(url); _elAudio = null; if (!cancelled && onEnd) onEnd(); };
+    _elAudio.onerror = () => { URL.revokeObjectURL(url); _elAudio = null; if (!cancelled && onEnd) onEnd(); };
+    _elAudio.play().catch(() => { if (!cancelled && onEnd) onEnd(); });
+  }).catch(() => { if (!cancelled && onEnd) onEnd(); });
+  return cancel;
+}
+
 function speak(text) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  // Strip markdown formatting before speaking
   const clean = text.replace(/[*_`#~>\[\]]/g, '').replace(/\n+/g, '. ').slice(0, 1000);
-  const utt = new SpeechSynthesisUtterance(clean);
-  utt.lang = 'en-GB';
-  utt.rate = 0.92; utt.pitch = 1.05;
-  // Prefer a natural-sounding UK voice if available
-  const voices = window.speechSynthesis.getVoices();
-  const preferred = voices.find(v => v.lang === 'en-GB' && v.name.includes('Female'))
-    || voices.find(v => v.lang === 'en-GB')
-    || voices.find(v => v.lang.startsWith('en'));
-  if (preferred) utt.voice = preferred;
-  window.speechSynthesis.speak(utt);
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  elSpeak(clean);
 }
 
 let _voiceMode = false;
@@ -9413,43 +9426,8 @@ function wsBestVoice() {
 function ttsSpeak(text, onEnd) {
   const clean = text.replace(/[*_`#~>\[\]]/g, '').replace(/\s+/g, ' ').trim();
   if (!clean) { if (onEnd) onEnd(); return () => {}; }
-
   if (window.speechSynthesis) window.speechSynthesis.cancel();
-
-  let cancelled = false;
-  const cancel = () => {
-    cancelled = true;
-    if (window.speechSynthesis) window.speechSynthesis.cancel();
-  };
-
-  if (!window.speechSynthesis) { if (onEnd) onEnd(); return cancel; }
-
-  // Re-pick voice each call in case voices loaded after page start
-  _wsBestVoice = null;
-  const voice = wsBestVoice();
-
-  const sentences = clean.match(/[^.!?]+[.!?]*/g) || [clean];
-  let idx = 0;
-  let done = false;
-
-  function finish() { if (!done) { done = true; if (!cancelled && onEnd) onEnd(); } }
-
-  function next() {
-    if (cancelled || idx >= sentences.length) { finish(); return; }
-    const s = sentences[idx++].trim();
-    if (!s) { next(); return; }
-    const utt = new SpeechSynthesisUtterance(s);
-    utt.lang  = 'en-GB';
-    utt.rate  = 0.88;  // slightly slower = clearer, more natural
-    utt.pitch = 1.0;
-    if (voice) utt.voice = voice;
-    utt.onerror = next;
-    const guard = setTimeout(next, 12000); // Chrome stall safety
-    utt.onend = () => { clearTimeout(guard); next(); };
-    window.speechSynthesis.speak(utt);
-  }
-  next();
-  return cancel;
+  return elSpeak(clean, onEnd);
 }
 
 /* ── Teacher Voice engine ── */
