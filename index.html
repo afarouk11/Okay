@@ -3477,6 +3477,31 @@ body.mode-adhd .adhd-break { display: block; }
             <button class="vid-ctrl-btn" onclick="vidNext()">Next ➡</button>
             <span style="font-size:.8rem;color:var(--muted)" id="vid-slide-counter">Scene 1 of 1</span>
             <button class="vid-ctrl-btn" onclick="saveVideoToNotes()">📓 Save to Notes</button>
+            <button class="vid-ctrl-btn" id="vid-tts-btn" onclick="toggleVidTTS()" title="Toggle narration">🔊 Narrate</button>
+            <button class="vid-ctrl-btn" onclick="toggleAskTeacher()" id="ask-teacher-toggle-btn" style="background:rgba(201,168,76,.15);border-color:rgba(201,168,76,.4);color:var(--gold)">💬 Ask Teacher</button>
+          </div>
+
+          <!-- Ask the Teacher Panel -->
+          <div id="ask-teacher-panel" style="display:none;margin-top:1.5rem;background:var(--bg3);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+            <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+              <div>
+                <div style="font-weight:700;font-size:.95rem">💬 Ask the Teacher</div>
+                <div style="font-size:.75rem;color:var(--muted)">Your AI teacher has full context of this lesson — ask anything</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:.5rem">
+                <div id="teacher-voice-indicator" style="display:none;font-size:.75rem;color:var(--gold);animation:pulse 1.2s infinite">🎤 Listening…</div>
+                <button id="teacher-voice-btn" onclick="teacherVoiceInput()" style="background:var(--bg4);border:1px solid var(--border);color:var(--white);border-radius:8px;padding:.35rem .75rem;font-size:.8rem;cursor:pointer">🎤 Speak</button>
+              </div>
+            </div>
+            <div id="teacher-chat" style="padding:1rem;min-height:80px;max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:.75rem">
+              <div style="align-self:flex-start;background:var(--bg4);border-radius:12px 12px 12px 4px;padding:.75rem 1rem;font-size:.88rem;max-width:85%;color:var(--muted)">
+                Hi! I'm your lesson teacher. Ask me anything about this topic — I'll explain it in a different way, give examples, or go deeper. 🎓
+              </div>
+            </div>
+            <div style="padding:.75rem 1rem;border-top:1px solid var(--border);display:flex;gap:.5rem">
+              <input id="teacher-input" type="text" placeholder="Ask a question about this lesson…" style="flex:1;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:.6rem .9rem;color:var(--white);font-size:.88rem" onkeydown="if(event.key==='Enter')sendTeacherQuestion()">
+              <button onclick="sendTeacherQuestion()" style="background:var(--gold);color:#000;border:none;border-radius:10px;padding:.6rem 1.1rem;font-weight:700;cursor:pointer;font-size:.88rem">Send</button>
+            </div>
           </div>
         </div>
       </div>
@@ -9181,6 +9206,215 @@ function saveVideoToNotes() {
   document.getElementById('note-text-input').value = `VIDEO EXPLAINER NOTES\n\n${content}`;
   selectedNoteTag = 'General';
   showDash('notes');
+}
+
+// ─── LESSON NARRATION + ASK THE TEACHER ──────────────
+
+let vidTTSEnabled = true;  // narration on by default
+let _vidSpeaking = false;
+
+// Override renderVidScene to narrate each scene
+const _origRenderVidScene = renderVidScene;
+renderVidScene = function() {
+  _origRenderVidScene();
+  if (vidTTSEnabled && vidScenes.length) {
+    const scene = vidScenes[Math.min(vidIdx, vidScenes.length - 1)];
+    const text = (scene.title || '') + '. ' + (scene.content || '').replace(/<[^>]+>/g, '');
+    vidNarrate(text);
+  }
+};
+
+function vidNarrate(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  _vidSpeaking = true;
+  const clean = text.replace(/[*_`#~\[\]]/g, '').replace(/\n/g, '. ').slice(0, 600);
+  const utt = new SpeechSynthesisUtterance(clean);
+  utt.lang = 'en-GB'; utt.rate = 0.93; utt.pitch = 1.02;
+  // Pick best voice (reuse VC voice picker if available)
+  const voices = window.speechSynthesis.getVoices();
+  const preferred = voices.find(v => v.name.includes('Google') && v.lang === 'en-GB')
+    || voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
+    || voices.find(v => /microsoft.*natural/i.test(v.name))
+    || voices.find(v => v.lang === 'en-GB')
+    || voices.find(v => v.lang.startsWith('en'));
+  if (preferred) utt.voice = preferred;
+  utt.onend = () => {
+    _vidSpeaking = false;
+    // Auto-advance when playing and narration finishes
+    if (vidPlaying) {
+      if (vidIdx < vidScenes.length - 1) { vidIdx++; renderVidScene(); }
+      else { stopVidPlay(); }
+    }
+  };
+  window.speechSynthesis.speak(utt);
+}
+
+// Override startVidPlay to drive by narration instead of fixed interval
+const _origStartVidPlay = startVidPlay;
+startVidPlay = function() {
+  vidPlaying = true;
+  clearInterval(vidInterval);
+  vidInterval = null;
+  const btn = document.getElementById('vid-play-btn');
+  if (btn) btn.textContent = '⏸ Pause';
+  // If TTS is off, fall back to 7s interval
+  if (!vidTTSEnabled) {
+    vidInterval = setInterval(() => {
+      if (vidIdx < vidScenes.length - 1) { vidIdx++; renderVidScene(); }
+      else { stopVidPlay(); }
+    }, 7000);
+  }
+  // If TTS is on, narration onend drives the advance (renderVidScene already narrates)
+};
+
+const _origStopVidPlay = stopVidPlay;
+stopVidPlay = function() {
+  vidPlaying = false;
+  clearInterval(vidInterval);
+  vidInterval = null;
+  window.speechSynthesis?.cancel();
+  _vidSpeaking = false;
+  const btn = document.getElementById('vid-play-btn');
+  if (btn) btn.textContent = '▶ Play';
+};
+
+function toggleVidTTS() {
+  vidTTSEnabled = !vidTTSEnabled;
+  const btn = document.getElementById('vid-tts-btn');
+  if (btn) {
+    btn.textContent = vidTTSEnabled ? '🔊 Narrate' : '🔇 Muted';
+    btn.style.opacity = vidTTSEnabled ? '1' : '0.5';
+  }
+  if (!vidTTSEnabled) window.speechSynthesis?.cancel();
+  else if (vidScenes.length) {
+    const scene = vidScenes[Math.min(vidIdx, vidScenes.length - 1)];
+    vidNarrate((scene.title || '') + '. ' + (scene.content || ''));
+  }
+}
+
+// vidNext / vidPrev — cancel speech then render
+const _origVidNext = vidNext;
+const _origVidPrev = vidPrev;
+vidNext = function() {
+  if (vidIdx < vidScenes.length - 1) { vidIdx++; window.speechSynthesis?.cancel(); renderVidScene(); }
+};
+vidPrev = function() {
+  if (vidIdx > 0) { vidIdx--; window.speechSynthesis?.cancel(); renderVidScene(); }
+};
+
+// ── Ask the Teacher ────────────────────────────────────
+
+function toggleAskTeacher() {
+  const panel = document.getElementById('ask-teacher-panel');
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  panel.style.display = open ? 'none' : 'block';
+  if (!open) document.getElementById('teacher-input')?.focus();
+}
+
+function teacherAddMsg(role, text) {
+  const chat = document.getElementById('teacher-chat');
+  if (!chat) return;
+  const isTeacher = role === 'teacher';
+  const msg = document.createElement('div');
+  msg.style.cssText = `align-self:${isTeacher ? 'flex-start' : 'flex-end'};max-width:88%;background:${isTeacher ? 'var(--bg4)' : 'linear-gradient(135deg,rgba(201,168,76,.25),rgba(201,168,76,.1))'};border:${isTeacher ? 'none' : '1px solid rgba(201,168,76,.3)'};border-radius:${isTeacher ? '12px 12px 12px 4px' : '12px 12px 4px 12px'};padding:.75rem 1rem;font-size:.88rem;line-height:1.6`;
+  msg.innerHTML = isTeacher ? renderAIResponse(text) : `<span style="color:var(--white)">${text}</span>`;
+  chat.appendChild(msg);
+  chat.scrollTop = 99999;
+  // Read teacher response aloud
+  if (isTeacher && vidTTSEnabled) {
+    window.speechSynthesis?.cancel();
+    const utt = new SpeechSynthesisUtterance(text.replace(/[*_`#~\[\]]/g, '').slice(0, 500));
+    utt.lang = 'en-GB'; utt.rate = 0.93;
+    const voices = window.speechSynthesis?.getVoices() || [];
+    const v = voices.find(v => v.name.includes('Google') && v.lang === 'en-GB') || voices.find(v => v.lang === 'en-GB');
+    if (v) utt.voice = v;
+    window.speechSynthesis?.speak(utt);
+  }
+}
+
+async function sendTeacherQuestion() {
+  const input = document.getElementById('teacher-input');
+  const q = input?.value.trim();
+  if (!q) return;
+  input.value = '';
+  teacherAddMsg('student', q);
+
+  // Build context from current lesson
+  const topic = document.getElementById('vid-topic')?.value || 'this topic';
+  const subject = document.getElementById('vid-subject')?.value || 'A-Level';
+  const currentScene = vidScenes[vidIdx] || {};
+  const lessonOutline = vidScenes.map((s, i) => `Scene ${i+1}: ${s.title}`).join('\n');
+
+  const sys = `You are a warm, encouraging ${subject} teacher who has just been teaching a lesson on "${topic}".
+
+Current lesson outline:
+${lessonOutline}
+
+The student is currently on Scene ${vidIdx + 1}: "${currentScene.title}".
+Scene content: ${currentScene.content || ''}
+
+Answer the student's question in a clear, conversational teaching style. Be concise (2–4 sentences unless they need more).
+Use simple language and a real-world example where helpful. Do not use LaTeX — write maths in plain text (e.g. "x squared" not "x²").
+If they're confused, try explaining it a completely different way. Be encouraging and patient.`;
+
+  // Typing indicator
+  const chat = document.getElementById('teacher-chat');
+  const typing = document.createElement('div');
+  typing.style.cssText = 'align-self:flex-start;background:var(--bg4);border-radius:12px 12px 12px 4px;padding:.75rem 1rem;font-size:.88rem;color:var(--muted)';
+  typing.textContent = '…';
+  chat.appendChild(typing);
+  chat.scrollTop = 99999;
+
+  try {
+    const data = await callClaude([{ role: 'user', content: q }], sys);
+    typing.remove();
+    const reply = getReply(data);
+    teacherAddMsg('teacher', reply);
+    addXP(5, '💬 Asked the teacher +5 XP');
+  } catch(e) {
+    typing.remove();
+    teacherAddMsg('teacher', '⚠️ Sorry, I had a problem answering that. Please try again.');
+  }
+}
+
+let _teacherRecog = null;
+function teacherVoiceInput() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('Voice input needs Chrome or Edge'); return; }
+  if (_teacherRecog) { _teacherRecog.stop(); _teacherRecog = null; return; }
+
+  const indicator = document.getElementById('teacher-voice-indicator');
+  const btn = document.getElementById('teacher-voice-btn');
+  if (indicator) indicator.style.display = 'block';
+  if (btn) btn.textContent = '⏹ Stop';
+
+  _teacherRecog = new SR();
+  _teacherRecog.lang = 'en-GB';
+  _teacherRecog.interimResults = true;
+  _teacherRecog.onresult = e => {
+    const text = Array.from(e.results).map(r => r[0].transcript).join('');
+    const input = document.getElementById('teacher-input');
+    if (input) input.value = text;
+    if (e.results[e.results.length - 1].isFinal) {
+      _teacherRecog = null;
+      if (indicator) indicator.style.display = 'none';
+      if (btn) btn.textContent = '🎤 Speak';
+      sendTeacherQuestion();
+    }
+  };
+  _teacherRecog.onerror = () => {
+    _teacherRecog = null;
+    if (indicator) indicator.style.display = 'none';
+    if (btn) btn.textContent = '🎤 Speak';
+  };
+  _teacherRecog.onend = () => {
+    _teacherRecog = null;
+    if (indicator) indicator.style.display = 'none';
+    if (btn) btn.textContent = '🎤 Speak';
+  };
+  _teacherRecog.start();
 }
 
 // ─── LEADERBOARD ─────────────────────────────────────
