@@ -11536,7 +11536,7 @@ function renderTeacherChapters() {
 
 // Fix unescaped LaTeX backslashes in Claude's JSON output (e.g. \frac → \\frac)
 function fixJsonLatex(str) {
-  return str.replace(/\\(?!["\\/bfnrtu])/g, '\\\\');
+  return str.replace(/(?<!\\)\\(?!["\\/bfnrtu])/g, '\\\\');
 }
 
 function initTeacher() {
