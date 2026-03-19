@@ -2138,7 +2138,7 @@ body.mode-adhd .adhd-break { display: block; }
         <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--black);font-size:.65rem;font-weight:800;letter-spacing:.1em;padding:.3rem .9rem;border-radius:20px;white-space:nowrap">BEST VALUE</div>
         <div style="font-size:2rem;margin-bottom:.5rem">🤖</div>
         <div style="font-size:1.1rem;font-weight:700;margin-bottom:.25rem">Synaptiq</div>
-        <div style="font-size:2rem;font-weight:900;font-family:var(--font-head);color:var(--gold)">£24.99</div>
+        <div style="font-size:2rem;font-weight:900;font-family:var(--font-head);color:var(--gold)">£35</div>
         <div style="color:var(--muted);font-size:.85rem">per month</div>
         <div style="margin-top:.75rem;font-size:.8rem;color:var(--muted);line-height:1.6">Unlimited sessions · 24/7 · Personalised to your exam board</div>
       </div>
@@ -2163,7 +2163,7 @@ body.mode-adhd .adhd-break { display: block; }
     <div class="pricing-grid">
       <div class="price-card">
         <div class="price-name">Student Plan</div>
-        <div class="price-amount" id="price-student-amount">£24.99<span>/month</span></div>
+        <div class="price-amount" id="price-student-amount">£35<span>/month</span></div>
         <div class="price-desc" id="price-student-sub">7-day free trial · Cancel any time</div>
         <ul class="price-features">
           <li><i class="fas fa-check"></i>Full AI Maths Tutor — unlimited questions</li>
@@ -2235,7 +2235,7 @@ body.mode-adhd .adhd-break { display: block; }
 
       <details class="faq-item">
         <summary class="faq-q">How much does it cost after the trial?</summary>
-        <p class="faq-a">£24.99/month, or £199/year (saving £101 — about £16.58/month). For context, a single hour with a private A-Level Maths tutor typically costs £40–80. Synaptiq gives you unlimited 24/7 access for the price of half a tutoring session per month.</p>
+        <p class="faq-a">£35/month, or £199/year (saving £221 — about £16.58/month). For context, a single hour with a private A-Level Maths tutor typically costs £40–80. Synaptiq gives you unlimited 24/7 access for less than the cost of a single tutoring session per month.</p>
       </details>
 
       <details class="faq-item">
@@ -2255,7 +2255,7 @@ body.mode-adhd .adhd-break { display: block; }
       <button class="btn-hero-primary" onclick="nav('auth');trackEvent('cta_clicked',{location:'footer_cta'})">Start Your Free Trial →</button>
       <button class="btn-hero-secondary" onclick="window.location.href='mailto:schools@synaptiqai.co.uk?subject=School%20Enquiry'">Schools — Book a Demo</button>
     </div>
-    <p style="color:var(--muted);font-size:.8rem">£24.99/month after trial · Cancel any time · AQA · Edexcel · OCR · WJEC</p>
+    <p style="color:var(--muted);font-size:.8rem">£35/month after trial · Cancel any time · AQA · Edexcel · OCR · WJEC</p>
   </section>
 
   <!-- Footer -->
@@ -2377,7 +2377,7 @@ body.mode-adhd .adhd-break { display: block; }
         <div class="plan-options">
           <div class="plan-opt selected" id="plan-student" onclick="selectPlan('student')">
             <div class="plan-name">Student</div>
-            <div class="plan-price">£24.99<span style="font-size:.75rem;font-weight:400">/mo</span></div>
+            <div class="plan-price">£35<span style="font-size:.75rem;font-weight:400">/mo</span></div>
             <div class="plan-tag">7-day free trial</div>
           </div>
           <div class="plan-opt" id="plan-home" onclick="selectPlan('home')">
@@ -4720,7 +4720,7 @@ function nextStep(from) {
     const progressFill = document.getElementById('auth-progress-fill');
     if (progressFill) progressFill.style.width = '100%';
     const _ps = document.getElementById('profile-summary'); if (_ps) _ps.innerHTML = `
-      <strong>Plan:</strong> ${state.selectedPlan === 'student' ? 'Student (£24.99/mo — 7-day free trial)' : 'Institution — Demo requested'}<br>
+      <strong>Plan:</strong> ${state.selectedPlan === 'student' ? 'Student (£35/mo — 7-day free trial)' : 'Institution — Demo requested'}<br>
       <strong>Year:</strong> ${document.getElementById('reg-year')?.value || ''}<br>
       <strong>Exam Board:</strong> ${document.getElementById('reg-board')?.value || ''}<br>
       <strong>Target Grade:</strong> ${document.getElementById('reg-target')?.value || ''}<br>
@@ -7726,7 +7726,7 @@ function resetStatsForNewUser() {
     <p id="upgrade-reason" style="color:var(--muted);margin-bottom:1.5rem;font-size:.9rem">This feature requires a subscription</p>
     <div style="display:flex;flex-direction:column;gap:.75rem">
       <button class="btn-gold" style="width:100%;padding:.875rem" onclick="startCheckoutFlow('student')">
-        Student Plan — £24.99/mo<br><span style="font-size:.75rem;font-weight:400">Unlimited AI tutoring · 7-day free trial</span>
+        Student Plan — £35/mo<br><span style="font-size:.75rem;font-weight:400">Unlimited AI tutoring · 7-day free trial</span>
       </button>
       <button class="btn-gold" style="width:100%;padding:.875rem;background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="window.location.href='mailto:schools@synaptiqai.co.uk?subject=School%20Enquiry'">
         Institution Plan — Book a Demo<br><span style="font-size:.75rem;font-weight:400">Custom pricing for schools &amp; sixth forms</span>
@@ -10416,7 +10416,7 @@ function setPricingBilling(annual) {
   const subEl    = document.getElementById('price-student-sub');
   const btnM     = document.getElementById('billing-monthly');
   const btnA     = document.getElementById('billing-annual');
-  if (amountEl) amountEl.innerHTML = annual ? '£199<span>/year</span>' : '£24.99<span>/month</span>';
+  if (amountEl) amountEl.innerHTML = annual ? '£199<span>/year</span>' : '£35<span>/month</span>';
   if (subEl)    subEl.textContent  = annual ? 'That\'s £16.58/mo — save £101' : '7-day free trial · Cancel any time';
   if (btnM) { btnM.style.background = annual ? 'transparent' : 'var(--gold)'; btnM.style.color = annual ? 'var(--muted)' : 'var(--black)'; btnM.style.borderColor = annual ? 'var(--border)' : 'var(--gold)'; }
   if (btnA) { btnA.style.background = annual ? 'var(--gold)' : 'transparent'; btnA.style.color = annual ? 'var(--black)' : 'var(--muted)'; btnA.style.borderColor = annual ? 'var(--gold)' : 'var(--border)'; }
