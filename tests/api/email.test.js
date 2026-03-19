@@ -7,7 +7,7 @@
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import handler from '../../api/email.js';
+import handler from '../../api/resend.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
