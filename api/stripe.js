@@ -9,15 +9,18 @@ export default async function handler(req, res) {
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeKey) return res.status(500).json({ error: 'Missing Stripe key' });
 
-  const { plan, email, successUrl, cancelUrl } = req.body;
+  const { plan, email, successUrl, cancelUrl, annual } = req.body;
 
   // Price IDs — set these in your Stripe dashboard and add as env vars
+  // Create separate monthly and annual price IDs in Stripe for the Student plan
   const prices = {
-    student: process.env.STRIPE_PRICE_STUDENT || 'price_student_placeholder',
-    homeschool: process.env.STRIPE_PRICE_HOMESCHOOL || 'price_homeschool_placeholder'
+    student:          process.env.STRIPE_PRICE_STUDENT          || 'price_student_monthly_placeholder',
+    student_annual:   process.env.STRIPE_PRICE_STUDENT_ANNUAL   || 'price_student_annual_placeholder',
+    homeschool:       process.env.STRIPE_PRICE_HOMESCHOOL        || 'price_homeschool_placeholder',
   };
 
-  const priceId = prices[plan] || prices.student;
+  const priceKey = plan === 'student' && annual ? 'student_annual' : (plan || 'student');
+  const priceId = prices[priceKey] || prices.student;
 
   try {
     const r = await fetch('https://api.stripe.com/v1/checkout/sessions', {
