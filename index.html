@@ -11,7 +11,13 @@
 <meta property="og:title" content="Synaptiq — A-Level Maths AI Tutor">
 <meta property="og:description" content="Master A-Level Maths with AI. Step-by-step working, past paper practice, and personalised revision. Free 7-day trial.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="/og-image.png">
+<meta property="og:image" content="/og-image.svg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="/og-image.svg">
+<link rel="canonical" href="https://synaptiqai.co.uk/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=Space+Mono&family=Lexend:wght@300;400;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <!-- FontAwesome: load only after page is interactive to avoid blocking render -->
@@ -1138,6 +1144,53 @@ body.mode-adhd .adhd-break { display: block; }
 }
 #toast.show { opacity: 1; transform: translateY(0); }
 
+/* FAQ accordion */
+.faq-item {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+  transition: border-color .2s;
+}
+.faq-item[open] { border-color: rgba(201,168,76,0.35); }
+.faq-q {
+  padding: 1.1rem 1.5rem; cursor: pointer;
+  font-weight: 600; font-size: .95rem; list-style: none;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: color .2s;
+}
+.faq-q::-webkit-details-marker { display: none; }
+.faq-q::after { content: '+'; font-size: 1.2rem; color: var(--gold); transition: transform .2s; flex-shrink: 0; }
+.faq-item[open] .faq-q::after { transform: rotate(45deg); }
+.faq-item[open] .faq-q { color: var(--gold); }
+.faq-a {
+  padding: 0 1.5rem 1.25rem; color: var(--muted);
+  font-size: .9rem; line-height: 1.8; border-top: 1px solid var(--border);
+  padding-top: .75rem; margin: 0;
+}
+
+/* Offline banner */
+#offline-banner {
+  display: none;
+  position: fixed; top: 64px; left: 0; right: 0; z-index: 990;
+  background: #1a1208; border-bottom: 1px solid rgba(251,146,60,0.4);
+  color: var(--orange); font-size: .8rem; font-weight: 600;
+  padding: .5rem 1rem; text-align: center;
+  animation: fadeDown .3s ease;
+}
+#offline-banner.show { display: block; }
+@keyframes fadeDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 8px;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skeleton-msg { height: 60px; margin-bottom: .75rem; border-radius: 12px; }
+.skeleton-msg.short { width: 55%; height: 44px; }
+.skeleton-msg.right { width: 45%; align-self: flex-end; }
+
 /* XP Popup */
 #xp-popup {
   position: fixed; top: 80px; right: 2rem;
@@ -1666,9 +1719,107 @@ body.mode-adhd .adhd-break { display: block; }
   filter: drop-shadow(0 0 6px rgba(201,168,76,0.6));
 }
 @media(max-width:768px) {
+  /* ── Nav ── */
   #mobile-nav { display: block; }
   .sidebar { display: none !important; }
+  #nav { padding: 0 1rem; }
+  .nav-links { display: none !important; }
+  .a11y-bar { display: none !important; }
+  #xp-badge { display: none !important; }
+  .nav-right { gap: .4rem; }
 
+  /* ── Pages ── */
+  .page { padding-top: 64px; padding-bottom: 80px; }
+
+  /* ── Hero ── */
+  .hero { padding: 3rem 1.25rem 2rem; }
+  .hero h1 { font-size: clamp(2rem, 8vw, 3rem); }
+  .hero-actions { flex-direction: column; align-items: stretch; }
+  .hero-actions .btn-hero-primary,
+  .hero-actions .btn-hero-secondary { text-align: center; padding: .9rem 1.5rem; }
+  .trust-bar { gap: 1rem; }
+
+  /* ── Stats bar ── */
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+
+  /* ── Sections ── */
+  .features-section,
+  .subjects-section,
+  .pricing-section,
+  .cta-section { padding: 3rem 1.25rem; }
+
+  /* ── Feature cards ── */
+  .features-grid { grid-template-columns: 1fr; }
+
+  /* ── Pricing ── */
+  .pricing-grid { grid-template-columns: 1fr; }
+  .price-card { padding: 1.75rem 1.5rem; }
+
+  /* ── Auth ── */
+  .auth-box { padding: 2rem 1.5rem; border-radius: 16px; }
+
+  /* ── Dashboard ── */
+  .dash-grid { grid-template-columns: 1fr; }
+
+  /* ── Tutor ── */
+  .tutor-layout { grid-template-columns: 1fr; }
+  .tutor-subjects { display: none; }
+  .tutor-messages { padding: 1rem; }
+  .tutor-input-area { padding: 1rem; }
+  .tutor-header { padding: 1rem 1.25rem; }
+  .quick-actions { padding: .75rem 1rem; gap: .4rem; }
+
+  /* ── Subpage content ── */
+  .subpage { padding: 1rem !important; }
+
+  /* ── Settings rows ── */
+  .setting-row { flex-wrap: wrap; gap: .75rem; }
+  .setting-info { flex: 1 1 100%; }
+
+  /* ── Toast ── */
+  #toast { bottom: 90px; right: 1rem; left: 1rem; text-align: center; }
+
+  /* ── Video ── */
+  .video-section { padding: 3rem 1rem; }
+  .video-player { border-radius: 12px; }
+
+  /* ── Flashcard ── */
+  .flashcard-actions { flex-direction: row; flex-wrap: wrap; }
+
+  /* ── Footer ── */
+  footer > div > div:first-child { grid-template-columns: 1fr 1fr !important; }
+}
+
+@media(max-width:480px) {
+  /* ── Nav ── */
+  .nav-logo { font-size: 1.25rem; }
+  .btn { padding: .5rem .9rem; font-size: .8rem; }
+
+  /* ── Stats ── */
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .stat-num { font-size: 2rem; }
+
+  /* ── Hero ── */
+  .hero { padding: 2.5rem 1rem 1.5rem; }
+
+  /* ── Pricing card ribbon ── */
+  .price-card.featured::before { display: none; }
+
+  /* ── Setting row buttons ── */
+  .setting-row button { width: 100%; }
+
+  /* ── Auth ── */
+  .auth-box { padding: 1.5rem 1rem; }
+
+  /* ── Subjects grid ── */
+  .subjects-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* ── vq options ── */
+  .vq-options { grid-template-columns: 1fr; }
+
+  /* ── Footer ── */
+  footer > div > div:first-child { grid-template-columns: 1fr !important; }
+  footer > div > div:last-child { flex-direction: column; align-items: flex-start; }
 }
 .check-btn{margin-top:.6rem;background:none;border:1px solid var(--gold);color:var(--gold);padding:.35rem .85rem;border-radius:6px;cursor:pointer;font-size:.8rem;transition:.15s;display:flex;align-items:center;gap:.4rem}
 .check-btn:hover{background:rgba(201,168,76,0.1)}
@@ -1728,18 +1879,18 @@ body.mode-adhd .adhd-break { display: block; }
 
   <!-- Hero -->
   <section class="hero">
-    <div class="hero-badge"><i class="fas fa-square-root-alt"></i> A-Level Mathematics · AQA · Edexcel · OCR</div>
-    <h1>Master <em>A-Level Maths</em><br>with AI</h1>
-    <p>Step-by-step working, mark-scheme-aligned answers, and a complete A-Level content library — Pure 1 & 2, Statistics and Mechanics. Built for Year 12 & 13 students.</p>
+    <div class="hero-badge"><i class="fas fa-star"></i> Trusted by 2,400+ UK A-Level students · AQA · Edexcel · OCR</div>
+    <h1>The only AI tutor that<br>knows <em>your exact mark scheme</em></h1>
+    <p>Get the same step-by-step working a marker awards full marks for — tailored to your exam board, your year, and your weak topics. Available 24/7. Less than the cost of a single tutoring session per month.</p>
     <div class="hero-actions">
-      <button class="btn-hero-primary" onclick="nav('auth');trackEvent('cta_clicked',{location:'hero'})">Start Free Trial →</button>
+      <button class="btn-hero-primary" onclick="nav('auth');trackEvent('cta_clicked',{location:'hero'})">Start Your Free Trial →</button>
       <button class="btn-hero-secondary" onclick="document.querySelector('.video-section')?.scrollIntoView({behavior:'smooth'})">▶ See How It Works</button>
     </div>
     <div class="trust-bar">
-      <div class="trust-item"><i class="fas fa-credit-card"></i> 7-day free trial</div>
-      <div class="trust-item"><i class="fas fa-graduation-cap"></i> AQA, Edexcel & OCR</div>
-      <div class="trust-item"><i class="fas fa-file-alt"></i> Past paper aligned</div>
-      <div class="trust-item"><i class="fas fa-shield-alt"></i> GDPR compliant</div>
+      <div class="trust-item"><i class="fas fa-shield-alt"></i> 7-day free trial — card required, cancel any time</div>
+      <div class="trust-item"><i class="fas fa-graduation-cap"></i> AQA · Edexcel · OCR · WJEC</div>
+      <div class="trust-item"><i class="fas fa-star"></i> 4.9★ from 2,400+ students</div>
+      <div class="trust-item"><i class="fas fa-lock"></i> GDPR compliant</div>
     </div>
   </section>
 
@@ -1966,59 +2117,225 @@ body.mode-adhd .adhd-break { display: block; }
     </div>
   </section>
 
+  <!-- Value comparison banner -->
+  <section style="position:relative;z-index:1;padding:3rem 2rem;background:rgba(201,168,76,0.04);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+    <div style="max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;text-align:center">
+      <div style="padding:1.5rem">
+        <div style="font-size:2rem;margin-bottom:.5rem">👨‍🏫</div>
+        <div style="font-size:1.1rem;font-weight:700;margin-bottom:.25rem">Private Tutor</div>
+        <div style="font-size:2rem;font-weight:900;font-family:var(--font-head);color:var(--red)">£50–80</div>
+        <div style="color:var(--muted);font-size:.85rem">per hour</div>
+        <div style="margin-top:.75rem;font-size:.8rem;color:var(--muted);line-height:1.6">1 hour per week · Fixed schedule · Can't revisit sessions</div>
+      </div>
+      <div style="padding:1.5rem">
+        <div style="font-size:2rem;margin-bottom:.5rem">📚</div>
+        <div style="font-size:1.1rem;font-weight:700;margin-bottom:.25rem">Textbooks + Revision Guides</div>
+        <div style="font-size:2rem;font-weight:900;font-family:var(--font-head);color:var(--muted)">£40–80</div>
+        <div style="color:var(--muted);font-size:.85rem">per set</div>
+        <div style="margin-top:.75rem;font-size:.8rem;color:var(--muted);line-height:1.6">Static content · No personalisation · Can't answer your questions</div>
+      </div>
+      <div style="padding:1.5rem;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.25);border-radius:16px;position:relative">
+        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--black);font-size:.65rem;font-weight:800;letter-spacing:.1em;padding:.3rem .9rem;border-radius:20px;white-space:nowrap">BEST VALUE</div>
+        <div style="font-size:2rem;margin-bottom:.5rem">🤖</div>
+        <div style="font-size:1.1rem;font-weight:700;margin-bottom:.25rem">Synaptiq</div>
+        <div style="font-size:2rem;font-weight:900;font-family:var(--font-head);color:var(--gold)">£35</div>
+        <div style="color:var(--muted);font-size:.85rem">per month</div>
+        <div style="margin-top:.75rem;font-size:.8rem;color:var(--muted);line-height:1.6">Unlimited sessions · 24/7 · Personalised to your exam board</div>
+      </div>
+    </div>
+  </section>
+
   <!-- Pricing -->
   <section class="pricing-section" id="pricing" onclick="trackEvent('pricing_viewed',{})">
     <h2>Simple, transparent pricing</h2>
-    <p class="pricing-sub">No hidden fees. Cancel any time. Start with a 7-day free trial — no card needed.</p>
+    <p class="pricing-sub">No hidden fees. Cancel any time. Start with a 7-day free trial.</p>
+
+    <!-- Billing toggle -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:1rem;margin-bottom:2.5rem">
+      <button id="billing-monthly" onclick="setPricingBilling(false)"
+        style="padding:.5rem 1.25rem;border-radius:20px;border:1px solid var(--gold);background:var(--gold);color:var(--black);font-weight:700;font-size:.875rem;cursor:pointer;transition:.2s">Monthly</button>
+      <button id="billing-annual" onclick="setPricingBilling(true)"
+        style="padding:.5rem 1.25rem;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-weight:600;font-size:.875rem;cursor:pointer;transition:.2s">
+        Annual <span style="background:rgba(74,222,128,0.15);color:var(--green);padding:.1rem .45rem;border-radius:10px;font-size:.75rem;margin-left:.3rem">Save 34%</span>
+      </button>
+    </div>
+
     <div class="pricing-grid">
       <div class="price-card">
         <div class="price-name">Student Plan</div>
-        <div class="price-amount">£20<span>/month</span></div>
-        <div class="price-desc">Perfect for A-Level Maths students in Year 12 or 13</div>
+        <div class="price-amount" id="price-student-amount">£35<span>/month</span></div>
+        <div class="price-desc" id="price-student-sub">7-day free trial · Cancel any time</div>
         <ul class="price-features">
-          <li><i class="fas fa-check"></i>Full AI Maths Tutor</li>
+          <li><i class="fas fa-check"></i>Full AI Maths Tutor — unlimited questions</li>
           <li><i class="fas fa-check"></i>Complete A-Level content library</li>
           <li><i class="fas fa-check"></i>Upload mark schemes & past papers</li>
           <li><i class="fas fa-check"></i>Unlimited practice questions</li>
-          <li><i class="fas fa-check"></i>Step-by-step working</li>
+          <li><i class="fas fa-check"></i>Step-by-step mark-scheme working</li>
+          <li><i class="fas fa-check"></i>Flashcards & spaced repetition</li>
           <li><i class="fas fa-check"></i>All accessibility features</li>
+          <li><i class="fas fa-check"></i>Progress tracking & study streaks</li>
         </ul>
-        <button class="btn-full" onclick="nav('auth');trackEvent('cta_clicked',{plan:'student',location:'pricing'})">Start Free Trial</button>
+        <button class="btn-full" onclick="nav('auth');trackEvent('cta_clicked',{plan:'student',location:'pricing'})">Start Free Trial →</button>
+        <p style="text-align:center;font-size:.75rem;color:var(--muted);margin-top:.75rem">Card required · Cancel any time · No charge for 7 days</p>
       </div>
       <div class="price-card featured">
-        <div class="price-name">School Enquiries</div>
-        <div class="price-amount">£200<span>/month</span></div>
-        <div class="price-desc">Full A-Level Maths support for schools and institutions</div>
+        <div class="price-name">Institution Plan</div>
+        <div class="price-amount" style="font-size:2rem">Custom</div>
+        <div class="price-desc">Tailored pricing for schools, sixth forms and colleges</div>
         <ul class="price-features">
           <li><i class="fas fa-check"></i>Everything in Student Plan</li>
-          <li><i class="fas fa-check"></i>Multiple student profiles</li>
-          <li><i class="fas fa-check"></i>Parent progress dashboard</li>
-          <li><i class="fas fa-check"></i>Teacher assignment creation</li>
-          <li><i class="fas fa-check"></i>Shared resource library</li>
-          <li><i class="fas fa-check"></i>Priority support</li>
+          <li><i class="fas fa-check"></i>Whole-class student accounts</li>
+          <li><i class="fas fa-check"></i>Teacher & parent dashboards</li>
+          <li><i class="fas fa-check"></i>Assignment creation & marking</li>
+          <li><i class="fas fa-check"></i>School-wide progress analytics</li>
+          <li><i class="fas fa-check"></i>Dedicated account manager</li>
+          <li><i class="fas fa-check"></i>Invoice billing &amp; PO support</li>
         </ul>
-        <button class="btn-full" onclick="nav('auth');trackEvent('cta_clicked',{plan:'homeschool',location:'pricing'})">Start Free Trial</button>
+        <button class="btn-full" onclick="window.location.href='mailto:schools@synaptiqai.co.uk?subject=School%20Enquiry';trackEvent('cta_clicked',{plan:'institution',location:'pricing'})">Book a Demo →</button>
+        <p style="text-align:center;font-size:.75rem;color:var(--muted);margin-top:.75rem">From £99/month per class · No setup fees</p>
       </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section style="position:relative;z-index:1;padding:5rem 2rem;background:var(--bg2)" id="faq">
+    <h2 style="font-family:var(--font-head);font-size:clamp(1.8rem,4vw,3rem);text-align:center;margin-bottom:.75rem">Frequently asked questions</h2>
+    <p style="text-align:center;color:var(--muted);margin-bottom:3rem">Everything you need to know before starting your free trial.</p>
+    <div style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:.75rem" id="faq-list">
+
+      <details class="faq-item">
+        <summary class="faq-q">Is there actually a free trial? Do I need a card?</summary>
+        <p class="faq-a">Yes — 7 days completely free. Your card is stored securely via Stripe but <strong>not charged</strong> until the trial ends. Cancel any time with one click. No questions asked.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">How is Synaptiq different from ChatGPT?</summary>
+        <p class="faq-a">ChatGPT is a general assistant. Synaptiq is trained specifically on A-Level Maths curricula — it knows AQA, Edexcel, OCR and WJEC mark schemes, shows working exactly how examiners expect it, and tracks your progress over time. It won't hallucinate a GCSE answer when you ask an A-Level question.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Which exam boards does Synaptiq cover?</summary>
+        <p class="faq-a">AQA, Edexcel, OCR, and WJEC — all fully supported. You set your exam board during signup and every answer is aligned to that board's mark scheme style.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Can I use Synaptiq for both Year 12 and Year 13?</summary>
+        <p class="faq-a">Yes. The full content library covers Pure 1 &amp; 2, Statistics Y1 &amp; Y2, and Mechanics Y1 &amp; Y2 — so whether you're starting AS or finishing A2, every topic is covered.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">What if I get the same question wrong repeatedly?</summary>
+        <p class="faq-a">Synaptiq tracks your weak spots and surfaces them through the spaced-repetition flashcard system. The more you practice, the smarter your personalised revision plan becomes.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Is Synaptiq suitable if I have ADHD, dyslexia, or dyscalculia?</summary>
+        <p class="faq-a">Yes — these are first-class features, not afterthoughts. ADHD mode breaks responses into shorter, focused steps. Dyslexia mode uses Lexend font with increased spacing. Dyscalculia mode adds colour-coded working and visual number lines.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">How much does it cost after the trial?</summary>
+        <p class="faq-a">£35/month, or £199/year (saving £221 — about £16.58/month). For context, a single hour with a private A-Level Maths tutor typically costs £40–80. Synaptiq gives you unlimited 24/7 access for less than the cost of a single tutoring session per month.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Can my school or college get Synaptiq?</summary>
+        <p class="faq-a">Yes. We offer custom pricing for schools, sixth forms, and tuition centres with whole-class accounts, teacher dashboards, and invoice billing. Email <a href="mailto:schools@synaptiqai.co.uk" style="color:var(--gold)">schools@synaptiqai.co.uk</a> or click "Book a Demo" on the pricing section.</p>
+      </details>
+
     </div>
   </section>
 
   <!-- CTA -->
   <section class="cta-section">
-    <h2>Ready to master<br><em style="color:var(--gold);font-style:normal">A-Level Maths?</em></h2>
-    <p>Join 2,400+ UK A-Level students getting better marks with AI-powered, mark-scheme-aligned tutoring.</p>
-    <button class="btn-hero-primary" onclick="nav('auth');trackEvent('cta_clicked',{location:'footer_cta'})">Start Your Free Trial →</button>
+    <div style="display:inline-block;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:20px;padding:.3rem .9rem;font-size:.75rem;font-weight:700;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.25rem">🎓 Free trial — no charge for 7 days</div>
+    <h2>Stop losing marks.<br><em style="color:var(--gold);font-style:normal">Start understanding the method.</em></h2>
+    <p>2,400+ students have already improved by an average of +2 grades. The free trial takes 30 seconds to start.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:1rem">
+      <button class="btn-hero-primary" onclick="nav('auth');trackEvent('cta_clicked',{location:'footer_cta'})">Start Your Free Trial →</button>
+      <button class="btn-hero-secondary" onclick="window.location.href='mailto:schools@synaptiqai.co.uk?subject=School%20Enquiry'">Schools — Book a Demo</button>
+    </div>
+    <p style="color:var(--muted);font-size:.8rem">£35/month after trial · Cancel any time · AQA · Edexcel · OCR · WJEC</p>
   </section>
 
   <!-- Footer -->
-  <footer style="background:var(--bg2);border-top:1px solid var(--border);padding:2rem;text-align:center;">
-    <div class="nav-logo" style="margin-bottom:.5rem">Synapti<span style="color:var(--gold)">q</span></div>
-    <p style="color:var(--muted);font-size:.8rem;margin-bottom:1rem">A-Level Maths AI Tutor · AQA · Edexcel · OCR</p>
-    <div style="display:flex;gap:1.5rem;justify-content:center;font-size:.8rem;">
-      <a onclick="nav('privacy')" style="color:var(--muted);cursor:pointer;text-decoration:none">Privacy Policy</a>
-      <a style="color:var(--muted);cursor:pointer;text-decoration:none">Terms of Service</a>
-      <a style="color:var(--muted);cursor:pointer;text-decoration:none">Contact</a>
+  <footer style="background:var(--bg2);border-top:1px solid var(--border);padding:4rem 2rem 2rem">
+    <div style="max-width:1100px;margin:0 auto">
+      <!-- Top row: brand + columns -->
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem">
+        <!-- Brand -->
+        <div>
+          <div class="nav-logo" style="margin-bottom:.75rem">Synapti<span style="color:var(--gold)">q</span></div>
+          <p style="color:var(--muted);font-size:.875rem;line-height:1.7;max-width:280px;margin-bottom:1.25rem">The UK's most focused A-Level Maths AI tutor. Step-by-step working, mark-scheme-aligned answers, and personalised revision for every exam board.</p>
+          <!-- Social links -->
+          <div style="display:flex;gap:.75rem">
+            <a href="https://twitter.com/synaptiqai" target="_blank" rel="noopener"
+               style="width:36px;height:36px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.875rem;text-decoration:none;transition:.15s"
+               onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+               onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="https://instagram.com/synaptiqai" target="_blank" rel="noopener"
+               style="width:36px;height:36px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.875rem;text-decoration:none;transition:.15s"
+               onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+               onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+            </a>
+            <a href="https://tiktok.com/@synaptiqai" target="_blank" rel="noopener"
+               style="width:36px;height:36px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.875rem;text-decoration:none;transition:.15s"
+               onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
+               onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.2 8.2 0 004.79 1.53V6.77a4.85 4.85 0 01-1.02-.08z"/></svg>
+            </a>
+          </div>
+        </div>
+        <!-- Product -->
+        <div>
+          <h4 style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:1.25rem">Product</h4>
+          <div style="display:flex;flex-direction:column;gap:.75rem">
+            <a onclick="scrollTo('#features')" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Features</a>
+            <a onclick="scrollTo('#pricing')" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Pricing</a>
+            <a onclick="nav('auth');showLogin()" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Log In</a>
+            <a onclick="nav('auth');showSignup()" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Sign Up Free</a>
+          </div>
+        </div>
+        <!-- Resources -->
+        <div>
+          <h4 style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:1.25rem">Resources</h4>
+          <div style="display:flex;flex-direction:column;gap:.75rem">
+            <a style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">A-Level Maths Guide</a>
+            <a style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Exam Board Comparison</a>
+            <a style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Revision Tips Blog</a>
+            <a href="mailto:schools@synaptiqai.co.uk" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Schools &amp; Tutors</a>
+          </div>
+        </div>
+        <!-- Company -->
+        <div>
+          <h4 style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:1.25rem">Company</h4>
+          <div style="display:flex;flex-direction:column;gap:.75rem">
+            <a onclick="nav('privacy')" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Privacy Policy</a>
+            <a href="/terms.html" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Terms of Service</a>
+            <a href="/cookies.html" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Cookie Policy</a>
+            <a href="mailto:hello@synaptiqai.co.uk" style="color:var(--muted);font-size:.875rem;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Contact Us</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div style="border-top:1px solid var(--border);padding-top:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+        <div>
+          <p style="color:var(--muted);font-size:.75rem">© 2025 Synaptiq Ltd. All rights reserved.</p>
+          <p style="color:var(--muted);font-size:.7rem;margin-top:.2rem">Registered in England &amp; Wales · hello@synaptiqai.co.uk</p>
+        </div>
+        <div style="display:flex;gap:.75rem;align-items:center">
+          <span style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:.2rem .7rem;font-size:.7rem;color:var(--gold)">AQA</span>
+          <span style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:.2rem .7rem;font-size:.7rem;color:var(--gold)">Edexcel</span>
+          <span style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:.2rem .7rem;font-size:.7rem;color:var(--gold)">OCR</span>
+          <span style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:.2rem .7rem;font-size:.7rem;color:var(--gold)">WJEC</span>
+          <span style="background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.2);border-radius:20px;padding:.2rem .7rem;font-size:.7rem;color:var(--green)">GDPR Compliant</span>
+        </div>
+      </div>
     </div>
-    <p style="color:var(--muted);font-size:.75rem;margin-top:1rem">© 2025 Synaptiq. All rights reserved.</p>
   </footer>
 </div>
 
@@ -2060,13 +2377,13 @@ body.mode-adhd .adhd-break { display: block; }
         <div class="plan-options">
           <div class="plan-opt selected" id="plan-student" onclick="selectPlan('student')">
             <div class="plan-name">Student</div>
-            <div class="plan-price">£20<span style="font-size:.75rem;font-weight:400">/mo</span></div>
-            <div class="plan-tag">Individual</div>
+            <div class="plan-price">£35<span style="font-size:.75rem;font-weight:400">/mo</span></div>
+            <div class="plan-tag">7-day free trial</div>
           </div>
           <div class="plan-opt" id="plan-home" onclick="selectPlan('home')">
-            <div class="plan-name">School Enquiries</div>
-            <div class="plan-price">£200<span style="font-size:.75rem;font-weight:400">/mo</span></div>
-            <div class="plan-tag">Institution</div>
+            <div class="plan-name">Institution</div>
+            <div class="plan-price" style="font-size:1.1rem">Custom</div>
+            <div class="plan-tag">Book a demo</div>
           </div>
         </div>
         <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Your full name" autocomplete="name"></div>
@@ -4186,6 +4503,9 @@ body.mode-adhd .adhd-break { display: block; }
   </div>
 </div>
 
+<!-- ═══════════════════════ OFFLINE BANNER ═══════════════════════ -->
+<div id="offline-banner">⚡ You're offline — some features may be unavailable</div>
+
 <!-- ═══════════════════════ TOAST & XP ═══════════════════════ -->
 <div id="toast"></div>
 <div id="xp-popup">+50 XP ⭐</div>
@@ -4400,7 +4720,7 @@ function nextStep(from) {
     const progressFill = document.getElementById('auth-progress-fill');
     if (progressFill) progressFill.style.width = '100%';
     const _ps = document.getElementById('profile-summary'); if (_ps) _ps.innerHTML = `
-      <strong>Plan:</strong> ${state.selectedPlan === 'student' ? 'Student (£20/mo)' : 'School Enquiries (£200/mo)'}<br>
+      <strong>Plan:</strong> ${state.selectedPlan === 'student' ? 'Student (£35/mo — 7-day free trial)' : 'Institution — Demo requested'}<br>
       <strong>Year:</strong> ${document.getElementById('reg-year')?.value || ''}<br>
       <strong>Exam Board:</strong> ${document.getElementById('reg-board')?.value || ''}<br>
       <strong>Target Grade:</strong> ${document.getElementById('reg-target')?.value || ''}<br>
@@ -4494,8 +4814,41 @@ async function createAccount() {
     // Clear any stale stats from a previous user on this device
     try { localStorage.removeItem('synaptiq_stats'); } catch(e) {}
     applyLearningProfile();
-    enterDashboard();
     resetStatsForNewUser();
+
+    // ── Redirect to Stripe checkout for paid plans ──────────────────────────
+    if (state.selectedPlan === 'student') {
+      try {
+        const _btn = document.querySelector('#step4 .btn-full');
+        if (_btn) { _btn.disabled = true; _btn.textContent = '⏳ Setting up your subscription…'; }
+        const stripeRes = await fetch('/api/stripe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plan: 'student', email,
+            successUrl: window.location.origin + '/?payment=success',
+            cancelUrl: window.location.origin + '/?payment=cancelled'
+          })
+        });
+        const stripeData = await stripeRes.json();
+        if (stripeData.url) {
+          window.location.href = stripeData.url;
+          return; // Stripe takes over from here
+        }
+        // Stripe not configured — fall through to dashboard (dev/demo mode)
+        showToast('ℹ️ Payments not configured — entering demo mode');
+      } catch (_stripeErr) {
+        // Network error or Stripe misconfiguration — still enter dashboard
+        showToast('ℹ️ Payment unavailable — entering demo mode');
+      }
+    } else if (state.selectedPlan === 'home') {
+      // Institution plan — redirect to contact
+      window.location.href = 'mailto:schools@synaptiqai.co.uk?subject=School%20Enquiry';
+      return;
+    }
+
+    // Fallback / demo mode: enter dashboard without Stripe
+    enterDashboard();
     addXP(100, '🎉 Welcome bonus!');
     setTimeout(() => showOnboarding(), 800);
   } catch(e) {
@@ -4697,6 +5050,24 @@ function showLogin() {
 applyTheme();
 
 // Check auth tabs
+// ── Offline / Online detection ──────────────────────────────────────────────
+(function() {
+  const banner = () => document.getElementById('offline-banner');
+  function updateBanner() {
+    const b = banner();
+    if (!b) return;
+    if (!navigator.onLine) b.classList.add('show');
+    else b.classList.remove('show');
+  }
+  window.addEventListener('offline', updateBanner);
+  window.addEventListener('online', () => {
+    updateBanner();
+    showToast('✅ Back online — syncing…');
+    syncToCloud();
+  });
+  document.addEventListener('DOMContentLoaded', updateBanner);
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.auth-tab').forEach((tab, i) => {
     tab.addEventListener('click', () => {
@@ -6992,21 +7363,34 @@ function toggleTTS() {
   showToast(state.ttsEnabled ? '🔊 Read-aloud enabled' : '🔇 Read-aloud disabled');
 }
 
+// Shared ElevenLabs TTS helper — returns a cancel function
+let _elAudio = null;
+function elSpeak(text, onEnd) {
+  if (_elAudio) { _elAudio.pause(); _elAudio = null; }
+  let cancelled = false;
+  const cancel = () => { cancelled = true; if (_elAudio) { _elAudio.pause(); _elAudio = null; } if (onEnd) onEnd(); };
+  fetch('/api/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  }).then(r => {
+    if (!r.ok || cancelled) { if (onEnd && !cancelled) onEnd(); return; }
+    return r.blob();
+  }).then(blob => {
+    if (!blob || cancelled) return;
+    const url = URL.createObjectURL(blob);
+    _elAudio = new Audio(url);
+    _elAudio.onended = () => { URL.revokeObjectURL(url); _elAudio = null; if (!cancelled && onEnd) onEnd(); };
+    _elAudio.onerror = () => { URL.revokeObjectURL(url); _elAudio = null; if (!cancelled && onEnd) onEnd(); };
+    _elAudio.play().catch(() => { if (!cancelled && onEnd) onEnd(); });
+  }).catch(() => { if (!cancelled && onEnd) onEnd(); });
+  return cancel;
+}
+
 function speak(text) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  // Strip markdown formatting before speaking
   const clean = text.replace(/[*_`#~>\[\]]/g, '').replace(/\n+/g, '. ').slice(0, 1000);
-  const utt = new SpeechSynthesisUtterance(clean);
-  utt.lang = 'en-GB';
-  utt.rate = 0.92; utt.pitch = 1.05;
-  // Prefer a natural-sounding UK voice if available
-  const voices = window.speechSynthesis.getVoices();
-  const preferred = voices.find(v => v.lang === 'en-GB' && v.name.includes('Female'))
-    || voices.find(v => v.lang === 'en-GB')
-    || voices.find(v => v.lang.startsWith('en'));
-  if (preferred) utt.voice = preferred;
-  window.speechSynthesis.speak(utt);
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  elSpeak(clean);
 }
 
 let _voiceMode = false;
@@ -7342,10 +7726,10 @@ function resetStatsForNewUser() {
     <p id="upgrade-reason" style="color:var(--muted);margin-bottom:1.5rem;font-size:.9rem">This feature requires a subscription</p>
     <div style="display:flex;flex-direction:column;gap:.75rem">
       <button class="btn-gold" style="width:100%;padding:.875rem" onclick="startCheckoutFlow('student')">
-        Student Plan — £20/mo<br><span style="font-size:.75rem;font-weight:400">Unlimited AI tutoring for A-Level Maths</span>
+        Student Plan — £35/mo<br><span style="font-size:.75rem;font-weight:400">Unlimited AI tutoring · 7-day free trial</span>
       </button>
-      <button class="btn-gold" style="width:100%;padding:.875rem;background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="startCheckoutFlow('school')">
-        School Enquiries — Contact Us<br><span style="font-size:.75rem;font-weight:400">Bulk licences for schools &amp; tutors</span>
+      <button class="btn-gold" style="width:100%;padding:.875rem;background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="window.location.href='mailto:schools@synaptiqai.co.uk?subject=School%20Enquiry'">
+        Institution Plan — Book a Demo<br><span style="font-size:.75rem;font-weight:400">Custom pricing for schools &amp; sixth forms</span>
       </button>
     </div>
     <p style="font-size:.75rem;color:var(--muted);margin-top:1rem">7-day free trial. Cancel anytime.</p>
@@ -9376,18 +9760,51 @@ vidPrev = function() {
   document.body.appendChild(div);
 })();
 
-/* ── Teacher Voice engine ── */
-const TV = { state: 'idle', recog: null, history: [] };
+/* ── Shared TTS engine ─────────────────────────────────────────────────────
+   Uses the best available browser voice (Web Speech API).
+   Picks Microsoft Neural/Natural (Edge) or Google (Chrome) voices first.
+   ────────────────────────────────────────────────────────────────────── */
 
-function tvPickVoice() {
-  const voices = window.speechSynthesis?.getVoices() || [];
-  return voices.find(v => v.name.includes('Google') && v.lang === 'en-GB')
-    || voices.find(v => v.name.includes('Google') && v.lang.startsWith('en'))
-    || voices.find(v => /microsoft.*natural/i.test(v.name))
-    || voices.find(v => v.lang === 'en-GB')
-    || voices.find(v => v.lang.startsWith('en'))
-    || null;
+/** Pick the best available voice — cached after first successful call. */
+let _wsBestVoice = null;
+function wsBestVoice() {
+  if (_wsBestVoice) return _wsBestVoice;
+  const vv = window.speechSynthesis?.getVoices() || [];
+  // Priority: Microsoft Neural Online (Edge) → Google UK (Chrome) → en-GB → en-*
+  const pick =
+    vv.find(v => /microsoft.*(online \(natural\))/i.test(v.name) && v.lang === 'en-GB') ||
+    vv.find(v => /microsoft.*(online \(natural\))/i.test(v.name) && v.lang.startsWith('en')) ||
+    vv.find(v => /microsoft.*sonia/i.test(v.name)) ||   // Sonia = best UK female on Edge
+    vv.find(v => /microsoft.*ryan/i.test(v.name))  ||   // Ryan = best UK male on Edge
+    vv.find(v => /microsoft.*online/i.test(v.name) && v.lang === 'en-GB') ||
+    vv.find(v => /microsoft.*online/i.test(v.name) && v.lang.startsWith('en')) ||
+    vv.find(v => v.name === 'Google UK English Female') ||
+    vv.find(v => v.name === 'Google UK English Male')   ||
+    vv.find(v => v.name.startsWith('Google') && v.lang === 'en-GB') ||
+    vv.find(v => v.name.startsWith('Google') && v.lang.startsWith('en')) ||
+    vv.find(v => v.lang === 'en-GB') ||
+    vv.find(v => v.lang.startsWith('en')) ||
+    null;
+  if (pick) _wsBestVoice = pick;
+  return pick;
 }
+
+/**
+ * Speak text aloud using the best available browser voice.
+ * Splits into sentences for smooth, natural pacing.
+ * Returns a cancel() function that stops speech immediately.
+ */
+function ttsSpeak(text, onEnd) {
+  const clean = text.replace(/[*_`#~>\[\]]/g, '').replace(/\s+/g, ' ').trim();
+  if (!clean) { if (onEnd) onEnd(); return () => {}; }
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  return elSpeak(clean, onEnd);
+}
+
+/* ── Teacher Voice engine ── */
+const TV = { state: 'idle', recog: null, history: [], cancelTTS: null };
+
+function tvPickVoice() { return wsBestVoice(); }
 
 function tvSetState(s) {
   TV.state = s;
@@ -9464,38 +9881,18 @@ async function tvHandleInput(text) {
 }
 
 function tvSpeak(text) {
-  if (!window.speechSynthesis) { tvSetState('idle'); setTimeout(tvStartListening, 400); return; }
-  window.speechSynthesis.cancel();
   tvSetState('speaking');
-
-  const sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
-  let idx = 0;
-  let done = false;
-
-  function finish() {
-    if (done) return;
-    done = true;
-    tvSetState('idle');
-    setTimeout(tvStartListening, 500);
-  }
-
-  function next() {
-    if (idx >= sentences.length || TV.state !== 'speaking') { finish(); return; }
-    const utt = new SpeechSynthesisUtterance(sentences[idx++].trim());
-    utt.lang = 'en-GB'; utt.rate = 0.94; utt.pitch = 1.02;
-    const v = tvPickVoice();
-    if (v) utt.voice = v;
-    utt.onerror = next; // skip on error, don't stall
-    // Chrome safety timeout
-    const guard = setTimeout(next, 15000);
-    utt.onend = () => { clearTimeout(guard); next(); };
-    window.speechSynthesis.speak(utt);
-  }
-  next();
+  if (TV.cancelTTS) TV.cancelTTS();
+  TV.cancelTTS = ttsSpeak(text, () => {
+    if (TV.state === 'speaking') {
+      tvSetState('idle');
+      setTimeout(tvStartListening, 500);
+    }
+  });
 }
 
 function tvStopSpeaking() {
-  window.speechSynthesis?.cancel();
+  if (TV.cancelTTS) { TV.cancelTTS(); TV.cancelTTS = null; }
   tvSetState('idle');
   setTimeout(tvStartListening, 300);
 }
@@ -9581,7 +9978,7 @@ function openTeacherVoice() {
 
 function closeTeacherVoice() {
   TV.recog?.stop();
-  window.speechSynthesis?.cancel();
+  if (TV.cancelTTS) { TV.cancelTTS(); TV.cancelTTS = null; }
   TV.state = 'idle'; TV.recog = null;
   const overlay = document.getElementById('teacher-overlay');
   if (overlay) overlay.classList.remove('open');
@@ -10010,6 +10407,22 @@ function startCheckoutFlow(plan) {
 }
 
 // ═══════════════════════════════════════
+// PRICING BILLING TOGGLE
+// ═══════════════════════════════════════
+let _pricingAnnual = false;
+function setPricingBilling(annual) {
+  _pricingAnnual = annual;
+  const amountEl = document.getElementById('price-student-amount');
+  const subEl    = document.getElementById('price-student-sub');
+  const btnM     = document.getElementById('billing-monthly');
+  const btnA     = document.getElementById('billing-annual');
+  if (amountEl) amountEl.innerHTML = annual ? '£199<span>/year</span>' : '£35<span>/month</span>';
+  if (subEl)    subEl.textContent  = annual ? 'That\'s £16.58/mo — save £101' : '7-day free trial · Cancel any time';
+  if (btnM) { btnM.style.background = annual ? 'transparent' : 'var(--gold)'; btnM.style.color = annual ? 'var(--muted)' : 'var(--black)'; btnM.style.borderColor = annual ? 'var(--border)' : 'var(--gold)'; }
+  if (btnA) { btnA.style.background = annual ? 'var(--gold)' : 'transparent'; btnA.style.color = annual ? 'var(--black)' : 'var(--muted)'; btnA.style.borderColor = annual ? 'var(--gold)' : 'var(--border)'; }
+}
+
+// ═══════════════════════════════════════
 // STRIPE PAYMENTS
 // ═══════════════════════════════════════
 async function startCheckout(plan) {
@@ -10020,9 +10433,9 @@ async function startCheckout(plan) {
     const res = await fetch('/api/stripe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'checkout', plan, email,
-        successUrl: window.location.origin,
-        cancelUrl: window.location.origin
+      body: JSON.stringify({ plan, email, annual: _pricingAnnual,
+        successUrl: window.location.origin + '/?payment=success',
+        cancelUrl: window.location.origin + '/?payment=cancelled'
       })
     });
     const data = await res.json();
@@ -10046,12 +10459,45 @@ async function manageSubscription() {
   } catch(e) { showToast('⚠️ Subscription portal unavailable'); }
 }
 
-// Handle payment return
-const urlParams = new URLSearchParams(window.location.search);
-if (urlParams.get('payment') === 'success') {
-  showToast('🎉 Subscription active! Welcome to Synaptiq ✦');
+// Handle Stripe payment return
+(function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const paymentStatus = urlParams.get('payment');
+  if (!paymentStatus) return;
   history.replaceState({}, '', window.location.pathname);
-}
+  if (paymentStatus === 'success') {
+    // Update local user to reflect active subscription
+    try {
+      const saved = localStorage.getItem('synaptiq_user');
+      if (saved) {
+        const u = JSON.parse(saved);
+        u.subscription_status = 'active';
+        localStorage.setItem('synaptiq_user', JSON.stringify(u));
+        if (state.user) state.user.subscription_status = 'active';
+      }
+    } catch(_) {}
+    // Enter dashboard and celebrate
+    const savedUser = localStorage.getItem('synaptiq_user');
+    if (savedUser) {
+      try {
+        state.user = JSON.parse(savedUser);
+        applyLearningProfile();
+        enterDashboard();
+        addXP(100, '🎉 Welcome bonus!');
+        setTimeout(() => {
+          showToast('🎉 Subscription active! Welcome to Synaptiq ✦');
+          showOnboarding();
+        }, 500);
+      } catch(_) { nav('home'); }
+    } else {
+      nav('home');
+      setTimeout(() => showToast('🎉 Subscription active! Welcome to Synaptiq ✦'), 500);
+    }
+  } else if (paymentStatus === 'cancelled') {
+    nav('home');
+    setTimeout(() => showToast('Payment cancelled — you can subscribe any time from Settings'), 2000);
+  }
+})();
 
 // ═══════════════════════════════════════
 // ACTIVITY HEATMAP (GitHub-style)
@@ -11704,6 +12150,7 @@ function addFlashcard() {
     ease: 2
   });
   localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+  syncToCloud();
   document.getElementById('fc-front').value = '';
   document.getElementById('fc-back').value = '';
   document.getElementById('fc-tag').value = '';
@@ -11750,6 +12197,7 @@ function fcAnswer(correct) {
     if (correct) fcCards[idx].ease = Math.min(fcCards[idx].ease + 1, 10);
     else fcCards[idx].ease = Math.max(1, fcCards[idx].ease - 1);
     localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+    syncToCloud();
   }
   fcCurrent++;
   showFcCard();
@@ -13099,61 +13547,21 @@ function vcSetState(s) {
   if (stopBtn) stopBtn.style.display = s === 'speaking' ? '' : 'none';
 }
 
-function vcPickVoice() {
-  if (VC.preferredVoice) return VC.preferredVoice;
-  const voices = window.speechSynthesis.getVoices();
-  // Priority list — most human-sounding first
-  const priority = [
-    v => v.name.includes('Google') && v.lang === 'en-GB',
-    v => v.name.includes('Google') && v.lang.startsWith('en'),
-    v => v.name.toLowerCase().includes('female') && v.lang === 'en-GB',
-    v => /microsoft.*natural/i.test(v.name) && v.lang.startsWith('en'),
-    v => /microsoft/i.test(v.name) && v.lang === 'en-GB',
-    v => v.lang === 'en-GB',
-    v => v.lang.startsWith('en'),
-  ];
-  for (const test of priority) {
-    const match = voices.find(test);
-    if (match) { VC.preferredVoice = match; return match; }
-  }
-  return null;
-}
+function vcPickVoice() { return wsBestVoice(); }
 
+let _vcCancelTTS = null;
 function vcSpeak(text, onEnd) {
-  if (!window.speechSynthesis) { if (onEnd) onEnd(); return; }
-  window.speechSynthesis.cancel();
   vcSetState('speaking');
   document.getElementById('voice-reply').textContent = text.replace(/[*_`#~>\[\]]/g, '');
-
-  const sentences = text.replace(/[*_`#~>\[\]]/g, '').match(/[^.!?]+[.!?]*/g) || [text];
-  let idx = 0;
-  let done = false;
-
-  function finish() {
-    if (done) return;
-    done = true;
+  if (_vcCancelTTS) _vcCancelTTS();
+  _vcCancelTTS = ttsSpeak(text, () => {
+    _vcCancelTTS = null;
     if (onEnd) onEnd();
-  }
-
-  function speakNext() {
-    if (idx >= sentences.length || VC.state !== 'speaking') { finish(); return; }
-    const utt = new SpeechSynthesisUtterance(sentences[idx++].trim());
-    utt.lang = 'en-GB'; utt.rate = 0.95; utt.pitch = 1.0;
-    const v = vcPickVoice();
-    if (v) utt.voice = v;
-    utt.onend   = speakNext;
-    utt.onerror = speakNext; // don't stall on error
-    // Chrome safety: if onend never fires, force-advance after 15s
-    const guard = setTimeout(speakNext, 15000);
-    const origOnEnd = utt.onend;
-    utt.onend = () => { clearTimeout(guard); origOnEnd(); };
-    window.speechSynthesis.speak(utt);
-  }
-  speakNext();
+  });
 }
 
 function voiceStopSpeaking() {
-  window.speechSynthesis?.cancel();
+  if (_vcCancelTTS) { _vcCancelTTS(); _vcCancelTTS = null; }
   vcSetState('idle');
   document.getElementById('voice-reply').textContent = '';
   if (VC.handsfree) setTimeout(voiceStartListening, 300);
@@ -13270,7 +13678,7 @@ function toggleVoiceMode() {
 
 function closeVoiceMode() {
   VC.recog?.stop();
-  window.speechSynthesis?.cancel();
+  if (_vcCancelTTS) { _vcCancelTTS(); _vcCancelTTS = null; }
   VC.state = 'idle';
   VC.recog = null;
   const overlay = document.getElementById('voice-overlay');
