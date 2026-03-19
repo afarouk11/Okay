@@ -11,7 +11,13 @@
 <meta property="og:title" content="Synaptiq — A-Level Maths AI Tutor">
 <meta property="og:description" content="Master A-Level Maths with AI. Step-by-step working, past paper practice, and personalised revision. Free 7-day trial.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="/og-image.png">
+<meta property="og:image" content="/og-image.svg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="/og-image.svg">
+<link rel="canonical" href="https://synaptiqai.co.uk/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=Space+Mono&family=Lexend:wght@300;400;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 <!-- FontAwesome: load only after page is interactive to avoid blocking render -->
@@ -1138,6 +1144,30 @@ body.mode-adhd .adhd-break { display: block; }
 }
 #toast.show { opacity: 1; transform: translateY(0); }
 
+/* Offline banner */
+#offline-banner {
+  display: none;
+  position: fixed; top: 64px; left: 0; right: 0; z-index: 990;
+  background: #1a1208; border-bottom: 1px solid rgba(251,146,60,0.4);
+  color: var(--orange); font-size: .8rem; font-weight: 600;
+  padding: .5rem 1rem; text-align: center;
+  animation: fadeDown .3s ease;
+}
+#offline-banner.show { display: block; }
+@keyframes fadeDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 8px;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skeleton-msg { height: 60px; margin-bottom: .75rem; border-radius: 12px; }
+.skeleton-msg.short { width: 55%; height: 44px; }
+.skeleton-msg.right { width: 45%; align-self: flex-end; }
+
 /* XP Popup */
 #xp-popup {
   position: fixed; top: 80px; right: 2rem;
@@ -1666,9 +1696,100 @@ body.mode-adhd .adhd-break { display: block; }
   filter: drop-shadow(0 0 6px rgba(201,168,76,0.6));
 }
 @media(max-width:768px) {
+  /* ── Nav ── */
   #mobile-nav { display: block; }
   .sidebar { display: none !important; }
+  #nav { padding: 0 1rem; }
+  .nav-links { display: none !important; }
+  .a11y-bar { display: none !important; }
+  #xp-badge { display: none !important; }
+  .nav-right { gap: .4rem; }
 
+  /* ── Pages ── */
+  .page { padding-top: 64px; padding-bottom: 80px; }
+
+  /* ── Hero ── */
+  .hero { padding: 3rem 1.25rem 2rem; }
+  .hero h1 { font-size: clamp(2rem, 8vw, 3rem); }
+  .hero-actions { flex-direction: column; align-items: stretch; }
+  .hero-actions .btn-hero-primary,
+  .hero-actions .btn-hero-secondary { text-align: center; padding: .9rem 1.5rem; }
+  .trust-bar { gap: 1rem; }
+
+  /* ── Stats bar ── */
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+
+  /* ── Sections ── */
+  .features-section,
+  .subjects-section,
+  .pricing-section,
+  .cta-section { padding: 3rem 1.25rem; }
+
+  /* ── Feature cards ── */
+  .features-grid { grid-template-columns: 1fr; }
+
+  /* ── Pricing ── */
+  .pricing-grid { grid-template-columns: 1fr; }
+  .price-card { padding: 1.75rem 1.5rem; }
+
+  /* ── Auth ── */
+  .auth-box { padding: 2rem 1.5rem; border-radius: 16px; }
+
+  /* ── Dashboard ── */
+  .dash-grid { grid-template-columns: 1fr; }
+
+  /* ── Tutor ── */
+  .tutor-layout { grid-template-columns: 1fr; }
+  .tutor-subjects { display: none; }
+  .tutor-messages { padding: 1rem; }
+  .tutor-input-area { padding: 1rem; }
+  .tutor-header { padding: 1rem 1.25rem; }
+  .quick-actions { padding: .75rem 1rem; gap: .4rem; }
+
+  /* ── Subpage content ── */
+  .subpage { padding: 1rem !important; }
+
+  /* ── Settings rows ── */
+  .setting-row { flex-wrap: wrap; gap: .75rem; }
+  .setting-info { flex: 1 1 100%; }
+
+  /* ── Toast ── */
+  #toast { bottom: 90px; right: 1rem; left: 1rem; text-align: center; }
+
+  /* ── Video ── */
+  .video-section { padding: 3rem 1rem; }
+  .video-player { border-radius: 12px; }
+
+  /* ── Flashcard ── */
+  .flashcard-actions { flex-direction: row; flex-wrap: wrap; }
+}
+
+@media(max-width:480px) {
+  /* ── Nav ── */
+  .nav-logo { font-size: 1.25rem; }
+  .btn { padding: .5rem .9rem; font-size: .8rem; }
+
+  /* ── Stats ── */
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: .75rem; }
+  .stat-num { font-size: 2rem; }
+
+  /* ── Hero ── */
+  .hero { padding: 2.5rem 1rem 1.5rem; }
+
+  /* ── Pricing card ribbon ── */
+  .price-card.featured::before { display: none; }
+
+  /* ── Setting row buttons ── */
+  .setting-row button { width: 100%; }
+
+  /* ── Auth ── */
+  .auth-box { padding: 1.5rem 1rem; }
+
+  /* ── Subjects grid ── */
+  .subjects-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* ── vq options ── */
+  .vq-options { grid-template-columns: 1fr; }
 }
 .check-btn{margin-top:.6rem;background:none;border:1px solid var(--gold);color:var(--gold);padding:.35rem .85rem;border-radius:6px;cursor:pointer;font-size:.8rem;transition:.15s;display:flex;align-items:center;gap:.4rem}
 .check-btn:hover{background:rgba(201,168,76,0.1)}
@@ -4186,6 +4307,9 @@ body.mode-adhd .adhd-break { display: block; }
   </div>
 </div>
 
+<!-- ═══════════════════════ OFFLINE BANNER ═══════════════════════ -->
+<div id="offline-banner">⚡ You're offline — some features may be unavailable</div>
+
 <!-- ═══════════════════════ TOAST & XP ═══════════════════════ -->
 <div id="toast"></div>
 <div id="xp-popup">+50 XP ⭐</div>
@@ -4697,6 +4821,24 @@ function showLogin() {
 applyTheme();
 
 // Check auth tabs
+// ── Offline / Online detection ──────────────────────────────────────────────
+(function() {
+  const banner = () => document.getElementById('offline-banner');
+  function updateBanner() {
+    const b = banner();
+    if (!b) return;
+    if (!navigator.onLine) b.classList.add('show');
+    else b.classList.remove('show');
+  }
+  window.addEventListener('offline', updateBanner);
+  window.addEventListener('online', () => {
+    updateBanner();
+    showToast('✅ Back online — syncing…');
+    syncToCloud();
+  });
+  document.addEventListener('DOMContentLoaded', updateBanner);
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.auth-tab').forEach((tab, i) => {
     tab.addEventListener('click', () => {
@@ -11730,6 +11872,7 @@ function addFlashcard() {
     ease: 2
   });
   localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+  syncToCloud();
   document.getElementById('fc-front').value = '';
   document.getElementById('fc-back').value = '';
   document.getElementById('fc-tag').value = '';
@@ -11776,6 +11919,7 @@ function fcAnswer(correct) {
     if (correct) fcCards[idx].ease = Math.min(fcCards[idx].ease + 1, 10);
     else fcCards[idx].ease = Math.max(1, fcCards[idx].ease - 1);
     localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+    syncToCloud();
   }
   fcCurrent++;
   showFcCard();
