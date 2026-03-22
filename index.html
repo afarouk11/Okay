@@ -2550,6 +2550,7 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="sidebar-item" id="si-mistakes" onclick="showDash('mistakes')"><i class="fas fa-exclamation-triangle"></i>Mistakes Tracker</div>
       <div class="sidebar-section-label">WELLBEING</div>
       <div class="sidebar-item" id="si-mood" onclick="showDash('mood')"><i class="fas fa-smile"></i>Mood Check-in</div>
+      <div class="sidebar-item" id="si-pomodoro" onclick="showDash('pomodoro')"><i class="fas fa-clock"></i>Pomodoro Timer</div>
       <div class="sidebar-section-label">SCHOOL</div>
       <div class="sidebar-item" id="si-assignments" onclick="showDash('assignments')"><i class="fas fa-clipboard-list"></i>Assignments<span class="sidebar-badge">2</span></div>
       <div class="sidebar-section-label">Account</div>
@@ -3986,6 +3987,54 @@ body.mode-adhd .adhd-break { display: block; }
           <div id="mood-advice" style="line-height:1.8;font-size:.95rem"></div>
           <button class="btn-gold" onclick="startMoodSession()" style="margin-top:1rem">Start Adapted Session →</button>
         </div>
+      </div>
+    </div>
+
+    <div class="subpage" id="sp-pomodoro">
+      <div class="page-title">🍅 Pomodoro Timer</div>
+      <p class="page-subtitle">25 minutes of focused study, 5 minute breaks — proven to boost concentration</p>
+      <div style="max-width:480px;margin:0 auto;text-align:center">
+        <!-- Mode selector -->
+        <div style="display:flex;gap:.5rem;justify-content:center;margin-bottom:2rem">
+          <button class="note-tag-btn selected" id="pom-mode-work" onclick="setPomMode('work',this)">📚 Focus (25m)</button>
+          <button class="note-tag-btn" id="pom-mode-short" onclick="setPomMode('short',this)">☕ Short Break (5m)</button>
+          <button class="note-tag-btn" id="pom-mode-long" onclick="setPomMode('long',this)">🌿 Long Break (15m)</button>
+        </div>
+        <!-- Timer ring -->
+        <div style="position:relative;display:inline-block;margin-bottom:2rem">
+          <svg width="220" height="220" style="transform:rotate(-90deg)">
+            <circle cx="110" cy="110" r="95" fill="none" stroke="var(--bg3)" stroke-width="12"/>
+            <circle id="pom-ring" cx="110" cy="110" r="95" fill="none" stroke="var(--gold)" stroke-width="12"
+              stroke-dasharray="597" stroke-dashoffset="0" stroke-linecap="round" style="transition:stroke-dashoffset 1s linear,stroke .3s"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+            <div style="font-family:var(--font-head);font-size:3rem;font-weight:900;color:var(--white);line-height:1" id="pom-display">25:00</div>
+            <div style="font-size:.8rem;color:var(--muted);margin-top:.4rem" id="pom-label">Ready to focus</div>
+          </div>
+        </div>
+        <!-- Controls -->
+        <div style="display:flex;gap:.75rem;justify-content:center;margin-bottom:1.5rem">
+          <button class="btn btn-gold" id="pom-start-btn" onclick="pomToggle()" style="padding:.875rem 2rem;font-size:1rem;min-width:120px">▶ Start</button>
+          <button class="btn btn-outline" onclick="pomReset()" style="padding:.875rem 1.25rem">↺ Reset</button>
+        </div>
+        <!-- Session count & stats -->
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:1.25rem">
+          <div style="display:flex;justify-content:space-around">
+            <div style="text-align:center">
+              <div style="font-family:var(--font-head);font-size:1.75rem;font-weight:700;color:var(--gold)" id="pom-sessions">0</div>
+              <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Sessions today</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-family:var(--font-head);font-size:1.75rem;font-weight:700;color:var(--green)" id="pom-total-min">0</div>
+              <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Minutes focused</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-family:var(--font-head);font-size:1.75rem;font-weight:700;color:var(--purple)" id="pom-streak-count">0</div>
+              <div style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Session streak</div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:1rem">After 4 sessions, take a long break. You've got this! 💪</p>
       </div>
     </div>
 
@@ -5621,6 +5670,19 @@ Reply with ONLY this HTML (no markdown, no extra text):
       ? applyDyscalculiaColors(getReply(data))
       : getReply(data);
     fbDiv.innerHTML = sanitizeAIHTML(fbRaw);
+    // Add "Teach me this" and "Add to Mistakes" action buttons
+    const qBlock = btn.closest('.question-block');
+    const qText = qBlock?.querySelector('.question-text')?.textContent?.slice(0, 120) || 'this topic';
+    const existingActions = fbDiv.parentElement.querySelector('.post-feedback-actions');
+    if (existingActions) existingActions.remove();
+    const actions = document.createElement('div');
+    actions.className = 'post-feedback-actions';
+    actions.style.cssText = 'display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem';
+    actions.innerHTML = `
+      <button onclick="teachMeThis('${qText.replace(/'/g,"\\'")}')" style="background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.3);color:var(--blue);border-radius:8px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer">📚 Teach me this</button>
+      <button onclick="addToMistakesFromQ('${qText.replace(/'/g,"\\'")}')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#EF4444;border-radius:8px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer">⚠️ Add to Mistakes</button>
+      <button onclick="this.closest('.post-feedback-actions').remove()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer">✓ Got it</button>`;
+    fbDiv.after(actions);
     fbDiv.classList.add('show');
     if (window.MathJax) MathJax.typesetPromise([fbDiv]).catch(() => {});
     btn.innerHTML = '✦ Re-check';
@@ -5630,6 +5692,40 @@ Reply with ONLY this HTML (no markdown, no extra text):
     btn.disabled = false;
     showToast('Could not mark: ' + e.message);
   }
+}
+
+// ─── Post-answer helpers ─────────────────────────────
+function teachMeThis(qText) {
+  showDash('content');
+  // Pre-fill the topic input if it exists and trigger lesson generation
+  setTimeout(() => {
+    // Try to find the topic search input in teacher section
+    const topicInput = document.getElementById('teacher-topic-input') || document.getElementById('tt-topic');
+    const chatInput = document.getElementById('tutor-input');
+    if (topicInput) {
+      topicInput.value = qText.slice(0, 80);
+    } else {
+      showDash('tutor');
+      if (chatInput) {
+        chatInput.value = `Can you teach me about: ${qText.slice(0, 100)}? I just attempted a question on this and need a clear explanation.`;
+        tutorSend();
+      }
+    }
+  }, 300);
+}
+
+function addToMistakesFromQ(qText) {
+  try {
+    const mistakes = JSON.parse(localStorage.getItem('synaptiq_mistakes') || '[]');
+    mistakes.unshift({
+      id: Date.now(), subject: state.subject || 'Mathematics',
+      topic: qText.slice(0, 80), note: 'Added from practice questions',
+      date: new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short'})
+    });
+    localStorage.setItem('synaptiq_mistakes', JSON.stringify(mistakes.slice(0, 200)));
+    showToast('⚠️ Added to Mistakes Tracker');
+    renderStudyCoach();
+  } catch(e) { showToast('Could not save'); }
 }
 
 // ═══════════════════════════════════════
@@ -7187,15 +7283,19 @@ function switchAssign(view) {
 }
 
 async function getHint(id) {
-  const hints = {
-    1: 'quadratic equations — try using the quadratic formula x = (-b ± √(b²-4ac)) / 2a, or factorising first',
-    2: 'Newton\'s three laws — think about inertia, F=ma, and equal/opposite reactions with real examples'
-  };
+  const defaults = { 1: 'quadratic equations', 2: 'integration by parts' };
+  const topic = defaults[id] || 'mathematics';
+  getHintForAssignment(topic, 'A-Level Maths');
+}
+
+async function getHintForAssignment(title, subject) {
   showToast('💡 Getting your hint...');
-  const sys = `You are a supportive tutor helping a student with their homework. Give a helpful HINT that guides them WITHOUT giving the answer away. Keep it to 2-3 sentences. ${getA11yInstructions()}`;
+  const sys = `You are a supportive UK A-Level tutor helping a student with their homework. Give a helpful HINT that guides them WITHOUT giving the full answer away. Keep it to 2-3 clear sentences.`;
   try {
-    const data = await callClaude([{ role: 'user', content: `Give me a hint for: ${hints[id]}. Don't give me the answer, just guide me.` }], sys);
-    showToast('💡 ' + getReply(data).slice(0, 100) + '...');
+    const data = await callClaude([{ role: 'user', content: `Give me a helpful starting hint for this ${subject} assignment: "${title}". Guide me without giving the answer.` }], sys);
+    const hint = getReply(data).slice(0, 200);
+    showToast('💡 ' + hint);
+    addTutorMsg && document.getElementById('sp-tutor').classList.contains('active') ? null : null;
   } catch (e) {
     showToast('⚠️ ' + e.message.slice(0, 80));
   }
@@ -7272,23 +7372,75 @@ async function deleteMyAccount() {
 }
 
 function saveAssignment() {
-  const titleEl   = document.getElementById('assignment-title');
-  const subjectEl = document.getElementById('assignment-subject');
-  const deadlineEl= document.getElementById('assignment-deadline');
-  const descEl    = document.getElementById('assignment-desc');
-  const title   = titleEl?.value?.trim()   || '';
-  const subject = subjectEl?.value?.trim() || '';
-  const deadline= deadlineEl?.value        || '';
-  const desc    = descEl?.value?.trim()    || '';
-  if (!title) { showToast('⚠️ Please enter an assignment title'); return; }
+  const title   = document.getElementById('asgn-title')?.value?.trim()   || '';
+  const subject = document.getElementById('asgn-subject')?.value?.trim() || '';
+  const deadline= document.getElementById('asgn-due')?.value             || '';
+  const desc    = document.getElementById('asgn-instructions')?.value?.trim() || '';
+  if (!title) { showToast('⚠️ Please enter a title first'); return; }
   try {
-    const saved = JSON.parse(localStorage.getItem('lumina_assignments') || '[]');
-    saved.unshift({ id: Date.now(), title, subject, deadline, desc, created: new Date().toISOString() });
-    localStorage.setItem('lumina_assignments', JSON.stringify(saved.slice(0, 100)));
+    const saved = JSON.parse(localStorage.getItem('synaptiq_assignments') || '[]');
+    const newAssign = { id: Date.now(), title, subject, deadline, desc, created: new Date().toISOString(), status: 'new' };
+    saved.unshift(newAssign);
+    localStorage.setItem('synaptiq_assignments', JSON.stringify(saved.slice(0, 100)));
   } catch(e) {}
-  showToast('✅ Assignment saved!');
+  renderStudentAssignments();
+  showToast('✅ Assignment saved and assigned to students!');
+  // Switch to student view to show new assignment
+  switchAssign('student');
 }
-function openAssignment(id) { showToast('Opening assignment...'); showDash('tutor'); }
+
+function renderStudentAssignments() {
+  const container = document.getElementById('av-student');
+  if (!container) return;
+  let customAssigns = [];
+  try { customAssigns = JSON.parse(localStorage.getItem('synaptiq_assignments') || '[]'); } catch(e) {}
+  // Hardcoded defaults shown when no custom ones exist
+  const defaults = [
+    { id: 1, title: 'Algebra Practice — Quadratics', subject: 'Mathematics · AQA Higher', deadline: 'Tomorrow', desc: 'Solve the following quadratic equations and show all working. Use the quadratic formula where necessary.', marks: 20, status: 'due' },
+    { id: 2, title: 'Integration by Parts — Mixed Practice', subject: 'A-Level Maths · Pure 2 · AQA', deadline: 'Friday', desc: 'Use integration by parts to evaluate the following integrals. Show all working — marks are awarded for method.', marks: 20, status: 'new' }
+  ];
+  const assigns = customAssigns.length ? customAssigns : defaults;
+  const statusClasses = { new: 'status-new', due: 'status-due', completed: 'status-ok' };
+  const statusLabels = { new: 'New', due: 'Due Soon', completed: 'Done' };
+  container.innerHTML = assigns.map(a => {
+    const statusKey = a.status || 'new';
+    const dueText = a.deadline ? (a.deadline.includes('-') ? new Date(a.deadline).toLocaleDateString('en-GB', {weekday:'short',day:'numeric',month:'short'}) : a.deadline) : 'TBC';
+    return `<div class="assign-card">
+      <div class="assign-header">
+        <div class="assign-title">${a.title}</div>
+        <span class="status-badge ${statusClasses[statusKey]||'status-new'}">${statusLabels[statusKey]||'New'}</span>
+      </div>
+      <div class="assign-meta">📚 ${a.subject || 'Mathematics'} · Due: ${dueText}${a.marks ? ' · ' + a.marks + ' marks' : ''}</div>
+      <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">${a.desc || ''}</p>
+      <div style="display:flex;gap:.75rem">
+        <button class="btn btn-gold" onclick="openAssignment(${a.id})">Start Assignment</button>
+        <button class="btn btn-outline" onclick="getHintForAssignment('${(a.title||'').replace(/'/g,"\\'")}', '${(a.subject||'').replace(/'/g,"\\'")}')">💡 Get AI Hint</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function openAssignment(id) {
+  // Default assignment data for hardcoded cards
+  const defaults = {
+    1: { title: 'Algebra Practice — Quadratics', topic: 'Quadratics', desc: 'Solve the following quadratic equations showing all working. Use the quadratic formula where necessary.' },
+    2: { title: 'Integration by Parts — Mixed Practice', topic: 'Integration by parts', desc: 'Use integration by parts to evaluate the following integrals. Show all working — marks are awarded for method.' }
+  };
+  // Try localStorage for teacher-created assignments
+  let assign = null;
+  try {
+    const saved = JSON.parse(localStorage.getItem('synaptiq_assignments') || '[]');
+    assign = saved.find(a => a.id === id) || defaults[id];
+  } catch(e) { assign = defaults[id]; }
+  if (!assign) return;
+  showDash('tutor');
+  setTimeout(() => {
+    const input = document.getElementById('tutor-input');
+    if (input) {
+      input.value = `I'm working on my assignment: "${assign.title}". ${assign.desc} Can you walk me through this step by step?`;
+      tutorSend();
+    }
+  }, 300);
+}
 
 // ═══════════════════════════════════════
 // VIDEO PLAYER (Interactive)
@@ -9375,6 +9527,8 @@ Each day should have ${hours} hours of study split into 45-60 min sessions. Rest
         <button class="vid-ctrl-btn" onclick="window.print()">🖨️ Print</button>
       </div>`;
     addXP(20, '📆 Timetable generated +20 XP');
+    // Persist timetable
+    try { localStorage.setItem('synaptiq_timetable', output.innerHTML); } catch(e) {}
   } catch(e) { showToast('⚠️ Could not generate timetable'); }
   btn.textContent = '✦ Generate My Timetable'; btn.disabled = false;
 }
@@ -9389,9 +9543,10 @@ function saveRevisionToNotes() {
 // ─── CHAT HISTORY ────────────────────────────────────
 let chatHistory = [];
 
-function saveChatToHistory(subject, question, preview) {
+function saveChatToHistory(subject, question, preview, messages) {
   chatHistory.unshift({
     id: Date.now(), subject, question, preview,
+    messages: messages ? messages.slice(-20) : null,
     date: new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short'}),
     time: new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'})
   });
@@ -9429,11 +9584,39 @@ function renderHistory(filter='') {
 
 function filterHistory(q) { renderHistory(q.toLowerCase()); }
 function clearHistory() { chatHistory = []; try { localStorage.removeItem('synaptiq_history'); } catch(e) {} renderHistory(); showToast('🗑️ Chat history cleared'); }
-function replayChat(id) { showDash('tutor'); showToast('💬 Conversation loaded in Tutor'); }
+function replayChat(id) {
+  const h = chatHistory.find(c => String(c.id) === String(id));
+  showDash('tutor');
+  if (h?.messages?.length) {
+    state.tutorHistory = h.messages.slice();
+    const container = document.getElementById('tutor-messages');
+    if (container) {
+      container.innerHTML = '';
+      h.messages.forEach(m => addTutorMsg(m.role === 'user' ? 'user' : 'bot', m.content));
+    }
+    showToast('💬 Conversation restored in Tutor — continue where you left off');
+  } else {
+    if (h?.question) {
+      setTimeout(() => {
+        const input = document.getElementById('tutor-input');
+        if (input) { input.value = h.question; }
+      }, 200);
+    }
+    showToast('💬 Topic loaded — continue the conversation');
+  }
+}
 
 // ─── GLOSSARY ────────────────────────────────────────
 let glossaryTerms = {};
 let glossaryFilter = 'all';
+
+function saveGlossaryToStorage() { try { localStorage.setItem('synaptiq_glossary', JSON.stringify(glossaryTerms)); } catch(e) {} }
+function loadGlossaryFromStorage() {
+  try {
+    const s = localStorage.getItem('synaptiq_glossary');
+    if (s) { glossaryTerms = JSON.parse(s); }
+  } catch(e) {}
+}
 
 async function lookupTerm() {
   const query = document.getElementById('glossary-search').value.trim();
@@ -9448,6 +9631,7 @@ async function lookupTerm() {
     const letter = query[0].toUpperCase();
     if (!glossaryTerms[letter]) glossaryTerms[letter] = [];
     glossaryTerms[letter].unshift(result);
+    saveGlossaryToStorage();
     renderGlossary();
     addXP(5, '📖 Term looked up +5 XP');
   } catch(e) { showToast('⚠️ Could not look up term'); }
@@ -9545,10 +9729,31 @@ function renderPapers() {
 
 function openPaper(id) {
   const paper = savedPapers.find(p => p.id === id);
-  if (!paper) return;
-  // Switch to questions tab and populate
+  if (!paper || !paper.questions?.length) return;
   showDash('questions');
-  showToast('📄 Paper loaded — check Questions tab');
+  const output = document.getElementById('q-output');
+  const qContainer = document.getElementById('q-questions');
+  if (!output || !qContainer) return;
+  output.classList.add('show');
+  document.getElementById('q-output-title').textContent = `${paper.subject} — ${paper.diff}`;
+  document.getElementById('q-output-sub').textContent = `${paper.board} · ${paper.questions.length} questions · ${paper.date}`;
+  qContainer.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  paper.questions.forEach((q, i) => {
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = `<div class="question-block">
+      <div class="question-num">Question ${i + 1} <span class="marks-badge">${q.marks || 4} marks</span></div>
+      <div class="question-text">${q.question || q.title || ''}</div>
+      ${q.hint ? `<div style="font-size:.8rem;color:var(--gold);margin-bottom:.75rem">💡 Hint: ${q.hint}</div>` : ''}
+      <textarea class="answer-space" id="ans-${i}" placeholder="Write your working here..." rows="4" spellcheck="false" style="width:100%;resize:vertical;background:transparent;border:1px solid var(--border);border-radius:8px;padding:.75rem;color:inherit;font-family:inherit;font-size:.875rem;outline:none"></textarea>
+      <button class="check-btn" onclick="checkAnswer(${i},this)" data-sol="${encodeURIComponent(q.solution||'')}">✦ Check My Answer</button>
+      <div class="ai-feedback" id="fb-${i}"></div>
+    </div>`;
+    frag.appendChild(wrapper.firstElementChild);
+  });
+  qContainer.appendChild(frag);
+  if (window.MathJax) MathJax.typesetPromise([qContainer]).catch(() => {});
+  showToast(`📄 ${paper.subject} paper loaded — ${paper.questions.length} questions ready`);
 }
 
 function loadPapers() { try { const s = localStorage.getItem('synaptiq_papers'); if (s) { savedPapers = JSON.parse(s); renderPapers(); } } catch(e) {} }
@@ -10800,6 +11005,13 @@ window.enterDashboard = function() {
   loadChatHistory();
   loadPapers();
   renderLeaderboard();
+  loadGlossaryFromStorage();
+  renderStudentAssignments();
+  // Restore timetable if previously generated
+  try {
+    const tt = localStorage.getItem('synaptiq_timetable');
+    if (tt) { const el = document.getElementById('timetable-output'); if (el) { el.innerHTML = tt; el.style.display = 'block'; } }
+  } catch(e) {}
   // Restore font size
   try {
     const fs = localStorage.getItem('synaptiq_fontsize');
@@ -10824,6 +11036,8 @@ window.showDash = function(sub) {
   if (sub === 'history') renderHistory();
   if (sub === 'papers') renderPapers();
   if (sub === 'exams') renderExams();
+  if (sub === 'glossary') renderGlossary();
+  if (sub === 'assignments') renderStudentAssignments();
 };
 
 // ─── PATCH tutor send to auto-save history ────────────
@@ -10832,7 +11046,7 @@ window.sendTutor = function() {
   const input = document.getElementById('tutor-input');
   if (input && input.value.trim()) {
     const msg = input.value.trim();
-    setTimeout(() => saveChatToHistory(state.subject || 'General', msg.slice(0,60), 'AI response saved'), 3000);
+    setTimeout(() => saveChatToHistory(state.subject || 'General', msg.slice(0,60), 'AI response saved', state.tutorHistory), 3000);
   }
   if (_v9TutorSend) _v9TutorSend();
 };
@@ -14562,6 +14776,144 @@ document.addEventListener('DOMContentLoaded', () => {
   initDailyChallenge();
   renderStudyCoach();
 });
+
+// ═══════════════════════════════════════
+// POMODORO TIMER
+// ═══════════════════════════════════════
+const POM_MODES = { work: 25 * 60, short: 5 * 60, long: 15 * 60 };
+let pomState = {
+  mode: 'work', running: false, remaining: 25 * 60,
+  sessionsToday: 0, totalMinutes: 0, streak: 0, interval: null
+};
+
+function initPomodoroStats() {
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const s = JSON.parse(localStorage.getItem('synaptiq_pom') || '{}');
+    if (s.date === today) {
+      pomState.sessionsToday = s.sessions || 0;
+      pomState.totalMinutes = s.minutes || 0;
+    }
+  } catch(e) {}
+  updatePomDisplay();
+  updatePomStats();
+}
+
+function setPomMode(mode, btn) {
+  if (pomState.running) pomStop();
+  pomState.mode = mode;
+  pomState.remaining = POM_MODES[mode];
+  document.querySelectorAll('[id^="pom-mode-"]').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const colors = { work: 'var(--gold)', short: 'var(--green)', long: 'var(--purple)' };
+  document.getElementById('pom-ring').style.stroke = colors[mode];
+  updatePomDisplay();
+}
+
+function pomToggle() {
+  if (pomState.running) pomStop(); else pomStart();
+}
+
+function pomStart() {
+  pomState.running = true;
+  document.getElementById('pom-start-btn').innerHTML = '⏸ Pause';
+  document.getElementById('pom-label').textContent = pomState.mode === 'work' ? 'Focus time!' : 'Taking a break…';
+  pomState.interval = setInterval(() => {
+    pomState.remaining--;
+    updatePomDisplay();
+    if (pomState.remaining <= 0) {
+      pomComplete();
+    }
+  }, 1000);
+}
+
+function pomStop() {
+  pomState.running = false;
+  clearInterval(pomState.interval);
+  document.getElementById('pom-start-btn').innerHTML = '▶ Resume';
+  document.getElementById('pom-label').textContent = 'Paused';
+}
+
+function pomReset() {
+  pomState.running = false;
+  clearInterval(pomState.interval);
+  pomState.remaining = POM_MODES[pomState.mode];
+  document.getElementById('pom-start-btn').innerHTML = '▶ Start';
+  document.getElementById('pom-label').textContent = 'Ready to focus';
+  updatePomDisplay();
+}
+
+function pomComplete() {
+  pomState.running = false;
+  clearInterval(pomState.interval);
+  if (pomState.mode === 'work') {
+    pomState.sessionsToday++;
+    pomState.totalMinutes += 25;
+    pomState.streak++;
+    addXP(50);
+    showToast('🍅 Focus session complete! +50 XP. Take a short break!');
+    document.getElementById('pom-label').textContent = '✓ Session complete!';
+    // Auto-suggest break
+    setTimeout(() => setPomMode('short', document.getElementById('pom-mode-short')), 1500);
+  } else {
+    showToast('Break over — time to focus again!');
+    document.getElementById('pom-label').textContent = '✓ Break complete!';
+    setTimeout(() => setPomMode('work', document.getElementById('pom-mode-work')), 1500);
+  }
+  // Play notification sound (Web Audio API — no external request)
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 880; gain.gain.value = 0.3;
+    osc.start(); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+    osc.stop(ctx.currentTime + 0.6);
+  } catch(e) {}
+  // Save stats
+  const today = new Date().toISOString().split('T')[0];
+  try { localStorage.setItem('synaptiq_pom', JSON.stringify({ date: today, sessions: pomState.sessionsToday, minutes: pomState.totalMinutes })); } catch(e) {}
+  pomState.remaining = POM_MODES[pomState.mode];
+  updatePomStats();
+  document.getElementById('pom-start-btn').innerHTML = '▶ Start';
+  updatePomDisplay();
+}
+
+function updatePomDisplay() {
+  const m = Math.floor(pomState.remaining / 60);
+  const s = pomState.remaining % 60;
+  document.getElementById('pom-display').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  // Update ring
+  const total = POM_MODES[pomState.mode];
+  const circumference = 597;
+  const offset = circumference * (1 - pomState.remaining / total);
+  document.getElementById('pom-ring').style.strokeDashoffset = offset;
+}
+
+function updatePomStats() {
+  const el1 = document.getElementById('pom-sessions');
+  const el2 = document.getElementById('pom-total-min');
+  const el3 = document.getElementById('pom-streak-count');
+  if (el1) el1.textContent = pomState.sessionsToday;
+  if (el2) el2.textContent = pomState.totalMinutes;
+  if (el3) el3.textContent = pomState.sessionsToday;
+}
+
+// Hook showDash for pomodoro init and pause when leaving
+const __pomShowDash = showDash;
+showDash = function(sub) {
+  __pomShowDash(sub);
+  if (sub === 'pomodoro') {
+    initPomodoroStats();
+    const sp = document.getElementById('sp-pomodoro');
+    if (sp) { sp.classList.add('active'); }
+    const si = document.getElementById('si-pomodoro');
+    if (si) { document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active')); si.classList.add('active'); }
+  } else {
+    // Pause timer when leaving (don't lose progress)
+    if (pomState.running) { pomStop(); showToast('⏸ Pomodoro paused'); }
+  }
+};
 
 </script>
 
