@@ -2603,7 +2603,7 @@ body.mode-adhd .adhd-break { display: block; }
       <button class="a11y-btn" id="btn-dyscalculia" onclick="toggleMode('dyscalculia')" aria-label="Toggle Dyscalculia mode" aria-pressed="false">Dyscalculia</button>
     </div>
     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
-    <div id="session-timer-badge" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:.3rem .75rem;font-size:.78rem;color:var(--muted);align-items:center;gap:.4rem" title="Time studied today">⏱ <span id="session-timer-text">0m</span></div>
+    <div id="session-timer-badge" style="display:none;background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:.3rem .75rem;font-size:.78rem;color:var(--muted);align-items:center;gap:.4rem" title="Time studied today">⏱ <span id="session-timer-text">0m</span></div>
     <div id="xp-badge"><i class="fas fa-star"></i><span id="xp-display">0 XP</span></div>
     <div id="target-grade-badge" style="display:none;background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.35);border-radius:20px;padding:.3rem .85rem;font-size:.78rem;font-weight:700;color:#A78BFA" title="Your target grade">🎯 <span id="target-grade-text">A*</span></div>
     <div id="auth-buttons">
@@ -2797,14 +2797,14 @@ body.mode-adhd .adhd-break { display: block; }
       <div id="home-demo-chat" style="padding:1.5rem;min-height:200px;max-height:360px;overflow-y:auto">
         <div style="display:flex;gap:.75rem;margin-bottom:1.25rem">
           <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem">✦</div>
-          <div style="background:var(--bg3);border-radius:0 12px 12px 12px;padding:.85rem 1.1rem;max-width:85%;font-size:.9rem;line-height:1.7;color:var(--muted)">
+          <div style="background:rgba(12,14,20,0.82);border-radius:0 12px 12px 12px;padding:.85rem 1.1rem;max-width:85%;font-size:.9rem;line-height:1.7;color:var(--muted)">
             Hello! Ask me any A-Level Maths question — I'll show you full working, step by step, exactly as a mark scheme expects. 🎓
           </div>
         </div>
       </div>
       <!-- Demo input -->
       <div style="padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.75rem">
-        <input id="home-demo-input" type="text" placeholder="e.g. How do I differentiate x³sin(x)?" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.7rem 1rem;color:var(--white);font-size:.875rem" onkeydown="if(event.key==='Enter')homeDemoSend()" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+        <input id="home-demo-input" type="text" placeholder="e.g. How do I differentiate x³sin(x)?" style="flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:.7rem 1rem;color:var(--white);font-size:.875rem" onkeydown="if(event.key==='Enter')homeDemoSend()" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
         <button class="btn btn-gold" style="padding:.7rem 1.25rem;font-size:.875rem;white-space:nowrap" onclick="homeDemoSend()">Ask ✦</button>
       </div>
       <div style="padding:.5rem 1.5rem 1rem;text-align:center;font-size:.72rem;color:var(--muted)">Free demo · No account needed · Full AI responses</div>
@@ -3063,19 +3063,19 @@ body.mode-adhd .adhd-break { display: block; }
           <!-- Social links -->
           <div style="display:flex;gap:.75rem">
             <a href="https://twitter.com/synaptiqai" target="_blank" rel="noopener"
-               style="width:36px;height:36px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.875rem;text-decoration:none;transition:.15s"
+               style="width:36px;height:36px;border-radius:8px;background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.875rem;text-decoration:none;transition:.15s"
                onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
                onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
             </a>
             <a href="https://instagram.com/synaptiqai" target="_blank" rel="noopener"
-               style="width:36px;height:36px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.875rem;text-decoration:none;transition:.15s"
+               style="width:36px;height:36px;border-radius:8px;background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.875rem;text-decoration:none;transition:.15s"
                onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
                onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
             </a>
             <a href="https://tiktok.com/@synaptiqai" target="_blank" rel="noopener"
-               style="width:36px;height:36px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.875rem;text-decoration:none;transition:.15s"
+               style="width:36px;height:36px;border-radius:8px;background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.875rem;text-decoration:none;transition:.15s"
                onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'"
                onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.2 8.2 0 004.79 1.53V6.77a4.85 4.85 0 01-1.02-.08z"/></svg>
@@ -3249,7 +3249,7 @@ body.mode-adhd .adhd-break { display: block; }
       <!-- Step 4: GDPR -->
       <div class="auth-step" id="step4">
         <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:1.5rem">Almost there! 🎉</h3>
-        <div style="background:var(--bg3);border-radius:12px;padding:1rem;margin-bottom:1.5rem;font-size:.85rem;color:var(--muted);line-height:1.6">
+        <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;margin-bottom:1.5rem;font-size:.85rem;color:var(--muted);line-height:1.6">
           <strong style="color:var(--white);display:block;margin-bottom:.5rem">Your Synaptiq profile:</strong>
           <div id="profile-summary"></div>
         </div>
@@ -3574,9 +3574,9 @@ body.mode-adhd .adhd-break { display: block; }
           </div>
           <!-- Loading skeleton shown while AI responds -->
           <div id="tutor-skeleton" style="display:none;padding:1rem 1.5rem">
-            <div style="height:14px;background:var(--bg3);border-radius:7px;margin-bottom:.6rem;width:80%;animation:shimmer 1.5s infinite"></div>
-            <div style="height:14px;background:var(--bg3);border-radius:7px;margin-bottom:.6rem;width:60%;animation:shimmer 1.5s infinite .2s"></div>
-            <div style="height:14px;background:var(--bg3);border-radius:7px;width:72%;animation:shimmer 1.5s infinite .4s"></div>
+            <div style="height:14px;background:rgba(255,255,255,0.06);border-radius:7px;margin-bottom:.6rem;width:80%;animation:shimmer 1.5s infinite"></div>
+            <div style="height:14px;background:rgba(255,255,255,0.06);border-radius:7px;margin-bottom:.6rem;width:60%;animation:shimmer 1.5s infinite .2s"></div>
+            <div style="height:14px;background:rgba(255,255,255,0.06);border-radius:7px;width:72%;animation:shimmer 1.5s infinite .4s"></div>
           </div>
           <!-- Uploaded image strip -->
           <div id="tutor-img-strip" style="display:none;padding:.5rem 1rem;display:flex;gap:.5rem;flex-wrap:wrap;border-top:1px solid var(--border)"></div>
@@ -3695,7 +3695,7 @@ body.mode-adhd .adhd-break { display: block; }
       <p class="page-subtitle">Track your improvement over time</p>
       <div id="weekly-report-output" style="display:none;margin-bottom:1.5rem;padding:1.5rem 1.75rem;background:rgba(12,14,20,0.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(201,168,76,0.2);border-radius:16px;line-height:1.9;font-size:.9rem;box-shadow:0 8px 32px rgba(0,0,0,0.3)"></div>
       <!-- 7-day streak calendar -->
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+      <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
         <div style="font-size:.8rem;color:var(--muted);white-space:nowrap">This week:</div>
         <div id="streak-calendar" style="display:flex;gap:.4rem;flex:1;justify-content:flex-start"></div>
         <div style="font-size:.8rem;color:var(--muted)" id="streak-summary"></div>
@@ -3846,7 +3846,7 @@ body.mode-adhd .adhd-break { display: block; }
             <div class="form-group"><label>Year Group</label><select id="asgn-year"><option>Year 12</option><option>Year 13</option></select></div>
             <div class="form-group"><label>Due Date</label><input type="date" id="asgn-due"></div>
           </div>
-          <div class="form-group"><label>Instructions</label><textarea style="width:100%;padding:.875rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--white);font-family:var(--font-body);min-height:80px;resize:vertical" id="asgn-instructions" placeholder="What should students do?"></textarea></div>
+          <div class="form-group"><label>Instructions</label><textarea style="width:100%;padding:.875rem;background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:10px;color:var(--white);font-family:var(--font-body);min-height:80px;resize:vertical" id="asgn-instructions" placeholder="What should students do?"></textarea></div>
           <div style="display:flex;gap:.75rem">
             <button class="btn btn-gold" style="padding:.875rem 1.5rem" onclick="createAssignment()">✦ Generate Questions</button>
             <button class="btn btn-outline" style="padding:.875rem 1.5rem" onclick="saveAssignment()">💾 Save & Assign</button>
@@ -4037,11 +4037,11 @@ body.mode-adhd .adhd-break { display: block; }
         <button class="btn btn-outline" style="font-size:.85rem;padding:.5rem 1.25rem" onclick="generateFcWithAI()">✦ Generate with AI</button>
         <button class="btn btn-outline" style="font-size:.85rem;padding:.5rem 1.25rem" onclick="openFcPackModal()"><i class="fas fa-box-open"></i> Starter Packs</button>
         <button class="btn btn-outline" style="font-size:.85rem;padding:.5rem 1.25rem" onclick="exportFlashcards()">⬇ Export</button>
-        <select id="fc-subject" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.45rem .75rem;color:var(--white);font-size:.8rem" onchange="filterFcBySubject(this.value)">
+        <select id="fc-subject" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:.45rem .75rem;color:var(--white);font-size:.8rem" onchange="filterFcBySubject(this.value)">
           <option value="">All Topics</option>
           <option>Pure Mathematics</option><option>Statistics</option><option>Mechanics</option>
         </select>
-        <select id="fc-tag" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.45rem .75rem;color:var(--white);font-size:.8rem">
+        <select id="fc-tag" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:.45rem .75rem;color:var(--white);font-size:.8rem">
           <option value="">All Tags</option>
           <option>Due Today</option><option>Weak</option><option>Strong</option>
         </select>
@@ -4089,7 +4089,7 @@ body.mode-adhd .adhd-break { display: block; }
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
           <div>
             <label style="display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.4rem">Topic</label>
-            <select class="form-select" id="essay-subject" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.65rem .9rem;color:var(--white);font-size:.9rem">
+            <select class="form-select" id="essay-subject" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:.65rem .9rem;color:var(--white);font-size:.9rem">
               <option>Pure Mathematics</option>
               <option>Statistics</option>
               <option>Mechanics</option>
@@ -4098,14 +4098,14 @@ body.mode-adhd .adhd-break { display: block; }
           </div>
           <div>
             <label style="display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.4rem">Exam Board</label>
-            <select class="form-select" id="essay-board" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.65rem .9rem;color:var(--white);font-size:.9rem">
+            <select class="form-select" id="essay-board" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:.65rem .9rem;color:var(--white);font-size:.9rem">
               <option>AQA</option><option>Edexcel</option><option>OCR</option><option>OCR MEI</option>
             </select>
           </div>
         </div>
         <div style="margin-bottom:1rem">
           <label style="display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.4rem">Question</label>
-          <input type="text" id="essay-question" placeholder="e.g. Find ∫(2x+3)dx, giving your answer in terms of x" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.65rem .9rem;color:var(--white);font-size:.9rem">
+          <input type="text" id="essay-question" placeholder="e.g. Find ∫(2x+3)dx, giving your answer in terms of x" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:.65rem .9rem;color:var(--white);font-size:.9rem">
         </div>
         <div class="essay-dropzone" id="essay-img-drop" onclick="document.getElementById('essay-img-input').click()">
           <i class="fas fa-image"></i>
@@ -4115,7 +4115,7 @@ body.mode-adhd .adhd-break { display: block; }
         </div>
         <div style="margin-bottom:1.5rem">
           <label style="display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.4rem">Your Worked Solution</label>
-          <textarea id="essay-text" rows="12" placeholder="Write out your full working here — show every step.&#10;&#10;e.g.&#10;∫(2x+3)dx&#10;= x² + 3x + C" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;color:var(--white);font-family:var(--font-body);font-size:.9rem;resize:vertical;line-height:1.7"></textarea>
+          <textarea id="essay-text" rows="12" placeholder="Write out your full working here — show every step.&#10;&#10;e.g.&#10;∫(2x+3)dx&#10;= x² + 3x + C" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;color:var(--white);font-family:var(--font-body);font-size:.9rem;resize:vertical;line-height:1.7"></textarea>
         </div>
         <button class="btn btn-gold" onclick="markEssay()" id="essay-submit-btn" style="width:100%;padding:1rem;font-size:1rem">✦ Check My Working</button>
 
@@ -4276,7 +4276,7 @@ body.mode-adhd .adhd-break { display: block; }
             <div class="form-group"><label>Question</label><textarea id="sr-manual-q" class="chat-input" rows="2" style="resize:vertical" placeholder="e.g. What is the chain rule for differentiation?"></textarea></div>
             <div class="form-group" style="margin-top:.75rem"><label>Answer</label><textarea id="sr-manual-a" class="chat-input" rows="3" style="resize:vertical" placeholder="e.g. dy/dx = dy/du × du/dx — differentiate the outer function then multiply by the derivative of the inner"></textarea></div>
             <div class="form-group" style="margin-top:.75rem"><label>Subject</label>
-              <select id="sr-manual-subj" class="form-select" style="background:var(--bg3);border:1px solid var(--border);color:var(--white);padding:.6rem;border-radius:8px;width:100%">
+              <select id="sr-manual-subj" class="form-select" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--white);padding:.6rem;border-radius:8px;width:100%">
                 <option selected>Mathematics</option>
               </select>
             </div>
@@ -4342,9 +4342,9 @@ body.mode-adhd .adhd-break { display: block; }
             </div>
             <div style="display:flex;gap:.75rem;flex-wrap:wrap">
               <button class="save-note-btn" onclick="saveNote()">💾 Save Note</button>
-              <button class="save-note-btn" style="background:var(--bg3);color:var(--muted);border:1px solid var(--border)" onclick="aiSummariseNote()">✦ AI Summarise</button>
-              <button class="save-note-btn" style="background:var(--bg3);color:var(--blue);border:1px solid rgba(96,165,250,0.3)" onclick="generateTopicNotes()">✦ Generate Topic Notes</button>
-              <button class="save-note-btn" style="background:var(--bg3);color:var(--green);border:1px solid rgba(74,222,128,0.3)" onclick="exportNotes()">⬇ Export Notes</button>
+              <button class="save-note-btn" style="background:rgba(255,255,255,0.04);color:var(--muted);border:1px solid var(--border)" onclick="aiSummariseNote()">✦ AI Summarise</button>
+              <button class="save-note-btn" style="background:rgba(255,255,255,0.04);color:var(--blue);border:1px solid rgba(96,165,250,0.3)" onclick="generateTopicNotes()">✦ Generate Topic Notes</button>
+              <button class="save-note-btn" style="background:rgba(255,255,255,0.04);color:var(--green);border:1px solid rgba(74,222,128,0.3)" onclick="exportNotes()">⬇ Export Notes</button>
             </div>
           </div>
         </div>
@@ -4808,7 +4808,7 @@ body.mode-adhd .adhd-break { display: block; }
         <img id="photo-preview" class="photo-preview" style="display:none" alt="Question preview">
         <button class="btn-gold" id="photo-solve-btn" onclick="solvePhoto()" style="display:none;width:100%;padding:1rem;font-size:1rem;margin-bottom:1.5rem">✦ Solve This Question</button>
         <div id="photo-answer" style="display:none">
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem">
+          <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem">
             <div style="font-weight:700;margin-bottom:1rem;color:var(--gold)">✦ Answer</div>
             <div id="photo-answer-text" style="line-height:1.9;font-size:.95rem"></div>
           </div>
@@ -4876,7 +4876,7 @@ body.mode-adhd .adhd-break { display: block; }
           <div style="color:var(--muted);font-size:.875rem;margin-top:.5rem" id="grade-confidence">Answer some practice questions to see your prediction</div>
         </div>
         <div id="grade-breakdown" style="margin-bottom:1.5rem"></div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem">
+        <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem">
           <div style="font-weight:700;margin-bottom:1rem">📊 How this is calculated</div>
           <div style="font-size:.875rem;color:var(--muted);line-height:1.8">
             Synaptiq analyses your accuracy across topics, how recently you practised, the difficulty of questions you've answered, and typical grade boundary data for your exam board. The more you practise, the more accurate the prediction.
@@ -4901,7 +4901,7 @@ body.mode-adhd .adhd-break { display: block; }
           <button class="mood-btn" data-mood="stressed" data-score="1" onclick="selectMood(this)"><span style="font-size:2rem">😰</span><span>Stressed</span></button>
           <button class="mood-btn" data-mood="low" data-score="1" onclick="selectMood(this)"><span style="font-size:2rem">😢</span><span>Low</span></button>
         </div>
-        <div id="mood-response" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem;text-align:left;margin-top:1.5rem">
+        <div id="mood-response" style="display:none;background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem;text-align:left;margin-top:1.5rem">
           <div id="mood-advice" style="line-height:1.8;font-size:.95rem"></div>
           <button class="btn-gold" onclick="startMoodSession()" style="margin-top:1rem">Start Adapted Session →</button>
         </div>
@@ -4921,7 +4921,7 @@ body.mode-adhd .adhd-break { display: block; }
         <!-- Timer ring -->
         <div style="position:relative;display:inline-block;margin-bottom:2rem">
           <svg width="220" height="220" style="transform:rotate(-90deg)">
-            <circle cx="110" cy="110" r="95" fill="none" stroke="var(--bg3)" stroke-width="12"/>
+            <circle cx="110" cy="110" r="95" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="12"/>
             <circle id="pom-ring" cx="110" cy="110" r="95" fill="none" stroke="var(--gold)" stroke-width="12"
               stroke-dasharray="597" stroke-dashoffset="0" stroke-linecap="round" style="transition:stroke-dashoffset 1s linear,stroke .3s"/>
           </svg>
@@ -4936,7 +4936,7 @@ body.mode-adhd .adhd-break { display: block; }
           <button class="btn btn-outline" onclick="pomReset()" style="padding:.875rem 1.25rem">↺ Reset</button>
         </div>
         <!-- Session count & stats -->
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:1.25rem">
+        <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:1.25rem">
           <div style="display:flex;justify-content:space-around">
             <div style="text-align:center">
               <div style="font-family:var(--font-head);font-size:1.75rem;font-weight:700;color:var(--gold)" id="pom-sessions">0</div>
@@ -5055,7 +5055,7 @@ body.mode-adhd .adhd-break { display: block; }
             <span style="font-weight:700">Simplified version</span>
             <span class="readability-badge" id="readability-badge" style="background:rgba(74,222,128,0.15);color:var(--green)">Easy to read</span>
           </div>
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1rem">
+          <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem;margin-bottom:1rem">
             <div id="simplify-result" style="line-height:1.9;font-size:.95rem"></div>
           </div>
           <div style="display:flex;gap:.75rem">
@@ -5095,7 +5095,7 @@ body.mode-adhd .adhd-break { display: block; }
         </div>
         <button class="btn-gold" onclick="generateMnemonic()" style="width:100%;padding:1rem;margin-bottom:1.5rem">🧠 Create Memory Trick</button>
         <div id="mnemonic-output" style="display:none">
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1rem;border-left:4px solid var(--gold)">
+          <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem;margin-bottom:1rem;border-left:4px solid var(--gold)">
             <div id="mnemonic-result" style="font-size:1rem;line-height:1.9"></div>
           </div>
           <div style="display:flex;gap:.75rem">
@@ -5167,7 +5167,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
           <button class="note-tag-btn" onclick="setCWLevel('maths',this)">Maths/Science</button>
         </div>
         <div id="cw-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem"></div>
-        <div style="margin-top:2rem;background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem">
+        <div style="margin-top:2rem;background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem">
           <div style="font-weight:700;margin-bottom:.75rem">🤖 AI Practice Mode</div>
           <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">Select a command word, then practise writing an answer — Synaptiq will mark it specifically for that command word's requirements.</p>
           <div style="display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap">
@@ -5276,7 +5276,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
           <div id="blitz-result-score" style="font-size:3.5rem;font-weight:900;background:linear-gradient(135deg,#F5D660,#C9A84C,#E8A820);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem;font-family:var(--font-head)"></div>
           <div id="blitz-result-msg" style="font-size:1rem;color:var(--muted);margin-bottom:1.5rem"></div>
           <div id="blitz-result-breakdown" style="text-align:left;margin-bottom:1.5rem"></div>
-          <div id="blitz-study-links" style="display:none;background:var(--bg3);border-radius:12px;padding:1rem;margin-bottom:1.25rem;text-align:left">
+          <div id="blitz-study-links" style="display:none;background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;margin-bottom:1.25rem;text-align:left">
             <div style="font-weight:700;font-size:.875rem;margin-bottom:.75rem;color:var(--gold)">📚 Study the topics you missed:</div>
             <div id="blitz-study-btns" style="display:flex;flex-wrap:wrap;gap:.5rem"></div>
           </div>
@@ -5405,7 +5405,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
             </div>
           </div>
         </div>
-        <div id="goal-streak-display" style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem">
+        <div id="goal-streak-display" style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem">
           <div style="font-weight:700;margin-bottom:.75rem">🔥 Goal Streak</div>
           <div id="goal-streak-content" style="color:var(--muted);font-size:.875rem">Complete your daily goal to build a streak!</div>
         </div>
@@ -5441,7 +5441,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
           <div class="a11y-info"><div class="a11y-name">Simplified Interface</div><div class="a11y-desc">Reduces visual clutter — shows only the most important elements. Great for ADHD</div></div>
           <span id="a11y-simple-status" style="color:var(--muted);font-size:.8rem">Off</span>
         </button>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.25rem;margin-top:1rem">
+        <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;margin-top:1rem">
           <div style="font-weight:700;margin-bottom:.75rem">Text Size</div>
           <div style="display:flex;align-items:center;gap:1rem">
             <button onclick="changeFontSize(-5)" style="background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:.4rem .875rem;color:var(--white);cursor:pointer;font-size:1rem">A−</button>
@@ -5542,25 +5542,25 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
     </div>
     <!-- Stats row -->
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem" id="parent-stats-row">
-      <div style="background:var(--bg3);border-radius:12px;padding:1rem;text-align:center">
+      <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;text-align:center">
         <div style="font-size:1.6rem;font-weight:900;color:var(--gold)" id="p-stat-streak">—</div>
         <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">Day Streak</div>
       </div>
-      <div style="background:var(--bg3);border-radius:12px;padding:1rem;text-align:center">
+      <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;text-align:center">
         <div style="font-size:1.6rem;font-weight:900;color:var(--blue)" id="p-stat-questions">—</div>
         <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">Questions Done</div>
       </div>
-      <div style="background:var(--bg3);border-radius:12px;padding:1rem;text-align:center">
+      <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;text-align:center">
         <div style="font-size:1.6rem;font-weight:900;color:var(--green)" id="p-stat-topics">—</div>
         <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">Topics Explored</div>
       </div>
-      <div style="background:var(--bg3);border-radius:12px;padding:1rem;text-align:center">
+      <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;text-align:center">
         <div style="font-size:1.6rem;font-weight:900;color:var(--purple)" id="p-stat-xp">—</div>
         <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">XP Earned</div>
       </div>
     </div>
     <!-- Weekly activity -->
-    <div style="background:var(--bg3);border-radius:12px;padding:1.25rem;margin-bottom:1rem">
+    <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1.25rem;margin-bottom:1rem">
       <div style="font-weight:700;color:var(--white);margin-bottom:.75rem;font-size:.9rem">📅 This week's activity</div>
       <div id="parent-week-chart" style="display:flex;align-items:flex-end;gap:6px;height:80px">
         <!-- Bars rendered by renderParentDash() -->
@@ -5568,7 +5568,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
       <div style="display:flex;justify-content:space-between;margin-top:.4rem;font-size:.7rem;color:var(--muted)" id="parent-week-labels"></div>
     </div>
     <!-- Module progress -->
-    <div style="background:var(--bg3);border-radius:12px;padding:1.25rem">
+    <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1.25rem">
       <div style="font-weight:700;color:var(--white);margin-bottom:.75rem;font-size:.9rem">📊 Module progress</div>
       <div id="parent-module-bars"></div>
     </div>
@@ -5596,7 +5596,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
       </div>
       <div class="form-group" style="margin-bottom:1rem">
         <label class="form-label">Your name</label>
-        <input class="form-input" id="ob-name" placeholder="e.g. Alex" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.65rem 1rem;color:var(--white);width:100%;box-sizing:border-box;font-size:.9rem">
+        <input class="form-input" id="ob-name" placeholder="e.g. Alex" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:.65rem 1rem;color:var(--white);width:100%;box-sizing:border-box;font-size:.9rem">
       </div>
       <div class="form-group" style="margin-bottom:1.5rem">
         <label class="form-label">Exam Board</label>
@@ -5619,7 +5619,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
       </div>
       <div class="form-group" style="margin-bottom:1rem">
         <label class="form-label">A-Level Maths Exam Date</label>
-        <input type="date" class="form-input" id="ob-exam-date" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.65rem 1rem;color:var(--white);width:100%;box-sizing:border-box;font-size:.9rem">
+        <input type="date" class="form-input" id="ob-exam-date" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:.65rem 1rem;color:var(--white);width:100%;box-sizing:border-box;font-size:.9rem">
       </div>
       <div class="form-group" style="margin-bottom:1.5rem">
         <label class="form-label">Target Grade</label>
@@ -5643,17 +5643,17 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
         <p style="color:var(--muted);font-size:.9rem">Here's your 3-step starter plan to get the most from Synaptiq:</p>
       </div>
       <div style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.5rem">
-        <div style="background:var(--bg3);border-radius:12px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer" onclick="obGo('checklist')">
+        <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer" onclick="obGo('checklist')">
           <div style="font-size:1.5rem">✅</div>
           <div><div style="font-weight:700;font-size:.9rem">Rate your topic confidence</div><div style="font-size:.8rem;color:var(--muted)">Mark each A-Level topic as not started, in progress, or confident</div></div>
           <div style="margin-left:auto;color:var(--gold)">→</div>
         </div>
-        <div style="background:var(--bg3);border-radius:12px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer" onclick="obGo('questions')">
+        <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer" onclick="obGo('questions')">
           <div style="font-size:1.5rem">📝</div>
           <div><div style="font-weight:700;font-size:.9rem">Answer your first practice question</div><div style="font-size:.8rem;color:var(--muted)">Pick a topic and get an AI-marked exam question</div></div>
           <div style="margin-left:auto;color:var(--gold)">→</div>
         </div>
-        <div style="background:var(--bg3);border-radius:12px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer" onclick="obGo('flashcards')">
+        <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer" onclick="obGo('flashcards')">
           <div style="font-size:1.5rem">🗂</div>
           <div><div style="font-weight:700;font-size:.9rem">Load your first flashcard pack</div><div style="font-size:.8rem;color:var(--muted)">60+ ready-made A-Level Maths cards with spaced repetition</div></div>
           <div style="margin-left:auto;color:var(--gold)">→</div>
@@ -6911,7 +6911,7 @@ Reply with ONLY this HTML (no markdown, no extra text):
     actions.innerHTML = `
       <button onclick="teachMeThis('${qText.replace(/'/g,"\\'")}')" style="background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.3);color:var(--blue);border-radius:8px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer">📚 Teach me this</button>
       <button onclick="addToMistakesFromQ('${qText.replace(/'/g,"\\'")}')" style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#EF4444;border-radius:8px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer">⚠️ Add to Mistakes</button>
-      <button onclick="this.closest('.post-feedback-actions').remove()" style="background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer">✓ Got it</button>`;
+      <button onclick="this.closest('.post-feedback-actions').remove()" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:.4rem .9rem;font-size:.8rem;cursor:pointer">✓ Got it</button>`;
     fbDiv.after(actions);
     fbDiv.classList.add('show');
     if (window.MathJax) MathJax.typesetPromise([fbDiv]).catch(() => {});
@@ -7877,7 +7877,7 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nAccessibility: ' + a11y :
     container.innerHTML = '';
     questions.forEach((q, i) => {
       container.innerHTML += `
-        <div class="question-block" style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1rem">
+        <div class="question-block" style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem;margin-bottom:1rem">
           <div class="question-num" style="display:flex;justify-content:space-between;align-items:center">
             <span>Question ${i + 1}</span>
             <span class="marks-badge">${q.marks || 4} marks</span>
@@ -7977,7 +7977,7 @@ ONLY return the JSON array.`;
     const r = results[i] || { marks_awarded: 0, marks_available: q.marks, feedback: '' };
     const color = r.marks_awarded === r.marks_available ? '#22c55e' : r.marks_awarded > 0 ? '#f59e0b' : '#ef4444';
     detail.innerHTML += `
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.25rem;margin-bottom:.75rem">
+      <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;margin-bottom:.75rem">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
           <span style="font-weight:700">Question ${i + 1}: ${q.topic || ''}</span>
           <span style="font-weight:800;color:${color}">${r.marks_awarded}/${r.marks_available}</span>
@@ -8104,7 +8104,7 @@ function renderDiagQuestion(idx) {
   const area = document.getElementById('diag-question-area');
   const selected = diag.answers[idx];
   area.innerHTML = `
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1rem">
+    <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem;margin-bottom:1rem">
       <div style="display:flex;justify-content:space-between;margin-bottom:1rem">
         <span style="font-weight:700">${q.topic}</span>
         <span class="marks-badge">${q.difficulty}</span>
@@ -8151,7 +8151,7 @@ function submitDiagnostic() {
   document.getElementById('diag-active').style.display = 'none';
 
   resultsEl.innerHTML = `
-    <div style="background:linear-gradient(135deg,var(--bg3),rgba(201,168,76,0.05));border:1px solid var(--gold);border-radius:16px;padding:2rem;text-align:center;margin-bottom:1.5rem">
+    <div style="background:linear-gradient(135deg,rgba(12,14,20,0.88),rgba(201,168,76,0.05));border:1px solid var(--gold);border-radius:16px;padding:2rem;text-align:center;margin-bottom:1.5rem">
       <div style="font-size:3rem;margin-bottom:.5rem">${emoji}</div>
       <div style="font-size:1.5rem;font-weight:800;margin-bottom:.25rem">${correctCount}/${topicResults.length} (${pct}%)</div>
       <div style="font-size:1.1rem;color:var(--gold);font-weight:600;margin-bottom:1rem">Level: ${level}</div>
@@ -8161,7 +8161,7 @@ function submitDiagnostic() {
 
     <div style="font-weight:700;margin-bottom:1rem">📋 Detailed Breakdown</div>
     ${topicResults.map((r, i) => `
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center">
+      <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center">
         <div style="flex:1">
           <div style="font-weight:600">${i + 1}. ${r.topic} <span class="marks-badge">${r.difficulty}</span></div>
           <div style="font-size:.85rem;color:var(--muted);margin-top:.25rem">${r.question}</div>
@@ -8294,7 +8294,7 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
         <div style="margin-top:.85rem">
           <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">📐 Drawing Space</div>
           <canvas id="qcanvas-${i}" width="420" height="260"
-            style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:crosshair;touch-action:none;display:block;max-width:100%"
+            style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:10px;cursor:crosshair;touch-action:none;display:block;max-width:100%"
             onmousedown="qDrawStart(this,event)" onmousemove="qDrawMove(this,event)" onmouseup="qDrawStop()" onmouseleave="qDrawStop()"
             ontouchstart="qDrawStart(this,event)" ontouchmove="qDrawMove(this,event)" ontouchend="qDrawStop()"></canvas>
           <div style="display:flex;gap:.35rem;margin-top:.4rem;align-items:center;flex-wrap:wrap">
@@ -8736,7 +8736,7 @@ function playChapter(i) {
   const chapter = videoChapters[i];
   const main = document.getElementById('video-main');
   const colors = ['#C9A84C', '#60A5FA', '#4ADE80', '#F472B6', '#A78BFA'];
-  main.style.background = `radial-gradient(ellipse at center, ${colors[i]}22 0%, var(--bg3) 70%)`;
+  main.style.background = `radial-gradient(ellipse at center, ${colors[i]}22 0%, rgba(12,14,20,0.95) 70%)`;
   main.querySelector('.video-preview-content h3').textContent = chapter.title;
   main.querySelector('.video-preview-content p').textContent = chapter.desc;
   const existing = main.querySelector('.video-question');
@@ -9215,7 +9215,7 @@ function resetStatsForNewUser() {
     </div>
     <div style="display:flex;gap:.75rem">
       <button class="btn-gold" onclick="sendPasswordReset()" style="flex:1">Send Reset Link</button>
-      <button onclick="document.getElementById('forgot-modal').style.display='none'" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.6rem 1rem;color:var(--muted);cursor:pointer">Cancel</button>
+      <button onclick="document.getElementById('forgot-modal').style.display='none'" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:.6rem 1rem;color:var(--muted);cursor:pointer">Cancel</button>
     </div>
     <div id="reset-confirm" style="display:none;margin-top:1rem;color:var(--green);font-size:.875rem;text-align:center">✅ If that email exists, a reset link has been sent!</div>
   </div>
@@ -9226,7 +9226,7 @@ function resetStatsForNewUser() {
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:2rem;max-width:480px;width:100%">
     <div style="font-weight:700;font-size:1.1rem;margin-bottom:.5rem">📤 Share Question</div>
     <p style="color:var(--muted);font-size:.875rem;margin-bottom:1.5rem">Share this question with a classmate</p>
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:.875rem" id="share-question-preview">No question selected</div>
+    <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:.875rem" id="share-question-preview">No question selected</div>
     <div style="display:flex;gap:.5rem;margin-bottom:1rem">
       <input type="text" class="form-input" id="share-link" value="https://synaptiq.app/q/share/abc123" readonly style="flex:1">
       <button class="btn-gold" onclick="copyShareLink()">Copy</button>
@@ -9234,7 +9234,7 @@ function resetStatsForNewUser() {
     <div style="display:flex;gap:.5rem">
       <button class="vid-ctrl-btn" style="flex:1" onclick="shareViaWhatsApp()">💬 WhatsApp</button>
       <button class="vid-ctrl-btn" style="flex:1" onclick="shareViaEmail()">📧 Email</button>
-      <button onclick="document.getElementById('share-modal').style.display='none'" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.6rem 1rem;color:var(--muted);cursor:pointer">✕</button>
+      <button onclick="document.getElementById('share-modal').style.display='none'" style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:.6rem 1rem;color:var(--muted);cursor:pointer">✕</button>
     </div>
   </div>
 </div>
@@ -9248,7 +9248,7 @@ function resetStatsForNewUser() {
 
 <!-- ═══════════════════ GEOMETRY PANEL ═══════════════════ -->
 <div id="geo-panel">
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid var(--border);background:var(--bg3)">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;border-bottom:1px solid var(--border);background:rgba(12,14,20,0.82)">
     <div style="font-weight:700;font-size:.95rem">📐 Geometry Canvas</div>
     <button onclick="toggleGeo()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem">✕</button>
   </div>
@@ -9311,7 +9311,7 @@ function resetStatsForNewUser() {
       <p id="upgrade-reason" style="color:var(--muted);font-size:.875rem">This feature requires a subscription</p>
     </div>
     <!-- Feature bullets -->
-    <div style="background:var(--bg3);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.25rem">
+    <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.25rem">
       <div style="font-size:.8rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem">Everything included:</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;font-size:.825rem">
         <div>✦ Unlimited AI tutoring</div>
@@ -10219,8 +10219,8 @@ function renderNotes() {
       <div class="note-text">${n.text.replace(/\n/g,'<br>')}</div>
       <div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap">
         <button onclick="flashcardsFromNote(${n.id})" style="font-size:.75rem;padding:.3rem .7rem;background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:var(--blue);border-radius:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(96,165,250,0.2)'" onmouseout="this.style.background='rgba(96,165,250,0.1)'">🗂 Create Flashcards</button>
-        <button onclick="copyNote(${n.id},this)" style="font-size:.75rem;padding:.3rem .7rem;background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer">📋 Copy</button>
-        <button onclick="deleteNote(${n.id})" style="font-size:.75rem;padding:.3rem .7rem;background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer">🗑 Delete</button>
+        <button onclick="copyNote(${n.id},this)" style="font-size:.75rem;padding:.3rem .7rem;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer">📋 Copy</button>
+        <button onclick="deleteNote(${n.id})" style="font-size:.75rem;padding:.3rem .7rem;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer">🗑 Delete</button>
       </div>
     </div>
   `).join('');
@@ -10405,7 +10405,7 @@ function searchDash(query) {
     featureMatches.slice(0,4).forEach(f => {
       html += `<div onclick="${f.action};document.getElementById('search-results')?.style?.display='none';const _ds=document.getElementById('dash-search');if(_ds)_ds.value=''" 
         style="padding:.6rem 1rem;cursor:pointer;font-size:.875rem;transition:background .1s" 
-        onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">${f.name}</div>`;
+        onmouseover="this.style.background='rgba(201,168,76,0.08)'" onmouseout="this.style.background=''">${f.name}</div>`;
     });
   }
   if (subjectMatches.length) {
@@ -10413,7 +10413,7 @@ function searchDash(query) {
     subjectMatches.slice(0,3).forEach(s => {
       html += `<div onclick="showDash('tutor');setSubject('${s}','','');document.getElementById('search-results')?.style?.display='none'" 
         style="padding:.6rem 1rem;cursor:pointer;font-size:.875rem" 
-        onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">📚 ${s}</div>`;
+        onmouseover="this.style.background='rgba(201,168,76,0.08)'" onmouseout="this.style.background=''">📚 ${s}</div>`;
     });
   }
   if (noteMatches.length) {
@@ -10421,7 +10421,7 @@ function searchDash(query) {
     noteMatches.forEach(n => {
       html += `<div onclick="showDash('notes');document.getElementById('search-results')?.style?.display='none'"
         style="padding:.6rem 1rem;cursor:pointer;font-size:.85rem;border-bottom:1px solid var(--border)"
-        onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+        onmouseover="this.style.background='rgba(201,168,76,0.08)'" onmouseout="this.style.background=''">
         <div style="font-weight:600;color:var(--gold);font-size:.75rem">📓 Note · ${n.subject}</div>
         <div style="color:var(--white)">${n.text.slice(0,60)}...</div>
       </div>`;
@@ -10431,7 +10431,7 @@ function searchDash(query) {
     html += `<div style="padding:.5rem 1rem;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Flashcards</div>`;
     fcMatches.forEach(c => {
       const clearFn = "document.getElementById('search-results').style.display='none';const _ds=document.getElementById('dash-search');if(_ds)_ds.value=''";
-      html += `<div onclick="showDash('flashcards');${clearFn}" style="padding:.6rem 1rem;cursor:pointer;font-size:.85rem" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+      html += `<div onclick="showDash('flashcards');${clearFn}" style="padding:.6rem 1rem;cursor:pointer;font-size:.85rem" onmouseover="this.style.background='rgba(201,168,76,0.08)'" onmouseout="this.style.background=''">
         <div style="font-weight:600;color:#60A5FA;font-size:.75rem">🗂 Flashcard</div>
         <div style="color:var(--white)">${(c.front||'').slice(0,60)}</div>
       </div>`;
@@ -10441,7 +10441,7 @@ function searchDash(query) {
     html += `<div style="padding:.5rem 1rem;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">A-Level Topics</div>`;
     topicMatches.forEach(t => {
       const clearFn = "document.getElementById('search-results').style.display='none';const _ds=document.getElementById('dash-search');if(_ds)_ds.value=''";
-      html += `<div onclick="showDash('tutor');setTimeout(()=>{const inp=document.getElementById('tutor-input');if(inp){inp.value='Explain ${t} in detail with examples';inp.focus();}},300);${clearFn}" style="padding:.6rem 1rem;cursor:pointer;font-size:.85rem" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+      html += `<div onclick="showDash('tutor');setTimeout(()=>{const inp=document.getElementById('tutor-input');if(inp){inp.value='Explain ${t} in detail with examples';inp.focus();}},300);${clearFn}" style="padding:.6rem 1rem;cursor:pointer;font-size:.85rem" onmouseover="this.style.background='rgba(201,168,76,0.08)'" onmouseout="this.style.background=''">
         <div style="font-weight:600;color:var(--green);font-size:.75rem">📐 A-Level Topic</div>
         <div style="color:var(--white)">${t}</div>
       </div>`;
@@ -10485,25 +10485,25 @@ function showParentDash() {
       </div>
       <!-- Child overview -->
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem">
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.25rem;text-align:center">
+        <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.25rem;text-align:center">
           <div style="font-size:1.8rem;font-weight:800;color:var(--gold)">14</div>
           <div style="font-size:.75rem;color:var(--muted)">Day Streak 🔥</div>
         </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.25rem;text-align:center">
+        <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.25rem;text-align:center">
           <div style="font-size:1.8rem;font-weight:800;color:var(--green)">78%</div>
           <div style="font-size:.75rem;color:var(--muted)">Avg. Accuracy</div>
         </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.25rem;text-align:center">
+        <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.25rem;text-align:center">
           <div style="font-size:1.8rem;font-weight:800;color:var(--blue)">1,247</div>
           <div style="font-size:.75rem;color:var(--muted)">Questions Done</div>
         </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.25rem;text-align:center">
+        <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.25rem;text-align:center">
           <div style="font-size:1.8rem;font-weight:800;color:var(--purple)">0</div>
           <div style="font-size:.75rem;color:var(--muted)">Topics Mastered</div>
         </div>
       </div>
       <!-- Weekly activity -->
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem">
+      <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem">
         <div style="font-weight:700;margin-bottom:1rem">📅 This Week's Activity</div>
         <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:.4rem;text-align:center">
           ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i) => {
@@ -10517,7 +10517,7 @@ function showParentDash() {
         </div>
       </div>
       <!-- Subject progress -->
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem">
+      <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem">
         <div style="font-weight:700;margin-bottom:1rem">📊 Subject Progress</div>
         ${[['Mathematics','72%',72,'#60A5FA'],['Biology','81%',81,'#4ADE80'],['Physics','65%',65,'#A78BFA'],['Chemistry','58%',58,'#FB923C']].map(([s,pct,n,c]) =>
           `<div style="margin-bottom:.75rem">
@@ -10940,18 +10940,18 @@ Each day should have ${hours} hours of study split into 45-60 min sessions. Rest
     output.style.display = 'block';
     output.innerHTML = `<div style="font-weight:700;margin-bottom:1rem">Your Personalised Revision Timetable</div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.8rem">
-        <tr>${['Time','Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<th style="padding:.5rem;background:var(--bg3);border:1px solid var(--border);white-space:nowrap">${d}</th>`).join('')}</tr>
+        <tr>${['Time','Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<th style="padding:.5rem;background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);white-space:nowrap">${d}</th>`).join('')}</tr>
         ${['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00'].map(time => {
           const cols = days.map(day => {
             const slot = (day.slots||[]).find(s => s.time === time);
-            if (!slot) return `<td style="padding:.5rem;border:1px solid var(--border);background:var(--bg3);text-align:center;color:var(--muted)">—</td>`;
+            if (!slot) return `<td style="padding:.5rem;border:1px solid var(--border);background:rgba(12,14,20,0.82);text-align:center;color:var(--muted)">—</td>`;
             const c = subjectColors[slot.subject] || 'var(--gold)';
             return `<td style="padding:.4rem;border:1px solid var(--border);background:${c}22;text-align:center">
               <div style="font-weight:700;font-size:.75rem;color:${c}">${slot.subject.split(' ')[0]}</div>
               <div style="font-size:.65rem;color:var(--muted)">${slot.topic||''}</div>
             </td>`;
           }).join('');
-          return `<tr><td style="padding:.5rem;border:1px solid var(--border);background:var(--bg3);font-family:var(--font-mono);font-size:.75rem;white-space:nowrap">${time}</td>${cols}</tr>`;
+          return `<tr><td style="padding:.5rem;border:1px solid var(--border);background:rgba(12,14,20,0.82);font-family:var(--font-mono);font-size:.75rem;white-space:nowrap">${time}</td>${cols}</tr>`;
         }).join('')}
       </table></div>
       <div style="display:flex;gap:.75rem;margin-top:1rem">
@@ -12916,7 +12916,7 @@ async function runGradePredictor() {
     document.getElementById('grade-confidence').textContent = `${result.confidence} confidence — ${result.prediction}`;
 
     document.getElementById('grade-breakdown').innerHTML = `
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1rem">
+      <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem;margin-bottom:1rem">
         <div style="font-weight:700;margin-bottom:.75rem">📌 Topics to improve:</div>
         <div style="display:flex;gap:.5rem;flex-wrap:wrap">${(result.topics_to_improve||[]).map(t=>`<span style="background:rgba(251,113,133,0.15);color:var(--red);border-radius:8px;padding:.3rem .75rem;font-size:.8rem">${t}</span>`).join('')}</div>
       </div>
@@ -13145,7 +13145,7 @@ Use 4-7 steps. Be thorough. UK curriculum.`;
     const ex = JSON.parse(raw);
 
     document.getElementById('example-output').innerHTML = `
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1rem">
+      <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem;margin-bottom:1rem">
         <div style="font-size:1.1rem;font-weight:800;margin-bottom:.5rem;color:var(--gold)">${ex.title}</div>
         <div style="color:var(--muted);margin-bottom:1.5rem">${ex.intro}</div>
         ${(ex.steps||[]).map((s,i) => `<div class="example-step">
@@ -13859,7 +13859,7 @@ const _tutorMO = new MutationObserver(() => {
   if (resp?.textContent.length > 30 && !existing) {
     const btn = document.createElement('button');
     btn.id = 'explain-diff-btn';
-    btn.style.cssText = 'margin-top:.75rem;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.4rem .875rem;color:var(--muted);cursor:pointer;font-size:.8rem;display:block';
+    btn.style.cssText = 'margin-top:.75rem;background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:.4rem .875rem;color:var(--muted);cursor:pointer;font-size:.8rem;display:block';
     btn.textContent = '🔄 Explain differently';
     btn.onclick = explainDifferently;
     resp.parentNode?.appendChild(btn);
@@ -14079,7 +14079,7 @@ function renderAllSRCards(cards) {
   }
   const subjectColors = { Mathematics:'#60A5FA', Physics:'#A78BFA', Chemistry:'#4ADE80', Biology:'#4ADE80', 'English Literature':'#F472B6', History:'#FBBF24', 'Computer Science':'#FB923C', Economics:'#C9A84C', French:'#60A5FA' };
   container.innerHTML = cards.map((c, i) => `
-    <div style="background:var(--bg3);border-radius:12px;padding:1rem;margin-bottom:.75rem;border-left:3px solid ${subjectColors[c.subj]||'#C9A84C'}">
+    <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;margin-bottom:.75rem;border-left:3px solid ${subjectColors[c.subj]||'#C9A84C'}">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
         <span style="font-size:.75rem;font-weight:600;color:${subjectColors[c.subj]||'#C9A84C'}">${c.subj||'General'}</span>
         <button onclick="deleteSRCard(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem">✕</button>
@@ -14542,7 +14542,7 @@ function renderTeacherLesson(chapter, year, L, box) {
   const diagramHTML = diagram ? `
     <div class="lesson-section">
       <h3><i class="fas fa-drafting-compass"></i> Visual Reference</h3>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.25rem;display:inline-block;max-width:100%">
+      <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.25rem;display:inline-block;max-width:100%">
         ${diagram}
       </div>
     </div>` : '';
@@ -14577,7 +14577,7 @@ function renderTeacherLesson(chapter, year, L, box) {
           <div style="margin-top:.85rem">
             <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">📐 Drawing Space</div>
             <canvas id="pqcanvas-${i}" width="420" height="260"
-              style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:crosshair;touch-action:none;display:block;max-width:100%"
+              style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:10px;cursor:crosshair;touch-action:none;display:block;max-width:100%"
               onmousedown="qDrawStart(this,event)" onmousemove="qDrawMove(this,event)" onmouseup="qDrawStop()" onmouseleave="qDrawStop()"
               ontouchstart="qDrawStart(this,event)" ontouchmove="qDrawMove(this,event)" ontouchend="qDrawStop()"></canvas>
             <div style="display:flex;gap:.35rem;margin-top:.4rem;align-items:center;flex-wrap:wrap">
@@ -15009,7 +15009,7 @@ function renderAdminResources() {
   const countEl = document.getElementById('admin-resource-count');
   if (countEl) countEl.textContent = global.length + ' resource' + (global.length !== 1 ? 's' : '');
   if (!global.length) {
-    list.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);background:var(--bg2);border:1px solid var(--bg3);border-radius:10px">No shared resources yet. Upload your first mark scheme or past paper above.</div>';
+    list.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);background:var(--bg2);border:1px solid rgba(255,255,255,0.07);border-radius:10px">No shared resources yet. Upload your first mark scheme or past paper above.</div>';
     return;
   }
   list.innerHTML = global.map(u => `
@@ -15073,14 +15073,14 @@ async function homeDemoSend() {
   chat.innerHTML += `<div style="display:flex;justify-content:flex-end;margin-bottom:1.25rem"><div style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);border-radius:12px 12px 0 12px;padding:.75rem 1rem;max-width:80%;font-size:.875rem;color:var(--white)">${q.replace(/</g,'&lt;')}</div></div>`;
   // Loading state
   const loadId = 'demo-load-' + Date.now();
-  chat.innerHTML += `<div id="${loadId}" style="display:flex;gap:.75rem;margin-bottom:1.25rem"><div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem">✦</div><div style="background:var(--bg3);border-radius:0 12px 12px 12px;padding:.85rem 1.1rem;font-size:.875rem;color:var(--muted)"><span class="lesson-spin" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:.5rem"></span>Thinking…</div></div>`;
+  chat.innerHTML += `<div id="${loadId}" style="display:flex;gap:.75rem;margin-bottom:1.25rem"><div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem">✦</div><div style="background:rgba(12,14,20,0.82);border-radius:0 12px 12px 12px;padding:.85rem 1.1rem;font-size:.875rem;color:var(--muted)"><span class="lesson-spin" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:.5rem"></span>Thinking…</div></div>`;
   chat.scrollTop = chat.scrollHeight;
   try {
     const sys = `You are Synaptiq, an expert A-Level Mathematics AI tutor for UK students. Give a clear, step-by-step explanation with full working shown. Use $...$ for inline maths. Keep the response concise but complete — max 200 words. End with one follow-up question to deepen understanding.`;
     const data = await callClaude([{role:'user',content:q}], sys, 600);
     const reply = getReply(data);
     const loadEl = document.getElementById(loadId);
-    if (loadEl) loadEl.outerHTML = `<div style="display:flex;gap:.75rem;margin-bottom:1.25rem"><div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem">✦</div><div style="background:var(--bg3);border-radius:0 12px 12px 12px;padding:.85rem 1.1rem;max-width:88%;font-size:.875rem;line-height:1.7;color:var(--muted)">${reply.replace(/\n/g,'<br>')}</div></div>`;
+    if (loadEl) loadEl.outerHTML = `<div style="display:flex;gap:.75rem;margin-bottom:1.25rem"><div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem">✦</div><div style="background:rgba(12,14,20,0.82);border-radius:0 12px 12px 12px;padding:.85rem 1.1rem;max-width:88%;font-size:.875rem;line-height:1.7;color:var(--muted)">${reply.replace(/\n/g,'<br>')}</div></div>`;
     if (_demoUsed >= 3) {
       chat.innerHTML += `<div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;text-align:center"><div style="font-weight:700;color:var(--gold);margin-bottom:.5rem">You've used 3 free questions ✦</div><div style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem">Create a free account to ask unlimited questions</div><button class="btn btn-gold" onclick="nav('auth');showSignup()" style="font-size:.85rem;padding:.6rem 1.5rem">Start Free Trial →</button></div>`;
     }
@@ -15740,7 +15740,7 @@ function renderFlashcardDueWidget() {
   const urgency = due > 10 ? '#FB7185' : due > 3 ? '#FBBF24' : '#4ADE80';
   const widget = document.createElement('div');
   widget.id = 'fc-due-widget';
-  widget.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap';
+  widget.style.cssText = 'background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap';
   widget.innerHTML = `
     <div style="display:flex;align-items:center;gap:.75rem">
       <div style="font-size:1.6rem">🃏</div>
@@ -16168,9 +16168,9 @@ function dcShowQuestion() {
   opts.innerHTML = '';
   shuffledOpts.forEach((opt, i) => {
     const btn = document.createElement('button');
-    btn.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.65rem 1rem;text-align:left;color:var(--white);cursor:pointer;font-size:.9rem;transition:all .2s;width:100%';
+    btn.style.cssText = 'background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:.65rem 1rem;text-align:left;color:var(--white);cursor:pointer;font-size:.9rem;transition:all .2s;width:100%';
     btn.onmouseover = () => { if (!dcState.answered) { btn.style.borderColor = 'var(--blue)'; btn.style.background = 'rgba(96,165,250,0.1)'; } };
-    btn.onmouseout = () => { if (!dcState.answered) { btn.style.borderColor = 'var(--border)'; btn.style.background = 'var(--bg3)'; } };
+    btn.onmouseout = () => { if (!dcState.answered) { btn.style.borderColor = 'var(--border)'; btn.style.background = 'rgba(12,14,20,0.82)'; } };
     btn.textContent = opt;
     btn.onclick = () => dcAnswer(i === newCorrectIdx, btn, correctText);
     opts.appendChild(btn);
@@ -16349,7 +16349,7 @@ Each array 3-5 items. Base on genuine historical patterns.`;
           <button onclick="showDash('tutor');setTimeout(()=>{const i=document.getElementById('tutor-input');if(i){i.value='Teach me ${t.topic.replace(/'/g,"\\'")} for ${board} ${level} ${subject}';tutorSend();}},300)" style="margin-top:.5rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);border-radius:8px;padding:.3rem .8rem;font-size:.75rem;cursor:pointer">📚 Revise this →</button>
         </div>`).join('')}
       </div>
-      ${(pred.examTips||[]).length?`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem">
+      ${(pred.examTips||[]).length?`<div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem">
         <div style="font-weight:700;margin-bottom:.75rem">💡 Exam Technique Tips</div>
         ${pred.examTips.map(t=>`<div style="font-size:.875rem;color:var(--muted);padding:.3rem 0;border-bottom:1px solid var(--border)">→ ${t}</div>`).join('')}
       </div>`:''}
@@ -16585,7 +16585,7 @@ async function analyseMarkScheme() {
       <div style="margin-bottom:1.25rem">
         <div style="font-weight:700;margin-bottom:.75rem">📋 Every Mark Point — Decoded</div>
         ${(analysis.markPoints||[]).map((p,i) => `
-          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:.75rem">
+          <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1rem 1.25rem;margin-bottom:.75rem">
             <div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.75rem">
               <div style="background:var(--gold);color:var(--black);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;margin-top:.1rem">${i+1}</div>
               <div style="font-weight:600;font-size:.9rem">${p.point}</div>
@@ -16603,7 +16603,7 @@ async function analyseMarkScheme() {
         <div style="font-size:.9rem;line-height:1.8;white-space:pre-wrap">${analysis.modelAnswer}</div>
       </div>` : ''}
       ${(analysis.keyPhrases||[]).length ? `
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.25rem">
+      <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1.25rem;margin-bottom:1.25rem">
         <div style="font-weight:700;margin-bottom:.75rem">🔑 Key Phrases Examiners Want to See</div>
         <div style="display:flex;flex-wrap:wrap;gap:.5rem">${analysis.keyPhrases.map(p=>`<span style="background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.2);border-radius:20px;padding:.3rem .9rem;font-size:.825rem;color:var(--purple)">${p}</span>`).join('')}</div>
       </div>` : ''}
@@ -16705,7 +16705,7 @@ function renderCommandWords() {
   const filtered = cwCurrentLevel === 'all' ? COMMAND_WORDS : COMMAND_WORDS.filter(w => w.level === cwCurrentLevel);
   const categoryColors = { 'High Order': 'var(--gold)', 'Core': 'var(--blue)', 'Maths/Science': 'var(--green)' };
   grid.innerHTML = filtered.map(w => `
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:1.25rem;cursor:pointer;transition:border-color .2s"
+    <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:1.25rem;cursor:pointer;transition:border-color .2s"
          onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"
          onclick="expandCmdWord('${w.word}')">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
@@ -17333,9 +17333,9 @@ function openFcPackModal() {
   modal.id = 'fc-pack-modal';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
   const packItems = Object.entries(FC_STARTER_PACKS).map(([name, cards]) => `
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1rem;cursor:pointer;transition:all .2s"
+    <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1rem;cursor:pointer;transition:all .2s"
          onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(201,168,76,0.07)'"
-         onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg3)'"
+         onmouseout="this.style.borderColor='var(--border)';this.style.background='rgba(12,14,20,0.82)'"
          onclick="loadFcPack('${name}')">
       <div style="font-weight:700;margin-bottom:.25rem">${name}</div>
       <div style="font-size:.8rem;color:var(--muted)">${cards.length} flashcards</div>
@@ -17588,7 +17588,7 @@ function showFqQuestion() {
   if (fqState.current >= fqState.questions.length) {
     const pct = Math.round((fqState.score / fqState.questions.length) * 100);
     const emoji = pct >= 80 ? '🏆' : pct >= 60 ? '🎉' : pct >= 40 ? '📚' : '💪';
-    area.innerHTML = `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:1.5rem;text-align:center">
+    area.innerHTML = `<div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:1.5rem;text-align:center">
       <div style="font-size:2.5rem;margin-bottom:.75rem">${emoji}</div>
       <div style="font-size:1.2rem;font-weight:800;margin-bottom:.25rem">${fqState.score}/${fqState.questions.length} correct</div>
       <div style="color:var(--muted);margin-bottom:1rem">${pct >= 80 ? 'Excellent formula knowledge!' : pct >= 60 ? 'Good work — keep reviewing!' : 'Keep practising — formulas take time to memorise.'}</div>
@@ -17603,7 +17603,7 @@ function showFqQuestion() {
   const q = fqState.questions[fqState.current];
   const allOpts = [q.name, ...q.distractors].sort(() => Math.random() - 0.5);
   fqState.answered = false;
-  area.innerHTML = `<div style="background:var(--bg3);border:1px solid rgba(167,139,250,0.3);border-radius:14px;padding:1.5rem">
+  area.innerHTML = `<div style="background:rgba(12,14,20,0.82);border:1px solid rgba(167,139,250,0.3);border-radius:14px;padding:1.5rem">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
       <span style="font-size:.78rem;color:#A78BFA;font-weight:700">🧩 FORMULA QUIZ · Q${fqState.current+1}/5</span>
       <span style="font-size:.78rem;color:var(--muted)">Score: ${fqState.score}</span>
@@ -17734,7 +17734,7 @@ function searchFormulas(query) {
   resultsEl.innerHTML = `<div style="margin-bottom:1rem;font-size:.85rem;color:var(--muted)">${matches.length} result${matches.length > 1 ? 's' : ''} for "<strong style="color:var(--white)">${query}</strong>"</div>` +
     matches.map(item => {
       const inBooklet = typeof GIVEN_IN_BOOKLET !== 'undefined' && GIVEN_IN_BOOKLET.has(item.formula || '');
-      return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:.75rem">
+      return `<div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:1rem 1.25rem;margin-bottom:.75rem">
         <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.5rem">
           <span style="font-weight:700">${item.name || ''}</span>
           <span style="font-size:.75rem;color:var(--muted);background:var(--bg4);border-radius:6px;padding:.15rem .5rem">${item.groupLabel || ''}</span>
@@ -17890,7 +17890,7 @@ ans is the 0-based index of the correct option. Make questions exam-style. Vary 
     const result = JSON.parse(m[0]);
     const qs = result.questions || [];
     out.style.display = 'block';
-    out.innerHTML = `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:1rem">
+    out.innerHTML = `<div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:1rem">
       <div style="font-weight:700;font-size:.95rem;margin-bottom:1rem;color:var(--gold)">⚡ Instant Quiz — Targeting Your Weak Topics</div>
       ${qs.map((q, qi) => `<div class="mq-item" id="mq-${qi}" style="margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border)">
         <div style="font-weight:600;margin-bottom:.75rem;line-height:1.6"><span style="color:var(--muted);font-size:.8rem">Q${qi+1} · ${q.topic}</span><br>${q.q}</div>
@@ -18070,7 +18070,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     searchEl.addEventListener('blur', () => {
       searchEl.style.borderColor = 'rgba(201,168,76,0.15)';
-      searchEl.style.background = 'var(--bg3)';
+      searchEl.style.background = 'rgba(12,14,20,0.95)';
       searchEl.style.boxShadow = 'none';
     });
   }
