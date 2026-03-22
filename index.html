@@ -2574,6 +2574,37 @@ body.mode-adhd .adhd-break { display: block; }
         <div id="search-results" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:12px;z-index:500;max-height:260px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.4)"></div>
       </div>
       <p class="page-subtitle" style="margin-top:0">Here's your learning overview</p>
+      <!-- Daily Challenge Card -->
+      <div id="daily-challenge-card" style="background:linear-gradient(135deg,rgba(96,165,250,0.1),rgba(96,165,250,0.03));border:1px solid rgba(96,165,250,0.25);border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:1.5rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+          <div style="display:flex;align-items:center;gap:1rem">
+            <div style="font-size:2rem">⚡</div>
+            <div>
+              <div style="font-weight:700;font-size:1rem;color:var(--white)">Daily Challenge</div>
+              <div style="font-size:.85rem;color:var(--muted)" id="dc-subtitle">5 quick questions · Under 5 minutes</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:1rem">
+            <div id="dc-progress-wrap" style="display:none;align-items:center;gap:.75rem">
+              <div style="display:flex;gap:4px" id="dc-dots"></div>
+              <span style="font-size:.8rem;color:var(--muted)" id="dc-score-label">0/5</span>
+            </div>
+            <button class="btn btn-gold" id="dc-start-btn" onclick="startDailyChallenge()" style="font-size:.85rem;padding:.5rem 1.25rem">Start Challenge →</button>
+            <div id="dc-done-badge" style="display:none;background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.3);border-radius:20px;padding:.4rem 1rem;font-size:.85rem;font-weight:700;color:var(--green)">✓ Completed today!</div>
+          </div>
+        </div>
+        <div id="dc-question-area" style="display:none;margin-top:1.25rem;border-top:1px solid var(--border);padding-top:1.25rem">
+          <div id="dc-q-text" style="font-weight:600;margin-bottom:1rem;line-height:1.6"></div>
+          <div id="dc-options" style="display:flex;flex-direction:column;gap:.5rem"></div>
+          <div id="dc-feedback" style="display:none;margin-top:1rem;padding:.75rem 1rem;border-radius:10px;font-size:.9rem"></div>
+          <button id="dc-next-btn" style="display:none;margin-top:.75rem" class="btn btn-gold" onclick="dcNext()">Next Question →</button>
+          <div id="dc-results" style="display:none;text-align:center;padding:1rem 0">
+            <div style="font-size:2.5rem;margin-bottom:.5rem" id="dc-result-emoji">🎉</div>
+            <div style="font-weight:700;font-size:1.1rem;margin-bottom:.25rem" id="dc-result-text"></div>
+            <div style="font-size:.85rem;color:var(--muted)" id="dc-result-sub"></div>
+          </div>
+        </div>
+      </div>
       <div class="stats-row">
         <div class="stat-card"><div class="stat-card-label">Questions Answered</div><div class="stat-card-value" id="stat-q">0</div><div class="stat-card-change">↑ Start today!</div></div>
         <div class="stat-card"><div class="stat-card-label">Accuracy Rate</div><div class="stat-card-value" id="stat-acc">—</div><div class="stat-card-change">Answer questions to track</div></div>
@@ -2633,6 +2664,15 @@ body.mode-adhd .adhd-break { display: block; }
               <div class="activity-item"><div class="activity-icon" style="background:rgba(201,168,76,0.15);color:var(--gold)">🎓</div><div><div class="activity-text fw700">Welcome to Synaptiq!</div><div style="font-size:.75rem;color:var(--muted)">Your A-Level Maths journey starts now</div></div><div class="activity-time">now</div></div>
             </div>
           </div>
+          <!-- AI Study Coach -->
+          <div class="card" style="margin-top:1.5rem">
+            <div class="card-header"><span class="card-title">🎯 AI Study Coach</span></div>
+            <div class="card-body" id="study-coach-body" style="padding:1.25rem 1.5rem">
+              <div id="coach-recs" style="display:flex;flex-direction:column;gap:.75rem">
+                <div style="color:var(--muted);font-size:.9rem">Loading your personalised recommendations...</div>
+              </div>
+            </div>
+          </div>
           <!-- Quick actions -->
           <div class="card" style="margin-top:1.5rem">
             <div class="card-header"><span class="card-title">🚀 Quick Actions</span></div>
@@ -2640,7 +2680,7 @@ body.mode-adhd .adhd-break { display: block; }
               <button class="btn btn-outline" style="border-radius:10px;padding:.875rem" onclick="showDash('tutor')">🤖 AI Tutor</button>
               <button class="btn btn-outline" style="border-radius:10px;padding:.875rem" onclick="showDash('content')">📚 A-Level Content</button>
               <button class="btn btn-outline" style="border-radius:10px;padding:.875rem" onclick="showDash('questions')">📝 Past Paper Questions</button>
-              <button class="btn btn-outline" style="border-radius:10px;padding:.875rem" onclick="showDash('resources')">📄 Upload Resources</button>
+              <button class="btn btn-outline" style="border-radius:10px;padding:.875rem" onclick="showDash('flashcards')">🗂 Flashcards</button>
             </div>
           </div>
         </div>
@@ -5369,8 +5409,39 @@ function addTutorMsg(role, text) {
   } else {
     el.textContent = text;
   }
-  document.getElementById('tutor-messages').appendChild(el);
-  document.getElementById('tutor-messages').scrollTop = 99999;
+  const container = document.getElementById('tutor-messages');
+  container.appendChild(el);
+  // After bot messages, add "explain differently" quick action chips
+  if (role === 'bot') {
+    // Remove any previous action chips
+    const prev = container.querySelector('.tutor-quick-actions');
+    if (prev) prev.remove();
+    const chips = document.createElement('div');
+    chips.className = 'tutor-quick-actions';
+    chips.style.cssText = 'display:flex;gap:.4rem;flex-wrap:wrap;padding:.25rem 0 .75rem .5rem';
+    const actions = [
+      { label: '🔄 Explain differently', prompt: 'Please explain that using a completely different approach or analogy.' },
+      { label: '📋 Step by step', prompt: 'Can you break that down into clear numbered steps?' },
+      { label: '🎯 Practice question', prompt: 'Give me a practice question on this topic so I can test my understanding.' },
+      { label: '💡 Real example', prompt: 'Show me a real-world example of how this is used.' },
+      { label: '✅ Got it!', prompt: null }
+    ];
+    actions.forEach(a => {
+      const btn = document.createElement('button');
+      btn.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:.3rem .8rem;font-size:.78rem;color:var(--muted);cursor:pointer;transition:all .15s';
+      btn.onmouseover = () => { btn.style.borderColor = 'var(--gold)'; btn.style.color = 'var(--white)'; };
+      btn.onmouseout = () => { btn.style.borderColor = 'var(--border)'; btn.style.color = 'var(--muted)'; };
+      btn.textContent = a.label;
+      if (a.prompt) {
+        btn.onclick = () => { chips.remove(); document.getElementById('tutor-input').value = a.prompt; tutorSend(); };
+      } else {
+        btn.onclick = () => chips.remove();
+      }
+      chips.appendChild(btn);
+    });
+    container.appendChild(chips);
+  }
+  container.scrollTop = 99999;
   // Don't call speak() when the voice overlay is active — vcSpeak handles it
   const voiceOverlayOpen = document.getElementById('voice-overlay')?.classList.contains('open');
   if (role === 'bot' && state.ttsEnabled && !voiceOverlayOpen) speak(text);
@@ -14260,6 +14331,237 @@ async function saveSessionSummary() {
     }
   };
 })();
+
+// ═══════════════════════════════════════
+// DAILY CHALLENGE
+// ═══════════════════════════════════════
+const DC_QUESTIONS = [
+  // Pure 1
+  { q: 'What is the derivative of x³ + 5x − 2?', opts: ['3x² + 5', '3x² − 5', 'x² + 5', '3x + 5'], ans: 0 },
+  { q: 'Solve: 2x² − 5x − 3 = 0. What are the values of x?', opts: ['x = 3 or x = −½', 'x = −3 or x = ½', 'x = 3 or x = ½', 'x = −3 or x = −½'], ans: 0 },
+  { q: 'What is the gradient of the line 3x − 4y + 8 = 0?', opts: ['¾', '−¾', '3', '4'], ans: 0 },
+  { q: 'Expand and simplify (x + 3)(x − 2)(x + 1).', opts: ['x³ + 2x² − 5x − 6', 'x³ − 2x² + 5x − 6', 'x³ + 2x² + 5x + 6', 'x³ − 2x² − 5x + 6'], ans: 0 },
+  { q: 'The function f(x) = 2x³ − 3x² − 12x + 4 has a stationary point at x = 2. Is it a maximum or minimum?', opts: ['Minimum', 'Maximum', 'Point of inflection', 'Cannot be determined'], ans: 0 },
+  { q: 'What is ∫(4x³ − 6x + 1)dx?', opts: ['x⁴ − 3x² + x + C', '12x² − 6 + C', '4x⁴ − 6x² + x + C', 'x³ − 3x + C'], ans: 0 },
+  { q: 'If sin θ = ⅗ and θ is acute, what is cos θ?', opts: ['⅘', '¾', '3/4', '5/3'], ans: 0 },
+  { q: 'What is the equation of a circle with centre (3, −2) and radius 5?', opts: ['(x−3)² + (y+2)² = 25', '(x+3)² + (y−2)² = 25', '(x−3)² + (y−2)² = 25', '(x+3)² + (y+2)² = 25'], ans: 0 },
+  // Pure 2
+  { q: 'What is log₂(32)?', opts: ['5', '4', '6', '2'], ans: 0 },
+  { q: 'The first term of a geometric series is 2 and the common ratio is 3. What is the 5th term?', opts: ['162', '81', '54', '243'], ans: 0 },
+  { q: 'Differentiate y = e^(3x) with respect to x.', opts: ['3e^(3x)', 'e^(3x)', '3xe^(3x)', '3e^x'], ans: 0 },
+  { q: 'What is the sum to infinity of the series 8, 4, 2, 1, ...?', opts: ['16', '12', '24', '8'], ans: 0 },
+  { q: 'Differentiate y = ln(5x) with respect to x.', opts: ['1/x', '5/x', '1/(5x)', '5ln(x)'], ans: 0 },
+  { q: 'Solve 2^x = 10, giving your answer to 3 significant figures.', opts: ['3.32', '2.32', '5.00', '0.301'], ans: 0 },
+  // Statistics
+  { q: 'A random variable X ~ B(10, 0.3). What is E(X)?', opts: ['3', '7', '2.1', '0.3'], ans: 0 },
+  { q: 'A random variable X ~ N(50, 16). What is the standard deviation of X?', opts: ['4', '16', '8', '2'], ans: 0 },
+  { q: 'P(A) = 0.4, P(B) = 0.5, P(A ∩ B) = 0.2. Are A and B independent?', opts: ['Yes, since P(A)×P(B) = P(A∩B)', 'No', 'Cannot be determined', 'Yes, since P(A∩B) > 0'], ans: 0 },
+  // Mechanics
+  { q: 'A particle moves with velocity v = 3t² − 4t. What is its acceleration when t = 2?', opts: ['8 m/s²', '4 m/s²', '12 m/s²', '6 m/s²'], ans: 0 },
+  { q: 'A particle is projected with initial speed 20 m/s at 30° to the horizontal. What is the horizontal component of its initial velocity?', opts: ['10√3 m/s', '10 m/s', '20 m/s', '10√2 m/s'], ans: 0 },
+];
+
+let dcState = { questions: [], current: 0, correct: 0, answered: false };
+
+function initDailyChallenge() {
+  const today = new Date().toISOString().split('T')[0];
+  const saved = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_dc') || 'null'); } catch(e) { return null; } })();
+  if (saved && saved.date === today && saved.done) {
+    // Already completed today
+    document.getElementById('dc-start-btn').style.display = 'none';
+    document.getElementById('dc-done-badge').style.display = 'flex';
+    document.getElementById('dc-subtitle').textContent = `Completed today! Score: ${saved.score}/5 · Come back tomorrow for more`;
+    return;
+  }
+  // Seed 5 random questions for today (deterministic seed by date)
+  const seed = today.replace(/-/g, '') | 0;
+  const shuffled = [...DC_QUESTIONS].sort((a, b) => ((seed * DC_QUESTIONS.indexOf(a) * 2654435761) % DC_QUESTIONS.length) - ((seed * DC_QUESTIONS.indexOf(b) * 2654435761) % DC_QUESTIONS.length));
+  dcState.questions = shuffled.slice(0, 5);
+  dcState.current = 0; dcState.correct = 0; dcState.answered = false;
+}
+
+function startDailyChallenge() {
+  const today = new Date().toISOString().split('T')[0];
+  const saved = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_dc') || 'null'); } catch(e) { return null; } })();
+  if (saved && saved.date === today && saved.done) return;
+  // Seed questions
+  const seed = parseInt(today.replace(/-/g, ''));
+  const shuffled = DC_QUESTIONS.slice().sort((a,b) => { const h = (n) => ((n ^ seed) * 2654435761) >>> 0; return h(DC_QUESTIONS.indexOf(a)) - h(DC_QUESTIONS.indexOf(b)); });
+  dcState.questions = shuffled.slice(0, 5);
+  dcState.current = 0; dcState.correct = 0; dcState.answered = false;
+  document.getElementById('dc-start-btn').style.display = 'none';
+  document.getElementById('dc-question-area').style.display = 'block';
+  document.getElementById('dc-progress-wrap').style.display = 'flex';
+  renderDCDots(); dcShowQuestion();
+}
+
+function renderDCDots() {
+  const wrap = document.getElementById('dc-dots');
+  wrap.innerHTML = dcState.questions.map((_, i) => {
+    let bg = 'var(--border)';
+    if (i < dcState.current) bg = 'var(--green)';
+    else if (i === dcState.current) bg = 'var(--blue)';
+    return `<div style="width:10px;height:10px;border-radius:50%;background:${bg};transition:background .3s"></div>`;
+  }).join('');
+  document.getElementById('dc-score-label').textContent = `${dcState.current}/5`;
+}
+
+function dcShowQuestion() {
+  const q = dcState.questions[dcState.current];
+  document.getElementById('dc-q-text').innerHTML = `<span style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Question ${dcState.current + 1} of 5</span><br>${q.q}`;
+  document.getElementById('dc-feedback').style.display = 'none';
+  document.getElementById('dc-next-btn').style.display = 'none';
+  document.getElementById('dc-results').style.display = 'none';
+  dcState.answered = false;
+  // Shuffle options deterministically (by question index + day seed)
+  const today = new Date().toISOString().split('T')[0];
+  const daySeed = parseInt(today.replace(/-/g, '')) + dcState.current;
+  const correctText = q.opts[q.ans];
+  const shuffledOpts = q.opts.slice().sort((a, b) => {
+    const h = (s, n) => ((n * 2654435761) ^ s) >>> 0;
+    return h(daySeed, q.opts.indexOf(a)) - h(daySeed, q.opts.indexOf(b));
+  });
+  const newCorrectIdx = shuffledOpts.indexOf(correctText);
+  const opts = document.getElementById('dc-options');
+  opts.innerHTML = '';
+  shuffledOpts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.65rem 1rem;text-align:left;color:var(--white);cursor:pointer;font-size:.9rem;transition:all .2s;width:100%';
+    btn.onmouseover = () => { if (!dcState.answered) { btn.style.borderColor = 'var(--blue)'; btn.style.background = 'rgba(96,165,250,0.1)'; } };
+    btn.onmouseout = () => { if (!dcState.answered) { btn.style.borderColor = 'var(--border)'; btn.style.background = 'var(--bg3)'; } };
+    btn.textContent = opt;
+    btn.onclick = () => dcAnswer(i === newCorrectIdx, btn, correctText);
+    opts.appendChild(btn);
+  });
+}
+
+function dcAnswer(isCorrect, btn, correctText) {
+  if (dcState.answered) return;
+  dcState.answered = true;
+  const allBtns = document.getElementById('dc-options').children;
+  Array.from(allBtns).forEach(b => { b.onclick = null; b.onmouseover = null; b.onmouseout = null; });
+  if (isCorrect) {
+    btn.style.background = 'rgba(74,222,128,0.15)';
+    btn.style.borderColor = 'var(--green)';
+    btn.style.color = 'var(--green)';
+    dcState.correct++;
+    addXP(20);
+  } else {
+    btn.style.background = 'rgba(239,68,68,0.12)';
+    btn.style.borderColor = '#EF4444';
+    btn.style.color = '#EF4444';
+    // Highlight correct button
+    Array.from(allBtns).forEach(b => { if (b.textContent === correctText) { b.style.background = 'rgba(74,222,128,0.1)'; b.style.borderColor = 'var(--green)'; b.style.color = 'var(--green)'; } });
+  }
+  const fb = document.getElementById('dc-feedback');
+  fb.style.display = 'block';
+  fb.style.background = isCorrect ? 'rgba(74,222,128,0.08)' : 'rgba(239,68,68,0.08)';
+  fb.style.border = isCorrect ? '1px solid rgba(74,222,128,0.2)' : '1px solid rgba(239,68,68,0.2)';
+  fb.style.color = isCorrect ? 'var(--green)' : '#EF4444';
+  fb.textContent = isCorrect ? '✓ Correct! Well done.' : `✗ The correct answer was: ${correctText}`;
+  document.getElementById('dc-next-btn').style.display = 'block';
+}
+
+function dcNext() {
+  dcState.current++;
+  renderDCDots();
+  if (dcState.current >= 5) {
+    dcFinish();
+  } else {
+    dcShowQuestion();
+  }
+}
+
+function dcFinish() {
+  document.getElementById('dc-options').innerHTML = '';
+  document.getElementById('dc-feedback').style.display = 'none';
+  document.getElementById('dc-next-btn').style.display = 'none';
+  const res = document.getElementById('dc-results');
+  res.style.display = 'block';
+  const score = dcState.correct;
+  const emojis = ['😢', '😕', '🙂', '😊', '🎉', '🏆'];
+  const msgs = ['Keep practising!', 'Getting there!', 'Good effort!', 'Well done!', 'Excellent!', 'Perfect score! 🌟'];
+  const subs = ['Practice makes perfect. Come back tomorrow!', 'You\'re improving! Review your weak areas.', 'Solid work! Try the AI Teacher for more depth.', 'Great session! Your hard work is paying off.', 'Brilliant! Open the Practice Questions for a challenge.', 'Flawless! You\'re mastering A-Level Maths!'];
+  document.getElementById('dc-result-emoji').textContent = emojis[score];
+  document.getElementById('dc-result-text').textContent = `${score}/5 correct — ${msgs[score]}`;
+  document.getElementById('dc-result-sub').textContent = subs[score];
+  document.getElementById('dc-score-label').textContent = `${score}/5 ✓`;
+  document.getElementById('dc-q-text').textContent = '';
+  // Save completion
+  const today = new Date().toISOString().split('T')[0];
+  try { localStorage.setItem('synaptiq_dc', JSON.stringify({ date: today, done: true, score })); } catch(e) {}
+  // Update done badge
+  setTimeout(() => {
+    document.getElementById('dc-question-area').style.display = 'none';
+    document.getElementById('dc-done-badge').style.display = 'flex';
+    document.getElementById('dc-subtitle').textContent = `Completed today! Score: ${score}/5 · Come back tomorrow`;
+    addXP(score * 10);
+    showToast(`⚡ Challenge done! ${score}/5 correct. +${score * 10 + 20} XP`);
+  }, 2500);
+}
+
+// ═══════════════════════════════════════
+// AI STUDY COACH RECOMMENDATIONS
+// ═══════════════════════════════════════
+function renderStudyCoach() {
+  const el = document.getElementById('coach-recs');
+  if (!el) return;
+  const recs = [];
+  // 1. Flashcards due
+  let fcCards = [];
+  try { fcCards = JSON.parse(localStorage.getItem('synaptiq_fc') || '[]'); } catch(e) {}
+  const today = new Date().toISOString().split('T')[0];
+  const due = fcCards.filter(c => c.nextReview && c.nextReview <= today).length;
+  if (due > 0) recs.push({ icon: '🗂', text: `${due} flashcard${due > 1 ? 's' : ''} due for review`, action: "showDash('flashcards')", color: 'var(--blue)' });
+  // 2. Daily challenge
+  const dc = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_dc') || 'null'); } catch(e) { return null; } })();
+  if (!dc || dc.date !== today) recs.push({ icon: '⚡', text: 'Daily challenge not done yet', action: "startDailyChallenge()", color: 'var(--gold)' });
+  // 3. Streak — if last active was not yesterday, warn
+  let s = {};
+  try { s = JSON.parse(localStorage.getItem('synaptiq_stats') || '{}'); } catch(e) {}
+  if (s.lastActive) {
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    if (s.lastActive < yesterday) recs.push({ icon: '🔥', text: 'Study today to keep your streak!', action: "showDash('questions')", color: '#F97316' });
+  }
+  // 4. Suggest AI Teacher if no lessons recently
+  let topicsVisited = 0;
+  try { topicsVisited = Object.keys(JSON.parse(localStorage.getItem('synaptiq_topic_progress') || '{}')).length; } catch(e) {}
+  if (topicsVisited < 3) recs.push({ icon: '📚', text: 'Try the AI Teacher for a structured lesson', action: "showDash('content')", color: 'var(--purple)' });
+  // 5. Mistakes to review
+  let mistakes = [];
+  try { mistakes = JSON.parse(localStorage.getItem('synaptiq_mistakes') || '[]'); } catch(e) {}
+  if (mistakes.length >= 3) recs.push({ icon: '⚠️', text: `Review your ${mistakes.length} tracked mistakes`, action: "showDash('mistakes')", color: '#EF4444' });
+  // 6. If no exam date set
+  const examDate = localStorage.getItem('synaptiq_exam_date');
+  if (!examDate) recs.push({ icon: '📅', text: 'Set your exam date for countdown & planning', action: "document.getElementById('exam-date-input').focus()", color: 'var(--muted)' });
+  // Default if nothing specific
+  if (recs.length === 0) recs.push({ icon: '✨', text: 'Great work! Try Practice Questions to stay sharp', action: "showDash('questions')", color: 'var(--green)' });
+  el.innerHTML = recs.slice(0, 4).map(r => `
+    <div onclick="${r.action}" style="display:flex;align-items:center;gap:.75rem;padding:.65rem .75rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s"
+         onmouseover="this.style.borderColor='${r.color}';this.style.background='var(--bg2)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg3)'">
+      <div style="font-size:1.25rem;width:28px;text-align:center">${r.icon}</div>
+      <div style="font-size:.85rem;flex:1;color:var(--white)">${r.text}</div>
+      <div style="color:var(--muted);font-size:.8rem">→</div>
+    </div>`).join('');
+}
+
+// Hook into dashboard home display
+const _origShowDash = window.showDash;
+if (typeof showDash === 'function') {
+  const __origShowDash = showDash;
+  window.showDash = function(sub) {
+    __origShowDash(sub);
+    if (sub === 'home') {
+      initDailyChallenge();
+      renderStudyCoach();
+    }
+  };
+}
+// Also run on page load when dashboard is shown
+document.addEventListener('DOMContentLoaded', () => {
+  initDailyChallenge();
+  renderStudyCoach();
+});
 
 </script>
 
