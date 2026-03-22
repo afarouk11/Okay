@@ -9024,6 +9024,54 @@ function showToast(msg) {
 }
 
 // ═══════════════════════════════════════
+// CONFETTI CELEBRATION
+// ═══════════════════════════════════════
+function _launchConfetti() {
+  const colors = ['#C9A84C','#F5E199','#D4A820','#fff','#4ade80','#60a5fa','#f472b6'];
+  const count = 80;
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99999;overflow:hidden';
+  document.body.appendChild(container);
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    const size = 6 + Math.random() * 8;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const startX = Math.random() * 100;
+    const delay = Math.random() * 0.8;
+    const duration = 1.8 + Math.random() * 1.4;
+    const drift = (Math.random() - 0.5) * 200;
+    const isRect = Math.random() > 0.5;
+    el.style.cssText = `
+      position:absolute;
+      top:-${size * 2}px;
+      left:${startX}%;
+      width:${size}px;
+      height:${isRect ? size * 1.6 : size}px;
+      background:${color};
+      border-radius:${isRect ? '2px' : '50%'};
+      opacity:1;
+      animation: confettiFall ${duration}s ${delay}s cubic-bezier(.25,.46,.45,.94) forwards;
+      --drift:${drift}px;
+    `;
+    container.appendChild(el);
+  }
+  // Inject keyframes once
+  if (!document.getElementById('confetti-style')) {
+    const s = document.createElement('style');
+    s.id = 'confetti-style';
+    s.textContent = `
+      @keyframes confettiFall {
+        0%   { transform: translateY(0) translateX(0) rotate(0deg); opacity: 1; }
+        80%  { opacity: 1; }
+        100% { transform: translateY(100vh) translateX(var(--drift)) rotate(720deg); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(s);
+  }
+  setTimeout(() => container.remove(), 3500);
+}
+
+// ═══════════════════════════════════════
 // HTML SANITIZATION (XSS Prevention)
 // ═══════════════════════════════════════
 function sanitizeHTML(str) {
@@ -16968,9 +17016,11 @@ function endBlitz() {
   document.getElementById('blitz-result-score').textContent = `${blitzState.score} / ${maxScore}`;
   document.getElementById('blitz-result-msg').textContent = msg;
   document.getElementById('blitz-result-breakdown').innerHTML = blitzState.results.map((r, i) =>
-    `<div style="padding:.5rem .75rem;background:${r.correct ? 'rgba(74,222,128,0.07)' : r.partial ? 'rgba(251,146,60,0.07)' : 'rgba(239,68,68,0.07)'};border-radius:8px;margin-bottom:.35rem;font-size:.82rem">
+    `<div style="padding:.65rem .875rem;background:${r.correct ? 'rgba(74,222,128,0.08)' : r.partial ? 'rgba(251,146,60,0.08)' : 'rgba(239,68,68,0.06)'};border:1px solid ${r.correct ? 'rgba(74,222,128,0.2)' : r.partial ? 'rgba(251,146,60,0.2)' : 'rgba(239,68,68,0.15)'};border-radius:10px;margin-bottom:.4rem;font-size:.82rem;animation:fadeInUp .3s ease ${i*0.05}s both">
       ${r.correct ? '✅' : r.partial ? '⚠️' : '❌'} <strong>Q${i+1}</strong>: ${sanitizeAIHTML((r.q||'').slice(0,60))}… <span style="color:var(--muted)">(+${r.pts}pts)</span>
     </div>`).join('');
+  // Confetti for good scores
+  if (pct >= 70) _launchConfetti();
   const xp = 20 + blitzState.score * 5;
   addXP(xp, `⚡ Blitz complete! +${xp} XP`);
   try { localStorage.setItem('synaptiq_blitz', JSON.stringify({ date: new Date().toISOString(), score: blitzState.score })); } catch(e) {}
