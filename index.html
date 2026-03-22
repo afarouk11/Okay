@@ -1218,10 +1218,12 @@ body {
 }
 .chat-input {
   flex: 1; padding: .75rem 1rem;
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 10px; color: var(--white);
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 12px; color: var(--white);
   font-size: .875rem; font-family: var(--font-body);
   resize: none; height: 44px; line-height: 1.4;
+  transition: border .2s, box-shadow .2s;
 }
 .chat-send {
   padding: .75rem 1.25rem;
@@ -3364,7 +3366,7 @@ body.mode-adhd .adhd-break { display: block; }
       <!-- Dashboard search -->
       <div id="dash-search-wrap" style="position:relative;margin-bottom:1.5rem">
         <input id="dash-search" type="text" placeholder="🔍 Search topics, chapters, formulas..." style="width:100%;background:rgba(255,255,255,0.04);border:1.5px solid rgba(201,168,76,0.15);border-radius:14px;padding:.85rem 1.1rem;color:var(--white);font-size:.9rem;box-sizing:border-box;backdrop-filter:blur(8px);transition:all .2s;outline:none" oninput="searchDash(this.value)">
-        <div id="search-results" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:12px;z-index:500;max-height:260px;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.4)"></div>
+        <div id="search-results" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:rgba(10,12,18,0.97);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(201,168,76,0.2);border-radius:14px;z-index:500;max-height:280px;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.6),0 0 0 1px rgba(201,168,76,0.05)"></div>
       </div>
       <p class="page-subtitle" style="margin-top:0">Here's your learning overview</p>
       <!-- Daily Challenge Card -->
@@ -3419,7 +3421,7 @@ body.mode-adhd .adhd-break { display: block; }
             <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">days to go</div>
           </div>
           <div style="display:flex;gap:.5rem;align-items:center">
-            <input type="date" id="exam-date-input" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.5rem .75rem;color:var(--white);font-size:.85rem" onchange="saveExamDate(this.value)">
+            <input type="date" id="exam-date-input" style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(201,168,76,0.25);border-radius:10px;padding:.5rem .75rem;color:var(--white);font-size:.85rem;transition:border .2s;outline:none" onchange="saveExamDate(this.value)" onfocus="this.style.borderColor='rgba(201,168,76,0.5)'" onblur="this.style.borderColor='rgba(201,168,76,0.25)'"  >
             <button class="btn btn-outline" style="font-size:.8rem;padding:.5rem .9rem;white-space:nowrap" onclick="showDash('questions')">Practice Now →</button>
           </div>
         </div>
@@ -3999,7 +4001,7 @@ body.mode-adhd .adhd-break { display: block; }
             <h4>A-Level Maths Exam Date</h4>
             <p>Set your exam date to see the countdown on your dashboard</p>
           </div>
-          <input type="date" id="settings-exam-date" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.5rem .75rem;color:var(--white);font-size:.85rem" onchange="saveExamDate(this.value)">
+          <input type="date" id="settings-exam-date" style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(255,255,255,0.1);border-radius:10px;padding:.5rem .75rem;color:var(--white);font-size:.85rem;transition:border .2s;outline:none" onchange="saveExamDate(this.value)" onfocus="this.style.borderColor='rgba(201,168,76,0.5)'" onblur="this.style.borderColor='rgba(255,255,255,0.1)'"  >
         </div>
       </div>
       <div class="settings-section">
@@ -4608,7 +4610,7 @@ body.mode-adhd .adhd-break { display: block; }
 
         <!-- Active test -->
         <div id="diag-active" style="display:none">
-          <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1rem 1.5rem;margin-bottom:1.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(12,14,20,0.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(201,168,76,0.15);border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:1.5rem">
             <div style="font-weight:700">Diagnostic Test</div>
             <div style="display:flex;align-items:center;gap:1rem">
               <div id="diag-progress-text" style="font-size:.875rem;color:var(--muted)">Question 1 of 12</div>
@@ -5363,7 +5365,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
       <div class="page-title">🎯 Daily Goals</div>
       <p class="page-subtitle">Set a daily study target and track your habit</p>
       <div style="max-width:600px">
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:2rem;text-align:center;margin-bottom:1.5rem">
+        <div style="background:rgba(12,14,20,0.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(201,168,76,0.15);border-radius:20px;padding:2.5rem;text-align:center;margin-bottom:1.5rem;box-shadow:0 12px 48px rgba(0,0,0,0.35)">
           <div class="goal-ring-wrap">
             <svg width="120" height="120" viewBox="0 0 120 120" style="transform:rotate(-90deg)">
               <circle cx="60" cy="60" r="50" fill="none" stroke="var(--bg4)" stroke-width="10"/>
@@ -5378,7 +5380,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
           <div style="font-size:1.1rem;font-weight:700;margin-bottom:.25rem" id="goal-status">Set your daily goal below</div>
           <div style="color:var(--muted);font-size:.875rem" id="goal-detail"></div>
         </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem">
+        <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:1.5rem;margin-bottom:1.5rem">
           <div style="font-weight:700;margin-bottom:1rem">Set Daily Goals</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
             <div>
@@ -11800,17 +11802,46 @@ function exportQuestionsPDF() {
 .compare-table tr:hover td { background: rgba(201,168,76,0.04); }
 .compare-table .criteria-col { color: var(--muted); font-size: .8rem; font-weight: 600; }
 /* ── MISTAKES TRACKER ── */
+/* ── SEARCH BAR + ACTION BUTTONS ── */
+.glossary-search-bar {
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 12px; padding: .7rem 1rem;
+  color: var(--white); font-family: var(--font-body); font-size: .9rem;
+  width: 100%; box-sizing: border-box; margin-bottom: 1rem;
+  transition: border .2s, box-shadow .2s;
+}
+.glossary-search-bar:focus { outline: none; border-color: rgba(201,168,76,0.5); box-shadow: 0 0 0 3px rgba(201,168,76,0.08); }
+.glossary-search-bar::placeholder { color: rgba(136,146,164,0.5); }
+.glossary-term { background: rgba(12,14,20,0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: .75rem; transition: all .2s; animation: fadeInUp .3s ease; }
+.glossary-term:hover { border-color: rgba(201,168,76,0.2); }
+.glossary-term-word { font-weight: 700; font-size: 1rem; color: var(--gold); margin-bottom: .4rem; }
+.glossary-term-def { font-size: .875rem; line-height: 1.7; color: rgba(240,238,248,0.85); }
+.glossary-term-example { font-size: .8rem; color: var(--muted); margin-top: .5rem; font-style: italic; }
+.glossary-letter { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; color: var(--gold); margin: 1.5rem 0 .75rem; opacity: .6; }
+.vid-ctrl-btn {
+  padding: .5rem 1rem; border-radius: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--muted); font-size: .82rem; font-weight: 600;
+  cursor: pointer; transition: all .2s; white-space: nowrap;
+}
+.vid-ctrl-btn:hover { border-color: rgba(201,168,76,0.35); color: var(--gold); background: rgba(201,168,76,0.06); }
 /* ── ONBOARDING ── */
 .ob-step { width: 32px; height: 6px; border-radius: 3px; background: var(--bg4); transition: background .3s; }
 .ob-step-active { background: var(--gold); }
-.ob-grade-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: .45rem 1.1rem; color: var(--white); cursor: pointer; font-size: .9rem; font-weight: 600; transition: all .2s; }
+.ob-grade-btn { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: .45rem 1.1rem; color: var(--white); cursor: pointer; font-size: .9rem; font-weight: 600; transition: all .2s; }
 .ob-grade-btn:hover,.ob-grade-btn.selected { background: rgba(201,168,76,0.15); border-color: var(--gold); color: var(--gold); }
 /* ── MISTAKES ── */
 .mistake-item {
-  background: var(--bg3); border: 1px solid var(--border);
+  background: rgba(12,14,20,0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.07);
   border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: .75rem;
-  border-left: 3px solid;
+  border-left: 3px solid; transition: all .2s; animation: fadeInUp .3s ease;
 }
+.mistake-item:hover { transform: translateX(4px); border-color: rgba(255,255,255,0.15); }
 .mistake-count {
   display: inline-flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; border-radius: 50%;
@@ -11900,19 +11931,26 @@ function exportQuestionsPDF() {
 .pt-num { font-size: .55rem; color: rgba(255,255,255,0.6); }
 .pt-name { font-size: .5rem; color: rgba(255,255,255,0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pt-detail {
-  background: var(--bg3); border: 1px solid var(--border);
+  background: rgba(12,14,20,0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(201,168,76,0.15);
   border-radius: 16px; padding: 1.5rem; margin-top: 1rem;
-  display: none;
+  display: none; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  animation: fadeInUp .3s ease;
 }
 .pt-detail.show { display: block; }
 /* ── FORMULA SHEET ── */
 .formula-section { margin-bottom: 2rem; }
 .formula-section h3 { color: var(--gold); font-family: var(--font-head); font-weight: 700; margin-bottom: 1rem; font-size: 1rem; }
 .formula-card {
-  background: var(--bg3); border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
   border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: .6rem;
   display: flex; align-items: center; gap: 1rem;
+  transition: all .2s;
 }
+.formula-card:hover { border-color: rgba(201,168,76,0.25); background: rgba(201,168,76,0.04); }
 .formula-expr {
   font-family: var(--font-mono); font-size: .9rem;
   color: var(--gold); min-width: 140px; flex-shrink: 0;
@@ -11927,10 +11965,15 @@ function exportQuestionsPDF() {
 @keyframes voicePulse { 0%,100% { box-shadow: 0 0 0 0 rgba(251,113,133,.3); } 50% { box-shadow: 0 0 0 8px rgba(251,113,133,0); } }
 /* ── BOOKMARKS ── */
 .bookmark-item {
-  background: var(--bg3); border: 1px solid var(--border);
+  background: rgba(12,14,20,0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.07);
   border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: .6rem;
   display: flex; gap: 1rem; align-items: flex-start;
+  transition: all .2s; animation: fadeInUp .3s ease;
 }
+.bookmark-item:hover { border-color: rgba(201,168,76,0.25); transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,0.3); }
 .bookmark-type { font-size: 1.25rem; flex-shrink: 0; }
 .bookmark-content { flex: 1; }
 .bookmark-title { font-weight: 700; margin-bottom: .25rem; font-size: .875rem; }
@@ -11943,12 +11986,15 @@ function exportQuestionsPDF() {
 /* ── ACCESSIBILITY ── */
 .a11y-btn {
   display: flex; align-items: center; gap: .75rem;
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 12px; padding: 1rem 1.25rem; cursor: pointer;
-  transition: all .2s; margin-bottom: .6rem; width: 100%;
+  background: rgba(12,14,20,0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 1.1rem 1.25rem; cursor: pointer;
+  transition: all .25s; margin-bottom: .75rem; width: 100%;
 }
-.a11y-btn:hover { border-color: var(--gold); }
-.a11y-btn.active { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+.a11y-btn:hover { border-color: rgba(201,168,76,0.4); background: rgba(201,168,76,0.05); transform: translateY(-2px); }
+.a11y-btn.active { border-color: var(--gold); background: rgba(201,168,76,0.1); box-shadow: 0 0 0 1px rgba(201,168,76,0.15); }
 .a11y-icon { font-size: 1.5rem; }
 .a11y-info { flex: 1; text-align: left; }
 .a11y-name { font-weight: 700; font-size: .875rem; }
