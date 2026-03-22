@@ -2868,7 +2868,7 @@ body.mode-adhd .adhd-break { display: block; }
               </select>
             </div>
             <div class="form-group"><label>Exam Board</label>
-              <select id="q-board"><option>AQA</option><option>Edexcel</option><option>OCR</option><option>WJEC</option></select>
+              <select id="q-board" onchange="try{localStorage.setItem('synaptiq_exam_board',this.value)}catch(e){}"><option>AQA</option><option>Edexcel</option><option>OCR</option><option>WJEC</option></select>
             </div>
           </div>
           <div class="form-row">
@@ -3383,6 +3383,11 @@ body.mode-adhd .adhd-break { display: block; }
           <button class="btn btn-outline" onclick="switchFormulaTab('mech',this)" id="ftab-mech">Mechanics</button>
         </div>
       </div>
+      <div style="margin-bottom:1rem">
+        <button class="btn btn-outline" style="font-size:.82rem;padding:.45rem 1rem;border-color:rgba(167,139,250,0.4);color:#A78BFA" onclick="startFormulaQuiz()">🧩 Formula Quiz Mode</button>
+        <span style="font-size:.78rem;color:var(--muted);margin-left:.75rem">Test if you know when to apply each formula</span>
+      </div>
+      <div id="formula-quiz-area" style="display:none;margin-bottom:1.5rem"></div>
       <div id="formula-search-results" style="display:none"></div>
       <div id="formula-content"></div>
     </div>
@@ -3567,6 +3572,7 @@ body.mode-adhd .adhd-break { display: block; }
               <button class="save-note-btn" onclick="saveNote()">💾 Save Note</button>
               <button class="save-note-btn" style="background:var(--bg3);color:var(--muted);border:1px solid var(--border)" onclick="aiSummariseNote()">✦ AI Summarise</button>
               <button class="save-note-btn" style="background:var(--bg3);color:var(--blue);border:1px solid rgba(96,165,250,0.3)" onclick="generateTopicNotes()">✦ Generate Topic Notes</button>
+              <button class="save-note-btn" style="background:var(--bg3);color:var(--green);border:1px solid rgba(74,222,128,0.3)" onclick="exportNotes()">⬇ Export Notes</button>
             </div>
           </div>
         </div>
@@ -5468,7 +5474,7 @@ function enterDashboard() {
   nav('dashboard');
   showDash('home');
   // Render dashboard widgets
-  setTimeout(() => { renderTipOfDay(); renderSpecProgress(); }, 200);
+  setTimeout(() => { renderTipOfDay(); renderSpecProgress(); applyBoardPreference(); }, 200);
   // Show new feature UI elements
   if (typeof updateMobileNav === 'function') updateMobileNav();
 
@@ -9328,6 +9334,7 @@ function renderNotes() {
       <div class="note-text">${n.text.replace(/\n/g,'<br>')}</div>
       <div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap">
         <button onclick="flashcardsFromNote(${n.id})" style="font-size:.75rem;padding:.3rem .7rem;background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:var(--blue);border-radius:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(96,165,250,0.2)'" onmouseout="this.style.background='rgba(96,165,250,0.1)'">🗂 Create Flashcards</button>
+        <button onclick="copyNote(${n.id},this)" style="font-size:.75rem;padding:.3rem .7rem;background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer">📋 Copy</button>
         <button onclick="deleteNote(${n.id})" style="font-size:.75rem;padding:.3rem .7rem;background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer">🗑 Delete</button>
       </div>
     </div>
@@ -16421,6 +16428,142 @@ Make questions exam-style with full context. Vary difficulty. Cover the weak top
     if (btn) { btn.disabled = false; btn.textContent = '🎯 Drill My Weak Topics'; }
     showToast('⚠️ Could not generate drill — try again');
   }
+}
+
+// ══════════════════════════════════════════
+// EXPORT NOTES
+// ══════════════════════════════════════════
+function exportNotes() {
+  if (!notes.length) { showToast('No notes to export yet'); return; }
+  const text = notes.map(n =>
+    `# ${n.subject} — ${n.date} ${n.time}\n\n${n.text}\n\n${'─'.repeat(60)}\n`
+  ).join('\n');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `synaptiq-notes-${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`✅ ${notes.length} note${notes.length > 1 ? 's' : ''} exported!`);
+}
+
+function copyNote(id, btn) {
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  navigator.clipboard.writeText(note.text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    btn.style.color = 'var(--green)';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1500);
+  }).catch(() => showToast('Copy failed — please select the text manually'));
+}
+
+// ══════════════════════════════════════════
+// PRE-FILL EXAM BOARD PREFERENCE
+// ══════════════════════════════════════════
+function applyBoardPreference() {
+  const board = localStorage.getItem('synaptiq_exam_board');
+  if (!board) return;
+  const selectors = ['q-board', 'pp-board', 'pred-board', 'diag-board', 'blitz-topic'];
+  selectors.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || el.tagName !== 'SELECT') return;
+    const opt = Array.from(el.options).find(o => o.value === board || o.text === board);
+    if (opt) el.value = opt.value;
+  });
+}
+
+// ══════════════════════════════════════════
+// FORMULA QUIZ MODE
+// ══════════════════════════════════════════
+const FQ_BANK = [
+  { formula: 'x = \\dfrac{-b \\pm \\sqrt{b^2-4ac}}{2a}', name: 'Quadratic Formula', distractors: ['Circle Equation', 'Completing the Square', 'Discriminant Formula'] },
+  { formula: '\\sin^2\\theta + \\cos^2\\theta = 1', name: 'Pythagorean Identity', distractors: ['Double Angle Formula', 'Addition Formula', 'CAST Rule'] },
+  { formula: '\\dfrac{d}{dx}[x^n] = nx^{n-1}', name: 'Power Rule (Differentiation)', distractors: ['Chain Rule', 'Product Rule', 'Integration by Parts'] },
+  { formula: '\\int x^n\\,dx = \\dfrac{x^{n+1}}{n+1} + C', name: 'Power Rule (Integration)', distractors: ['Integration by Substitution', 'Chain Rule', 'Trapezium Rule'] },
+  { formula: 'v = u + at', name: 'SUVAT (velocity-time)', distractors: ['Newton\'s Second Law', 'Impulse Formula', 'Work-Energy Theorem'] },
+  { formula: 's = ut + \\tfrac{1}{2}at^2', name: 'SUVAT (displacement)', distractors: ['Kinetic Energy', 'Momentum-Impulse', 'Friction Formula'] },
+  { formula: 'P(A\\cup B) = P(A)+P(B)-P(A\\cap B)', name: 'Addition Rule (Probability)', distractors: ['Bayes\' Theorem', 'Conditional Probability', 'Multiplication Rule'] },
+  { formula: '\\log_a(xy) = \\log_a x + \\log_a y', name: 'Log Product Rule', distractors: ['Log Quotient Rule', 'Log Power Rule', 'Change of Base Formula'] },
+  { formula: 'a^2 = b^2 + c^2 - 2bc\\cos A', name: 'Cosine Rule', distractors: ['Sine Rule', 'Area of Triangle', 'Pythagoras Theorem'] },
+  { formula: '\\dfrac{a}{\\sin A} = \\dfrac{b}{\\sin B}', name: 'Sine Rule', distractors: ['Cosine Rule', 'Area of Triangle', 'SOH-CAH-TOA'] },
+  { formula: '\\binom{n}{r} = \\dfrac{n!}{r!(n-r)!}', name: 'Binomial Coefficient', distractors: ['Permutation Formula', 'Pascal\'s Triangle Row', 'Factorial Notation'] },
+  { formula: 'e^{i\\pi}+1=0', name: 'Euler\'s Identity', distractors: ['De Moivre\'s Theorem', 'Complex Exponential', 'Taylor Series'] },
+  { formula: '\\bar{x} = \\dfrac{\\sum fx}{\\sum f}', name: 'Mean of Frequency Distribution', distractors: ['Variance Formula', 'Standard Deviation', 'Median Formula'] },
+  { formula: 'f\'(x) = \\lim_{h\\to0}\\dfrac{f(x+h)-f(x)}{h}', name: 'Definition of Derivative', distractors: ['Gradient of Chord', 'Normal to Curve', 'Second Derivative Test'] },
+];
+
+let fqState = { questions: [], current: 0, score: 0, answered: false };
+
+function startFormulaQuiz() {
+  const area = document.getElementById('formula-quiz-area');
+  if (!area) return;
+  // Pick 5 random questions
+  const shuffled = FQ_BANK.slice().sort(() => Math.random() - 0.5);
+  fqState.questions = shuffled.slice(0, 5);
+  fqState.current = 0; fqState.score = 0;
+  area.style.display = 'block';
+  area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  showFqQuestion();
+}
+
+function showFqQuestion() {
+  const area = document.getElementById('formula-quiz-area');
+  if (!area) return;
+  if (fqState.current >= fqState.questions.length) {
+    const pct = Math.round((fqState.score / fqState.questions.length) * 100);
+    const emoji = pct >= 80 ? '🏆' : pct >= 60 ? '🎉' : pct >= 40 ? '📚' : '💪';
+    area.innerHTML = `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:1.5rem;text-align:center">
+      <div style="font-size:2.5rem;margin-bottom:.75rem">${emoji}</div>
+      <div style="font-size:1.2rem;font-weight:800;margin-bottom:.25rem">${fqState.score}/${fqState.questions.length} correct</div>
+      <div style="color:var(--muted);margin-bottom:1rem">${pct >= 80 ? 'Excellent formula knowledge!' : pct >= 60 ? 'Good work — keep reviewing!' : 'Keep practising — formulas take time to memorise.'}</div>
+      <div style="display:flex;gap:.75rem;justify-content:center">
+        <button class="btn btn-gold" onclick="startFormulaQuiz()">Try Again</button>
+        <button class="btn btn-outline" onclick="document.getElementById('formula-quiz-area').style.display='none'">Close</button>
+      </div>
+    </div>`;
+    if (fqState.score > 0) addXP(fqState.score * 10);
+    return;
+  }
+  const q = fqState.questions[fqState.current];
+  const allOpts = [q.name, ...q.distractors].sort(() => Math.random() - 0.5);
+  fqState.answered = false;
+  area.innerHTML = `<div style="background:var(--bg3);border:1px solid rgba(167,139,250,0.3);border-radius:14px;padding:1.5rem">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <span style="font-size:.78rem;color:#A78BFA;font-weight:700">🧩 FORMULA QUIZ · Q${fqState.current+1}/5</span>
+      <span style="font-size:.78rem;color:var(--muted)">Score: ${fqState.score}</span>
+    </div>
+    <div style="text-align:center;font-size:1.1rem;padding:.75rem 0 1rem;color:var(--gold)">\\(${q.formula}\\)</div>
+    <div style="font-size:.875rem;color:var(--muted);margin-bottom:.75rem">What is this formula used for?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem" id="fq-opts">
+      ${allOpts.map(opt => `<button onclick="fqAnswer('${opt.replace(/'/g,"&#39;")}','${q.name.replace(/'/g,"&#39;")}',this)" style="background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:.6rem .75rem;color:var(--white);cursor:pointer;font-size:.82rem;text-align:left;transition:all .2s" onmouseover="if(!fqState.answered)this.style.borderColor='#A78BFA'" onmouseout="if(!fqState.answered)this.style.borderColor='var(--border)'">${opt}</button>`).join('')}
+    </div>
+    <div id="fq-feedback" style="display:none;margin-top:.75rem;padding:.6rem .9rem;border-radius:8px;font-size:.85rem"></div>
+  </div>`;
+  if (window.MathJax) MathJax.typesetPromise([area]).catch(() => {});
+}
+
+function fqAnswer(chosen, correct, btn) {
+  if (fqState.answered) return;
+  fqState.answered = true;
+  const opts = document.querySelectorAll('#fq-opts button');
+  opts.forEach(b => {
+    b.onclick = null; b.onmouseover = null; b.onmouseout = null; b.style.cursor = 'default';
+    if (b.textContent.trim() === correct) { b.style.background = 'rgba(74,222,128,0.15)'; b.style.borderColor = 'var(--green)'; b.style.color = 'var(--green)'; }
+    else if (b === btn && chosen !== correct) { b.style.background = 'rgba(239,68,68,0.12)'; b.style.borderColor = '#EF4444'; b.style.color = '#EF4444'; }
+  });
+  const ok = chosen === correct;
+  if (ok) fqState.score++;
+  const fb = document.getElementById('fq-feedback');
+  if (fb) {
+    fb.style.display = 'block';
+    fb.innerHTML = ok ? `<span style="color:var(--green)">✓ Correct! That's the <strong>${correct}</strong>.</span>` : `<span style="color:#FB7185">✗ That was the <strong>${correct}</strong>. The formula and its name will stick with practice!</span>`;
+  }
+  setTimeout(() => {
+    fqState.current++;
+    showFqQuestion();
+  }, 1800);
 }
 
 // ══════════════════════════════════════════
