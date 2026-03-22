@@ -861,6 +861,14 @@ body {
   border-top: 1px solid var(--border);
   background: var(--bg2);
 }
+.tutor-starter-chip {
+  text-align: left; padding: .65rem .85rem;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 12px; color: var(--white);
+  font-size: .82rem; cursor: pointer; transition: all .15s;
+  font-family: var(--font-body);
+}
+.tutor-starter-chip:hover { border-color: var(--gold); background: rgba(201,168,76,0.07); }
 .tutor-input-row {
   display: flex; gap: .75rem; align-items: flex-end;
 }
@@ -2768,7 +2776,24 @@ body.mode-adhd .adhd-break { display: block; }
           <div id="tutor-img-strip" style="display:none;padding:.5rem 1rem;display:flex;gap:.5rem;flex-wrap:wrap;border-top:1px solid var(--border)"></div>
           <!-- Current AI response target (used by streaming updates) -->
           <div id="tutor-response" style="display:none"></div>
-          <div class="tutor-messages" id="tutor-messages"></div>
+          <div id="tutor-starters" style="padding:1.5rem 1rem">
+            <div style="text-align:center;margin-bottom:1.25rem">
+              <div style="font-size:1.5rem;margin-bottom:.4rem">✦</div>
+              <div style="font-weight:700;font-size:1rem;margin-bottom:.25rem">What are you working on today?</div>
+              <div style="font-size:.82rem;color:var(--muted)">Ask anything about A-Level Maths — or pick a topic below</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+              <button onclick="useTutorStarter(this)" class="tutor-starter-chip">📐 Integration by parts</button>
+              <button onclick="useTutorStarter(this)" class="tutor-starter-chip">📊 Hypothesis testing</button>
+              <button onclick="useTutorStarter(this)" class="tutor-starter-chip">🔢 Implicit differentiation</button>
+              <button onclick="useTutorStarter(this)" class="tutor-starter-chip">📉 Normal distribution</button>
+              <button onclick="useTutorStarter(this)" class="tutor-starter-chip">🔄 Proof by induction</button>
+              <button onclick="useTutorStarter(this)" class="tutor-starter-chip">⚡ Vectors in 3D</button>
+              <button onclick="useTutorStarter(this)" class="tutor-starter-chip">📈 Binomial expansion</button>
+              <button onclick="useTutorStarter(this)" class="tutor-starter-chip">🎯 Moments & equilibrium</button>
+            </div>
+          </div>
+          <div class="tutor-messages" id="tutor-messages" style="display:none"></div>
           <div class="tutor-input-area">
             <div class="tutor-input-row">
               <textarea class="tutor-input" id="tutor-input" placeholder="Ask about any A-Level Maths topic..." onkeydown="tutorKey(event)" rows="1"></textarea>
@@ -5673,7 +5698,19 @@ function formatTutorMsg(text) {
   return s;
 }
 
+function useTutorStarter(btn) {
+  const topic = btn.textContent.replace(/^[^\w]+/, '').trim();
+  const input = document.getElementById('tutor-input');
+  if (input) { input.value = `Can you explain ${topic} for A-Level Maths? Include worked examples and key exam tips.`; tutorSend(); }
+}
+
 function addTutorMsg(role, text) {
+  // Hide starters when first message is added
+  const starters = document.getElementById('tutor-starters');
+  const msgs = document.getElementById('tutor-messages');
+  if (starters) starters.style.display = 'none';
+  if (msgs) msgs.style.display = '';
+
   const el = document.createElement('div');
   el.className = 'msg ' + role;
   if (role === 'bot') {
@@ -13709,13 +13746,32 @@ function switchFormulaTab(tab, btn) {
   renderFormulaTab(tab);
 }
 
+// Formulas that AQA/Edexcel give in the formula booklet (students DON'T need to memorise)
+const GIVEN_IN_BOOKLET = new Set([
+  'x = \\dfrac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}',
+  '\\text{Sine rule: } \\dfrac{a}{\\sin A} = \\dfrac{b}{\\sin B} = \\dfrac{c}{\\sin C}',
+  '\\text{Cosine rule: } a^2 = b^2 + c^2 - 2bc\\cos A',
+  '\\text{Area} = \\tfrac{1}{2}ab\\sin C',
+  '(a+b)^n = \\sum_{r=0}^{n} \\binom{n}{r} a^{n-r} b^r',
+  '\\binom{n}{r} = \\dfrac{n!}{r!(n-r)!}',
+  'S_\\infty = \\dfrac{a}{1-r} \\quad (|r|<1)',
+  '\\text{AP: } u_n = a + (n-1)d, \\quad S_n = \\dfrac{n}{2}(2a + (n-1)d)',
+  '\\text{GP: } u_n = ar^{n-1}, \\quad S_n = \\dfrac{a(1-r^n)}{1-r}',
+]);
+
 function renderFormulaTab(tab) {
   const sections = FORMULAS[tab] || [];
   const html = sections.map(sec => `
     <div class="card" style="margin-bottom:1.25rem">
       <div class="card-header"><span class="card-title">${sec.title}</span></div>
       <div class="card-body">
-        ${sec.items.map(f => `<div style="padding:.6rem 0;border-bottom:1px solid var(--border);font-size:1rem;line-height:1.8">\\(${f}\\)</div>`).join('')}
+        ${sec.items.map(f => {
+          const given = GIVEN_IN_BOOKLET.has(f);
+          const badge = given
+            ? '<span style="font-size:.68rem;padding:.15rem .45rem;background:rgba(74,222,128,0.12);color:var(--green);border:1px solid rgba(74,222,128,0.25);border-radius:6px;margin-left:.5rem;vertical-align:middle;white-space:nowrap">✓ Given in booklet</span>'
+            : '<span style="font-size:.68rem;padding:.15rem .45rem;background:rgba(239,68,68,0.1);color:#F87171;border:1px solid rgba(239,68,68,0.2);border-radius:6px;margin-left:.5rem;vertical-align:middle;white-space:nowrap">⚠ Memorise</span>';
+          return `<div style="padding:.65rem 0;border-bottom:1px solid var(--border);font-size:1rem;line-height:1.8;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">\\(${f}\\)${badge}</div>`;
+        }).join('')}
       </div>
     </div>`).join('');
   document.getElementById('formula-content').innerHTML = html;
