@@ -1873,6 +1873,7 @@ body.mode-adhd .adhd-break { display: block; }
     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
     <div id="session-timer-badge" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:.3rem .75rem;font-size:.78rem;color:var(--muted);align-items:center;gap:.4rem" title="Time studied today">⏱ <span id="session-timer-text">0m</span></div>
     <div id="xp-badge"><i class="fas fa-star"></i><span id="xp-display">0 XP</span></div>
+    <div id="target-grade-badge" style="display:none;background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.35);border-radius:20px;padding:.3rem .85rem;font-size:.78rem;font-weight:700;color:#A78BFA" title="Your target grade">🎯 <span id="target-grade-text">A*</span></div>
     <div id="auth-buttons">
       <button class="btn btn-outline" onclick="nav('auth');showLogin()">Log In</button>
       <button class="btn btn-gold" onclick="nav('auth');showSignup()">Sign Up</button>
@@ -1995,6 +1996,24 @@ body.mode-adhd .adhd-break { display: block; }
         <h3>Quick Blitz & Spaced Repetition</h3>
         <p>5-question rapid blitz mode and 60+ pre-built A-Level Maths flashcard packs using science-backed spaced repetition.</p>
         <span class="feature-tag">Proven Revision</span>
+      </div>
+      <div class="feature-card" onclick="nav('auth');showSignup()">
+        <div class="feature-icon">✅</div>
+        <h3>Topic Revision Checklist</h3>
+        <p>Rate your confidence on all 34 A-Level Maths spec topics. Radar chart shows your coverage across Pure, Stats and Mechanics at a glance.</p>
+        <span class="feature-tag">Track Everything</span>
+      </div>
+      <div class="feature-card" onclick="nav('auth');showSignup()">
+        <div class="feature-icon">🩺</div>
+        <h3>Diagnostic Test & Grade Predictor</h3>
+        <p>Take a 12-question placement test to reveal your current level. AI predicts your grade and generates a personalised revision action plan.</p>
+        <span class="feature-tag">Know Your Level</span>
+      </div>
+      <div class="feature-card" onclick="nav('auth');showSignup()">
+        <div class="feature-icon">🔥</div>
+        <h3>Daily Challenge & Study Streaks</h3>
+        <p>5 questions every day. Build study streaks, earn XP, unlock achievements. A habit loop designed to keep you consistent right up to exam day.</p>
+        <span class="feature-tag">Stay Consistent</span>
       </div>
     </div>
   </section>
@@ -3271,6 +3290,7 @@ body.mode-adhd .adhd-break { display: block; }
         <button class="btn btn-gold" style="font-size:.85rem;padding:.5rem 1.25rem" onclick="showFcCreate()"><i class="fas fa-plus"></i> New Card</button>
         <button class="btn btn-outline" style="font-size:.85rem;padding:.5rem 1.25rem" onclick="generateFcWithAI()">✦ Generate with AI</button>
         <button class="btn btn-outline" style="font-size:.85rem;padding:.5rem 1.25rem" onclick="openFcPackModal()"><i class="fas fa-box-open"></i> Starter Packs</button>
+        <button class="btn btn-outline" style="font-size:.85rem;padding:.5rem 1.25rem" onclick="exportFlashcards()">⬇ Export</button>
         <select id="fc-subject" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.45rem .75rem;color:var(--white);font-size:.8rem" onchange="filterFcBySubject(this.value)">
           <option value="">All Topics</option>
           <option>Pure Mathematics</option><option>Statistics</option><option>Mechanics</option>
@@ -5476,6 +5496,11 @@ function enterDashboard() {
   document.getElementById('xp-badge').style.display = 'flex';
   const stBadge = document.getElementById('session-timer-badge');
   if (stBadge) { stBadge.style.display = 'flex'; _sessionTick(); }
+  // Show target grade badge if set
+  const tg = localStorage.getItem('synaptiq_target_grade') || state?.user?.target;
+  const tgBadge = document.getElementById('target-grade-badge');
+  const tgText = document.getElementById('target-grade-text');
+  if (tgBadge && tgText && tg) { tgText.textContent = tg; tgBadge.style.display = 'flex'; }
 
   nav('dashboard');
   showDash('home');
@@ -16536,6 +16561,20 @@ function exportNotes() {
   showToast(`✅ ${notes.length} note${notes.length > 1 ? 's' : ''} exported!`);
 }
 
+function exportFlashcards() {
+  if (!fcCards.length) { showToast('No flashcards to export yet'); return; }
+  const today = new Date().toISOString().split('T')[0];
+  const text = fcCards.map((c, i) =>
+    `Card ${i + 1}\nFront: ${c.front}\nBack: ${c.back}\nEase: ${c.ease || 1} · Next review: ${c.nextReview || today}\n`
+  ).join('\n' + '─'.repeat(40) + '\n\n');
+  const blob = new Blob([`Synaptiq Flashcards Export — ${today}\n${'═'.repeat(50)}\n\n${text}`], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `synaptiq-flashcards-${today}.txt`; a.click();
+  URL.revokeObjectURL(url);
+  showToast(`✅ ${fcCards.length} flashcard${fcCards.length > 1 ? 's' : ''} exported!`);
+}
+
 function copyNote(id, btn) {
   const note = notes.find(n => n.id === id);
   if (!note) return;
@@ -16970,7 +17009,12 @@ function obNext(step) {
   } else if (step === 2) {
     const date = document.getElementById('ob-exam-date').value;
     if (date) saveExamDate(date);
-    if (_obGrade) { try { localStorage.setItem('synaptiq_target_grade', _obGrade); } catch(e) {} }
+    if (_obGrade) {
+      try { localStorage.setItem('synaptiq_target_grade', _obGrade); } catch(e) {}
+      const tgBadge = document.getElementById('target-grade-badge');
+      const tgText = document.getElementById('target-grade-text');
+      if (tgBadge && tgText) { tgText.textContent = _obGrade; tgBadge.style.display = 'flex'; }
+    }
     const name = document.getElementById('ob-name').value.trim() || 'there';
     document.getElementById('ob-name-display').textContent = name;
     document.getElementById('ob-step-2').style.display = 'none';
