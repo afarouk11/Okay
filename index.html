@@ -3586,19 +3586,19 @@ body.mode-adhd .adhd-break { display: block; }
           <div class="form-row" style="grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
             <div class="form-group">
               <label class="form-label">Study hours per day</label>
-              <select class="form-select" id="tt-hours">
+              <select class="form-select" id="tt-hours-exams">
                 <option value="2">2 hours</option><option value="3">3 hours</option>
                 <option value="4" selected>4 hours</option><option value="6">6 hours</option>
               </select>
             </div>
             <div class="form-group">
               <label class="form-label">Rest day</label>
-              <select class="form-select" id="tt-rest">
+              <select class="form-select" id="tt-rest-exams">
                 <option>Sunday</option><option>Saturday</option><option>None</option>
               </select>
             </div>
           </div>
-          <button class="btn-gold" onclick="generateTimetable()" id="tt-gen-btn">✦ Generate My Timetable</button>
+          <button class="btn-gold" onclick="generateTimetable('exams')" id="tt-gen-btn">✦ Generate My Timetable</button>
           <div id="timetable-output" style="margin-top:1.5rem;display:none"></div>
         </div>
       </div>
@@ -9789,12 +9789,14 @@ function saveExams() { try { localStorage.setItem('synaptiq_exams', JSON.stringi
 function loadExams() { try { const s = localStorage.getItem('synaptiq_exams'); if (s) { exams = JSON.parse(s); renderExams(); } } catch(e) {} }
 
 // ─── REVISION TIMETABLE ──────────────────────────────
-async function generateTimetable() {
+async function generateTimetable(src) {
   if (!exams.length) { showToast('Add at least one exam first!'); return; }
   const btn = document.getElementById('tt-gen-btn');
   btn.textContent = '✦ Generating timetable...'; btn.disabled = true;
-  const hours = document.getElementById('tt-hours').value;
-  const rest = document.getElementById('tt-rest').value;
+  const hoursId = src === 'exams' ? 'tt-hours-exams' : 'tt-hours';
+  const restId  = src === 'exams' ? 'tt-rest-exams' : 'tt-rest';
+  const hours = document.getElementById(hoursId)?.value || document.getElementById('tt-hours')?.value || '3';
+  const rest  = document.getElementById(restId)?.value  || document.getElementById('tt-rest')?.value  || 'Sunday';
   const examList = exams.map(e => `${e.subject} on ${new Date(e.date).toLocaleDateString('en-GB')}`).join(', ');
   const sys = `You are a revision planner. Create a 1-week timetable for a student. Return ONLY valid JSON array of 7 days:
 [{"day":"Monday","slots":[{"time":"09:00","subject":"Mathematics","topic":"Algebra","duration":60},...]},...]
