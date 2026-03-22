@@ -2830,6 +2830,11 @@ body.mode-adhd .adhd-break { display: block; }
             <input type="text" id="q-topics" placeholder="e.g. Integration by parts, Normal distribution, Projectiles">
           </div>
           <button class="btn btn-gold" style="width:100%;padding:1rem;font-size:1rem" onclick="generateQuestions()">✦ Generate Questions</button>
+          <div style="margin-top:.75rem;padding:.75rem 1rem;background:rgba(96,165,250,0.07);border:1px solid rgba(96,165,250,0.2);border-radius:10px">
+            <div style="font-size:.8rem;font-weight:600;color:var(--blue);margin-bottom:.4rem">🎯 Weak Topic Drill</div>
+            <div style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">Auto-generates questions targeting your personal weak spots from your Mistakes Tracker and flashcard data.</div>
+            <button id="weak-drill-btn" class="btn btn-outline" style="font-size:.82rem;padding:.45rem 1rem;border-color:var(--blue);color:var(--blue)" onclick="startWeakTopicDrill()">🎯 Drill My Weak Topics</button>
+          </div>
           <div id="adaptive-suggestion" style="display:none;margin-top:.75rem;padding:.75rem 1rem;background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.25);border-radius:10px;font-size:.85rem;color:var(--green)"></div>
         </div>
         <div class="gen-output" id="q-output">
@@ -3173,6 +3178,7 @@ body.mode-adhd .adhd-break { display: block; }
       <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center">
         <button class="btn btn-gold" style="font-size:.85rem;padding:.5rem 1.25rem" onclick="showFcCreate()"><i class="fas fa-plus"></i> New Card</button>
         <button class="btn btn-outline" style="font-size:.85rem;padding:.5rem 1.25rem" onclick="generateFcWithAI()">✦ Generate with AI</button>
+        <button class="btn btn-outline" style="font-size:.85rem;padding:.5rem 1.25rem" onclick="openFcPackModal()"><i class="fas fa-box-open"></i> Starter Packs</button>
         <select id="fc-subject" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.45rem .75rem;color:var(--white);font-size:.8rem" onchange="filterFcBySubject(this.value)">
           <option value="">All Topics</option>
           <option>Pure Mathematics</option><option>Statistics</option><option>Mechanics</option>
@@ -15366,7 +15372,259 @@ showDash = function(sub) {
     if (si) si.classList.add('active');
     if (sub === 'cmdwords') renderCommandWords();
   }
+  if (sub === 'progress') setTimeout(renderHeatmap, 100);
 };
+
+// ══════════════════════════════════════════
+// ACTIVITY HEATMAP RENDERER
+// ══════════════════════════════════════════
+function renderHeatmap() {
+  const heatmap = document.getElementById('heatmap');
+  if (!heatmap) return;
+  const activity = JSON.parse(localStorage.getItem('synaptiq_activity') || '{}');
+  const WEEKS = 16;
+  const today = new Date();
+  const days = [];
+  for (let i = WEEKS * 7 - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    days.push({ key, xp: activity[key] || 0, date: d });
+  }
+  const maxXP = Math.max(...days.map(d => d.xp), 1);
+  const DAY_NAMES = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+  // Build grid: 7 rows × 16 cols
+  const grid = Array.from({length: 7}, () => []);
+  days.forEach((day, idx) => { grid[day.date.getDay()].push(day); });
+  let html = '<div style="display:flex;gap:3px;overflow-x:auto;padding-bottom:.25rem">';
+  for (let w = 0; w < WEEKS; w++) {
+    html += '<div style="display:flex;flex-direction:column;gap:3px">';
+    for (let dow = 0; dow < 7; dow++) {
+      const day = days[w * 7 + dow];
+      if (!day) { html += '<div style="width:13px;height:13px"></div>'; continue; }
+      const intensity = day.xp === 0 ? 0 : Math.min(day.xp / maxXP, 1);
+      let bg;
+      if (intensity === 0) bg = 'var(--bg4)';
+      else if (intensity < 0.25) bg = 'rgba(201,168,76,0.2)';
+      else if (intensity < 0.5) bg = 'rgba(201,168,76,0.45)';
+      else if (intensity < 0.75) bg = 'rgba(201,168,76,0.7)';
+      else bg = 'var(--gold)';
+      html += `<div title="${day.key}: ${day.xp} XP earned" style="width:13px;height:13px;border-radius:2px;background:${bg};cursor:default;flex-shrink:0"></div>`;
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  // Month labels
+  const firstDay = days[0].date;
+  const lastDay = days[days.length - 1].date;
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  html += `<div style="font-size:.72rem;color:var(--muted);margin-top:.4rem">${months[firstDay.getMonth()]} — ${months[lastDay.getMonth()]} ${lastDay.getFullYear()}</div>`;
+  heatmap.innerHTML = html;
+}
+
+// ══════════════════════════════════════════
+// FLASHCARD STARTER PACKS
+// ══════════════════════════════════════════
+const FC_STARTER_PACKS = {
+  'Algebra': [
+    {q:'Expand and simplify (x + 3)(x − 2)',a:'x² + x − 6\nMultiply: x·x − 2x + 3x − 6'},
+    {q:'Complete the square for x² + 6x + 5',a:'(x + 3)² − 4\nHalf coefficient of x: (x+3)² − 9 + 5'},
+    {q:'Solve 2x² − 5x + 3 = 0 by factorisation',a:'(2x − 3)(x − 1) = 0 → x = 3/2 or x = 1'},
+    {q:'What does the discriminant b² − 4ac tell you?',a:'> 0: two distinct real roots\n= 0: one repeated root\n< 0: no real roots'},
+    {q:'State the Factor Theorem',a:'If f(a) = 0 then (x − a) is a factor of f(x)'},
+    {q:'Remainder when f(x) is divided by (x − a)?',a:'The remainder is f(a) — Remainder Theorem'},
+    {q:'Simplify (x² − 9) / (x + 3)',a:'(x−3)(x+3)/(x+3) = x − 3, provided x ≠ −3'},
+  ],
+  'Calculus': [
+    {q:'Differentiate y = xⁿ',a:'dy/dx = nxⁿ⁻¹ (Power Rule)'},
+    {q:'Derivative of sin(x)?',a:'cos(x)'},
+    {q:'Derivative of cos(x)?',a:'−sin(x)'},
+    {q:'Derivative of eˣ?',a:'eˣ (it is its own derivative)'},
+    {q:'Derivative of ln(x)?',a:'1/x'},
+    {q:'State the Chain Rule',a:'dy/dx = dy/du · du/dx\ne.g. d/dx[sin(x²)] = cos(x²) · 2x'},
+    {q:'State the Product Rule',a:'d/dx[uv] = u\'v + uv\''},
+    {q:'State the Quotient Rule',a:'d/dx[u/v] = (u\'v − uv\') / v²'},
+    {q:'∫xⁿ dx (n ≠ −1)',a:'xⁿ⁺¹/(n+1) + C'},
+    {q:'∫eˣ dx',a:'eˣ + C'},
+    {q:'∫1/x dx',a:'ln|x| + C'},
+    {q:'∫cos(x) dx',a:'sin(x) + C'},
+    {q:'∫sin(x) dx',a:'−cos(x) + C'},
+  ],
+  'Trigonometry': [
+    {q:'State the Sine Rule',a:'a/sin A = b/sin B = c/sin C'},
+    {q:'State the Cosine Rule',a:'a² = b² + c² − 2bc·cos A'},
+    {q:'Pythagorean identity',a:'sin²θ + cos²θ = 1'},
+    {q:'tan θ in terms of sin and cos',a:'tan θ = sin θ / cos θ'},
+    {q:'sin(2θ) = ?',a:'2 sin θ cos θ'},
+    {q:'cos(2θ) — three forms',a:'cos²θ − sin²θ = 2cos²θ − 1 = 1 − 2sin²θ'},
+    {q:'180° in radians',a:'π radians'},
+    {q:'Exact value of sin 30°',a:'1/2'},
+    {q:'Exact value of cos 60°',a:'1/2'},
+    {q:'Exact value of tan 45°',a:'1'},
+    {q:'Area of a triangle (trig form)',a:'Area = ½ab sin C'},
+  ],
+  'Exponentials & Logs': [
+    {q:'logₐb = c means…',a:'aᶜ = b (the log is the exponent)'},
+    {q:'Log product rule',a:'log(xy) = log x + log y'},
+    {q:'Log quotient rule',a:'log(x/y) = log x − log y'},
+    {q:'Log power rule',a:'log(xⁿ) = n log x'},
+    {q:'ln(e) = ?',a:'1'},
+    {q:'Derivative of aˣ',a:'aˣ · ln a'},
+    {q:'Solve eˣ = 5',a:'x = ln 5 ≈ 1.609'},
+    {q:'Solve ln(x) = 3',a:'x = e³ ≈ 20.09'},
+  ],
+  'Statistics': [
+    {q:'Mean of frequency distribution',a:'x̄ = Σ(fx) / Σf'},
+    {q:'Variance formula',a:'σ² = Σx²/n − x̄²'},
+    {q:'Normal distribution notation',a:'X ~ N(μ, σ²)'},
+    {q:'What is a p-value?',a:'P(results at least as extreme | H₀ true). Reject H₀ if p < α'},
+    {q:'Binomial distribution notation',a:'X ~ B(n, p)'},
+    {q:'P(X = r) for B(n, p)',a:'ⁿCᵣ · pʳ · (1−p)ⁿ⁻ʳ'},
+    {q:'Conditions for Normal approximation to Binomial',a:'n large, p close to 0.5; use X ~ N(np, np(1−p))'},
+  ],
+  'Mechanics': [
+    {q:'Newton\'s 2nd Law',a:'F = ma'},
+    {q:'SUVAT: v = ?',a:'v = u + at'},
+    {q:'SUVAT: s = ? (two forms)',a:'s = ut + ½at²\nalso v² = u² + 2as'},
+    {q:'Coefficient of friction μ',a:'F = μR at limiting equilibrium\n(F ≤ μR in general)'},
+    {q:'Work-Energy theorem',a:'Work done = ΔKE = ½mv² − ½mu²'},
+    {q:'Gravitational PE',a:'GPE = mgh'},
+    {q:'Momentum formula',a:'p = mv (kg m/s)'},
+    {q:'Conservation of momentum',a:'Total momentum before = Total momentum after (no external forces)'},
+  ],
+  'Vectors': [
+    {q:'Magnitude of a = xi + yj',a:'|a| = √(x² + y²)'},
+    {q:'Unit vector in direction of a',a:'â = a / |a|'},
+    {q:'Midpoint position vector of AB',a:'½(a + b)'},
+    {q:'Condition for two vectors to be parallel',a:'a = kb for some scalar k'},
+    {q:'Condition for perpendicular vectors',a:'a · b = 0 (dot product = 0)'},
+    {q:'Dot product formula',a:'a · b = |a||b|cos θ\nor component form: x₁x₂ + y₁y₂'},
+  ],
+  'Sequences & Series': [
+    {q:'Arithmetic sequence nth term',a:'aₙ = a + (n−1)d'},
+    {q:'Arithmetic series sum Sₙ',a:'Sₙ = n/2 · (2a + (n−1)d) = n/2 · (a + l)'},
+    {q:'Geometric sequence nth term',a:'aₙ = arⁿ⁻¹'},
+    {q:'Geometric series sum Sₙ',a:'Sₙ = a(1 − rⁿ) / (1 − r) for r ≠ 1'},
+    {q:'Sum to infinity of geometric series',a:'S∞ = a / (1 − r), valid when |r| < 1'},
+    {q:'Binomial expansion (1 + x)ⁿ',a:'1 + nx + n(n−1)/2! x² + n(n−1)(n−2)/3! x³ + …\nValid for |x| < 1 when n is not a positive integer'},
+  ]
+};
+
+function openFcPackModal() {
+  const existing = document.getElementById('fc-pack-modal');
+  if (existing) { existing.remove(); return; }
+  const modal = document.createElement('div');
+  modal.id = 'fc-pack-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+  const packItems = Object.entries(FC_STARTER_PACKS).map(([name, cards]) => `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1rem;cursor:pointer;transition:all .2s"
+         onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(201,168,76,0.07)'"
+         onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg3)'"
+         onclick="loadFcPack('${name}')">
+      <div style="font-weight:700;margin-bottom:.25rem">${name}</div>
+      <div style="font-size:.8rem;color:var(--muted)">${cards.length} flashcards</div>
+    </div>`).join('');
+  modal.innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1.5rem;max-width:540px;width:100%;max-height:80vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+        <div style="font-size:1.1rem;font-weight:700">📦 A-Level Maths Starter Packs</div>
+        <button onclick="document.getElementById('fc-pack-modal').remove()" style="background:none;border:none;color:var(--muted);font-size:1.25rem;cursor:pointer;line-height:1">✕</button>
+      </div>
+      <p style="font-size:.83rem;color:var(--muted);margin-bottom:1rem">Pre-written flashcards covering the full A-Level Maths spec. Already-owned cards won't be duplicated.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">${packItems}</div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function loadFcPack(packName) {
+  const pack = FC_STARTER_PACKS[packName];
+  if (!pack) return;
+  const today = new Date().toISOString().split('T')[0];
+  let added = 0;
+  pack.forEach(card => {
+    const dup = fcCards.some(c => c.front.toLowerCase().trim() === card.q.toLowerCase().trim());
+    if (!dup) {
+      fcCards.push({
+        id: Date.now() + Math.random(), front: card.q, back: card.a,
+        subject: packName, nextReview: today, ease: 2, interval: 1, repetitions: 0
+      });
+      added++;
+    }
+  });
+  localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+  syncToCloud();
+  document.getElementById('fc-pack-modal')?.remove();
+  loadFcDue();
+  showToast(`✅ Added ${added} new card${added !== 1 ? 's' : ''} from the "${packName}" pack!`);
+}
+
+// ══════════════════════════════════════════
+// WEAK TOPIC DRILL
+// ══════════════════════════════════════════
+async function startWeakTopicDrill() {
+  const btn = document.getElementById('weak-drill-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Finding your weak spots…'; }
+
+  const mistakes = JSON.parse(localStorage.getItem('synaptiq_mistakes') || '[]');
+  const topicCounts = {};
+  mistakes.forEach(m => {
+    const t = m.topic || m.subject || m.category || 'Pure Mathematics';
+    topicCounts[t] = (topicCounts[t] || 0) + 1;
+  });
+  // Include weak flashcard subjects
+  fcCards.filter(c => (c.ease || 2) <= 2).slice(0, 8).forEach(c => {
+    const t = c.subject || 'Pure Mathematics';
+    topicCounts[t] = (topicCounts[t] || 0) + 1;
+  });
+
+  const sorted = Object.entries(topicCounts).sort((a, b) => b[1] - a[1]);
+  const topTopics = sorted.slice(0, 3).map(e => e[0]);
+  if (topTopics.length === 0) topTopics.push('Pure Mathematics', 'Calculus');
+  const topicStr = topTopics.join(', ');
+
+  const sys = `You are a UK A-Level Maths examiner. Generate 3 targeted practice questions for a student who is struggling with: ${topicStr}.
+Return ONLY valid JSON (no markdown): {"questions":[{"question":"full question text","topic":"exact topic name","marks":4}]}.
+Make questions exam-style with full context. Vary difficulty. Cover the weak topics listed.`;
+
+  try {
+    const data = await callClaude([{role:'user',content:`Generate 3 targeted A-Level Maths questions for weak topics: ${topicStr}`}], sys, 1200);
+    const raw = getReply(data);
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('No JSON');
+    const result = JSON.parse(m[0]);
+
+    showDash('questions');
+    setTimeout(() => {
+      const output = document.getElementById('q-output');
+      const qContainer = document.getElementById('q-questions');
+      const titleEl = document.getElementById('q-output-title');
+      if (!output || !qContainer) return;
+      output.classList.add('show');
+      if (titleEl) titleEl.textContent = `🎯 Weak Topic Drill — ${topicStr}`;
+      qContainer.innerHTML = (result.questions || []).map((q, i) => `
+        <div class="question-block" style="border-left:3px solid var(--gold)">
+          <div class="question-header">
+            <span class="q-num">Q${i + 1}</span>
+            <span style="font-size:.78rem;color:var(--gold);background:rgba(201,168,76,0.1);padding:.2rem .6rem;border-radius:12px">${q.topic || ''}</span>
+            <span style="font-size:.78rem;color:var(--muted)">[${q.marks || 4} marks]</span>
+          </div>
+          <div class="question-text">${sanitizeAIHTML(q.question || '')}</div>
+          <textarea class="answer-box" rows="4" placeholder="Write your answer here…"></textarea>
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.5rem">
+            <button class="btn btn-outline" style="font-size:.8rem;padding:.4rem .9rem" onclick="checkAnswer(this, ${JSON.stringify(q.question || '')}, ${q.marks || 4})">✓ Check Answer</button>
+            <button class="btn btn-outline" style="font-size:.8rem;padding:.4rem .9rem" onclick="teachMeThis(${JSON.stringify((q.topic || q.question || '').slice(0, 80))})">📚 Teach Me This</button>
+          </div>
+          <div class="feedback-area" style="margin-top:.75rem"></div>
+        </div>`).join('');
+      if (window.MathJax) MathJax.typesetPromise([qContainer]).catch(() => {});
+      showToast(`🎯 Drill ready! Targeting: ${topTopics.join(', ')}`);
+    }, 200);
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '🎯 Drill My Weak Topics'; }
+    showToast('⚠️ Could not generate drill — try again');
+  }
+}
 
 </script>
 
