@@ -794,31 +794,7 @@ body {
   background-clip: text;
 }
 
-/* ═══ FAQ ENHANCEMENTS ═══ */
-.faq-item {
-  border: 1px solid rgba(201,168,76,0.1);
-  border-radius: 14px; margin-bottom: .65rem;
-  background: rgba(15,17,24,0.7);
-  backdrop-filter: blur(8px);
-  transition: border-color .2s, box-shadow .2s;
-  overflow: hidden;
-}
-.faq-item[open] {
-  border-color: rgba(201,168,76,0.28);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
-}
-.faq-q {
-  padding: 1.1rem 1.25rem; cursor: pointer; font-weight: 600;
-  font-size: .95rem; list-style: none; display: flex;
-  align-items: center; justify-content: space-between;
-  user-select: none;
-}
-.faq-q::after { content: '+'; color: var(--gold); font-size: 1.2rem; font-weight: 300; transition: transform .3s; }
-.faq-item[open] .faq-q::after { transform: rotate(45deg); }
-.faq-a {
-  padding: 0 1.25rem 1.1rem; color: var(--muted);
-  font-size: .875rem; line-height: 1.7;
-}
+/* FAQ accordion — defined in TOAST/FAQ section below */
 
 /* ═══ NAV LINKS ACTIVE STATE ═══ */
 .nav-links a.active {
@@ -1224,8 +1200,19 @@ body {
   border-radius: 12px; font-size: .875rem; line-height: 1.6;
   animation: msgIn .3s ease;
 }
-.msg.bot { background: var(--bg3); border: 1px solid var(--border); align-self: flex-start; border-bottom-left-radius: 4px; }
-.msg.user { background: var(--gold); color: var(--black); align-self: flex-end; border-bottom-right-radius: 4px; font-weight: 500; }
+.msg.bot {
+  background: rgba(21,24,33,0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(201,168,76,0.12);
+  align-self: flex-start; border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+.msg.user {
+  background: linear-gradient(135deg, #D4A820, #C9A84C);
+  color: var(--black); align-self: flex-end;
+  border-bottom-right-radius: 4px; font-weight: 600;
+  box-shadow: 0 4px 16px rgba(201,168,76,0.3);
+}
 .msg.typing span { display: inline-block; width: 6px; height: 6px; background: var(--muted); border-radius: 50%; animation: bounce .8s infinite; margin: 0 1px; }
 .msg.typing span:nth-child(2) { animation-delay: .15s; }
 .msg.typing span:nth-child(3) { animation-delay: .3s; }
@@ -1512,15 +1499,27 @@ body.mode-adhd .adhd-break { display: block; }
 }
 .achievements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; }
 .ach-card {
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 12px; padding: 1rem; text-align: center;
-  transition: all .2s;
+  background: rgba(15,17,24,0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px; padding: 1.1rem; text-align: center;
+  transition: all .3s cubic-bezier(.4,0,.2,1);
+  position: relative; overflow: hidden;
 }
-.ach-card.earned { border-color: rgba(201,168,76,0.4); }
-.ach-card.locked { opacity: .4; }
-.ach-icon { font-size: 2rem; margin-bottom: .5rem; }
+.ach-card.earned {
+  border-color: rgba(201,168,76,0.35);
+  background: rgba(201,168,76,0.07);
+  box-shadow: 0 0 24px rgba(201,168,76,0.12), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.ach-card.earned:hover {
+  border-color: rgba(201,168,76,0.55);
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 8px 28px rgba(201,168,76,0.2);
+}
+.ach-card.locked { opacity: .35; filter: grayscale(0.6); }
+.ach-icon { font-size: 2rem; margin-bottom: .5rem; line-height: 1; }
 .ach-name { font-size: .75rem; font-weight: 700; }
-.ach-desc { font-size: .65rem; color: var(--muted); margin-top: .2rem; }
+.ach-desc { font-size: .65rem; color: var(--muted); margin-top: .25rem; line-height: 1.4; }
 
 /* ═══════════════════════════════════════
    STRENGTHS PAGE
@@ -1631,36 +1630,51 @@ body.mode-adhd .adhd-break { display: block; }
    TOAST
 ═══════════════════════════════════════ */
 #toast {
-  position: fixed; bottom: 2rem; right: 2rem;
-  background: var(--bg3); border: 1px solid var(--gold);
-  border-radius: 12px; padding: 1rem 1.5rem;
-  color: var(--white); font-size: .875rem; font-weight: 500;
-  z-index: 9999; opacity: 0; transform: translateY(10px);
-  transition: all .3s; pointer-events: none; max-width: 300px;
+  position: fixed; bottom: 6rem; right: 2rem;
+  background: rgba(10,12,18,0.96);
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid rgba(201,168,76,0.35);
+  border-radius: 16px; padding: .9rem 1.35rem;
+  color: var(--white); font-size: .875rem; font-weight: 600;
+  z-index: 9999; opacity: 0; transform: translateY(16px) scale(0.92);
+  transition: all .35s cubic-bezier(0.34,1.56,0.64,1); pointer-events: none;
+  max-width: 320px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 20px rgba(201,168,76,0.12);
 }
-#toast.show { opacity: 1; transform: translateY(0); }
+#toast.show { opacity: 1; transform: translateY(0) scale(1); }
 
-/* FAQ accordion */
+/* FAQ accordion — glassmorphism */
 .faq-item {
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 12px; overflow: hidden;
-  transition: border-color .2s;
+  background: rgba(15,17,24,0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(201,168,76,0.1);
+  border-radius: 16px; overflow: hidden;
+  transition: border-color .25s, box-shadow .25s;
+  margin-bottom: 0;
 }
-.faq-item[open] { border-color: rgba(201,168,76,0.35); }
+.faq-item[open] {
+  border-color: rgba(201,168,76,0.3);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(201,168,76,0.06);
+}
 .faq-q {
-  padding: 1.1rem 1.5rem; cursor: pointer;
+  padding: 1.15rem 1.4rem; cursor: pointer;
   font-weight: 600; font-size: .95rem; list-style: none;
   display: flex; align-items: center; justify-content: space-between;
-  transition: color .2s;
+  transition: color .2s; user-select: none;
 }
 .faq-q::-webkit-details-marker { display: none; }
-.faq-q::after { content: '+'; font-size: 1.2rem; color: var(--gold); transition: transform .2s; flex-shrink: 0; }
+.faq-q::after {
+  content: '+'; font-size: 1.25rem; color: var(--gold);
+  transition: transform .3s cubic-bezier(.4,0,.2,1); flex-shrink: 0;
+  font-weight: 300; line-height: 1;
+}
 .faq-item[open] .faq-q::after { transform: rotate(45deg); }
 .faq-item[open] .faq-q { color: var(--gold); }
 .faq-a {
-  padding: 0 1.5rem 1.25rem; color: var(--muted);
-  font-size: .9rem; line-height: 1.8; border-top: 1px solid var(--border);
-  padding-top: .75rem; margin: 0;
+  padding: 0 1.4rem 1.15rem; color: rgba(136,146,164,0.9);
+  font-size: .875rem; line-height: 1.8; margin: 0;
 }
 
 /* Offline banner */
@@ -1766,23 +1780,37 @@ body.mode-adhd .adhd-break { display: block; }
 ═══════════════════════════════════════ */
 #exit-popup {
   display: none; position: fixed; inset: 0; z-index: 10000;
-  background: rgba(7,8,12,0.85); backdrop-filter: blur(8px);
+  background: rgba(7,8,12,0.88); backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   align-items: center; justify-content: center;
 }
 #exit-popup.show { display: flex; }
 .exit-popup-box {
-  background: var(--bg2); border: 1px solid var(--gold);
-  border-radius: 24px; padding: 3rem; max-width: 480px; width: 90%;
-  text-align: center; box-shadow: var(--shadow), var(--glow);
-  animation: fadeUp .4s ease;
-  position: relative;
+  background: rgba(10,12,18,0.95);
+  backdrop-filter: blur(48px) saturate(1.6);
+  -webkit-backdrop-filter: blur(48px) saturate(1.6);
+  border: 1px solid rgba(201,168,76,0.35);
+  border-radius: 28px; padding: 3rem; max-width: 480px; width: 90%;
+  text-align: center;
+  box-shadow: 0 32px 100px rgba(0,0,0,0.7), 0 0 60px rgba(201,168,76,0.12), inset 0 1px 0 rgba(255,255,255,0.06);
+  animation: authBoxIn .45s cubic-bezier(0.34,1.4,0.64,1) both;
+  position: relative; overflow: hidden;
+}
+.exit-popup-box::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
 }
 .exit-popup-close {
   position: absolute; top: 1rem; right: 1rem;
-  background: none; border: none; color: var(--muted);
-  font-size: 1.4rem; cursor: pointer;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; color: var(--muted);
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; cursor: pointer; transition: all .2s;
 }
-.exit-popup-box h2 { font-family: var(--font-head); font-size: 1.8rem; margin-bottom: .75rem; }
+.exit-popup-close:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+.exit-popup-box h2 {
+  font-family: var(--font-head); font-size: 1.8rem; margin-bottom: .75rem;
+}
 .exit-popup-box p { color: var(--muted); margin-bottom: 1.5rem; line-height: 1.6; }
 
 /* ═══════════════════════════════════════
@@ -1790,26 +1818,41 @@ body.mode-adhd .adhd-break { display: block; }
 ═══════════════════════════════════════ */
 #onboarding-modal {
   display: none; position: fixed; inset: 0; z-index: 9999;
-  background: rgba(7,8,12,0.85); backdrop-filter: blur(8px);
+  background: rgba(7,8,12,0.9); backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   align-items: center; justify-content: center;
 }
 #onboarding-modal.show { display: flex; }
 .onboarding-box {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: 24px; padding: 2.5rem; max-width: 520px; width: 90%;
-  box-shadow: var(--shadow); animation: fadeUp .4s ease;
+  background: rgba(10,12,18,0.95);
+  backdrop-filter: blur(48px) saturate(1.6);
+  -webkit-backdrop-filter: blur(48px) saturate(1.6);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 28px; padding: 2.75rem; max-width: 520px; width: 90%;
+  box-shadow: 0 32px 100px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06);
+  animation: authBoxIn .5s cubic-bezier(0.34,1.4,0.64,1) both;
+  position: relative; overflow: hidden;
 }
-.onboarding-box h2 { font-family: var(--font-head); font-size: 1.6rem; margin-bottom: .5rem; }
+.onboarding-box::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.onboarding-box h2 {
+  font-family: var(--font-head); font-size: 1.7rem; margin-bottom: .5rem;
+}
 .onboarding-box .sub { color: var(--muted); margin-bottom: 2rem; }
-.onboarding-tips { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+.onboarding-tips { display: flex; flex-direction: column; gap: .85rem; margin-bottom: 2rem; }
 .onboarding-tip {
   display: flex; gap: 1rem; align-items: flex-start;
-  background: var(--bg3); border-radius: 12px; padding: 1rem 1.25rem;
-  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+  border-radius: 14px; padding: 1rem 1.25rem;
+  border: 1px solid rgba(201,168,76,0.1);
+  transition: border-color .2s;
 }
-.onboarding-tip .tip-icon { font-size: 1.5rem; flex-shrink: 0; }
+.onboarding-tip:hover { border-color: rgba(201,168,76,0.22); }
+.onboarding-tip .tip-icon { font-size: 1.6rem; flex-shrink: 0; }
 .onboarding-tip h4 { font-size: .9rem; font-weight: 700; margin-bottom: .25rem; }
-.onboarding-tip p { font-size: .8rem; color: var(--muted); }
+.onboarding-tip p { font-size: .8rem; color: var(--muted); line-height: 1.55; }
 
 /* ═══════════════════════════════════════
    A-LEVEL CONTENT PAGE
@@ -2555,9 +2598,9 @@ body.mode-adhd .adhd-break { display: block; }
       <h2>Ask the AI Tutor anything</h2>
       <p style="color:var(--muted);max-width:520px;margin:.75rem auto 0">Type a real A-Level Maths question below. See exactly how Synaptiq explains it — full working, step-by-step, mark-scheme style.</p>
     </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;overflow:hidden;max-width:780px;margin:0 auto;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+    <div style="background:rgba(12,14,20,0.88);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(201,168,76,0.2);border-radius:24px;overflow:hidden;max-width:780px;margin:0 auto;box-shadow:0 32px 80px rgba(0,0,0,.6),0 0 0 1px rgba(201,168,76,0.06)">
       <!-- Chat header -->
-      <div style="padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem">
+      <div style="padding:1rem 1.5rem;border-bottom:1px solid rgba(201,168,76,0.1);display:flex;align-items:center;gap:.75rem;background:rgba(255,255,255,0.02)">
         <div style="width:32px;height:32px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem">✦</div>
         <div>
           <div style="font-weight:700;font-size:.9rem">Synaptiq AI Tutor</div>
@@ -2684,29 +2727,32 @@ body.mode-adhd .adhd-break { display: block; }
   </section>
 
   <!-- Value comparison banner -->
-  <section style="position:relative;z-index:1;padding:3rem 2rem;background:rgba(201,168,76,0.04);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
-    <div style="max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem;text-align:center">
-      <div style="padding:1.5rem">
-        <div style="font-size:2rem;margin-bottom:.5rem">👨‍🏫</div>
-        <div style="font-size:1.1rem;font-weight:700;margin-bottom:.25rem">Private Tutor</div>
-        <div style="font-size:2rem;font-weight:900;font-family:var(--font-head);color:var(--red)">£50–80</div>
-        <div style="color:var(--muted);font-size:.85rem">per hour</div>
-        <div style="margin-top:.75rem;font-size:.8rem;color:var(--muted);line-height:1.6">1 hour per week · Fixed schedule · Can't revisit sessions</div>
+  <section style="position:relative;z-index:1;padding:3.5rem 2rem;background:rgba(10,12,18,0.7);border-top:1px solid rgba(201,168,76,0.1);border-bottom:1px solid rgba(201,168,76,0.1);backdrop-filter:blur(12px)">
+    <div style="text-align:center;margin-bottom:2rem">
+      <div class="section-label">Why Synaptiq makes sense</div>
+    </div>
+    <div style="max-width:900px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.25rem;text-align:center">
+      <div style="padding:1.75rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:18px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(251,113,133,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
+        <div style="font-size:2.2rem;margin-bottom:.75rem">👨‍🏫</div>
+        <div style="font-size:1rem;font-weight:700;margin-bottom:.5rem">Private Tutor</div>
+        <div style="font-size:2.2rem;font-weight:900;font-family:var(--font-head);color:var(--red)">£50–80</div>
+        <div style="color:var(--muted);font-size:.82rem;margin-bottom:.75rem">per hour</div>
+        <div style="font-size:.78rem;color:rgba(136,146,164,0.7);line-height:1.65">1 hour per week · Fixed schedule · Can't revisit sessions</div>
       </div>
-      <div style="padding:1.5rem">
-        <div style="font-size:2rem;margin-bottom:.5rem">📚</div>
-        <div style="font-size:1.1rem;font-weight:700;margin-bottom:.25rem">Textbooks + Revision Guides</div>
-        <div style="font-size:2rem;font-weight:900;font-family:var(--font-head);color:var(--muted)">£40–80</div>
-        <div style="color:var(--muted);font-size:.85rem">per set</div>
-        <div style="margin-top:.75rem;font-size:.8rem;color:var(--muted);line-height:1.6">Static content · No personalisation · Can't answer your questions</div>
+      <div style="padding:1.75rem;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:18px;transition:border-color .2s" onmouseover="this.style.borderColor='rgba(148,163,184,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
+        <div style="font-size:2.2rem;margin-bottom:.75rem">📚</div>
+        <div style="font-size:1rem;font-weight:700;margin-bottom:.5rem">Textbooks + Revision Guides</div>
+        <div style="font-size:2.2rem;font-weight:900;font-family:var(--font-head);color:var(--muted)">£40–80</div>
+        <div style="color:var(--muted);font-size:.82rem;margin-bottom:.75rem">one-time</div>
+        <div style="font-size:.78rem;color:rgba(136,146,164,0.7);line-height:1.65">Static content · No personalisation · Can't answer questions</div>
       </div>
-      <div style="padding:1.5rem;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.25);border-radius:16px;position:relative">
-        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--black);font-size:.65rem;font-weight:800;letter-spacing:.1em;padding:.3rem .9rem;border-radius:20px;white-space:nowrap">BEST VALUE</div>
-        <div style="font-size:2rem;margin-bottom:.5rem">🤖</div>
-        <div style="font-size:1.1rem;font-weight:700;margin-bottom:.25rem">Synaptiq</div>
-        <div style="font-size:2rem;font-weight:900;font-family:var(--font-head);color:var(--gold)">£35</div>
-        <div style="color:var(--muted);font-size:.85rem">per month</div>
-        <div style="margin-top:.75rem;font-size:.8rem;color:var(--muted);line-height:1.6">Unlimited sessions · 24/7 · Personalised to your exam board</div>
+      <div style="padding:1.75rem;background:rgba(201,168,76,0.07);border:1.5px solid rgba(201,168,76,0.3);border-radius:18px;position:relative;box-shadow:0 0 40px rgba(201,168,76,0.1),inset 0 1px 0 rgba(255,255,255,0.05)">
+        <div style="position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#D4A820,#C9A84C);color:var(--black);font-size:.65rem;font-weight:800;letter-spacing:.12em;padding:.3rem 1rem;border-radius:20px;white-space:nowrap;box-shadow:0 4px 12px rgba(201,168,76,0.4)">BEST VALUE</div>
+        <div style="font-size:2.2rem;margin-bottom:.75rem">🤖</div>
+        <div style="font-size:1rem;font-weight:700;margin-bottom:.5rem">Synaptiq</div>
+        <div style="font-size:2.2rem;font-weight:900;font-family:var(--font-head);background:linear-gradient(135deg,#C9A84C,#F0D080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">£35</div>
+        <div style="color:var(--muted);font-size:.82rem;margin-bottom:.75rem">per month</div>
+        <div style="font-size:.78rem;color:rgba(136,146,164,0.7);line-height:1.65">Unlimited sessions · 24/7 · Personalised to your board</div>
       </div>
     </div>
   </section>
@@ -2815,7 +2861,7 @@ body.mode-adhd .adhd-break { display: block; }
   <!-- CTA -->
   <section class="cta-section">
     <div style="display:inline-block;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:20px;padding:.3rem .9rem;font-size:.75rem;font-weight:700;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.25rem">🎓 Free trial — no charge for 7 days</div>
-    <h2>Stop losing marks.<br><em style="color:var(--gold);font-style:normal">Start understanding the method.</em></h2>
+    <h2>Stop losing marks.<br><em style="font-style:normal;background:linear-gradient(135deg,#C9A84C 0%,#F0D080 50%,#C9A84C 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 5s linear infinite">Start understanding the method.</em></h2>
     <p>2,400+ students have already improved by an average of +2 grades. The free trial takes 30 seconds to start.</p>
     <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:1rem">
       <button class="btn-hero-primary" onclick="nav('auth');trackEvent('cta_clicked',{location:'footer_cta'})">Start Your Free Trial →</button>
