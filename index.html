@@ -1871,6 +1871,7 @@ body.mode-adhd .adhd-break { display: block; }
       <button class="a11y-btn" id="btn-dyscalculia" onclick="toggleMode('dyscalculia')" aria-label="Toggle Dyscalculia mode" aria-pressed="false">Dyscalculia</button>
     </div>
     <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">🌙</button>
+    <div id="session-timer-badge" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:.3rem .75rem;font-size:.78rem;color:var(--muted);align-items:center;gap:.4rem" title="Time studied today">⏱ <span id="session-timer-text">0m</span></div>
     <div id="xp-badge"><i class="fas fa-star"></i><span id="xp-display">0 XP</span></div>
     <div id="auth-buttons">
       <button class="btn btn-outline" onclick="nav('auth');showLogin()">Log In</button>
@@ -2947,6 +2948,19 @@ body.mode-adhd .adhd-break { display: block; }
               </div>
             </div>
           </div>
+          <!-- Radar Chart -->
+          <div class="card" style="margin-top:1.5rem">
+            <div class="card-header"><span class="card-title">🕸 Topic Confidence Radar</span></div>
+            <div class="card-body" style="display:flex;flex-direction:column;align-items:center;padding:1.25rem 1rem">
+              <svg id="radar-chart" viewBox="0 0 220 220" width="200" height="200" style="overflow:visible"></svg>
+              <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:.75rem;font-size:.75rem;color:var(--muted)">
+                <span style="color:#60A5FA">● Pure Maths 1</span>
+                <span style="color:var(--gold)">● Pure Maths 2</span>
+                <span style="color:var(--green)">● Statistics</span>
+                <span style="color:#A78BFA">● Mechanics</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -3263,6 +3277,11 @@ body.mode-adhd .adhd-break { display: block; }
         <div class="flashcard-actions" id="fc-actions" style="display:none">
           <button class="fc-wrong" onclick="fcAnswer(false)"><i class="fas fa-times"></i> Didn't Know</button>
           <button class="fc-right" onclick="fcAnswer(true)"><i class="fas fa-check"></i> Got It!</button>
+        </div>
+        <div style="text-align:center;margin-top:.75rem;font-size:.75rem;color:var(--muted)">
+          <kbd style="background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:.1rem .4rem;font-family:monospace">Space</kbd> flip &nbsp;
+          <kbd style="background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:.1rem .4rem;font-family:monospace">←</kbd> didn't know &nbsp;
+          <kbd style="background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:.1rem .4rem;font-family:monospace">→</kbd> got it
         </div>
       </div>
     </div>
@@ -4166,7 +4185,9 @@ body.mode-adhd .adhd-break { display: block; }
             <option selected>Mathematics</option>
           </select>
           <button class="btn-gold" onclick="practiseMistakes()">🎯 Practise My Weak Areas</button>
+          <button class="btn btn-outline" style="font-size:.85rem;padding:.5rem 1.1rem" onclick="quizMistakes(this)">⚡ Quiz Me Now</button>
         </div>
+        <div id="mistakes-quiz-output" style="display:none;margin-bottom:1.5rem"></div>
         <div id="mistakes-list"></div>
       </div>
     </div>
@@ -4742,6 +4763,92 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
     </div>
     <div style="margin-top:1.5rem;text-align:center">
       <button class="btn btn-gold" style="width:100%" onclick="emailParentReport()">📧 Email me this report</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ ONBOARDING MODAL ═══════════════════════ -->
+<div id="onboarding-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:2.5rem;max-width:480px;width:90%;position:relative">
+    <!-- Step indicators -->
+    <div style="display:flex;gap:.5rem;margin-bottom:2rem;justify-content:center" id="ob-steps">
+      <div class="ob-step ob-step-active" data-step="1"></div>
+      <div class="ob-step" data-step="2"></div>
+      <div class="ob-step" data-step="3"></div>
+    </div>
+    <!-- Step 1: Welcome -->
+    <div id="ob-step-1">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div style="font-size:3rem;margin-bottom:.75rem">🎓</div>
+        <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:.5rem">Welcome to Synaptiq!</h2>
+        <p style="color:var(--muted);font-size:.9rem">The AI-powered A-Level Maths tutor built around your exact mark scheme. Let's set up your profile — it takes 30 seconds.</p>
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">Your name</label>
+        <input class="form-input" id="ob-name" placeholder="e.g. Alex" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.65rem 1rem;color:var(--white);width:100%;box-sizing:border-box;font-size:.9rem">
+      </div>
+      <div class="form-group" style="margin-bottom:1.5rem">
+        <label class="form-label">Exam Board</label>
+        <select class="form-select" id="ob-board" style="width:100%">
+          <option value="AQA">AQA</option>
+          <option value="Edexcel">Edexcel (Pearson)</option>
+          <option value="OCR">OCR</option>
+          <option value="OCR MEI">OCR MEI</option>
+          <option value="WJEC">WJEC / Eduqas</option>
+        </select>
+      </div>
+      <button class="btn btn-gold" style="width:100%;padding:.8rem" onclick="obNext(1)">Next →</button>
+    </div>
+    <!-- Step 2: Exam date + goal -->
+    <div id="ob-step-2" style="display:none">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div style="font-size:3rem;margin-bottom:.75rem">🎯</div>
+        <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:.5rem">Set Your Target</h2>
+        <p style="color:var(--muted);font-size:.9rem">This helps Synaptiq build your personalised study timeline.</p>
+      </div>
+      <div class="form-group" style="margin-bottom:1rem">
+        <label class="form-label">A-Level Maths Exam Date</label>
+        <input type="date" class="form-input" id="ob-exam-date" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.65rem 1rem;color:var(--white);width:100%;box-sizing:border-box;font-size:.9rem">
+      </div>
+      <div class="form-group" style="margin-bottom:1.5rem">
+        <label class="form-label">Target Grade</label>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap" id="ob-grades">
+          <button class="ob-grade-btn" onclick="obSelectGrade(this,'A*')">A*</button>
+          <button class="ob-grade-btn" onclick="obSelectGrade(this,'A')">A</button>
+          <button class="ob-grade-btn" onclick="obSelectGrade(this,'B')">B</button>
+          <button class="ob-grade-btn" onclick="obSelectGrade(this,'C')">C</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:.75rem">
+        <button class="btn btn-outline" style="flex:1;padding:.8rem" onclick="obBack(2)">← Back</button>
+        <button class="btn btn-gold" style="flex:2;padding:.8rem" onclick="obNext(2)">Next →</button>
+      </div>
+    </div>
+    <!-- Step 3: Get started -->
+    <div id="ob-step-3" style="display:none">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div style="font-size:3rem;margin-bottom:.75rem">🚀</div>
+        <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:.5rem">You're all set, <span id="ob-name-display">there</span>!</h2>
+        <p style="color:var(--muted);font-size:.9rem">Here's your 3-step starter plan to get the most from Synaptiq:</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.5rem">
+        <div style="background:var(--bg3);border-radius:12px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer" onclick="obGo('checklist')">
+          <div style="font-size:1.5rem">✅</div>
+          <div><div style="font-weight:700;font-size:.9rem">Rate your topic confidence</div><div style="font-size:.8rem;color:var(--muted)">Mark each A-Level topic as not started, in progress, or confident</div></div>
+          <div style="margin-left:auto;color:var(--gold)">→</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:12px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer" onclick="obGo('questions')">
+          <div style="font-size:1.5rem">📝</div>
+          <div><div style="font-weight:700;font-size:.9rem">Answer your first practice question</div><div style="font-size:.8rem;color:var(--muted)">Pick a topic and get an AI-marked exam question</div></div>
+          <div style="margin-left:auto;color:var(--gold)">→</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:12px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer" onclick="obGo('flashcards')">
+          <div style="font-size:1.5rem">🗂</div>
+          <div><div style="font-weight:700;font-size:.9rem">Load your first flashcard pack</div><div style="font-size:.8rem;color:var(--muted)">60+ ready-made A-Level Maths cards with spaced repetition</div></div>
+          <div style="margin-left:auto;color:var(--gold)">→</div>
+        </div>
+      </div>
+      <button class="btn btn-gold" style="width:100%;padding:.8rem" onclick="obComplete()">Start Learning →</button>
     </div>
   </div>
 </div>
@@ -10780,6 +10887,12 @@ function exportQuestionsPDF() {
 .compare-table tr:hover td { background: rgba(201,168,76,0.04); }
 .compare-table .criteria-col { color: var(--muted); font-size: .8rem; font-weight: 600; }
 /* ── MISTAKES TRACKER ── */
+/* ── ONBOARDING ── */
+.ob-step { width: 32px; height: 6px; border-radius: 3px; background: var(--bg4); transition: background .3s; }
+.ob-step-active { background: var(--gold); }
+.ob-grade-btn { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: .45rem 1.1rem; color: var(--white); cursor: pointer; font-size: .9rem; font-weight: 600; transition: all .2s; }
+.ob-grade-btn:hover,.ob-grade-btn.selected { background: rgba(201,168,76,0.15); border-color: var(--gold); color: var(--gold); }
+/* ── MISTAKES ── */
 .mistake-item {
   background: var(--bg3); border: 1px solid var(--border);
   border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: .75rem;
@@ -16245,6 +16358,270 @@ Make questions exam-style with full context. Vary difficulty. Cover the weak top
     if (btn) { btn.disabled = false; btn.textContent = '🎯 Drill My Weak Topics'; }
     showToast('⚠️ Could not generate drill — try again');
   }
+}
+
+// ══════════════════════════════════════════
+// SESSION TIMER
+// ══════════════════════════════════════════
+const _sessionKey = 'synaptiq_session_' + new Date().toISOString().split('T')[0];
+let _sessionStart = Date.now();
+let _sessionSavedMs = (() => { try { return parseInt(localStorage.getItem(_sessionKey) || '0', 10); } catch(e) { return 0; } })();
+
+function _sessionTick() {
+  const totalMs = _sessionSavedMs + (Date.now() - _sessionStart);
+  const mins = Math.floor(totalMs / 60000);
+  const badge = document.getElementById('session-timer-badge');
+  const text = document.getElementById('session-timer-text');
+  if (!badge || !text) return;
+  if (mins > 0) {
+    badge.style.display = 'flex';
+    text.textContent = mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60}m` : `${mins}m`;
+  }
+  try { localStorage.setItem(_sessionKey, String(totalMs)); } catch(e) {}
+}
+setInterval(_sessionTick, 60000);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    _sessionSavedMs += Date.now() - _sessionStart;
+    try { localStorage.setItem(_sessionKey, String(_sessionSavedMs)); } catch(e) {}
+  } else {
+    _sessionStart = Date.now();
+  }
+});
+
+// ══════════════════════════════════════════
+// FLASHCARD KEYBOARD SHORTCUTS
+// ══════════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+  const sp = document.getElementById('sp-flashcards');
+  if (!sp || !sp.classList.contains('active')) return;
+  const card = document.getElementById('fc-card');
+  const actions = document.getElementById('fc-actions');
+  if (!card || card.style.display === 'none') return;
+  if (e.key === ' ' || e.code === 'Space') {
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    e.preventDefault();
+    card.classList.toggle('flipped');
+  } else if (e.key === 'ArrowRight') {
+    if (!card.classList.contains('flipped')) return;
+    e.preventDefault();
+    fcAnswer(true);
+  } else if (e.key === 'ArrowLeft') {
+    if (!card.classList.contains('flipped')) return;
+    e.preventDefault();
+    fcAnswer(false);
+  }
+});
+
+// ══════════════════════════════════════════
+// TOPIC RADAR CHART
+// ══════════════════════════════════════════
+function renderRadarChart() {
+  const svg = document.getElementById('radar-chart');
+  if (!svg) return;
+  let cl = {};
+  try { cl = JSON.parse(localStorage.getItem('synaptiq_checklist') || '{}'); } catch(e) {}
+
+  const sections = [
+    { key: 'Pure Mathematics — Year 1', label: 'Pure 1', color: '#60A5FA', topics: TOPIC_SPEC[0].topics },
+    { key: 'Pure Mathematics — Year 2', label: 'Pure 2', color: 'var(--gold)', topics: TOPIC_SPEC[1].topics },
+    { key: 'Statistics', label: 'Stats', color: 'var(--green)', topics: TOPIC_SPEC[2].topics },
+    { key: 'Mechanics', label: 'Mechanics', color: '#A78BFA', topics: TOPIC_SPEC[3].topics },
+  ];
+
+  // Convert CSS variables to actual values for SVG
+  const colorMap = { 'var(--gold)': '#C9A84C', 'var(--green)': '#4ADE80', 'var(--blue)': '#60A5FA' };
+
+  const cx = 110, cy = 110, maxR = 70;
+  const n = sections.length;
+  const angles = sections.map((_, i) => (i / n) * 2 * Math.PI - Math.PI / 2);
+
+  // Calculate confidence % per section
+  const vals = sections.map(s => {
+    const topicVals = s.topics.map(t => cl[t] === 'confident' ? 1 : cl[t] === 'in-progress' ? 0.5 : 0);
+    const avg = topicVals.length ? topicVals.reduce((a,b)=>a+b,0) / topicVals.length : 0;
+    return Math.max(avg, 0.06); // min 6% so shape is visible
+  });
+
+  // Grid rings
+  let html = '';
+  [0.25, 0.5, 0.75, 1].forEach(r => {
+    const pts = angles.map(a => `${cx + maxR*r*Math.cos(a)},${cy + maxR*r*Math.sin(a)}`).join(' ');
+    html += `<polygon points="${pts}" fill="none" stroke="var(--border)" stroke-width="1"/>`;
+  });
+  // Axes
+  angles.forEach((a, i) => {
+    html += `<line x1="${cx}" y1="${cy}" x2="${cx + maxR*Math.cos(a)}" y2="${cy + maxR*Math.sin(a)}" stroke="var(--border)" stroke-width="1"/>`;
+    const lx = cx + (maxR + 16) * Math.cos(a);
+    const ly = cy + (maxR + 16) * Math.sin(a);
+    html += `<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" fill="${sections[i].color}" font-size="10" font-weight="700">${sections[i].label}</text>`;
+  });
+  // Data polygon
+  const dataPts = vals.map((v, i) => `${cx + maxR*v*Math.cos(angles[i])},${cy + maxR*v*Math.sin(angles[i])}`).join(' ');
+  html += `<polygon points="${dataPts}" fill="rgba(201,168,76,0.15)" stroke="var(--gold)" stroke-width="2" stroke-linejoin="round"/>`;
+  // Data points
+  vals.forEach((v, i) => {
+    html += `<circle cx="${cx + maxR*v*Math.cos(angles[i])}" cy="${cy + maxR*v*Math.sin(angles[i])}" r="4" fill="${sections[i].color}"/>`;
+    const pct = Math.round(v * 100);
+    if (pct > 10) {
+      const px = cx + maxR * v * 0.55 * Math.cos(angles[i]);
+      const py = cy + maxR * v * 0.55 * Math.sin(angles[i]);
+      html += `<text x="${px}" y="${py}" text-anchor="middle" dominant-baseline="middle" fill="var(--white)" font-size="9" font-weight="700">${pct}%</text>`;
+    }
+  });
+  svg.innerHTML = html;
+}
+
+// Patch showDash to render radar when progress page opens
+const __radarShowDash = showDash;
+showDash = function(sub) {
+  __radarShowDash(sub);
+  if (sub === 'progress') setTimeout(renderRadarChart, 150);
+};
+
+// ══════════════════════════════════════════
+// ACTIVE MISTAKES QUIZ
+// ══════════════════════════════════════════
+async function quizMistakes(btn) {
+  let mistakes = [];
+  try { mistakes = JSON.parse(localStorage.getItem('synaptiq_mistakes') || '[]'); } catch(e) {}
+  if (!mistakes.length) { showToast('No mistakes tracked yet — answer some questions first!'); return; }
+  const out = document.getElementById('mistakes-quiz-output');
+  if (!out) return;
+  btn.disabled = true; btn.textContent = '⚡ Generating quiz...';
+  const topics = mistakes.slice(0, 5).map(m => m.topic).join(', ');
+  const sys = `You are a UK A-Level Maths examiner. Generate 3 multiple-choice questions targeting these weak topics: ${topics}.
+Return ONLY valid JSON (no markdown):
+{"questions":[{"q":"question text","opts":["A","B","C","D"],"ans":0,"topic":"topic name","explanation":"brief explanation of the answer"}]}
+ans is the 0-based index of the correct option. Make questions exam-style. Vary difficulty.`;
+  try {
+    const data = await callClaude([{role:'user',content:`Generate 3 MCQ questions on these weak topics: ${topics}`}], sys, 1200);
+    const raw = getReply(data).replace(/```json|```/g,'').trim();
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('No JSON');
+    const result = JSON.parse(m[0]);
+    const qs = result.questions || [];
+    out.style.display = 'block';
+    out.innerHTML = `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:1rem">
+      <div style="font-weight:700;font-size:.95rem;margin-bottom:1rem;color:var(--gold)">⚡ Instant Quiz — Targeting Your Weak Topics</div>
+      ${qs.map((q, qi) => `<div class="mq-item" id="mq-${qi}" style="margin-bottom:1.25rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border)">
+        <div style="font-weight:600;margin-bottom:.75rem;line-height:1.6"><span style="color:var(--muted);font-size:.8rem">Q${qi+1} · ${q.topic}</span><br>${q.q}</div>
+        <div style="display:flex;flex-direction:column;gap:.4rem">${(q.opts||[]).map((opt,oi)=>`<button onclick="mqAnswer(${qi},${oi},${q.ans},'${(q.explanation||'').replace(/'/g,"&#39;")}')" style="background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:.55rem .9rem;text-align:left;color:var(--white);cursor:pointer;font-size:.875rem;transition:all .2s" id="mq-opt-${qi}-${oi}">${String.fromCharCode(65+oi)}) ${opt}</button>`).join('')}</div>
+        <div id="mq-fb-${qi}" style="display:none;margin-top:.6rem;font-size:.85rem;padding:.6rem .9rem;border-radius:8px"></div>
+      </div>`).join('')}
+    </div>`;
+    showToast('⚡ Quiz ready! Test yourself on your weak spots.');
+  } catch(e) {
+    out.style.display = 'none';
+    showToast('⚠️ Could not generate quiz — try again');
+  }
+  btn.disabled = false; btn.textContent = '⚡ Quiz Me Now';
+}
+
+function mqAnswer(qi, chosen, correct, explanation) {
+  const item = document.getElementById(`mq-${qi}`);
+  if (!item) return;
+  // Disable all option buttons in this question
+  for (let i = 0; i < 4; i++) {
+    const b = document.getElementById(`mq-opt-${qi}-${i}`);
+    if (!b) continue;
+    b.onclick = null;
+    b.style.cursor = 'default';
+    if (i === correct) { b.style.background = 'rgba(74,222,128,0.15)'; b.style.borderColor = 'var(--green)'; b.style.color = 'var(--green)'; }
+    else if (i === chosen && chosen !== correct) { b.style.background = 'rgba(239,68,68,0.12)'; b.style.borderColor = '#EF4444'; b.style.color = '#EF4444'; }
+  }
+  const fb = document.getElementById(`mq-fb-${qi}`);
+  if (fb) {
+    const ok = chosen === correct;
+    fb.style.display = 'block';
+    fb.style.background = ok ? 'rgba(74,222,128,0.08)' : 'rgba(239,68,68,0.08)';
+    fb.style.border = ok ? '1px solid rgba(74,222,128,0.2)' : '1px solid rgba(239,68,68,0.2)';
+    fb.style.color = ok ? 'var(--green)' : '#FB7185';
+    fb.textContent = (ok ? '✓ Correct! ' : '✗ Incorrect. ') + (explanation || '');
+    if (ok) addXP(15);
+  }
+}
+
+// ══════════════════════════════════════════
+// ONBOARDING
+// ══════════════════════════════════════════
+let _obGrade = '';
+function obSelectGrade(btn, grade) {
+  _obGrade = grade;
+  document.querySelectorAll('.ob-grade-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function obNext(step) {
+  if (step === 1) {
+    const name = document.getElementById('ob-name').value.trim();
+    const board = document.getElementById('ob-board').value;
+    if (name) {
+      try { localStorage.setItem('synaptiq_display_name', name); } catch(e) {}
+      const greet = document.getElementById('dash-greeting');
+      if (greet) greet.textContent = `Hey ${name}! 👋`;
+    }
+    if (board) { try { localStorage.setItem('synaptiq_exam_board', board); } catch(e) {} }
+    document.getElementById('ob-step-1').style.display = 'none';
+    document.getElementById('ob-step-2').style.display = 'block';
+    document.querySelectorAll('.ob-step').forEach((s,i) => s.classList.toggle('ob-step-active', i < 2));
+  } else if (step === 2) {
+    const date = document.getElementById('ob-exam-date').value;
+    if (date) saveExamDate(date);
+    if (_obGrade) { try { localStorage.setItem('synaptiq_target_grade', _obGrade); } catch(e) {} }
+    const name = document.getElementById('ob-name').value.trim() || 'there';
+    document.getElementById('ob-name-display').textContent = name;
+    document.getElementById('ob-step-2').style.display = 'none';
+    document.getElementById('ob-step-3').style.display = 'block';
+    document.querySelectorAll('.ob-step').forEach(s => s.classList.add('ob-step-active'));
+  }
+}
+
+function obBack(step) {
+  if (step === 2) {
+    document.getElementById('ob-step-2').style.display = 'none';
+    document.getElementById('ob-step-1').style.display = 'block';
+    document.querySelectorAll('.ob-step').forEach((s,i) => s.classList.toggle('ob-step-active', i === 0));
+  }
+}
+
+function obGo(sub) {
+  obComplete();
+  showDash(sub);
+}
+
+function obComplete() {
+  try { localStorage.setItem('synaptiq_onboarded', '1'); } catch(e) {}
+  const modal = document.getElementById('onboarding-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function checkOnboarding() {
+  // Only show on the dashboard page, not landing
+  const page = document.getElementById('page-dashboard');
+  if (!page || !page.classList.contains('active')) return;
+  if (localStorage.getItem('synaptiq_onboarded')) return;
+  const modal = document.getElementById('onboarding-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+// Show onboarding when user navigates to dashboard for first time
+const __obShowDash = showDash;
+showDash = function(sub) {
+  __obShowDash(sub);
+  setTimeout(checkOnboarding, 400);
+};
+
+// Also trigger on initial dashboard load (nav to 'dash')
+const __origNav = typeof nav === 'function' ? nav : null;
+if (__origNav) {
+  window.nav = function(page) {
+    __origNav(page);
+    if (page === 'dash' || page === 'dashboard') {
+      setTimeout(checkOnboarding, 600);
+    }
+  };
 }
 
 </script>
