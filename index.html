@@ -1977,6 +1977,24 @@ body.mode-adhd .adhd-break { display: block; }
         <p>Visual number lines, colour-coded working, step-by-step breakdowns. Full accessibility for ADHD and dyslexia too.</p>
         <span class="feature-tag">Accessibility</span>
       </div>
+      <div class="feature-card" onclick="nav('auth');showSignup()">
+        <div class="feature-icon">⭐</div>
+        <h3>Mark Scheme Coach</h3>
+        <p>Paste any mark scheme. Synaptiq decodes exactly WHY each point earns marks — with model answers, key phrases, and examiner tips.</p>
+        <span class="feature-tag">Unique to Synaptiq</span>
+      </div>
+      <div class="feature-card" onclick="nav('auth');showSignup()">
+        <div class="feature-icon">📝</div>
+        <h3>Command Words Guide</h3>
+        <p>"Evaluate", "Assess", "Explain" — master what each command word demands. Includes AI-marked practice so you know you're doing it right.</p>
+        <span class="feature-tag">Exam Technique</span>
+      </div>
+      <div class="feature-card" onclick="nav('auth');showSignup()">
+        <div class="feature-icon">⚡</div>
+        <h3>Quick Blitz & Spaced Repetition</h3>
+        <p>5-question rapid blitz mode and 60+ pre-built A-Level Maths flashcard packs using science-backed spaced repetition.</p>
+        <span class="feature-tag">Proven Revision</span>
+      </div>
     </div>
   </section>
 
@@ -15586,14 +15604,17 @@ function resetChecklist() {
   renderChecklist();
 }
 
+let _clFilter = 'all';
+
 function filterChecklist(filter, btn) {
+  _clFilter = filter || 'all';
   document.querySelectorAll('#cl-filter-tabs .note-tag-btn').forEach(b => b.classList.remove('selected'));
   if (btn) btn.classList.add('selected');
-  renderChecklist(filter);
+  renderChecklist();
 }
 
 function renderChecklist(filter) {
-  filter = filter || document.querySelector('#cl-filter-tabs .note-tag-btn.selected')?.dataset?.filter || 'all';
+  filter = filter || _clFilter || 'all';
   loadChecklist();
   const grid = document.getElementById('checklist-grid');
   if (!grid) return;
