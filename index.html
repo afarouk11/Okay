@@ -3466,9 +3466,10 @@ body.mode-adhd .adhd-break { display: block; }
               <button class="note-tag-btn" data-tag="History" onclick="selectNoteTag(this)">History</button>
               <button class="note-tag-btn" data-tag="General" onclick="selectNoteTag(this)">General</button>
             </div>
-            <div style="display:flex;gap:.75rem">
+            <div style="display:flex;gap:.75rem;flex-wrap:wrap">
               <button class="save-note-btn" onclick="saveNote()">💾 Save Note</button>
               <button class="save-note-btn" style="background:var(--bg3);color:var(--muted);border:1px solid var(--border)" onclick="aiSummariseNote()">✦ AI Summarise</button>
+              <button class="save-note-btn" style="background:var(--bg3);color:var(--blue);border:1px solid rgba(96,165,250,0.3)" onclick="generateTopicNotes()">✦ Generate Topic Notes</button>
             </div>
           </div>
         </div>
@@ -8988,7 +8989,10 @@ function renderNotes() {
         <span class="note-date">${n.date} · ${n.time}</span>
       </div>
       <div class="note-text">${n.text.replace(/\n/g,'<br>')}</div>
-      <button class="note-delete" onclick="deleteNote(${n.id})" title="Delete note">🗑️</button>
+      <div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap">
+        <button onclick="flashcardsFromNote(${n.id})" style="font-size:.75rem;padding:.3rem .7rem;background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:var(--blue);border-radius:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(96,165,250,0.2)'" onmouseout="this.style.background='rgba(96,165,250,0.1)'">🗂 Create Flashcards</button>
+        <button onclick="deleteNote(${n.id})" style="font-size:.75rem;padding:.3rem .7rem;background:var(--bg3);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer">🗑 Delete</button>
+      </div>
     </div>
   `).join('');
 }
@@ -15374,6 +15378,64 @@ showDash = function(sub) {
   }
   if (sub === 'progress') setTimeout(renderHeatmap, 100);
 };
+
+// ══════════════════════════════════════════
+// NOTES — GENERATE TOPIC NOTES & FLASHCARDS FROM NOTES
+// ══════════════════════════════════════════
+async function generateTopicNotes() {
+  const input = document.getElementById('note-text-input');
+  const topicRaw = input.value.trim();
+  // Use input as topic hint, or prompt user
+  const topic = topicRaw || window.prompt('Which A-Level Maths topic would you like notes for?\n(e.g. Integration by Parts, Hypothesis Testing, Projectile Motion)');
+  if (!topic) return;
+  showToast('✦ Generating revision notes…');
+  const subjectTag = document.querySelector('.note-tag-btn.selected')?.dataset?.tag || 'Mathematics';
+  const sys = `You are an expert A-Level Mathematics teacher writing revision notes for a UK student.
+Generate comprehensive, well-structured revision notes for the topic: "${topic}".
+Format with clear sections using markdown-style headings (##), bullet points, key formulas in a code block, worked examples, and common exam mistakes.
+Use UK spelling and UK exam board terminology. Be thorough but concise — these are revision notes, not a textbook chapter.`;
+  try {
+    const data = await callClaude([{role:'user', content:`Generate A-Level Maths revision notes for: ${topic}`}], sys, 2000);
+    input.value = getReply(data);
+    showToast('✦ Notes generated — review and save!');
+  } catch(e) {
+    showToast('⚠️ Could not generate notes — try again');
+  }
+}
+
+async function flashcardsFromNote(noteId) {
+  const note = (typeof notes !== 'undefined' ? notes : []).find(n => n.id === noteId);
+  if (!note) return;
+  showToast('✦ Creating flashcards from your note…');
+  const sys = `You are an expert A-Level Mathematics teacher. Extract 4–6 key concepts from the student's notes and turn them into spaced-repetition flashcards.
+Return ONLY valid JSON array (no markdown): [{"q":"concise question","a":"clear answer with key steps or formula","subject":"topic name"}].
+Focus on the most testable, memorable facts. Use UK A-Level terminology.`;
+  try {
+    const data = await callClaude([{role:'user', content:`Create flashcards from these revision notes:\n\n${note.text.slice(0, 2000)}`}], sys, 1200);
+    const raw = getReply(data);
+    const m = raw.match(/\[[\s\S]*\]/);
+    if (!m) throw new Error('No JSON array');
+    const cards = JSON.parse(m[0]);
+    const today = new Date().toISOString().split('T')[0];
+    let added = 0;
+    cards.forEach(card => {
+      const dup = fcCards.some(c => c.front.toLowerCase().trim() === (card.q||'').toLowerCase().trim());
+      if (!dup && card.q && card.a) {
+        fcCards.push({
+          id: Date.now() + Math.random(), front: card.q, back: card.a,
+          subject: card.subject || note.subject || 'Mathematics',
+          nextReview: today, ease: 2, interval: 1, repetitions: 0
+        });
+        added++;
+      }
+    });
+    localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
+    syncToCloud();
+    showToast(`✅ Created ${added} flashcard${added !== 1 ? 's' : ''} from your note!`);
+  } catch(e) {
+    showToast('⚠️ Could not create flashcards — try again');
+  }
+}
 
 // ══════════════════════════════════════════
 // ACTIVITY HEATMAP RENDERER
