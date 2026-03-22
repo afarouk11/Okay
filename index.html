@@ -8739,13 +8739,48 @@ function addXP(amount, msg) {
   const newLevel = Math.floor(state.xp / 500) + 1;
   if (newLevel > state.level) {
     state.level = newLevel;
-    showToast(`🎉 Level Up! You're now Level ${newLevel}!`);
+    _showLevelUp(newLevel);
   }
   updateXPDisplay();
   const popup = document.getElementById('xp-popup');
-  popup.textContent = (msg || `+${amount} XP ⭐`);
-  popup.classList.add('show');
-  setTimeout(() => popup.classList.remove('show'), 2000);
+  if (popup) {
+    popup.textContent = (msg || `+${amount} XP`);
+    popup.classList.add('show');
+    clearTimeout(popup._t);
+    popup._t = setTimeout(() => popup.classList.remove('show'), 2200);
+  }
+}
+
+function _showLevelUp(level) {
+  const el = document.createElement('div');
+  el.style.cssText = `
+    position:fixed;inset:0;z-index:99999;pointer-events:none;
+    display:flex;align-items:center;justify-content:center;
+  `;
+  el.innerHTML = `
+    <div style="background:rgba(10,12,18,0.97);backdrop-filter:blur(32px);
+                border:2px solid rgba(201,168,76,0.6);border-radius:28px;
+                padding:2.5rem 3rem;text-align:center;
+                box-shadow:0 0 80px rgba(201,168,76,0.3),0 32px 80px rgba(0,0,0,0.7);
+                animation:authBoxIn .5s cubic-bezier(0.34,1.4,0.64,1) both">
+      <div style="font-size:3rem;line-height:1;margin-bottom:.75rem">🎉</div>
+      <div style="font-family:var(--font-head);font-size:1.8rem;font-weight:900;
+                  background:linear-gradient(135deg,#C9A84C,#F0D080,#C9A84C);
+                  background-size:200% auto;-webkit-background-clip:text;
+                  -webkit-text-fill-color:transparent;background-clip:text;
+                  animation:shimmer 2s linear infinite">Level ${level}!</div>
+      <div style="color:rgba(136,146,164,0.8);font-size:.9rem;margin-top:.4rem">
+        You've levelled up — keep going! 🚀
+      </div>
+    </div>
+  `;
+  document.body.appendChild(el);
+  setTimeout(() => {
+    el.style.transition = 'opacity .4s ease';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 400);
+  }, 2500);
+  showToast(`🎉 Level Up! You're now Level ${level}!`);
 }
 
 function updateXPDisplay() {
@@ -13826,7 +13861,9 @@ function addActivity(icon, text, sub, time) {
   const textColors = { '📝':'var(--blue)','🤖':'var(--gold)','✅':'var(--green)','🏆':'var(--purple)','🧠':'var(--pink)' };
   const item = document.createElement('div');
   item.className = 'activity-item';
-  item.innerHTML = `<div class="activity-icon" style="background:${colors[icon]||'rgba(201,168,76,0.15)'};color:${textColors[icon]||'var(--gold)'}">${icon}</div><div><div class="activity-text fw700">${text}</div><div style="font-size:.75rem;color:var(--muted)">${sub||''}</div></div><div class="activity-time">${time||'now'}</div>`;
+  item.style.cssText = 'opacity:0;transform:translateX(12px);transition:all .3s ease';
+  item.innerHTML = `<div class="activity-icon" style="background:${colors[icon]||'rgba(201,168,76,0.15)'};color:${textColors[icon]||'var(--gold)'};border:1px solid rgba(255,255,255,0.06)">${icon}</div><div style="flex:1;min-width:0"><div class="activity-text fw700" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${text}</div><div style="font-size:.73rem;color:var(--muted);margin-top:.1rem">${sub||''}</div></div><div class="activity-time" style="font-size:.7rem;color:rgba(136,146,164,0.6);flex-shrink:0">${time||'now'}</div>`;
+  requestAnimationFrame(() => { item.style.opacity = '1'; item.style.transform = 'translateX(0)'; });
   feed.insertBefore(item, feed.firstChild);
   // Keep max 10 items
   const items = feed.querySelectorAll('.activity-item');
@@ -15919,12 +15956,19 @@ function renderStudyCoach() {
   if (!examDate) recs.push({ icon: '📅', text: 'Set your exam date for countdown & planning', action: "document.getElementById('exam-date-input').focus()", color: 'var(--muted)' });
   // Default if nothing specific
   if (recs.length === 0) recs.push({ icon: '✨', text: 'Great work! Try Practice Questions to stay sharp', action: "showDash('questions')", color: 'var(--green)' });
-  el.innerHTML = recs.slice(0, 4).map(r => `
-    <div onclick="${r.action}" style="display:flex;align-items:center;gap:.75rem;padding:.65rem .75rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s"
-         onmouseover="this.style.borderColor='${r.color}';this.style.background='var(--bg2)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--bg3)'">
-      <div style="font-size:1.25rem;width:28px;text-align:center">${r.icon}</div>
-      <div style="font-size:.85rem;flex:1;color:var(--white)">${r.text}</div>
-      <div style="color:var(--muted);font-size:.8rem">→</div>
+  el.innerHTML = recs.slice(0, 4).map((r, i) => `
+    <div onclick="${r.action}"
+         style="display:flex;align-items:center;gap:.875rem;padding:.75rem 1rem;
+                background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+                border-radius:12px;cursor:pointer;transition:all .2s cubic-bezier(.4,0,.2,1);
+                animation:fadeInUp .3s ease ${i * 0.06}s both"
+         onmouseover="this.style.borderColor='${r.color}';this.style.background='rgba(255,255,255,0.06)';this.style.transform='translateX(4px)'"
+         onmouseout="this.style.borderColor='rgba(255,255,255,0.07)';this.style.background='rgba(255,255,255,0.03)';this.style.transform='translateX(0)'">
+      <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.05);
+                  border:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;
+                  justify-content:center;font-size:1.1rem;flex-shrink:0">${r.icon}</div>
+      <div style="font-size:.855rem;flex:1;color:var(--white);font-weight:500;line-height:1.4">${r.text}</div>
+      <div style="color:${r.color};font-size:.85rem;font-weight:700;flex-shrink:0">→</div>
     </div>`).join('');
 }
 
@@ -17093,17 +17137,32 @@ function renderStreakCalendar() {
     const hasActivity = !!activity[key];
     if (hasActivity) studiedDays++;
     const dayName = isToday ? 'Today' : days[d.getDay()];
-    cells.push(`<div style="display:flex;flex-direction:column;align-items:center;gap:.2rem">
-      <div style="width:32px;height:32px;border-radius:50%;background:${hasActivity ? 'var(--gold)' : isToday ? 'rgba(201,168,76,0.15)' : 'var(--bg4)'};border:${isToday ? '2px solid rgba(201,168,76,0.5)' : '2px solid transparent'};display:flex;align-items:center;justify-content:center;font-size:.9rem" title="${key}">
-        ${hasActivity ? '✓' : isToday ? '•' : ''}
+    const bg = hasActivity
+      ? 'linear-gradient(135deg,#D4A820,#C9A84C)'
+      : isToday
+        ? 'rgba(201,168,76,0.12)'
+        : 'rgba(255,255,255,0.04)';
+    const border = isToday
+      ? '2px solid rgba(201,168,76,0.4)'
+      : hasActivity
+        ? '2px solid rgba(201,168,76,0.5)'
+        : '2px solid rgba(255,255,255,0.06)';
+    const shadow = hasActivity ? 'box-shadow:0 0 14px rgba(201,168,76,0.35);' : '';
+    const delay = (6 - i) * 0.04;
+    cells.push(`<div style="display:flex;flex-direction:column;align-items:center;gap:.3rem;animation:fadeInUp .35s ease ${delay}s both">
+      <div style="width:36px;height:36px;border-radius:50%;background:${bg};border:${border};${shadow}display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:transform .2s;cursor:default"
+           title="${key}" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        ${hasActivity ? '✓' : isToday ? '◉' : ''}
       </div>
-      <div style="font-size:.62rem;color:${hasActivity ? 'var(--gold)' : 'var(--muted)'};font-weight:${isToday?'700':'400'}">${dayName}</div>
+      <div style="font-size:.6rem;color:${hasActivity ? '#E8C97A' : isToday ? 'rgba(201,168,76,0.7)' : 'rgba(136,146,164,0.6)'};font-weight:${isToday?'700':'500'};letter-spacing:.03em">${dayName}</div>
     </div>`);
   }
   cal.innerHTML = cells.join('');
   if (sumEl) {
-    sumEl.textContent = studiedDays === 7 ? '🔥 Perfect week!' : studiedDays >= 5 ? `${studiedDays}/7 days` : studiedDays > 0 ? `${studiedDays}/7 days` : 'No study recorded yet';
+    const msg = studiedDays === 7 ? '🔥 Perfect week!' : studiedDays >= 5 ? `⚡ ${studiedDays}/7 days — great streak!` : studiedDays > 0 ? `${studiedDays}/7 days this week` : 'Start studying to build your streak';
+    sumEl.textContent = msg;
     sumEl.style.color = studiedDays >= 5 ? 'var(--gold)' : studiedDays > 0 ? 'var(--white)' : 'var(--muted)';
+    sumEl.style.fontWeight = studiedDays >= 5 ? '700' : '500';
   }
 }
 
