@@ -2539,6 +2539,8 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="sidebar-item" id="si-calculator" onclick="showDash('calculator')"><i class="fas fa-calculator"></i>Calculator</div>
       <div class="sidebar-item" id="si-formulas" onclick="showDash('formulas')"><i class="fas fa-square-root-alt"></i>Formula Sheets</div>
       <div class="sidebar-item" id="si-mindmap" onclick="showDash('mindmap')"><i class="fas fa-project-diagram"></i>Mind Map</div>
+      <div class="sidebar-item" id="si-markscheme" onclick="showDash('markscheme')"><i class="fas fa-star-half-alt"></i>Mark Scheme Coach</div>
+      <div class="sidebar-item" id="si-cmdwords" onclick="showDash('cmdwords')"><i class="fas fa-spell-check"></i>Command Words</div>
       <div class="sidebar-item" id="si-grade" onclick="showDash('grade')"><i class="fas fa-chart-bar"></i>Grade Predictor</div>
       <div class="sidebar-item" id="si-diagnostic" onclick="showDash('diagnostic')"><i class="fas fa-stethoscope"></i>Diagnostic Test</div>
       <div class="sidebar-item" id="si-essay" onclick="showDash('essay')"><i class="fas fa-pen-nib"></i>Work Checker</div>
@@ -4217,6 +4219,96 @@ body.mode-adhd .adhd-break { display: block; }
             <button class="vid-ctrl-btn" onclick="saveMnemonicToNotes()">📓 Save to Notes</button>
             <button class="vid-ctrl-btn" onclick="addMnemonicToFlashcards()">🧠 Add to Flashcards</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARK SCHEME COACH -->
+    <div class="subpage" id="sp-markscheme">
+      <div class="page-title">⭐ Mark Scheme Coach</div>
+      <p class="page-subtitle">Paste any mark scheme — AI explains exactly why each mark is awarded and how to hit every point</p>
+      <div style="max-width:860px">
+        <div style="background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.2);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:.875rem">
+          💡 <strong style="color:var(--white)">How to use:</strong> Copy any mark scheme from a past paper or textbook, paste it below, and Synaptiq will decode it — explaining the "why" behind every mark point in plain English.
+        </div>
+        <div class="form-row" style="grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem">
+          <div class="form-group">
+            <label class="form-label">Subject</label>
+            <select class="form-select" id="ms-subject">
+              <option>Mathematics</option><option>Physics</option><option>Chemistry</option>
+              <option>Biology</option><option>English Literature</option><option>History</option>
+              <option>Geography</option><option>Psychology</option><option>Economics</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Exam Board</label>
+            <select class="form-select" id="ms-board">
+              <option>AQA</option><option>Edexcel</option><option>OCR</option><option>WJEC</option><option>CIE/CAIE</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Total Marks</label>
+            <input type="number" class="form-input" id="ms-marks" value="6" min="1" max="20" style="width:100%">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem">
+          <label class="form-label">Paste the question here (optional but helps)</label>
+          <textarea class="form-input" id="ms-question" rows="2" placeholder="e.g. Explain why the rate of reaction increases when temperature increases. [6 marks]" style="width:100%;resize:vertical"></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:1.25rem">
+          <label class="form-label">Paste the mark scheme here</label>
+          <textarea class="form-input" id="ms-scheme" rows="8" placeholder="e.g.
+Award 1 mark for each of the following:
+• Particles have more kinetic energy (1)
+• More frequent collisions (1)
+• More collisions exceed the activation energy (1)
+• Rate of successful collisions increases (1)
+Max 4 marks. Accept any other valid physics explanation." style="width:100%;resize:vertical"></textarea>
+        </div>
+        <button class="btn-gold" onclick="analyseMarkScheme()" id="ms-btn" style="margin-bottom:1.5rem">⭐ Analyse This Mark Scheme</button>
+        <div id="ms-output" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- COMMAND WORDS GUIDE -->
+    <div class="subpage" id="sp-cmdwords">
+      <div class="page-title">📝 Command Words Guide</div>
+      <p class="page-subtitle">Master the UK exam command words — the difference between full marks and losing marks on every question</p>
+      <div style="max-width:860px">
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem" id="cw-tabs">
+          <button class="note-tag-btn selected" onclick="setCWLevel('all',this)">All</button>
+          <button class="note-tag-btn" onclick="setCWLevel('common',this)">Most Common</button>
+          <button class="note-tag-btn" onclick="setCWLevel('evaluative',this)">Evaluative</button>
+          <button class="note-tag-btn" onclick="setCWLevel('descriptive',this)">Descriptive</button>
+          <button class="note-tag-btn" onclick="setCWLevel('maths',this)">Maths/Science</button>
+        </div>
+        <div id="cw-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem"></div>
+        <div style="margin-top:2rem;background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem">
+          <div style="font-weight:700;margin-bottom:.75rem">🤖 AI Practice Mode</div>
+          <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">Select a command word, then practise writing an answer — Synaptiq will mark it specifically for that command word's requirements.</p>
+          <div style="display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap">
+            <select class="form-select" id="cw-practice-word" style="flex:1">
+              <option value="evaluate">Evaluate</option>
+              <option value="assess">Assess</option>
+              <option value="analyse">Analyse</option>
+              <option value="discuss">Discuss</option>
+              <option value="explain">Explain</option>
+              <option value="describe">Describe</option>
+              <option value="justify">Justify</option>
+              <option value="compare">Compare</option>
+              <option value="outline">Outline</option>
+              <option value="define">Define</option>
+            </select>
+            <select class="form-select" id="cw-practice-subj" style="flex:1">
+              <option>Mathematics</option><option>Physics</option><option>Chemistry</option>
+              <option>Biology</option><option>English Literature</option><option>History</option><option>Geography</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:1rem">
+            <textarea class="form-input" id="cw-practice-ans" rows="4" placeholder="Write your answer here — Synaptiq will mark it specifically for how well you used the command word..." style="width:100%;resize:vertical"></textarea>
+          </div>
+          <button class="btn-gold" onclick="practiseCmdWord()" id="cw-practice-btn">⭐ Mark My Command Word Technique</button>
+          <div id="cw-practice-output" style="margin-top:1rem;display:none"></div>
         </div>
       </div>
     </div>
@@ -15034,6 +15126,245 @@ showDash = function(sub) {
   } else {
     // Pause timer when leaving (don't lose progress)
     if (pomState.running) { pomStop(); showToast('⏸ Pomodoro paused'); }
+  }
+};
+
+// ═══════════════════════════════════════
+// MARK SCHEME COACH
+// ═══════════════════════════════════════
+async function analyseMarkScheme() {
+  const subject = document.getElementById('ms-subject').value;
+  const board = document.getElementById('ms-board').value;
+  const marks = document.getElementById('ms-marks').value;
+  const question = document.getElementById('ms-question').value.trim();
+  const scheme = document.getElementById('ms-scheme').value.trim();
+  if (!scheme) { showToast('Please paste a mark scheme first'); return; }
+  const btn = document.getElementById('ms-btn');
+  const output = document.getElementById('ms-output');
+  btn.textContent = '✦ Analysing...'; btn.disabled = true;
+  output.style.display = 'block';
+  output.innerHTML = '<div class="skeleton-block" style="height:300px"></div>';
+  const sys = `You are an expert ${board} ${subject} examiner and chief moderator with 15+ years of experience. Analyse this mark scheme for students — explain WHY each mark point exists and what examiners look for. Return ONLY valid JSON:
+{
+  "overview": "1-2 sentences: what this question is actually testing",
+  "assessmentObjectives": "which AOs apply and why",
+  "markPoints": [{"point":"exact mark scheme text","why":"why this specifically earns a mark","commonMistake":"what students write instead","studentFriendly":"how to phrase this in your answer"}],
+  "modelAnswer": "a full model answer that would get full marks — write as a student would write it",
+  "topTips": ["3-4 actionable examiner insights"],
+  "keyPhrases": ["exact phrases/terminology examiners expect to see"]
+}`;
+  try {
+    const userContent = `${question ? 'Question: ' + question + '\n\n' : ''}Mark Scheme (${marks} marks, ${board} ${subject}):\n${scheme}`;
+    const data = await callClaude([{role:'user',content:userContent}], sys, 3000);
+    const raw = getReply(data).replace(/```json|```/g,'').trim();
+    const analysis = JSON.parse(raw);
+    output.innerHTML = `
+      <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:1.25rem;margin-bottom:1.25rem">
+        <div style="font-weight:700;color:var(--gold);margin-bottom:.5rem">🎯 What this question tests</div>
+        <div style="font-size:.9rem;line-height:1.7">${analysis.overview}</div>
+        ${analysis.assessmentObjectives ? `<div style="font-size:.8rem;color:var(--muted);margin-top:.5rem">Assessment Objectives: ${analysis.assessmentObjectives}</div>` : ''}
+      </div>
+      <div style="margin-bottom:1.25rem">
+        <div style="font-weight:700;margin-bottom:.75rem">📋 Every Mark Point — Decoded</div>
+        ${(analysis.markPoints||[]).map((p,i) => `
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:.75rem">
+            <div style="display:flex;align-items:flex-start;gap:.75rem;margin-bottom:.75rem">
+              <div style="background:var(--gold);color:var(--black);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;margin-top:.1rem">${i+1}</div>
+              <div style="font-weight:600;font-size:.9rem">${p.point}</div>
+            </div>
+            <div style="padding-left:2rem">
+              <div style="font-size:.85rem;color:var(--blue);margin-bottom:.4rem">✦ Why this earns a mark: <span style="color:var(--white)">${p.why}</span></div>
+              ${p.studentFriendly ? `<div style="font-size:.85rem;color:var(--green);margin-bottom:.4rem">📝 How to write this: <span style="color:var(--white)">${p.studentFriendly}</span></div>` : ''}
+              ${p.commonMistake ? `<div style="font-size:.85rem;color:#EF4444">✗ Common mistake: <span style="color:var(--muted)">${p.commonMistake}</span></div>` : ''}
+            </div>
+          </div>`).join('')}
+      </div>
+      ${analysis.modelAnswer ? `
+      <div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:12px;padding:1.25rem;margin-bottom:1.25rem">
+        <div style="font-weight:700;color:var(--green);margin-bottom:.75rem">✅ Model Answer (${marks} marks)</div>
+        <div style="font-size:.9rem;line-height:1.8;white-space:pre-wrap">${analysis.modelAnswer}</div>
+      </div>` : ''}
+      ${(analysis.keyPhrases||[]).length ? `
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.25rem">
+        <div style="font-weight:700;margin-bottom:.75rem">🔑 Key Phrases Examiners Want to See</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem">${analysis.keyPhrases.map(p=>`<span style="background:rgba(167,139,250,0.12);border:1px solid rgba(167,139,250,0.2);border-radius:20px;padding:.3rem .9rem;font-size:.825rem;color:var(--purple)">${p}</span>`).join('')}</div>
+      </div>` : ''}
+      ${(analysis.topTips||[]).length ? `
+      <div style="background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.2);border-radius:12px;padding:1.25rem;margin-bottom:1.25rem">
+        <div style="font-weight:700;color:var(--blue);margin-bottom:.75rem">💡 Examiner Insider Tips</div>
+        ${analysis.topTips.map(t=>`<div style="font-size:.875rem;padding:.3rem 0;border-bottom:1px solid var(--border);color:var(--muted)">→ ${t}</div>`).join('')}
+      </div>` : ''}
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.5rem">
+        <button class="btn-gold" onclick="showDash('essay');setTimeout(()=>{const t=document.getElementById('essay-topic');if(t)t.value='${(question||subject+' exam question').replace(/'/g,"\\'")}'},300)">✍️ Check My Answer Against This →</button>
+        <button class="vid-ctrl-btn" onclick="tutorQuick && tutorQuick('Teach me about: ${(question||'this mark scheme topic').replace(/'/g,"\\'").slice(0,80)}')">📚 Teach Me This Topic</button>
+        <button class="vid-ctrl-btn" onclick="document.getElementById('ms-output').style.display='none';document.getElementById('ms-scheme').value='';document.getElementById('ms-question').value=''">🔄 Analyse Another</button>
+      </div>`;
+    addXP(30, '⭐ Mark scheme analysed +30 XP');
+    if (window.MathJax) MathJax.typesetPromise([output]).catch(() => {});
+  } catch(e) {
+    output.innerHTML = '<div style="color:var(--muted);padding:1rem">⚠️ Could not analyse mark scheme — please try again.</div>';
+  }
+  btn.textContent = '⭐ Analyse This Mark Scheme'; btn.disabled = false;
+}
+
+// ═══════════════════════════════════════
+// COMMAND WORDS GUIDE
+// ═══════════════════════════════════════
+const COMMAND_WORDS = [
+  { word: 'Evaluate', level: 'evaluative', marks: '6–20', category: 'High Order',
+    definition: 'Make a judgement about the importance, success, or value of something based on evidence. Must reach a conclusion.',
+    structure: 'Evidence for → Evidence against → Weighing up → Conclusion with justified judgement',
+    starters: ['The evidence suggests...', 'On balance...', 'Taking all factors into account...', 'The most significant factor is... because...'],
+    examTip: 'Examiners want a clear, substantiated conclusion. A wishy-washy "there are arguments on both sides" answer will not get the top marks.' },
+  { word: 'Assess', level: 'evaluative', marks: '6–20', category: 'High Order',
+    definition: 'Consider all aspects of something and make a judgement. Similar to evaluate — focus on relative importance/significance.',
+    structure: 'State significance → Explain → Qualify with counter → Reach conclusion on degree/extent',
+    starters: ['To a large/significant extent...', 'Partially, however...', 'The most important aspect is...'],
+    examTip: 'Use extent language: "largely", "to some degree", "significantly". Examiners want you to weigh, not just describe.' },
+  { word: 'Analyse', level: 'evaluative', marks: '4–12', category: 'High Order',
+    definition: 'Break down a topic into its component parts and explain how they relate. Focus on "how" and "why".',
+    structure: 'Identify component → Explain mechanism → Show relationship to whole → Implication',
+    starters: ['This is significant because...', 'The key factor here is...', 'This leads to... which in turn...'],
+    examTip: 'Do not describe — explain. Every point needs a "because" or "which means" to show you understand causation.' },
+  { word: 'Discuss', level: 'evaluative', marks: '6–16', category: 'High Order',
+    definition: 'Present multiple viewpoints, arguments for and against. Must show balance and breadth.',
+    structure: 'One perspective + evidence → Alternative perspective + evidence → Compare → Conclusion',
+    starters: ['On one hand...', 'Conversely/However...', 'Some argue that...', 'A competing view holds...'],
+    examTip: 'Balance is essential — a one-sided discussion will cap you below the top mark band.' },
+  { word: 'Explain', level: 'descriptive', marks: '2–6', category: 'Core',
+    definition: 'Give reasons for something. State what happens AND why it happens — not just describe.',
+    structure: 'State → Reason (because/since/as) → Consequence/development',
+    starters: ['This occurs because...', 'As a result of...', 'This leads to... since...'],
+    examTip: 'Every explanation needs a "because". Statements without reasoning will only get half marks at best.' },
+  { word: 'Describe', level: 'descriptive', marks: '1–4', category: 'Core',
+    definition: 'Give the key features or characteristics of something. No explanation required.',
+    structure: 'What it is → Key features/properties → How it behaves',
+    starters: ['The key features are...', '...is characterised by...', 'In terms of...'],
+    examTip: 'Do not over-explain — describing when asked to describe is fine. Saving time for harder marks is smart exam technique.' },
+  { word: 'Define', level: 'descriptive', marks: '1–2', category: 'Core',
+    definition: 'Give the precise meaning of a term or concept.',
+    structure: 'Category + distinguishing characteristics + any necessary units',
+    starters: ['[Term] is defined as...', '[Term] refers to...'],
+    examTip: 'Learn the exact textbook definition. Paraphrasing often loses marks — examiners look for specific terminology.' },
+  { word: 'Compare', level: 'descriptive', marks: '2–6', category: 'Core',
+    definition: 'Show the similarities AND differences between two or more things.',
+    structure: 'Similarity 1 → Difference 1 → Similarity 2 → Difference 2',
+    starters: ['Both... however...', 'Unlike X, Y...', 'Similarly... in contrast...'],
+    examTip: 'Always address both similarities and differences unless told "compare and contrast" (differences only).' },
+  { word: 'Justify', level: 'evaluative', marks: '2–6', category: 'High Order',
+    definition: 'Give reasons to support a statement, decision, or view. Must provide evidence/logic.',
+    structure: 'Claim → Evidence → Explanation of why evidence supports the claim',
+    starters: ['This is supported by...', 'The evidence for this is...', 'This is justified because...'],
+    examTip: 'Justification requires proof, not just opinion. Reference specific evidence, data, or theory.' },
+  { word: 'Outline', level: 'descriptive', marks: '1–4', category: 'Core',
+    definition: 'Give the main points without going into detail.',
+    structure: 'Key point 1 → Key point 2 → Key point 3 (breadth over depth)',
+    starters: ['The main points are...', 'In summary...', 'Key aspects include...'],
+    examTip: 'Keep it brief — outline questions are low marks. Spending too long here wastes time for higher-mark questions.' },
+  { word: 'Calculate', level: 'maths', marks: '2–6', category: 'Maths/Science',
+    definition: 'Work out a numerical answer, showing all mathematical steps.',
+    structure: 'State formula → Substitute values → Work through steps → State answer with units',
+    starters: ['Using the formula...', 'Substituting values...'],
+    examTip: 'Always show working — method marks are awarded even if the final answer is wrong. Include units in your answer.' },
+  { word: 'Prove', level: 'maths', marks: '2–6', category: 'Maths/Science',
+    definition: 'Show logically and rigorously that a statement is true, using mathematical reasoning.',
+    structure: 'State what you\'re proving → Step-by-step logical derivation → QED statement',
+    starters: ['Let...', 'Starting from...', 'It follows that...', 'Therefore, as required □'],
+    examTip: 'Never use the result you\'re proving during the proof. Every step must flow logically from the last.' },
+  { word: 'Show that', level: 'maths', marks: '2–4', category: 'Maths/Science',
+    definition: 'Demonstrate that a given result is correct. Answer is given — marks are for the method.',
+    structure: 'Work from known to given result (do NOT work backwards)',
+    starters: ['Beginning with...', 'Starting from...'],
+    examTip: 'You must work towards the given answer, not from it. Working backwards scores zero.' },
+];
+
+let cwCurrentLevel = 'all';
+
+function renderCommandWords() {
+  const grid = document.getElementById('cw-grid');
+  if (!grid) return;
+  const filtered = cwCurrentLevel === 'all' ? COMMAND_WORDS : COMMAND_WORDS.filter(w => w.level === cwCurrentLevel);
+  const categoryColors = { 'High Order': 'var(--gold)', 'Core': 'var(--blue)', 'Maths/Science': 'var(--green)' };
+  grid.innerHTML = filtered.map(w => `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:1.25rem;cursor:pointer;transition:border-color .2s"
+         onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'"
+         onclick="expandCmdWord('${w.word}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem">
+        <div style="font-family:var(--font-head);font-weight:700;font-size:1.05rem">${w.word}</div>
+        <span style="background:${categoryColors[w.category]||'var(--gold)'}22;border:1px solid ${categoryColors[w.category]||'var(--gold)'}44;color:${categoryColors[w.category]||'var(--gold)'};border-radius:20px;padding:.2rem .65rem;font-size:.7rem;font-weight:600">${w.marks} marks</span>
+      </div>
+      <div style="font-size:.825rem;color:var(--muted);margin-bottom:.75rem;line-height:1.5">${w.definition.slice(0,100)}...</div>
+      <div id="cw-expand-${w.word}" style="display:none">
+        <div style="font-size:.8rem;color:var(--gold);font-weight:600;margin-bottom:.3rem;margin-top:.5rem">📐 Structure</div>
+        <div style="font-size:.825rem;color:var(--muted);margin-bottom:.75rem">${w.structure}</div>
+        <div style="font-size:.8rem;color:var(--blue);font-weight:600;margin-bottom:.3rem">✍️ Sentence starters</div>
+        <div style="font-size:.825rem;color:var(--muted);margin-bottom:.75rem">${w.starters.join(' · ')}</div>
+        <div style="font-size:.8rem;background:rgba(201,168,76,0.08);border-left:2px solid var(--gold);border-radius:0 6px 6px 0;padding:.5rem .75rem;color:var(--muted)">💡 ${w.examTip}</div>
+        <button onclick="event.stopPropagation();document.getElementById('cw-practice-word').value='${w.word.toLowerCase()}';document.getElementById('cw-practice-ans').focus();document.getElementById('cw-practice-ans').scrollIntoView({behavior:'smooth'})" style="margin-top:.75rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);border-radius:8px;padding:.35rem .85rem;font-size:.78rem;cursor:pointer;width:100%">🤖 Practise this command word →</button>
+      </div>
+      <div style="font-size:.75rem;color:var(--muted);text-align:right;margin-top:.25rem">Click to expand ↓</div>
+    </div>`).join('');
+}
+
+function expandCmdWord(word) {
+  const el = document.getElementById('cw-expand-' + word);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  const card = el.closest('[onclick*="expandCmdWord"]');
+  if (card) card.querySelector('div:last-child').textContent = isOpen ? 'Click to expand ↓' : 'Click to collapse ↑';
+}
+
+function setCWLevel(level, btn) {
+  cwCurrentLevel = level;
+  document.querySelectorAll('#cw-tabs .note-tag-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  renderCommandWords();
+}
+
+async function practiseCmdWord() {
+  const word = document.getElementById('cw-practice-word').value;
+  const subject = document.getElementById('cw-practice-subj').value;
+  const answer = document.getElementById('cw-practice-ans').value.trim();
+  if (!answer) { showToast('Write an answer first!'); return; }
+  const btn = document.getElementById('cw-practice-btn');
+  const output = document.getElementById('cw-practice-output');
+  btn.textContent = '✦ Marking...'; btn.disabled = true;
+  output.style.display = 'block';
+  output.innerHTML = '<div style="color:var(--muted)">Analysing your command word technique...</div>';
+  const cmdData = COMMAND_WORDS.find(w => w.word.toLowerCase() === word) || { word, structure: '', examTip: '' };
+  const sys = `You are a UK examiner assessing specifically how well a student has used the command word "${word.charAt(0).toUpperCase() + word.slice(1)}" in their ${subject} answer.
+The key requirements for "${word}" are: ${cmdData.structure}. ${cmdData.examTip}
+Mark their technique out of 5 and give specific feedback. Return HTML (no JSON):
+<div class="feedback-grade">[X / 5 for ${word} technique]</div>
+<p><strong>✓ What you did well:</strong> [specific points about their use of the command word]</p>
+<p><strong>✗ What's missing:</strong> [what they need to add/change to fully satisfy "${word}"]</p>
+<p><strong>💡 One improvement:</strong> [the single most important thing to fix]</p>`;
+  try {
+    const data = await callClaude([{role:'user',content:`Mark this ${subject} answer for use of command word "${word}":\n\n${answer}`}], sys, 1000);
+    const fbRaw = getReply(data);
+    output.innerHTML = sanitizeAIHTML(fbRaw);
+    if (window.MathJax) MathJax.typesetPromise([output]).catch(() => {});
+    addXP(15, '📝 Command word practised +15 XP');
+  } catch(e) {
+    output.innerHTML = '<div style="color:var(--muted)">⚠️ Could not mark — please try again.</div>';
+  }
+  btn.textContent = '⭐ Mark My Command Word Technique'; btn.disabled = false;
+}
+
+// Wire Mark Scheme Coach and Command Words into showDash
+const __msShowDash = showDash;
+showDash = function(sub) {
+  __msShowDash(sub);
+  const newSubs = ['markscheme', 'cmdwords'];
+  if (newSubs.includes(sub)) {
+    document.querySelectorAll('.subpage').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+    const sp = document.getElementById('sp-' + sub);
+    const si = document.getElementById('si-' + sub);
+    if (sp) sp.classList.add('active');
+    if (si) si.classList.add('active');
+    if (sub === 'cmdwords') renderCommandWords();
   }
 };
 
