@@ -2541,6 +2541,8 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="sidebar-item" id="si-mindmap" onclick="showDash('mindmap')"><i class="fas fa-project-diagram"></i>Mind Map</div>
       <div class="sidebar-item" id="si-markscheme" onclick="showDash('markscheme')"><i class="fas fa-star-half-alt"></i>Mark Scheme Coach</div>
       <div class="sidebar-item" id="si-cmdwords" onclick="showDash('cmdwords')"><i class="fas fa-spell-check"></i>Command Words</div>
+      <div class="sidebar-item" id="si-checklist" onclick="showDash('checklist')"><i class="fas fa-list-check"></i>Topic Checklist</div>
+      <div class="sidebar-item" id="si-blitz" onclick="showDash('blitz')"><i class="fas fa-bolt"></i>Quick Blitz</div>
       <div class="sidebar-item" id="si-grade" onclick="showDash('grade')"><i class="fas fa-chart-bar"></i>Grade Predictor</div>
       <div class="sidebar-item" id="si-diagnostic" onclick="showDash('diagnostic')"><i class="fas fa-stethoscope"></i>Diagnostic Test</div>
       <div class="sidebar-item" id="si-essay" onclick="showDash('essay')"><i class="fas fa-pen-nib"></i>Work Checker</div>
@@ -4320,6 +4322,91 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
           </div>
           <button class="btn-gold" onclick="practiseCmdWord()" id="cw-practice-btn">⭐ Mark My Command Word Technique</button>
           <div id="cw-practice-output" style="margin-top:1rem;display:none"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOPIC CHECKLIST SUBPAGE -->
+    <div class="subpage" id="sp-checklist">
+      <div class="page-title">✅ Topic Revision Checklist</div>
+      <p class="page-subtitle">Track every A-Level Maths topic — know exactly where you stand against the full specification</p>
+      <div style="max-width:860px">
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap;align-items:center;margin-bottom:1.25rem">
+          <div id="checklist-progress-bar-wrap" style="flex:1;min-width:200px">
+            <div style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted);margin-bottom:.3rem">
+              <span>Overall coverage</span>
+              <span id="checklist-pct">0%</span>
+            </div>
+            <div style="background:var(--bg4);border-radius:99px;height:8px;overflow:hidden">
+              <div id="checklist-bar" style="height:100%;background:var(--gold);border-radius:99px;width:0%;transition:width .4s"></div>
+            </div>
+          </div>
+          <button class="btn btn-outline" style="font-size:.8rem;padding:.4rem .9rem" onclick="resetChecklist()">↺ Reset</button>
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.25rem" id="cl-filter-tabs">
+          <button class="note-tag-btn selected" onclick="filterChecklist('all',this)">All</button>
+          <button class="note-tag-btn" onclick="filterChecklist('not-started',this)">Not Started</button>
+          <button class="note-tag-btn" onclick="filterChecklist('in-progress',this)">In Progress</button>
+          <button class="note-tag-btn" onclick="filterChecklist('confident',this)">Confident ✓</button>
+        </div>
+        <div id="checklist-grid"></div>
+      </div>
+    </div>
+
+    <!-- QUICK BLITZ SUBPAGE -->
+    <div class="subpage" id="sp-blitz">
+      <div class="page-title">⚡ Quick Blitz</div>
+      <p class="page-subtitle">5 rapid-fire questions, 60 seconds each — sharpen your recall before exams</p>
+      <div style="max-width:700px">
+        <div id="blitz-setup">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+            <div class="form-group">
+              <label class="form-label">Topic</label>
+              <select class="form-select" id="blitz-topic">
+                <option value="mixed">Mixed (All Topics)</option>
+                <option value="algebra">Algebra</option>
+                <option value="calculus">Calculus</option>
+                <option value="trigonometry">Trigonometry</option>
+                <option value="statistics">Statistics</option>
+                <option value="mechanics">Mechanics</option>
+                <option value="sequences">Sequences &amp; Series</option>
+                <option value="logs">Exponentials &amp; Logs</option>
+                <option value="vectors">Vectors</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Difficulty</label>
+              <select class="form-select" id="blitz-diff">
+                <option value="easy">Easy (AS Level recall)</option>
+                <option value="medium" selected>Medium (A-Level exam)</option>
+                <option value="hard">Hard (A* challenge)</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-gold" style="width:100%;padding:1rem;font-size:1rem" id="blitz-start-btn" onclick="startBlitz()">⚡ Start Blitz</button>
+        </div>
+
+        <div id="blitz-active" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <div style="font-size:.9rem;color:var(--muted)">Question <span id="blitz-q-num">1</span> of 5</div>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--gold)" id="blitz-timer">60</div>
+            <div style="font-size:.9rem;color:var(--muted)">Score: <span id="blitz-score">0</span></div>
+          </div>
+          <div style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;height:6px;overflow:hidden;margin-bottom:1.25rem">
+            <div id="blitz-timer-bar" style="height:100%;background:var(--gold);width:100%;transition:width 1s linear;border-radius:16px"></div>
+          </div>
+          <div id="blitz-question" style="background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:1rem;font-size:.95rem;line-height:1.7"></div>
+          <textarea id="blitz-answer" class="form-input" rows="3" placeholder="Your answer…" style="width:100%;resize:none;margin-bottom:.75rem"></textarea>
+          <button class="btn btn-gold" style="width:100%" onclick="submitBlitzAnswer()">Submit Answer →</button>
+          <div id="blitz-feedback" style="display:none;margin-top:.75rem;padding:1rem;background:var(--bg3);border:1px solid var(--border);border-radius:12px;font-size:.875rem;line-height:1.7"></div>
+        </div>
+
+        <div id="blitz-results" style="display:none;text-align:center;padding:2rem">
+          <div id="blitz-result-score" style="font-size:3rem;font-weight:700;color:var(--gold);margin-bottom:.5rem"></div>
+          <div id="blitz-result-msg" style="font-size:1rem;color:var(--muted);margin-bottom:1.5rem"></div>
+          <div id="blitz-result-breakdown" style="text-align:left;margin-bottom:1.5rem"></div>
+          <button class="btn btn-gold" onclick="startBlitz()">⚡ Blitz Again</button>
+          <button class="btn btn-outline" style="margin-left:.75rem" onclick="showDash('questions')">📝 More Practice</button>
         </div>
       </div>
     </div>
@@ -15370,11 +15457,11 @@ Mark their technique out of 5 and give specific feedback. Return HTML (no JSON):
   btn.textContent = '⭐ Mark My Command Word Technique'; btn.disabled = false;
 }
 
-// Wire Mark Scheme Coach and Command Words into showDash
+// Wire new subpages into showDash
 const __msShowDash = showDash;
 showDash = function(sub) {
   __msShowDash(sub);
-  const newSubs = ['markscheme', 'cmdwords'];
+  const newSubs = ['markscheme', 'cmdwords', 'checklist', 'blitz'];
   if (newSubs.includes(sub)) {
     document.querySelectorAll('.subpage').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
@@ -15383,9 +15470,242 @@ showDash = function(sub) {
     if (sp) sp.classList.add('active');
     if (si) si.classList.add('active');
     if (sub === 'cmdwords') renderCommandWords();
+    if (sub === 'checklist') renderChecklist();
   }
   if (sub === 'progress') setTimeout(renderHeatmap, 100);
 };
+
+// ══════════════════════════════════════════
+// TOPIC REVISION CHECKLIST
+// ══════════════════════════════════════════
+const TOPIC_SPEC = [
+  { section: 'Pure Mathematics — Year 1', topics: [
+    'Algebra & Functions', 'Quadratics', 'Equations & Inequalities', 'Graphs & Transformations',
+    'Straight Lines & Circles', 'Algebraic Methods', 'Binomial Expansion', 'Trigonometry',
+    'Trigonometric Identities', 'Differentiation', 'Integration', 'Vectors', 'Exponentials & Logarithms'
+  ]},
+  { section: 'Pure Mathematics — Year 2', topics: [
+    'Algebraic & Partial Fractions', 'Functions & Modelling', 'Sequences & Series',
+    'Binomial Expansion (fractional/negative)', 'Radians', 'Trigonometric Functions',
+    'Trigonometry & Modelling', 'Parametric Equations', 'Differentiation (advanced)',
+    'Numerical Methods', 'Integration (advanced)', 'Vectors (3D)', 'Proof'
+  ]},
+  { section: 'Statistics', topics: [
+    'Statistical Sampling', 'Data Presentation & Interpretation', 'Probability',
+    'Statistical Distributions', 'Statistical Hypothesis Testing',
+    'Regression & Correlation', 'Conditional Probability', 'Normal Distribution'
+  ]},
+  { section: 'Mechanics', topics: [
+    'Quantities & Units', 'Kinematics (1D)', 'Kinematics (2D)', 'Forces & Newtons Laws',
+    'Variable Acceleration', 'Moments', 'Projectiles', 'Friction', 'Work Energy & Power'
+  ]}
+];
+
+const STATUS_CYCLE = ['not-started', 'in-progress', 'confident'];
+const STATUS_LABEL = { 'not-started': '○ Not Started', 'in-progress': '◑ In Progress', 'confident': '✓ Confident' };
+const STATUS_COLOR = { 'not-started': 'var(--muted)', 'in-progress': '#FB923C', 'confident': 'var(--green)' };
+
+let checklistData = {};
+
+function loadChecklist() {
+  try { checklistData = JSON.parse(localStorage.getItem('synaptiq_checklist') || '{}'); } catch(e) { checklistData = {}; }
+}
+
+function saveChecklist() {
+  try { localStorage.setItem('synaptiq_checklist', JSON.stringify(checklistData)); } catch(e) {}
+}
+
+function toggleTopic(topic) {
+  const cur = checklistData[topic] || 'not-started';
+  const nextIdx = (STATUS_CYCLE.indexOf(cur) + 1) % STATUS_CYCLE.length;
+  checklistData[topic] = STATUS_CYCLE[nextIdx];
+  saveChecklist();
+  renderChecklist();
+}
+
+function resetChecklist() {
+  if (!confirm('Reset all topic statuses to Not Started?')) return;
+  checklistData = {};
+  saveChecklist();
+  renderChecklist();
+}
+
+function filterChecklist(filter, btn) {
+  document.querySelectorAll('#cl-filter-tabs .note-tag-btn').forEach(b => b.classList.remove('selected'));
+  if (btn) btn.classList.add('selected');
+  renderChecklist(filter);
+}
+
+function renderChecklist(filter) {
+  filter = filter || document.querySelector('#cl-filter-tabs .note-tag-btn.selected')?.dataset?.filter || 'all';
+  loadChecklist();
+  const grid = document.getElementById('checklist-grid');
+  if (!grid) return;
+
+  let total = 0, confident = 0, inProgress = 0;
+  TOPIC_SPEC.forEach(sec => { sec.topics.forEach(t => {
+    total++;
+    const s = checklistData[t] || 'not-started';
+    if (s === 'confident') confident++;
+    if (s === 'in-progress') inProgress++;
+  }); });
+
+  const pct = Math.round((confident / total) * 100);
+  const bar = document.getElementById('checklist-bar');
+  const pctEl = document.getElementById('checklist-pct');
+  if (bar) bar.style.width = pct + '%';
+  if (pctEl) pctEl.textContent = `${pct}% confident`;
+
+  grid.innerHTML = TOPIC_SPEC.map(sec => {
+    const filteredTopics = filter === 'all' ? sec.topics
+      : sec.topics.filter(t => (checklistData[t] || 'not-started') === filter);
+    if (!filteredTopics.length) return '';
+    const items = filteredTopics.map(t => {
+      const status = checklistData[t] || 'not-started';
+      return `<div onclick="toggleTopic(${JSON.stringify(t)})" style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .75rem;border-radius:8px;cursor:pointer;transition:background .15s;margin-bottom:.25rem" onmouseover="this.style.background='var(--bg4)'" onmouseout="this.style.background='transparent'">
+        <span style="font-size:.875rem">${t}</span>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span style="font-size:.75rem;color:${STATUS_COLOR[status]};white-space:nowrap">${STATUS_LABEL[status]}</span>
+          <button onclick="event.stopPropagation();showDash('tutor');setTimeout(()=>{const i=document.getElementById('tutor-input');if(i){i.value='Teach me about ${t.replace(/'/g,"\\'")}';tutorSend();}},250)" title="Study this topic" style="font-size:.7rem;padding:.2rem .45rem;background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.2);color:var(--blue);border-radius:6px;cursor:pointer">Study →</button>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="card" style="margin-bottom:1rem">
+      <div class="card-header"><span class="card-title">${sec.section}</span><span style="font-size:.78rem;color:var(--muted)">${sec.topics.filter(t=>(checklistData[t]||'not-started')==='confident').length}/${sec.topics.length} confident</span></div>
+      <div class="card-body" style="padding:.5rem .75rem">${items}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// QUICK BLITZ
+// ══════════════════════════════════════════
+let blitzState = { questions: [], current: 0, score: 0, timer: null, secondsLeft: 60, results: [] };
+
+async function startBlitz() {
+  const btn = document.getElementById('blitz-start-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Generating questions…'; }
+
+  const topic = document.getElementById('blitz-topic')?.value || 'mixed';
+  const diff  = document.getElementById('blitz-diff')?.value || 'medium';
+  const topicLabel = document.getElementById('blitz-topic')?.selectedOptions[0]?.text || 'Mixed';
+
+  const sys = `You are a UK A-Level Maths examiner. Generate exactly 5 rapid-fire questions on "${topicLabel}" at ${diff} difficulty.
+Each question should be answerable in under 60 seconds. Mix calculation, recall, and short explanation.
+Return ONLY valid JSON (no markdown): {"questions":[{"q":"question text","a":"concise model answer","topic":"specific topic"}]}.`;
+
+  try {
+    const data = await callClaude([{role:'user',content:`Generate 5 rapid blitz questions on: ${topicLabel}, ${diff} difficulty`}], sys, 1000);
+    const raw = getReply(data);
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('No JSON');
+    const result = JSON.parse(m[0]);
+    blitzState = { questions: result.questions || [], current: 0, score: 0, timer: null, secondsLeft: 60, results: [] };
+
+    document.getElementById('blitz-setup').style.display = 'none';
+    document.getElementById('blitz-active').style.display = 'block';
+    document.getElementById('blitz-results').style.display = 'none';
+    document.getElementById('blitz-feedback').style.display = 'none';
+    showBlitzQuestion();
+    if (btn) { btn.disabled = false; btn.textContent = '⚡ Start Blitz'; }
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '⚡ Start Blitz'; }
+    showToast('⚠️ Could not generate blitz — try again');
+  }
+}
+
+function showBlitzQuestion() {
+  const q = blitzState.questions[blitzState.current];
+  if (!q) { endBlitz(); return; }
+  document.getElementById('blitz-q-num').textContent = blitzState.current + 1;
+  document.getElementById('blitz-score').textContent = blitzState.score;
+  document.getElementById('blitz-question').innerHTML = sanitizeAIHTML(q.q);
+  document.getElementById('blitz-answer').value = '';
+  document.getElementById('blitz-feedback').style.display = 'none';
+  if (window.MathJax) MathJax.typesetPromise([document.getElementById('blitz-question')]).catch(()=>{});
+  blitzState.secondsLeft = 60;
+  updateBlitzTimer();
+  if (blitzState.timer) clearInterval(blitzState.timer);
+  blitzState.timer = setInterval(() => {
+    blitzState.secondsLeft--;
+    updateBlitzTimer();
+    if (blitzState.secondsLeft <= 0) { clearInterval(blitzState.timer); autoNextBlitz(); }
+  }, 1000);
+}
+
+function updateBlitzTimer() {
+  const el = document.getElementById('blitz-timer');
+  const bar = document.getElementById('blitz-timer-bar');
+  if (el) { el.textContent = blitzState.secondsLeft; el.style.color = blitzState.secondsLeft <= 10 ? '#EF4444' : 'var(--gold)'; }
+  if (bar) bar.style.width = (blitzState.secondsLeft / 60 * 100) + '%';
+}
+
+async function submitBlitzAnswer() {
+  clearInterval(blitzState.timer);
+  const q = blitzState.questions[blitzState.current];
+  const answer = document.getElementById('blitz-answer')?.value?.trim() || '';
+  const fbDiv = document.getElementById('blitz-feedback');
+  fbDiv.style.display = 'block';
+  fbDiv.innerHTML = '<span style="color:var(--muted)">⏳ Marking…</span>';
+
+  const sys = `You are a UK A-Level Maths marker. Given a question and a student's answer, decide: correct, partially correct, or incorrect.
+Return ONLY valid JSON: {"correct":true/false,"partial":true/false,"feedback":"one sentence of specific feedback","modelAnswer":"brief model answer"}`;
+  try {
+    const data = await callClaude([{role:'user',content:`Question: ${q.q}\nModel answer: ${q.a}\nStudent answer: ${answer || '(no answer)'}`}], sys, 400);
+    const raw = getReply(data);
+    const m = raw.match(/\{[\s\S]*\}/);
+    const result = m ? JSON.parse(m[0]) : { correct: false, partial: false, feedback: '', modelAnswer: q.a };
+    const pts = result.correct ? 2 : result.partial ? 1 : 0;
+    blitzState.score += pts;
+    blitzState.results.push({ q: q.q, answer, correct: result.correct, partial: result.partial, modelAnswer: result.modelAnswer, pts });
+    const icon = result.correct ? '✅' : result.partial ? '⚠️' : '❌';
+    fbDiv.innerHTML = `<div style="margin-bottom:.5rem">${icon} <strong>${result.correct ? 'Correct!' : result.partial ? 'Partially correct' : 'Not quite'}</strong> ${result.feedback ? '— ' + sanitizeAIHTML(result.feedback) : ''}</div><div style="font-size:.8rem;color:var(--muted)">Model answer: ${sanitizeAIHTML(result.modelAnswer || q.a)}</div><div style="margin-top:.75rem"><button class="btn btn-gold" style="font-size:.82rem;padding:.4rem 1rem" onclick="nextBlitzQuestion()">Next Question →</button></div>`;
+    document.getElementById('blitz-score').textContent = blitzState.score;
+    if (window.MathJax) MathJax.typesetPromise([fbDiv]).catch(()=>{});
+  } catch(e) {
+    fbDiv.innerHTML = `<div style="color:var(--muted)">Model answer: ${sanitizeAIHTML(q.a)}</div><div style="margin-top:.5rem"><button class="btn btn-gold" style="font-size:.82rem;padding:.4rem 1rem" onclick="nextBlitzQuestion()">Next →</button></div>`;
+  }
+}
+
+function autoNextBlitz() {
+  const q = blitzState.questions[blitzState.current];
+  blitzState.results.push({ q: q?.q, answer: '', correct: false, partial: false, modelAnswer: q?.a || '', pts: 0 });
+  blitzState.current++;
+  if (blitzState.current >= blitzState.questions.length) { endBlitz(); return; }
+  showBlitzQuestion();
+}
+
+function nextBlitzQuestion() {
+  blitzState.current++;
+  if (blitzState.current >= blitzState.questions.length) { endBlitz(); return; }
+  showBlitzQuestion();
+}
+
+function endBlitz() {
+  clearInterval(blitzState.timer);
+  const maxScore = blitzState.questions.length * 2;
+  const pct = Math.round((blitzState.score / maxScore) * 100);
+  const msgs = [
+    [90, '🏆 Outstanding! You\'re exam-ready.'],
+    [70, '🔥 Great work — nearly there!'],
+    [50, '📚 Solid effort — keep practising.'],
+    [0,  '💪 Keep going — every blitz improves you!']
+  ];
+  const msg = msgs.find(([min]) => pct >= min)[1];
+  document.getElementById('blitz-active').style.display = 'none';
+  document.getElementById('blitz-results').style.display = 'block';
+  document.getElementById('blitz-setup').style.display = 'none';
+  document.getElementById('blitz-result-score').textContent = `${blitzState.score} / ${maxScore}`;
+  document.getElementById('blitz-result-msg').textContent = msg;
+  document.getElementById('blitz-result-breakdown').innerHTML = blitzState.results.map((r, i) =>
+    `<div style="padding:.5rem .75rem;background:${r.correct ? 'rgba(74,222,128,0.07)' : r.partial ? 'rgba(251,146,60,0.07)' : 'rgba(239,68,68,0.07)'};border-radius:8px;margin-bottom:.35rem;font-size:.82rem">
+      ${r.correct ? '✅' : r.partial ? '⚠️' : '❌'} <strong>Q${i+1}</strong>: ${sanitizeAIHTML((r.q||'').slice(0,60))}… <span style="color:var(--muted)">(+${r.pts}pts)</span>
+    </div>`).join('');
+  const xp = 20 + blitzState.score * 5;
+  addXP(xp, `⚡ Blitz complete! +${xp} XP`);
+  // Show setup form for next blitz
+  document.getElementById('blitz-setup').style.display = 'block';
+}
 
 // ══════════════════════════════════════════
 // WEEKLY AI PROGRESS REPORT
