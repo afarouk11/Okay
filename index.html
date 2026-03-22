@@ -2930,6 +2930,12 @@ body.mode-adhd .adhd-break { display: block; }
       </div>
       <p class="page-subtitle">Track your improvement over time</p>
       <div id="weekly-report-output" style="display:none;margin-bottom:1.5rem;padding:1.25rem 1.5rem;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.25);border-radius:14px;line-height:1.8;font-size:.9rem"></div>
+      <!-- 7-day streak calendar -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div style="font-size:.8rem;color:var(--muted);white-space:nowrap">This week:</div>
+        <div id="streak-calendar" style="display:flex;gap:.4rem;flex:1;justify-content:flex-start"></div>
+        <div style="font-size:.8rem;color:var(--muted)" id="streak-summary"></div>
+      </div>
       <div class="stats-row">
         <div class="stat-card"><div class="stat-card-label">Total Questions</div><div class="stat-card-value" id="pp-stat-q">0</div><div class="stat-card-change">Answer questions to track</div></div>
         <div class="stat-card"><div class="stat-card-label">Topics Explored</div><div class="stat-card-value" id="pp-stat-topics">0</div><div class="stat-card-change">of all A-Level topics</div></div>
@@ -5474,7 +5480,7 @@ function enterDashboard() {
   nav('dashboard');
   showDash('home');
   // Render dashboard widgets
-  setTimeout(() => { renderTipOfDay(); renderSpecProgress(); applyBoardPreference(); }, 200);
+  setTimeout(() => { renderTipOfDay(); renderSpecProgress(); applyBoardPreference(); updateGreeting(); }, 200);
   // Show new feature UI elements
   if (typeof updateMobileNav === 'function') updateMobileNav();
 
@@ -5771,7 +5777,7 @@ function getA11yInstructions() {
 function getTutorSystem() {
   const user = state.user;
   const year = user?.year || 'Year 13 (A-Level)';
-  const board = user?.board || 'AQA';
+  const board = user?.board || localStorage.getItem('synaptiq_exam_board') || 'AQA';
   const target = user?.target || 'A';
   const topic = state.topic || 'A-Level Maths — General';
 
@@ -8222,7 +8228,9 @@ function getGreeting() {
 
 function updateGreeting() {
   const el = document.getElementById('dash-greeting');
-  if (el && state.user) el.textContent = `${getGreeting()}, ${state.user.name.split(' ')[0]}! 👋`;
+  if (!el) return;
+  const name = state.user?.name?.split(' ')[0] || localStorage.getItem('synaptiq_display_name') || '';
+  el.textContent = name ? `${getGreeting()}, ${name}! 👋` : `${getGreeting()}! 👋`;
 }
 
 // Init welcome tutor message if on tutor subpage
@@ -15776,7 +15784,7 @@ showDash = function(sub) {
     if (sub === 'cmdwords') renderCommandWords();
     if (sub === 'checklist') renderChecklist();
   }
-  if (sub === 'progress') setTimeout(renderHeatmap, 100);
+  if (sub === 'progress') { setTimeout(renderHeatmap, 100); setTimeout(renderStreakCalendar, 120); }
   if (sub === 'home') { setTimeout(renderTipOfDay, 50); setTimeout(renderSpecProgress, 80); }
 };
 
@@ -16427,6 +16435,39 @@ Make questions exam-style with full context. Vary difficulty. Cover the weak top
   } catch(e) {
     if (btn) { btn.disabled = false; btn.textContent = '🎯 Drill My Weak Topics'; }
     showToast('⚠️ Could not generate drill — try again');
+  }
+}
+
+// ══════════════════════════════════════════
+// STREAK CALENDAR (7-day)
+// ══════════════════════════════════════════
+function renderStreakCalendar() {
+  const cal = document.getElementById('streak-calendar');
+  const sumEl = document.getElementById('streak-summary');
+  if (!cal) return;
+  let activity = {};
+  try { activity = JSON.parse(localStorage.getItem('synaptiq_activity') || '{}'); } catch(e) {}
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  let studiedDays = 0;
+  const cells = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    const isToday = i === 0;
+    const hasActivity = !!activity[key];
+    if (hasActivity) studiedDays++;
+    const dayName = isToday ? 'Today' : days[d.getDay()];
+    cells.push(`<div style="display:flex;flex-direction:column;align-items:center;gap:.2rem">
+      <div style="width:32px;height:32px;border-radius:50%;background:${hasActivity ? 'var(--gold)' : isToday ? 'rgba(201,168,76,0.15)' : 'var(--bg4)'};border:${isToday ? '2px solid rgba(201,168,76,0.5)' : '2px solid transparent'};display:flex;align-items:center;justify-content:center;font-size:.9rem" title="${key}">
+        ${hasActivity ? '✓' : isToday ? '•' : ''}
+      </div>
+      <div style="font-size:.62rem;color:${hasActivity ? 'var(--gold)' : 'var(--muted)'};font-weight:${isToday?'700':'400'}">${dayName}</div>
+    </div>`);
+  }
+  cal.innerHTML = cells.join('');
+  if (sumEl) {
+    sumEl.textContent = studiedDays === 7 ? '🔥 Perfect week!' : studiedDays >= 5 ? `${studiedDays}/7 days` : studiedDays > 0 ? `${studiedDays}/7 days` : 'No study recorded yet';
+    sumEl.style.color = studiedDays >= 5 ? 'var(--gold)' : studiedDays > 0 ? 'var(--white)' : 'var(--muted)';
   }
 }
 
