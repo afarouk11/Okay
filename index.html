@@ -2855,8 +2855,12 @@ body.mode-adhd .adhd-break { display: block; }
 
     <!-- PROGRESS SUBPAGE -->
     <div class="subpage" id="sp-progress">
-      <div class="page-title">📊 Your Progress</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:.25rem">
+        <div class="page-title" style="margin-bottom:0">📊 Your Progress</div>
+        <button class="btn btn-outline" style="font-size:.82rem;padding:.45rem 1rem" onclick="generateWeeklyReport()">✦ Weekly AI Report</button>
+      </div>
       <p class="page-subtitle">Track your improvement over time</p>
+      <div id="weekly-report-output" style="display:none;margin-bottom:1.5rem;padding:1.25rem 1.5rem;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.25);border-radius:14px;line-height:1.8;font-size:.9rem"></div>
       <div class="stats-row">
         <div class="stat-card"><div class="stat-card-label">Total Questions</div><div class="stat-card-value" id="pp-stat-q">0</div><div class="stat-card-change">Answer questions to track</div></div>
         <div class="stat-card"><div class="stat-card-label">Topics Explored</div><div class="stat-card-value" id="pp-stat-topics">0</div><div class="stat-card-change">of all A-Level topics</div></div>
@@ -6779,6 +6783,10 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nAccessibility: ' + a11y :
           </div>
           <div class="question-text" style="margin:.75rem 0;line-height:1.6">${q.question}</div>
           <textarea id="sim-ans-${i}" class="form-input" rows="4" placeholder="Write your answer here..." style="width:100%;resize:vertical;font-family:inherit" oninput="state.examSim.answers[${i}]=this.value"></textarea>
+          <div style="display:flex;gap:.5rem;margin-top:.5rem;align-items:center">
+            <button onclick="getExamHint(this, ${i})" style="font-size:.75rem;padding:.3rem .75rem;background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.25);color:var(--blue);border-radius:8px;cursor:pointer">💡 Get a Hint</button>
+          </div>
+          <div id="sim-hint-${i}" style="display:none;margin-top:.5rem;padding:.75rem 1rem;background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.2);border-radius:10px;font-size:.85rem;color:var(--muted)"></div>
         </div>`;
     });
 
@@ -15378,6 +15386,86 @@ showDash = function(sub) {
   }
   if (sub === 'progress') setTimeout(renderHeatmap, 100);
 };
+
+// ══════════════════════════════════════════
+// WEEKLY AI PROGRESS REPORT
+// ══════════════════════════════════════════
+async function generateWeeklyReport() {
+  const output = document.getElementById('weekly-report-output');
+  if (!output) return;
+  output.style.display = 'block';
+  output.innerHTML = '<span style="color:var(--muted)">✦ Generating your weekly report…</span>';
+
+  const stats  = JSON.parse(localStorage.getItem('synaptiq_stats') || '{}');
+  const activity = JSON.parse(localStorage.getItem('synaptiq_activity') || '{}');
+  const mistakes = JSON.parse(localStorage.getItem('synaptiq_mistakes') || '[]');
+  const firstName = (state?.user?.name || 'Student').split(' ')[0];
+
+  // Last 7 days XP
+  let weekXP = 0, weekDays = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    const k = d.toISOString().slice(0, 10);
+    if (activity[k]) { weekXP += activity[k]; weekDays++; }
+  }
+  const dueFc = (typeof fcCards !== 'undefined' ? fcCards : []).filter(c => c.nextReview <= new Date().toISOString().slice(0,10)).length;
+  const recentMistakes = mistakes.slice(0, 5).map(m => m.topic || m.subject || 'Unknown').join(', ');
+  const totalQ = stats.questionsAnswered || stats.questions || 0;
+  const streak = stats.streak || 1;
+
+  const sys = `You are a supportive, encouraging A-Level Maths study coach writing a personalised weekly progress report.
+Write 3–4 short paragraphs in a warm, direct UK tone (not American). Be specific, honest, and motivating.
+Structure: (1) what went well this week, (2) areas to focus on, (3) a concrete action plan for next week.
+Address the student by first name: ${firstName}.
+Data: ${weekDays}/7 days studied this week, ${weekXP} XP earned this week, ${totalQ} total questions answered, ${streak}-day streak, ${dueFc} flashcards due, recent weak topics: ${recentMistakes || 'none recorded yet'}.
+End with one specific thing to do TODAY.`;
+
+  try {
+    const data = await callClaude([{role:'user', content:`Write my weekly progress report. I'm ${firstName}, studying A-Level Maths.`}], sys, 1200);
+    output.innerHTML = sanitizeAIHTML(getReply(data)) + `<div style="margin-top:1rem;font-size:.78rem;color:var(--muted);border-top:1px solid var(--border);padding-top:.75rem">Generated ${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</div>`;
+    if (window.MathJax) MathJax.typesetPromise([output]).catch(()=>{});
+    addXP(5, '📊 Weekly report generated +5 XP');
+  } catch(e) {
+    output.innerHTML = '<span style="color:var(--muted)">⚠️ Could not generate report — try again later.</span>';
+  }
+}
+
+// ══════════════════════════════════════════
+// EXAM SIMULATOR — SMART HINTS
+// ══════════════════════════════════════════
+async function getExamHint(btn, questionIndex) {
+  if (!state.examSim?.questions) return;
+  const q = state.examSim.questions[questionIndex];
+  if (!q) return;
+  const hintDiv = document.getElementById(`sim-hint-${questionIndex}`);
+  if (!hintDiv) return;
+
+  btn.disabled = true; btn.textContent = '⏳ Thinking…';
+  const studentAnswer = document.getElementById(`sim-ans-${questionIndex}`)?.value?.trim() || '';
+
+  const sys = `You are a Socratic A-Level Maths tutor helping a student during a timed exam.
+Your role is to give a HINT only — never give the full answer or model solution.
+Give one clear, targeted hint that nudges them in the right direction.
+If the student has written something, acknowledge what they've done right and guide the next step.
+Keep the hint to 2–3 sentences maximum.`;
+
+  const prompt = studentAnswer
+    ? `Question: ${q.question}\n\nStudent's attempt so far: "${studentAnswer}"\n\nGive me a hint to continue.`
+    : `Question: ${q.question}\n\nI'm not sure where to start. Give me a hint.`;
+
+  try {
+    const data = await callClaude([{role:'user', content: prompt}], sys, 400);
+    hintDiv.style.display = 'block';
+    hintDiv.innerHTML = '💡 <strong>Hint:</strong> ' + sanitizeAIHTML(getReply(data));
+    if (window.MathJax) MathJax.typesetPromise([hintDiv]).catch(()=>{});
+    btn.textContent = '💡 Another Hint';
+  } catch(e) {
+    hintDiv.style.display = 'block';
+    hintDiv.textContent = '⚠️ Could not load hint — try again.';
+    btn.textContent = '💡 Get a Hint';
+  }
+  btn.disabled = false;
+}
 
 // ══════════════════════════════════════════
 // NOTES — GENERATE TOPIC NOTES & FLASHCARDS FROM NOTES
