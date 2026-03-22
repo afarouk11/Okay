@@ -5637,9 +5637,22 @@ function getTutorSystem() {
     }
   }
 
+  // Build personalised context from student data
+  let personalCtx = '';
+  try {
+    const mistakes = JSON.parse(localStorage.getItem('synaptiq_mistakes') || '[]');
+    const checklist = JSON.parse(localStorage.getItem('synaptiq_checklist') || '{}');
+    const weakTopics = Object.entries(
+      mistakes.slice(0,20).reduce((a,m)=>{ const t=m.topic||m.subject||''; if(t) a[t]=(a[t]||0)+1; return a; }, {})
+    ).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([t])=>t);
+    const notStarted = Object.entries(checklist).filter(([,v])=>v==='not-started').map(([k])=>k).slice(0,3);
+    if (weakTopics.length) personalCtx += `\nThis student has struggled with: ${weakTopics.join(', ')}. Be extra thorough on these.`;
+    if (notStarted.length) personalCtx += `\nTopics not yet started: ${notStarted.join(', ')}. Encourage them to try these.`;
+  } catch(e) {}
+
   let sys = `You are Synaptiq, an expert A-Level Mathematics tutor for UK students.
 You are specialising in ${board} ${year}, targeting grade ${target}.
-Current topic focus: ${topic}.
+Current topic focus: ${topic}.${personalCtx}
 
 Your personality: Encouraging, patient, and brilliant at making complex maths feel achievable.
 Your method: Always show FULL step-by-step working. Never skip steps — A-Level mark schemes award method marks.
@@ -5651,7 +5664,7 @@ When answering maths questions:
 2. Show every algebraic step clearly
 3. Box or highlight the final answer
 4. Mention any common mistakes to avoid
-5. Reference mark scheme language where relevant (e.g. "B1 for...", "M1 for method...")
+5. Reference mark scheme language where relevant (e.g. "B1 for...", "M1 for method...", "A1 cao")
 
 When explaining concepts: Start with the core idea, then show a worked example, then give a practice question.${uploadsCtx}`;
 
