@@ -7537,15 +7537,49 @@ async function analyseStrengths() {
   const recs = document.getElementById('ai-recs');
   const body = document.getElementById('ai-recs-body');
   recs.style.display = 'block';
-  body.innerHTML = '<div class="msg bot" style="max-width:100%">⏳ Synaptiq is analysing your performance...</div>';
-  const sys = `You are an expert educational analyst. Given a student's strengths and weaknesses, provide specific, actionable recommendations.
-Format response as HTML with: <div class="weakness-item"><span class="sw-topic">Action</span><span class="sw-pct bad">Priority</span></div>
-Provide 5 specific study recommendations. Use Priority: HIGH, MEDIUM, or LOW.
+  body.innerHTML = '<div class="msg bot" style="max-width:100%">⏳ Synaptiq is analysing your performance…</div>';
+
+  // Gather real user data
+  const mistakes = JSON.parse(localStorage.getItem('synaptiq_mistakes') || '[]');
+  const checklist = JSON.parse(localStorage.getItem('synaptiq_checklist') || '{}');
+  const stats = JSON.parse(localStorage.getItem('synaptiq_stats') || '{}');
+  const fc = typeof fcCards !== 'undefined' ? fcCards : [];
+
+  const weakFromMistakes = Object.entries(
+    mistakes.reduce((acc, m) => { const t = m.topic||m.subject||'General'; acc[t]=(acc[t]||0)+1; return acc; }, {})
+  ).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([t,n])=>`${t} (${n} mistakes)`);
+
+  const confidentTopics = Object.entries(checklist).filter(([,v])=>v==='confident').map(([k])=>k).slice(0,5);
+  const inProgressTopics = Object.entries(checklist).filter(([,v])=>v==='in-progress').map(([k])=>k).slice(0,5);
+  const weakFcTopics = fc.filter(c=>(c.ease||2)<=1).map(c=>c.subject||c.front?.slice(0,30)||'Unknown').slice(0,5);
+
+  const explored = (stats.topicsExplored || []).slice(0,10);
+  const questionsAnswered = stats.questionsAnswered || 0;
+  const streak = stats.streak || 1;
+
+  const userSummary = [
+    questionsAnswered ? `${questionsAnswered} practice questions answered` : 'No questions yet',
+    `${streak}-day study streak`,
+    confidentTopics.length ? `Confident in: ${confidentTopics.join(', ')}` : 'No topics marked as confident yet',
+    inProgressTopics.length ? `In progress: ${inProgressTopics.join(', ')}` : '',
+    weakFromMistakes.length ? `Mistakes logged in: ${weakFromMistakes.join(', ')}` : 'No mistakes logged',
+    weakFcTopics.length ? `Struggling with flashcards on: ${[...new Set(weakFcTopics)].join(', ')}` : '',
+    explored.length ? `Recently explored: ${explored.slice(0,5).join(', ')}` : '',
+  ].filter(Boolean).join('\n');
+
+  const sys = `You are an expert A-Level Maths educational analyst for UK students. Analyse the student's real progress data and give specific, actionable recommendations.
+Return HTML using these formats for strengths and weaknesses:
+<div class="strength-item"><span class="sw-topic">Topic Name</span><span class="sw-pct good">Confident</span></div>
+<div class="weakness-item"><span class="sw-topic">Topic Name</span><span class="sw-pct bad">Priority: HIGH/MEDIUM/LOW</span></div>
+Then give 4-5 specific, actionable next steps as a bulleted list. Use UK exam terminology. Be encouraging but honest.
 ${getA11yInstructions()}`;
+
   try {
-    const data = await callClaude([{ role: 'user', content: 'My strongest topics: Biology Cell Structure (91%), Maths Algebra (88%), English Analysis (85%). My weakest: Maths Trigonometry (38%), Chemistry Organic (42%), Physics Electricity (45%). Give me a personalised study plan.' }], sys);
-    body.innerHTML = getReply(data);
-    addXP(15);
+    const data = await callClaude([{role:'user', content:`Here is my current A-Level Maths progress:\n\n${userSummary}\n\nAnalyse my strengths and weaknesses and give me a personalised study plan.`}], sys, 1200);
+    body.innerHTML = sanitizeAIHTML(getReply(data));
+    addXP(15, '🎯 Strengths analysed +15 XP');
+    // Also update strengths/weaknesses list panels
+    document.getElementById('strengths-list').innerHTML = body.querySelectorAll ? '' : '';
   } catch (e) {
     body.innerHTML = `<p style="color:var(--red)">⚠️ ${sanitizeHTML(e.message)}</p>`;
   }
