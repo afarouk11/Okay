@@ -2531,6 +2531,7 @@ body.mode-adhd .adhd-break { display: block; }
       <div class="sidebar-item" id="si-flashcards" onclick="showDash('flashcards')"><i class="fas fa-clone"></i>Flashcards</div>
       <div class="sidebar-item" id="si-exams" onclick="showDash('exams')"><i class="fas fa-calendar"></i>Exam Countdown</div>
       <div class="sidebar-item" id="si-exam-sim" onclick="showDash('exam-sim')"><i class="fas fa-stopwatch"></i>Exam Simulator</div>
+      <div class="sidebar-item" id="si-predict" onclick="showDash('predict')"><i class="fas fa-crystal-ball"></i>Exam Prediction</div>
       <div class="sidebar-item" id="si-timetable" onclick="showDash('timetable')"><i class="fas fa-table"></i>Revision Timetable</div>
       <div class="sidebar-item" id="si-papers" onclick="showDash('papers')"><i class="fas fa-file-alt"></i>Past Papers</div>
       <div class="sidebar-item" id="si-glossary" onclick="showDash('glossary')"><i class="fas fa-book-open"></i>Glossary</div>
@@ -3545,6 +3546,39 @@ body.mode-adhd .adhd-break { display: block; }
       </div>
     </div>
 
+
+    <div class="subpage" id="sp-predict">
+      <div class="page-title">🔮 Exam Prediction</div>
+      <p class="page-subtitle">AI analyses past paper trends to predict what's most likely to appear on your exam</p>
+      <div style="max-width:800px">
+        <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:.875rem;color:var(--muted)">
+          ⚠️ <strong style="color:var(--white)">Disclaimer:</strong> These are AI-generated predictions based on past paper patterns. They are not guaranteed — always revise all topics thoroughly.
+        </div>
+        <div class="form-row" style="grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+          <div class="form-group">
+            <label class="form-label">Subject</label>
+            <select class="form-select" id="pred-subject">
+              <option>Mathematics</option><option>Physics</option><option>Chemistry</option>
+              <option>Biology</option><option>English Literature</option><option>History</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Exam Board</label>
+            <select class="form-select" id="pred-board">
+              <option>AQA</option><option>Edexcel</option><option>OCR</option><option>WJEC</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Level</label>
+            <select class="form-select" id="pred-level">
+              <option>A-Level</option><option>AS-Level</option><option>GCSE Higher</option><option>GCSE Foundation</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-gold" onclick="generatePrediction()" id="pred-btn" style="margin-bottom:1.5rem">🔮 Generate Prediction</button>
+        <div id="pred-output" style="display:none"></div>
+      </div>
+    </div>
 
     <div class="subpage" id="sp-exam-sim">
       <div class="page-title">⏱️ Exam Simulator</div>
@@ -7941,21 +7975,39 @@ function resetStatsForNewUser() {
 <button class="sr-float-btn show" id="sr-float-btn" onclick="openSR()" style="display:none" title="Spaced Repetition Review">🧠</button>
 
 <!-- Upgrade / Paywall Modal -->
-<div id="upgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center">
-  <div style="background:var(--bg2);border:1px solid var(--gold);border-radius:20px;padding:2rem;max-width:460px;width:90%;text-align:center;position:relative">
+<div id="upgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:1rem">
+  <div style="background:var(--bg2);border:1px solid rgba(201,168,76,0.4);border-radius:20px;padding:2rem;max-width:480px;width:100%;position:relative;box-shadow:0 24px 64px rgba(0,0,0,0.6)">
     <button onclick="closeUpgradeModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem">✕</button>
-    <div style="font-size:2.5rem;margin-bottom:1rem">🔒</div>
-    <h3 style="font-family:var(--font-head);font-weight:800;font-size:1.3rem;margin-bottom:.5rem">Upgrade to Unlock</h3>
-    <p id="upgrade-reason" style="color:var(--muted);margin-bottom:1.5rem;font-size:.9rem">This feature requires a subscription</p>
+    <div style="text-align:center;margin-bottom:1.25rem">
+      <div style="font-size:2.5rem;margin-bottom:.75rem">🌟</div>
+      <h3 style="font-family:var(--font-head);font-weight:800;font-size:1.3rem;margin-bottom:.4rem">Unlock Full Synaptiq</h3>
+      <p id="upgrade-reason" style="color:var(--muted);font-size:.875rem">This feature requires a subscription</p>
+    </div>
+    <!-- Feature bullets -->
+    <div style="background:var(--bg3);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.25rem">
+      <div style="font-size:.8rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem">Everything included:</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;font-size:.825rem">
+        <div>✦ Unlimited AI tutoring</div>
+        <div>✦ Voice AI teacher</div>
+        <div>✦ AI essay marking</div>
+        <div>✦ Photo question solver</div>
+        <div>✦ Exam topic prediction</div>
+        <div>✦ Video explainers</div>
+        <div>✦ Grade predictor</div>
+        <div>✦ Past paper practice</div>
+        <div>✦ Spaced repetition</div>
+        <div>✦ All subjects & boards</div>
+      </div>
+    </div>
     <div style="display:flex;flex-direction:column;gap:.75rem">
-      <button class="btn-gold" style="width:100%;padding:.875rem" onclick="startCheckoutFlow('student')">
-        Student Plan — £35/mo<br><span style="font-size:.75rem;font-weight:400">Unlimited AI tutoring · 7-day free trial</span>
+      <button class="btn-gold" style="width:100%;padding:1rem;font-size:.95rem" onclick="startCheckoutFlow('student')">
+        Start 7-Day Free Trial →<br><span style="font-size:.75rem;font-weight:400;opacity:.85">Then £35/month · Cancel anytime</span>
       </button>
-      <button class="btn-gold" style="width:100%;padding:.875rem;background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="window.location.href='mailto:schools@synaptiqai.co.uk?subject=School%20Enquiry'">
-        Institution Plan — Book a Demo<br><span style="font-size:.75rem;font-weight:400">Custom pricing for schools &amp; sixth forms</span>
+      <button style="width:100%;padding:.75rem;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:10px;cursor:pointer;font-size:.85rem" onclick="window.location.href='mailto:schools@synaptiqai.co.uk?subject=School%20Enquiry'">
+        🏫 Institution / School pricing →
       </button>
     </div>
-    <p style="font-size:.75rem;color:var(--muted);margin-top:1rem">7-day free trial. Cancel anytime.</p>
+    <p style="font-size:.72rem;color:var(--muted);margin-top:.75rem;text-align:center">No credit card required to start trial.</p>
   </div>
 </div>
 <style>#upgrade-modal.show { display:flex !important; }</style>
@@ -14776,6 +14828,76 @@ document.addEventListener('DOMContentLoaded', () => {
   initDailyChallenge();
   renderStudyCoach();
 });
+
+// ═══════════════════════════════════════
+// EXAM PREDICTION
+// ═══════════════════════════════════════
+async function generatePrediction() {
+  const subject = document.getElementById('pred-subject').value;
+  const board = document.getElementById('pred-board').value;
+  const level = document.getElementById('pred-level').value;
+  const output = document.getElementById('pred-output');
+  const btn = document.getElementById('pred-btn');
+  btn.textContent = '✦ Analysing...'; btn.disabled = true;
+  output.style.display = 'block';
+  output.innerHTML = '<div class="skeleton-block" style="height:200px"></div>';
+  const sys = `You are a UK exam analysis expert who has studied ${board} ${subject} past papers for 10+ years. Analyse historical ${board} ${level} ${subject} exam patterns and predict likely topics. Return ONLY valid JSON:
+{"highProbability":[{"topic":"...","reason":"...","lastAppeared":"...","weighting":"..."}],"mediumProbability":[{"topic":"...","reason":"...","lastAppeared":"...","weighting":"..."}],"examTips":["..."],"mustRevise":["topic1","topic2"]}
+Each array 3-5 items. Base on genuine historical patterns.`;
+  try {
+    const data = await callClaude([{role:'user',content:`Predict likely ${board} ${level} ${subject} exam topics for the next exam series.`}], sys, 2000);
+    const raw = getReply(data).replace(/```json|```/g,'').trim();
+    const pred = JSON.parse(raw);
+    output.innerHTML = `
+      <div style="margin-bottom:1.5rem">
+        <div style="font-weight:700;color:var(--green);font-size:.875rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem">🔥 High Probability Topics</div>
+        ${(pred.highProbability||[]).map(t => `<div style="background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);border-radius:10px;padding:.875rem 1rem;margin-bottom:.5rem">
+          <div style="font-weight:700;margin-bottom:.25rem">${t.topic}</div>
+          <div style="font-size:.825rem;color:var(--muted)">${t.reason}</div>
+          ${t.lastAppeared?`<div style="font-size:.75rem;color:var(--green);margin-top:.25rem">Last seen: ${t.lastAppeared}${t.weighting?' · '+t.weighting:''}</div>`:''}
+          <button onclick="showDash('tutor');setTimeout(()=>{const i=document.getElementById('tutor-input');if(i){i.value='Teach me ${t.topic.replace(/'/g,"\\'")} for ${board} ${level} ${subject}';tutorSend();}},300)" style="margin-top:.5rem;background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.2);color:var(--green);border-radius:8px;padding:.3rem .8rem;font-size:.75rem;cursor:pointer">📚 Revise this →</button>
+        </div>`).join('')}
+      </div>
+      <div style="margin-bottom:1.5rem">
+        <div style="font-weight:700;color:var(--gold);font-size:.875rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem">📊 Medium Probability Topics</div>
+        ${(pred.mediumProbability||[]).map(t => `<div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-radius:10px;padding:.875rem 1rem;margin-bottom:.5rem">
+          <div style="font-weight:700;margin-bottom:.25rem">${t.topic}</div>
+          <div style="font-size:.825rem;color:var(--muted)">${t.reason}</div>
+          <button onclick="showDash('tutor');setTimeout(()=>{const i=document.getElementById('tutor-input');if(i){i.value='Teach me ${t.topic.replace(/'/g,"\\'")} for ${board} ${level} ${subject}';tutorSend();}},300)" style="margin-top:.5rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);color:var(--gold);border-radius:8px;padding:.3rem .8rem;font-size:.75rem;cursor:pointer">📚 Revise this →</button>
+        </div>`).join('')}
+      </div>
+      ${(pred.examTips||[]).length?`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem">
+        <div style="font-weight:700;margin-bottom:.75rem">💡 Exam Technique Tips</div>
+        ${pred.examTips.map(t=>`<div style="font-size:.875rem;color:var(--muted);padding:.3rem 0;border-bottom:1px solid var(--border)">→ ${t}</div>`).join('')}
+      </div>`:''}
+      ${(pred.mustRevise||[]).length?`<div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem">
+        <div style="font-weight:700;margin-bottom:.75rem;color:#EF4444">⚠️ Must-Revise (high mark weighting)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem">${pred.mustRevise.map(t=>`<span onclick="showDash('tutor');setTimeout(()=>{const i=document.getElementById('tutor-input');if(i){i.value='Explain ${t.replace(/'/g,"\\'")} in detail';tutorSend();}},300)" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:20px;padding:.3rem .85rem;font-size:.825rem;cursor:pointer">${t}</span>`).join('')}</div>
+      </div>`:''}
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+        <button class="btn-gold" onclick="showDash('questions')">Practice These Topics →</button>
+        <button class="vid-ctrl-btn" onclick="showDash('timetable')">Build Revision Timetable →</button>
+      </div>`;
+    addXP(25, '🔮 Prediction generated +25 XP');
+  } catch(e) {
+    output.innerHTML = '<div style="color:var(--muted);padding:1rem">⚠️ Could not generate prediction — please try again.</div>';
+  }
+  btn.textContent = '🔮 Generate Prediction'; btn.disabled = false;
+}
+
+// Wire Exam Prediction into showDash
+const __predShowDash = showDash;
+showDash = function(sub) {
+  __predShowDash(sub);
+  if (sub === 'predict') {
+    document.querySelectorAll('.subpage').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sidebar-item').forEach(s => s.classList.remove('active'));
+    const sp = document.getElementById('sp-predict');
+    const si = document.getElementById('si-predict');
+    if (sp) sp.classList.add('active');
+    if (si) si.classList.add('active');
+  }
+};
 
 // ═══════════════════════════════════════
 // POMODORO TIMER
