@@ -5917,6 +5917,9 @@ function _showDashCore(sub) {
   if (si) si.classList.add('active');
   document.querySelectorAll('#app-nav a').forEach(a => a.classList.remove('active'));
   state.currentSubpage = sub;
+  // Scroll main content to top when switching sections
+  const mc = document.querySelector('.main-content');
+  if (mc) mc.scrollTop = 0;
 
   if (sub === 'progress') { buildHeatmap(); updateDashboardStats(); }
   if (sub === 'strengths') loadCachedStudyPlan();
@@ -6684,9 +6687,9 @@ function addTutorMsg(role, text) {
     ];
     actions.forEach(a => {
       const btn = document.createElement('button');
-      btn.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:.3rem .8rem;font-size:.78rem;color:var(--muted);cursor:pointer;transition:all .15s';
-      btn.onmouseover = () => { btn.style.borderColor = 'var(--gold)'; btn.style.color = 'var(--white)'; };
-      btn.onmouseout = () => { btn.style.borderColor = 'var(--border)'; btn.style.color = 'var(--muted)'; };
+      btn.style.cssText = 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:.35rem .9rem;font-size:.78rem;color:var(--muted);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px)';
+      btn.onmouseover = () => { btn.style.borderColor = 'rgba(201,168,76,0.45)'; btn.style.color = 'var(--gold)'; btn.style.background = 'rgba(201,168,76,0.08)'; };
+      btn.onmouseout = () => { btn.style.borderColor = 'rgba(255,255,255,0.1)'; btn.style.color = 'var(--muted)'; btn.style.background = 'rgba(255,255,255,0.04)'; };
       btn.textContent = a.label;
       if (a.prompt) {
         btn.onclick = () => { chips.remove(); document.getElementById('tutor-input').value = a.prompt; tutorSend(); };
@@ -6695,6 +6698,26 @@ function addTutorMsg(role, text) {
       }
       chips.appendChild(btn);
     });
+    // Add copy + save to notes buttons
+    const utilRow = document.createElement('div');
+    utilRow.style.cssText = 'display:flex;gap:.4rem;margin-left:auto';
+    const copyBtn = document.createElement('button');
+    copyBtn.style.cssText = 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:.25rem .6rem;font-size:.7rem;color:var(--muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:.3rem';
+    copyBtn.innerHTML = '📋 Copy';
+    copyBtn.onclick = () => {
+      const msgText = el.textContent;
+      navigator.clipboard.writeText(msgText).then(() => { copyBtn.innerHTML = '✓ Copied!'; copyBtn.style.color = 'var(--gold)'; setTimeout(() => { copyBtn.innerHTML = '📋 Copy'; copyBtn.style.color = 'var(--muted)'; }, 1500); }).catch(() => {});
+    };
+    const saveBtn = document.createElement('button');
+    saveBtn.style.cssText = 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:.25rem .6rem;font-size:.7rem;color:var(--muted);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:.3rem';
+    saveBtn.innerHTML = '📓 Save';
+    saveBtn.onclick = () => {
+      const noteInput = document.getElementById('note-text-input');
+      if (noteInput) { noteInput.value = el.textContent.trim(); showDash('notes'); showToast('✦ Saved to Notes'); saveBtn.innerHTML = '✓ Saved!'; saveBtn.style.color = 'var(--green)'; }
+    };
+    utilRow.appendChild(copyBtn);
+    utilRow.appendChild(saveBtn);
+    chips.appendChild(utilRow);
     container.appendChild(chips);
   }
   container.scrollTop = 99999;
