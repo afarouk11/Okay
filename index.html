@@ -2706,6 +2706,29 @@ body.mode-adhd .adhd-break { display: block; }
               </div>
             </div>
           </div>
+          <!-- Spec progress mini bar -->
+          <div class="card" style="margin-top:1.5rem">
+            <div class="card-header" style="padding-bottom:.5rem">
+              <span class="card-title">📋 Spec Coverage</span>
+              <button class="btn btn-outline" style="font-size:.75rem;padding:.3rem .75rem" onclick="showDash('checklist')">View All →</button>
+            </div>
+            <div class="card-body" style="padding:.75rem 1.5rem 1rem">
+              <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.5rem">
+                <div style="flex:1;height:8px;background:var(--bg4);border-radius:4px;overflow:hidden">
+                  <div id="spec-prog-fill" style="height:100%;background:linear-gradient(90deg,var(--gold),#F0A500);border-radius:4px;transition:width .8s ease;width:0%"></div>
+                </div>
+                <span style="font-size:.875rem;font-weight:700;color:var(--gold);white-space:nowrap" id="spec-prog-label">0 / 34 confident</span>
+              </div>
+              <div style="font-size:.78rem;color:var(--muted)" id="spec-prog-detail">Rate your topics in the Revision Checklist to track your progress.</div>
+            </div>
+          </div>
+          <!-- Tip of the day -->
+          <div class="card" style="margin-top:1.5rem">
+            <div class="card-header"><span class="card-title">💡 Today's Exam Tip</span></div>
+            <div class="card-body" style="padding:1rem 1.5rem">
+              <div id="tip-of-day" style="font-size:.9rem;line-height:1.7;color:rgba(240,238,248,0.9)">Loading tip...</div>
+            </div>
+          </div>
           <!-- Quick actions -->
           <div class="card" style="margin-top:1.5rem">
             <div class="card-header"><span class="card-title">🚀 Quick Actions</span></div>
@@ -3349,12 +3372,18 @@ body.mode-adhd .adhd-break { display: block; }
     <div class="subpage" id="sp-formulas">
       <div class="page-title">📐 Formula Reference Sheet</div>
       <p class="page-subtitle">All A-Level Maths formulas in one place — Pure, Statistics &amp; Mechanics</p>
-      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem" id="formula-tabs">
-        <button class="btn btn-gold" onclick="switchFormulaTab('pure1',this)" id="ftab-pure1">Pure 1</button>
-        <button class="btn btn-outline" onclick="switchFormulaTab('pure2',this)" id="ftab-pure2">Pure 2</button>
-        <button class="btn btn-outline" onclick="switchFormulaTab('stats',this)" id="ftab-stats">Statistics</button>
-        <button class="btn btn-outline" onclick="switchFormulaTab('mech',this)" id="ftab-mech">Mechanics</button>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem;align-items:center">
+        <div style="position:relative;flex:1;min-width:180px;max-width:280px">
+          <input type="text" id="formula-search" placeholder="🔍 Search formulas..." oninput="searchFormulas(this.value)" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.5rem .9rem;color:var(--white);font-size:.85rem;box-sizing:border-box">
+        </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap" id="formula-tabs">
+          <button class="btn btn-gold" onclick="switchFormulaTab('pure1',this)" id="ftab-pure1">Pure 1</button>
+          <button class="btn btn-outline" onclick="switchFormulaTab('pure2',this)" id="ftab-pure2">Pure 2</button>
+          <button class="btn btn-outline" onclick="switchFormulaTab('stats',this)" id="ftab-stats">Statistics</button>
+          <button class="btn btn-outline" onclick="switchFormulaTab('mech',this)" id="ftab-mech">Mechanics</button>
+        </div>
       </div>
+      <div id="formula-search-results" style="display:none"></div>
       <div id="formula-content"></div>
     </div>
 
@@ -4469,6 +4498,10 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
           <div id="blitz-result-score" style="font-size:3rem;font-weight:700;color:var(--gold);margin-bottom:.5rem"></div>
           <div id="blitz-result-msg" style="font-size:1rem;color:var(--muted);margin-bottom:1.5rem"></div>
           <div id="blitz-result-breakdown" style="text-align:left;margin-bottom:1.5rem"></div>
+          <div id="blitz-study-links" style="display:none;background:var(--bg3);border-radius:12px;padding:1rem;margin-bottom:1.25rem;text-align:left">
+            <div style="font-weight:700;font-size:.875rem;margin-bottom:.75rem;color:var(--gold)">📚 Study the topics you missed:</div>
+            <div id="blitz-study-btns" style="display:flex;flex-wrap:wrap;gap:.5rem"></div>
+          </div>
           <button class="btn btn-gold" onclick="startBlitz()">⚡ Blitz Again</button>
           <button class="btn btn-outline" style="margin-left:.75rem" onclick="showDash('questions')">📝 More Practice</button>
         </div>
@@ -5429,9 +5462,13 @@ function enterDashboard() {
   document.getElementById('user-menu').style.display = 'flex';
   document.getElementById('a11y-bar').style.display = 'flex';
   document.getElementById('xp-badge').style.display = 'flex';
+  const stBadge = document.getElementById('session-timer-badge');
+  if (stBadge) { stBadge.style.display = 'flex'; _sessionTick(); }
 
   nav('dashboard');
   showDash('home');
+  // Render dashboard widgets
+  setTimeout(() => { renderTipOfDay(); renderSpecProgress(); }, 200);
   // Show new feature UI elements
   if (typeof updateMobileNav === 'function') updateMobileNav();
 
@@ -15733,6 +15770,7 @@ showDash = function(sub) {
     if (sub === 'checklist') renderChecklist();
   }
   if (sub === 'progress') setTimeout(renderHeatmap, 100);
+  if (sub === 'home') { setTimeout(renderTipOfDay, 50); setTimeout(renderSpecProgress, 80); }
 };
 
 // ══════════════════════════════════════════
@@ -15967,6 +16005,31 @@ function endBlitz() {
   const xp = 20 + blitzState.score * 5;
   addXP(xp, `⚡ Blitz complete! +${xp} XP`);
   try { localStorage.setItem('synaptiq_blitz', JSON.stringify({ date: new Date().toISOString(), score: blitzState.score })); } catch(e) {}
+
+  // Post-blitz study links for wrong/partial answers
+  const missed = blitzState.results
+    .filter(r => !r.correct)
+    .map(r => (r.q || '').slice(0, 60))
+    .filter(Boolean);
+  const blitzTopic = document.getElementById('blitz-topic')?.value || '';
+  const linksWrap = document.getElementById('blitz-study-links');
+  const linksContainer = document.getElementById('blitz-study-btns');
+  if (linksWrap && linksContainer && (missed.length > 0 || blitzTopic)) {
+    linksWrap.style.display = 'block';
+    const studyLinks = [];
+    if (blitzTopic) {
+      studyLinks.push(
+        `<button class="btn btn-outline" style="font-size:.8rem;padding:.4rem .85rem" onclick="showDash('content')">📚 AI Teacher: ${blitzTopic}</button>`,
+        `<button class="btn btn-outline" style="font-size:.8rem;padding:.4rem .85rem" onclick="teachMeThis('${blitzTopic.replace(/'/g,'\\\'').slice(0,50)}')">🤖 Ask AI Tutor</button>`
+      );
+    }
+    studyLinks.push(
+      `<button class="btn btn-outline" style="font-size:.8rem;padding:.4rem .85rem" onclick="showDash('flashcards')">🗂 Review Flashcards</button>`,
+      `<button class="btn btn-outline" style="font-size:.8rem;padding:.4rem .85rem" onclick="startWeakTopicDrill()">🎯 Weak Topic Drill</button>`
+    );
+    linksContainer.innerHTML = studyLinks.join('');
+  }
+
   // Show setup form for next blitz
   document.getElementById('blitz-setup').style.display = 'block';
 }
@@ -16358,6 +16421,113 @@ Make questions exam-style with full context. Vary difficulty. Cover the weak top
     if (btn) { btn.disabled = false; btn.textContent = '🎯 Drill My Weak Topics'; }
     showToast('⚠️ Could not generate drill — try again');
   }
+}
+
+// ══════════════════════════════════════════
+// TIP OF THE DAY
+// ══════════════════════════════════════════
+const EXAM_TIPS = [
+  '📐 Always show your <strong>method marks</strong> — even if your final answer is wrong, you can still earn M marks for correct working.',
+  '✅ In "Show that..." questions, <strong>start from given information</strong> and work towards the target — never assume what you\'re trying to prove.',
+  '🎯 For integration, always <strong>include +C</strong> for indefinite integrals. Forgetting it is one of the most common A-Level Maths mistakes.',
+  '📊 When sketching graphs, label <strong>all key features</strong>: intercepts, turning points, asymptotes — examiners award marks for each labelled feature.',
+  '⚡ In mechanics problems, draw a <strong>clear diagram with all forces labelled</strong> before writing any equations — this prevents sign errors.',
+  '🔢 For binomial expansion questions, identify <em>n</em>, <em>a</em>, and <em>b</em> first, then write out the <strong>general term formula</strong> before expanding.',
+  '📏 Remember: <strong>differentiate to find gradient, integrate to find area</strong>. These are inverse operations.',
+  '🌐 For <strong>radians vs degrees</strong> — always check which mode your calculator is in. This causes many lost marks.',
+  '📝 In proof questions, if asked to prove for <em>all</em> integers, consider <strong>proof by contradiction</strong> or exhaustion for small cases.',
+  '🔍 When a question says <strong>"exact value"</strong> — leave your answer in surd or π form. Decimals will cost you marks.',
+  '💡 For hypothesis testing, always state <strong>H₀ and H₁ clearly</strong>, state your significance level, and give a contextual conclusion — not just a number.',
+  '🧮 In <strong>parametric equations</strong>, find dx/dt and dy/dt separately, then use dy/dx = (dy/dt)/(dx/dt).',
+  '⚠️ For <strong>implicit differentiation</strong>, remember to use the chain rule: d/dx[f(y)] = f\'(y) · dy/dx.',
+  '📈 When finding the <strong>area between curves</strong>, always sketch both curves first to check which is on top over the interval.',
+  '🏃 In <strong>kinematics</strong>, be careful with sign conventions — define positive direction clearly at the start.',
+  '🎲 For <strong>probability questions</strong>, draw a Venn diagram or probability tree — they help avoid double-counting.',
+  '🔄 Remember the <strong>CAST diagram</strong> for trig equations — always find the principal value, then use symmetry.',
+  '📌 For <strong>vectors</strong>, to show three points are collinear, show one vector is a scalar multiple of another sharing a common point.',
+  '🔑 The <strong>factor theorem</strong>: if f(a) = 0, then (x - a) is a factor. Always try simple values like ±1, ±2 first.',
+  '📐 In <strong>circle geometry</strong>, remember: the angle in a semicircle is 90°. Identify right angles first in circle problems.',
+];
+
+function renderTipOfDay() {
+  const el = document.getElementById('tip-of-day');
+  if (!el) return;
+  const dayIdx = Math.floor(Date.now() / 86400000) % EXAM_TIPS.length;
+  el.innerHTML = EXAM_TIPS[dayIdx];
+}
+
+// ══════════════════════════════════════════
+// SPEC PROGRESS ON DASHBOARD
+// ══════════════════════════════════════════
+function renderSpecProgress() {
+  const fill = document.getElementById('spec-prog-fill');
+  const label = document.getElementById('spec-prog-label');
+  const detail = document.getElementById('spec-prog-detail');
+  if (!fill || !label) return;
+  let cl = {};
+  try { cl = JSON.parse(localStorage.getItem('synaptiq_checklist') || '{}'); } catch(e) {}
+  const total = 34;
+  const confident = Object.values(cl).filter(v => v === 'confident').length;
+  const inProgress = Object.values(cl).filter(v => v === 'in-progress').length;
+  const pct = Math.round((confident / total) * 100);
+  fill.style.width = pct + '%';
+  label.textContent = `${confident} / ${total} confident`;
+  if (detail) {
+    if (confident === 0 && inProgress === 0) {
+      detail.textContent = 'Rate your topics in the Revision Checklist to track your progress.';
+    } else {
+      detail.textContent = `${inProgress} in progress · ${total - confident - inProgress} not yet started${pct >= 80 ? ' 🎉 Almost there!' : pct >= 50 ? ' — great progress!' : ''}`;
+    }
+  }
+}
+
+// ══════════════════════════════════════════
+// FORMULA SEARCH
+// ══════════════════════════════════════════
+function searchFormulas(query) {
+  const resultsEl = document.getElementById('formula-search-results');
+  const contentEl = document.getElementById('formula-content');
+  if (!resultsEl || !contentEl) return;
+  if (!query.trim()) {
+    resultsEl.style.display = 'none';
+    contentEl.style.display = '';
+    return;
+  }
+  // Gather all formulas from FORMULAS object
+  const q = query.toLowerCase();
+  const matches = [];
+  if (typeof FORMULAS !== 'undefined') {
+    Object.values(FORMULAS).forEach(tab => {
+      (tab.groups || []).forEach(group => {
+        (group.items || []).forEach(item => {
+          const searchText = ((item.name || '') + ' ' + (item.desc || '') + ' ' + (item.formula || '')).toLowerCase();
+          if (searchText.includes(q)) {
+            matches.push({ ...item, groupLabel: group.label });
+          }
+        });
+      });
+    });
+  }
+  contentEl.style.display = 'none';
+  resultsEl.style.display = 'block';
+  if (!matches.length) {
+    resultsEl.innerHTML = `<div style="padding:2rem;text-align:center;color:var(--muted)">No formulas found for "${query}"</div>`;
+    return;
+  }
+  resultsEl.innerHTML = `<div style="margin-bottom:1rem;font-size:.85rem;color:var(--muted)">${matches.length} result${matches.length > 1 ? 's' : ''} for "<strong style="color:var(--white)">${query}</strong>"</div>` +
+    matches.map(item => {
+      const inBooklet = typeof GIVEN_IN_BOOKLET !== 'undefined' && GIVEN_IN_BOOKLET.has(item.formula || '');
+      return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:.75rem">
+        <div style="display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:.5rem">
+          <span style="font-weight:700">${item.name || ''}</span>
+          <span style="font-size:.75rem;color:var(--muted);background:var(--bg4);border-radius:6px;padding:.15rem .5rem">${item.groupLabel || ''}</span>
+          ${inBooklet ? '<span style="font-size:.72rem;color:var(--green);background:rgba(74,222,128,0.1);border:1px solid rgba(74,222,128,0.25);border-radius:6px;padding:.15rem .5rem">✓ Given in booklet</span>' : '<span style="font-size:.72rem;color:#FB923C;background:rgba(251,146,60,0.1);border:1px solid rgba(251,146,60,0.25);border-radius:6px;padding:.15rem .5rem">⚠ Memorise</span>'}
+        </div>
+        ${item.formula ? `<div style="font-family:var(--font-mono);font-size:.9rem;color:var(--gold);margin-bottom:.35rem">\\(${item.formula}\\)</div>` : ''}
+        <div style="font-size:.85rem;color:var(--muted)">${item.desc || ''}</div>
+      </div>`;
+    }).join('');
+  if (window.MathJax) MathJax.typesetPromise([resultsEl]).catch(() => {});
 }
 
 // ══════════════════════════════════════════
