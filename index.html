@@ -2810,7 +2810,7 @@ body.mode-adhd .adhd-break { display: block; }
         <input id="home-demo-input" type="text" placeholder="e.g. How do I differentiate x³sin(x)?" style="flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:10px;padding:.7rem 1rem;color:var(--white);font-size:.875rem" onkeydown="if(event.key==='Enter')homeDemoSend()" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
         <button class="btn btn-gold" style="padding:.7rem 1.25rem;font-size:.875rem;white-space:nowrap" onclick="homeDemoSend()">Ask ✦</button>
       </div>
-      <div style="padding:.5rem 1.5rem 1rem;text-align:center;font-size:.72rem;color:var(--muted)">Free demo · No account needed · Full AI responses</div>
+      <div style="padding:.5rem 1.5rem 1rem;text-align:center;font-size:.72rem;display:flex;justify-content:center;gap:1rem;align-items:center"><span style="color:var(--muted)">Free demo · No account needed · Full AI responses</span><span id="demo-usage-counter" style="color:var(--muted);font-weight:600">0/3 free questions used</span></div>
     </div>
   </section>
 
@@ -13755,6 +13755,46 @@ function trackProgress(type, amount) {
   todayProgress[type] = (todayProgress[type] || 0) + amount;
   try { localStorage.setItem('synaptiq_progress_' + today, JSON.stringify(todayProgress)); } catch(e) {}
   updateGoalDisplay();
+  _checkGoalStreak();
+}
+
+function _checkGoalStreak() {
+  const qPct = goals.questions > 0 ? (todayProgress.questions / goals.questions) : 1;
+  const mPct = goals.minutes > 0 ? (todayProgress.minutes / goals.minutes) : 1;
+  const goalMet = qPct >= 1 && mPct >= 1;
+  try {
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 864e5).toDateString();
+    const stored = JSON.parse(localStorage.getItem('synaptiq_goal_streak') || '{"streak":0,"last":""}');
+    let streak = stored.streak || 0;
+    if (goalMet) {
+      if (stored.last === today) {
+        // Already counted today — just update display
+      } else if (stored.last === yesterday || stored.last === '') {
+        streak++;
+        localStorage.setItem('synaptiq_goal_streak', JSON.stringify({ streak, last: today }));
+        if (streak > 1) showToast(`🔥 ${streak}-day streak! Keep it up!`);
+      }
+    }
+    _renderGoalStreak(streak, goalMet);
+  } catch(e) {}
+}
+
+function _renderGoalStreak(streak, goalMet) {
+  const el = document.getElementById('goal-streak-content');
+  if (!el) return;
+  if (streak === 0) {
+    el.innerHTML = `<span style="color:var(--muted)">Complete your daily goal to start a streak!</span>`;
+  } else {
+    const emojis = streak >= 30 ? '🏆' : streak >= 14 ? '💎' : streak >= 7 ? '🔥' : '⚡';
+    el.innerHTML = `<div style="display:flex;align-items:center;gap:.75rem">
+      <div style="font-size:2rem">${emojis}</div>
+      <div>
+        <div style="font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#F5F2EC,#C9A84C);-webkit-background-clip:text;-webkit-text-fill-color:transparent">${streak} day${streak !== 1 ? 's' : ''}</div>
+        <div style="font-size:.8rem;color:var(--muted)">${goalMet ? 'Goal met today ✓' : 'Goal not yet complete today'}</div>
+      </div>
+    </div>`;
+  }
 }
 
 // ─── ACCESSIBILITY ────────────────────────────────────
@@ -13891,7 +13931,7 @@ window.showDash = function(sub) {
     if (firstBtn) showFormulas(firstBtn, 'maths');
   }
   if (sub === 'bookmarks') renderBookmarks();
-  if (sub === 'goals') { loadGoals(); updateGoalDisplay(); }
+  if (sub === 'goals') { loadGoals(); updateGoalDisplay(); _checkGoalStreak(); }
   if (sub === 'repetition') refreshSRPage();
   if (sub === 'curriculum') showCurriculum(document.getElementById('curr-alevel-btn'), 'alevel');
 };
@@ -15075,24 +15115,32 @@ async function homeDemoSend() {
   input.value = '';
   // Append user message
   chat.innerHTML += `<div style="display:flex;justify-content:flex-end;margin-bottom:1.25rem"><div style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);border-radius:12px 12px 0 12px;padding:.75rem 1rem;max-width:80%;font-size:.875rem;color:var(--white)">${q.replace(/</g,'&lt;')}</div></div>`;
-  // Loading state
+  // Update demo counter badge
+  const ctr = document.getElementById('demo-usage-counter');
+  if (ctr) { ctr.textContent = `${_demoUsed}/3 free questions used`; ctr.style.color = _demoUsed >= 2 ? 'var(--gold)' : 'var(--muted)'; }
+  // Loading state with typing dots
   const loadId = 'demo-load-' + Date.now();
-  chat.innerHTML += `<div id="${loadId}" style="display:flex;gap:.75rem;margin-bottom:1.25rem"><div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem">✦</div><div style="background:rgba(12,14,20,0.82);border-radius:0 12px 12px 12px;padding:.85rem 1.1rem;font-size:.875rem;color:var(--muted)"><span class="lesson-spin" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:.5rem"></span>Thinking…</div></div>`;
+  chat.innerHTML += `<div id="${loadId}" style="display:flex;gap:.75rem;margin-bottom:1.25rem;animation:fadeInUp .25s ease"><div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem">✦</div><div style="background:rgba(12,14,20,0.82);border:1px solid rgba(255,255,255,0.06);border-radius:0 12px 12px 12px;padding:.85rem 1.1rem;font-size:.875rem;color:var(--muted);display:flex;align-items:center;gap:.4rem"><span style="display:inline-flex;gap:4px;align-items:center"><span style="width:6px;height:6px;border-radius:50%;background:var(--gold);animation:demoDot 1.2s ease infinite 0s"></span><span style="width:6px;height:6px;border-radius:50%;background:var(--gold);animation:demoDot 1.2s ease infinite .2s"></span><span style="width:6px;height:6px;border-radius:50%;background:var(--gold);animation:demoDot 1.2s ease infinite .4s"></span></span></div></div>`;
+  if (!document.getElementById('demo-dot-style')) {
+    const s = document.createElement('style'); s.id = 'demo-dot-style';
+    s.textContent = '@keyframes demoDot{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}';
+    document.head.appendChild(s);
+  }
   chat.scrollTop = chat.scrollHeight;
   try {
     const sys = `You are Synaptiq, an expert A-Level Mathematics AI tutor for UK students. Give a clear, step-by-step explanation with full working shown. Use $...$ for inline maths. Keep the response concise but complete — max 200 words. End with one follow-up question to deepen understanding.`;
     const data = await callClaude([{role:'user',content:q}], sys, 600);
     const reply = getReply(data);
     const loadEl = document.getElementById(loadId);
-    if (loadEl) loadEl.outerHTML = `<div style="display:flex;gap:.75rem;margin-bottom:1.25rem"><div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem">✦</div><div style="background:rgba(12,14,20,0.82);border-radius:0 12px 12px 12px;padding:.85rem 1.1rem;max-width:88%;font-size:.875rem;line-height:1.7;color:var(--muted)">${reply.replace(/\n/g,'<br>')}</div></div>`;
+    if (loadEl) loadEl.outerHTML = `<div style="display:flex;gap:.75rem;margin-bottom:1.25rem;animation:fadeInUp .25s ease"><div style="width:28px;height:28px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.75rem">✦</div><div style="background:rgba(12,14,20,0.82);border:1px solid rgba(255,255,255,0.06);border-radius:0 12px 12px 12px;padding:.85rem 1.1rem;max-width:88%;font-size:.875rem;line-height:1.7;color:var(--muted)">${reply.replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div></div>`;
     if (_demoUsed >= 3) {
-      chat.innerHTML += `<div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;text-align:center"><div style="font-weight:700;color:var(--gold);margin-bottom:.5rem">You've used 3 free questions ✦</div><div style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem">Create a free account to ask unlimited questions</div><button class="btn btn-gold" onclick="nav('auth');showSignup()" style="font-size:.85rem;padding:.6rem 1.5rem">Start Free Trial →</button></div>`;
+      chat.innerHTML += `<div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;text-align:center;animation:fadeInUp .3s ease"><div style="font-weight:700;color:var(--gold);margin-bottom:.5rem">You've used 3 free questions ✦</div><div style="font-size:.85rem;color:var(--muted);margin-bottom:.75rem">Create a free account to ask unlimited questions with full solutions, flashcards & more</div><button class="btn btn-gold" onclick="nav('auth');showSignup()" style="font-size:.85rem;padding:.6rem 1.5rem">Start Free — No Card Required →</button></div>`;
     }
     if (window.MathJax) MathJax.typesetPromise([chat]).catch(()=>{});
   } catch(e) {
     const loadEl = document.getElementById(loadId);
     if (loadEl) loadEl.remove();
-    chat.innerHTML += `<div style="font-size:.85rem;color:var(--red);padding:.5rem 1rem">Sorry, couldn't reach the AI. <a onclick="nav('auth');showSignup()" style="color:var(--gold);cursor:pointer">Create an account</a> for full access.</div>`;
+    chat.innerHTML += `<div style="font-size:.85rem;color:var(--red);padding:.5rem 1rem;animation:fadeInUp .25s ease">Sorry, couldn't reach the AI. <a onclick="nav('auth');showSignup()" style="color:var(--gold);cursor:pointer">Create an account</a> for full access.</div>`;
   }
   chat.scrollTop = chat.scrollHeight;
 }
@@ -16397,11 +16445,23 @@ let pomState = {
 
 function initPomodoroStats() {
   const today = new Date().toISOString().split('T')[0];
+  const yesterday = new Date(Date.now() - 864e5).toISOString().split('T')[0];
   try {
     const s = JSON.parse(localStorage.getItem('synaptiq_pom') || '{}');
     if (s.date === today) {
       pomState.sessionsToday = s.sessions || 0;
       pomState.totalMinutes = s.minutes || 0;
+      pomState.streak = s.streak || 0;
+    } else if (s.date === yesterday && (s.sessions || 0) > 0) {
+      // Previous day had sessions — streak continues but reset today's count
+      pomState.sessionsToday = 0;
+      pomState.totalMinutes = 0;
+      pomState.streak = s.streak || 1;
+    } else {
+      // Streak broken
+      pomState.sessionsToday = 0;
+      pomState.totalMinutes = 0;
+      pomState.streak = 0;
     }
   } catch(e) {}
   updatePomDisplay();
@@ -16488,9 +16548,11 @@ function pomComplete() {
     osc.start(); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
     osc.stop(ctx.currentTime + 0.6);
   } catch(e) {}
-  // Save stats
+  // Integrate with daily goals
+  if (pomState.mode === 'work') trackProgress('minutes', 25);
+  // Save stats with streak
   const today = new Date().toISOString().split('T')[0];
-  try { localStorage.setItem('synaptiq_pom', JSON.stringify({ date: today, sessions: pomState.sessionsToday, minutes: pomState.totalMinutes })); } catch(e) {}
+  try { localStorage.setItem('synaptiq_pom', JSON.stringify({ date: today, sessions: pomState.sessionsToday, minutes: pomState.totalMinutes, streak: pomState.streak })); } catch(e) {}
   pomState.remaining = POM_MODES[pomState.mode];
   updatePomStats();
   document.getElementById('pom-start-btn').innerHTML = '▶ Start';
@@ -16526,7 +16588,7 @@ function updatePomStats() {
   const el3 = document.getElementById('pom-streak-count');
   if (el1) el1.textContent = pomState.sessionsToday;
   if (el2) el2.textContent = pomState.totalMinutes;
-  if (el3) el3.textContent = pomState.sessionsToday;
+  if (el3) el3.textContent = pomState.streak;  // Fix: show actual streak, not sessionsToday
   // Update widget sessions
   const ws = document.getElementById('pom-widget-sessions');
   if (ws) {
@@ -17023,6 +17085,8 @@ function endBlitz() {
     `<div style="padding:.65rem .875rem;background:${r.correct ? 'rgba(74,222,128,0.08)' : r.partial ? 'rgba(251,146,60,0.08)' : 'rgba(239,68,68,0.06)'};border:1px solid ${r.correct ? 'rgba(74,222,128,0.2)' : r.partial ? 'rgba(251,146,60,0.2)' : 'rgba(239,68,68,0.15)'};border-radius:10px;margin-bottom:.4rem;font-size:.82rem;animation:fadeInUp .3s ease ${i*0.05}s both">
       ${r.correct ? '✅' : r.partial ? '⚠️' : '❌'} <strong>Q${i+1}</strong>: ${sanitizeAIHTML((r.q||'').slice(0,60))}… <span style="color:var(--muted)">(+${r.pts}pts)</span>
     </div>`).join('');
+  // Track questions toward daily goal
+  trackProgress('questions', blitzState.questions.length);
   // Confetti for good scores
   if (pct >= 70) _launchConfetti();
   const xp = 20 + blitzState.score * 5;
