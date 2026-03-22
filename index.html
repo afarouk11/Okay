@@ -9480,18 +9480,45 @@ function searchDash(query) {
   // Search subjects
   const subjects = ['Mathematics'];
   const subjectMatches = subjects.filter(s => s.toLowerCase().includes(q));
+  // Search flashcards
+  const fcMatches = fcCards.filter(c =>
+    (c.front||'').toLowerCase().includes(q) || (c.back||'').toLowerCase().includes(q)
+  ).slice(0, 3);
+  // Search checklist topics
+  let cl = {};
+  try { cl = JSON.parse(localStorage.getItem('synaptiq_checklist') || '{}'); } catch(e) {}
+  const topicMatches = (typeof TOPIC_SPEC !== 'undefined' ? TOPIC_SPEC.flatMap(s => s.topics) : [])
+    .filter(t => t.toLowerCase().includes(q)).slice(0, 4);
   // Search features
   const features = [
     { name:'AI Tutor', action:"showDash('tutor')" },
-    { name:'Question Generator', action:"showDash('questions')" },
+    { name:'AI Teacher', action:"showDash('content')" },
+    { name:'Practice Questions', action:"showDash('questions')" },
     { name:'Progress', action:"showDash('progress')" },
-    { name:'Notebook', action:"showDash('notes')" },
-    { name:'Strengths', action:"showDash('strengths')" },
-    { name:'Assignments', action:"showDash('assignments')" },
+    { name:'Notebook / Notes', action:"showDash('notes')" },
+    { name:'Flashcards', action:"showDash('flashcards')" },
+    { name:'Quick Blitz', action:"showDash('blitz')" },
+    { name:'Exam Simulator', action:"showDash('exam-sim')" },
+    { name:'Mark Scheme Coach', action:"showDash('markscheme')" },
+    { name:'Command Words', action:"showDash('cmdwords')" },
+    { name:'Topic Checklist', action:"showDash('checklist')" },
+    { name:'Formula Sheets', action:"showDash('formulas')" },
+    { name:'Formula Quiz', action:"showDash('formulas');setTimeout(startFormulaQuiz,300)" },
+    { name:'Mistakes Tracker', action:"showDash('mistakes')" },
+    { name:'Strengths & Weaknesses', action:"showDash('strengths')" },
+    { name:'Exam Prediction', action:"showDash('predict')" },
+    { name:'Diagnostic Test', action:"showDash('diagnostic')" },
+    { name:'Weekly Progress Report', action:"showDash('progress');setTimeout(generateWeeklyReport,300)" },
+    { name:'Revision Timetable', action:"showDash('timetable')" },
+    { name:'Glossary', action:"showDash('glossary')" },
+    { name:'Mind Map', action:"showDash('mindmap')" },
+    { name:'Worked Examples', action:"showDash('examples')" },
+    { name:'Pomodoro Timer', action:"showDash('pomodoro')" },
+    { name:'Daily Goals', action:"showDash('goals')" },
+    { name:'Leaderboard', action:"showDash('leaderboard')" },
+    { name:'Photo Question (take a photo)', action:"showDash('photo')" },
     { name:'Settings', action:"showDash('settings')" },
-    { name:'Geometry Canvas', action:"toggleGeo()" },
-    { name:'Flashcards', action:"openSR()" },
-    { name:'Pomodoro Timer', action:"togglePomodoro()" },
+    { name:'Achievements', action:"showDash('progress')" },
   ];
   const featureMatches = features.filter(f => f.name.toLowerCase().includes(q));
 
@@ -9515,11 +9542,31 @@ function searchDash(query) {
   if (noteMatches.length) {
     html += `<div style="padding:.5rem 1rem;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Notes</div>`;
     noteMatches.forEach(n => {
-      html += `<div onclick="showDash('notes');document.getElementById('search-results')?.style?.display='none'" 
-        style="padding:.6rem 1rem;cursor:pointer;font-size:.85rem;border-bottom:1px solid var(--border)" 
+      html += `<div onclick="showDash('notes');document.getElementById('search-results')?.style?.display='none'"
+        style="padding:.6rem 1rem;cursor:pointer;font-size:.85rem;border-bottom:1px solid var(--border)"
         onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
-        <div style="font-weight:600;color:var(--gold);font-size:.75rem">${n.subject}</div>
+        <div style="font-weight:600;color:var(--gold);font-size:.75rem">📓 Note · ${n.subject}</div>
         <div style="color:var(--white)">${n.text.slice(0,60)}...</div>
+      </div>`;
+    });
+  }
+  if (fcMatches.length) {
+    html += `<div style="padding:.5rem 1rem;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Flashcards</div>`;
+    fcMatches.forEach(c => {
+      const clearFn = "document.getElementById('search-results').style.display='none';const _ds=document.getElementById('dash-search');if(_ds)_ds.value=''";
+      html += `<div onclick="showDash('flashcards');${clearFn}" style="padding:.6rem 1rem;cursor:pointer;font-size:.85rem" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+        <div style="font-weight:600;color:#60A5FA;font-size:.75rem">🗂 Flashcard</div>
+        <div style="color:var(--white)">${(c.front||'').slice(0,60)}</div>
+      </div>`;
+    });
+  }
+  if (topicMatches.length) {
+    html += `<div style="padding:.5rem 1rem;font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">A-Level Topics</div>`;
+    topicMatches.forEach(t => {
+      const clearFn = "document.getElementById('search-results').style.display='none';const _ds=document.getElementById('dash-search');if(_ds)_ds.value=''";
+      html += `<div onclick="showDash('tutor');setTimeout(()=>{const inp=document.getElementById('tutor-input');if(inp){inp.value='Explain ${t} in detail with examples';inp.focus();}},300);${clearFn}" style="padding:.6rem 1rem;cursor:pointer;font-size:.85rem" onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+        <div style="font-weight:600;color:var(--green);font-size:.75rem">📐 A-Level Topic</div>
+        <div style="color:var(--white)">${t}</div>
       </div>`;
     });
   }
