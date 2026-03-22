@@ -6248,6 +6248,14 @@ const ACHIEVEMENTS = [
   { icon:'✨', name:'Rising Star',     desc:'Reach Level 5',         earned: (_,xp,lvl) => lvl >= 5 },
   { icon:'🏆', name:'Top of Class',    desc:'Reach Level 10',        earned: (_,xp,lvl) => lvl >= 10 },
   { icon:'💎', name:'Diamond',         desc:'Reach Level 20',        earned: (_,xp,lvl) => lvl >= 20 },
+  // New achievements for new features
+  { icon:'🗂️', name:'Card Collector',  desc:'Add 10 flashcards',     earned: () => (typeof fcCards!=='undefined'?fcCards:[]).length >= 10 },
+  { icon:'🃏', name:'Memory Master',   desc:'Add 50 flashcards',     earned: () => (typeof fcCards!=='undefined'?fcCards:[]).length >= 50 },
+  { icon:'⚡', name:'Blitz Beginner',  desc:'Complete a Quick Blitz', earned: () => { try { return !!JSON.parse(localStorage.getItem('synaptiq_blitz')||'null'); } catch(e) { return false; } } },
+  { icon:'✅', name:'Spec Starter',    desc:'Mark 5 topics as Confident', earned: () => { try { const cl = JSON.parse(localStorage.getItem('synaptiq_checklist')||'{}'); return Object.values(cl).filter(v=>v==='confident').length >= 5; } catch(e) { return false; } } },
+  { icon:'🎯', name:'Spec Master',     desc:'Mark 20 topics as Confident', earned: () => { try { const cl = JSON.parse(localStorage.getItem('synaptiq_checklist')||'{}'); return Object.values(cl).filter(v=>v==='confident').length >= 20; } catch(e) { return false; } } },
+  { icon:'📓', name:'Note Taker',      desc:'Save 5 notes',          earned: () => { try { return (JSON.parse(localStorage.getItem('synaptiq_notes')||'[]')).length >= 5; } catch(e) { return false; } } },
+  { icon:'⭐', name:'Mark Scheme Pro', desc:'Analyse a mark scheme',  earned: () => !!localStorage.getItem('synaptiq_ms_used') },
 ];
 
 function checkAchievements() {
@@ -15394,6 +15402,7 @@ async function analyseMarkScheme() {
         <button class="vid-ctrl-btn" onclick="document.getElementById('ms-output').style.display='none';document.getElementById('ms-scheme').value='';document.getElementById('ms-question').value=''">🔄 Analyse Another</button>
       </div>`;
     addXP(30, '⭐ Mark scheme analysed +30 XP');
+    try { localStorage.setItem('synaptiq_ms_used', '1'); } catch(e) {}
     if (window.MathJax) MathJax.typesetPromise([output]).catch(() => {});
   } catch(e) {
     output.innerHTML = '<div style="color:var(--muted);padding:1rem">⚠️ Could not analyse mark scheme — please try again.</div>';
@@ -15795,6 +15804,7 @@ function endBlitz() {
     </div>`).join('');
   const xp = 20 + blitzState.score * 5;
   addXP(xp, `⚡ Blitz complete! +${xp} XP`);
+  try { localStorage.setItem('synaptiq_blitz', JSON.stringify({ date: new Date().toISOString(), score: blitzState.score })); } catch(e) {}
   // Show setup form for next blitz
   document.getElementById('blitz-setup').style.display = 'block';
 }
