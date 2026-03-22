@@ -4519,18 +4519,6 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
       </div>
     </div>
 
-    <div class="subpage" id="sp-formulas">
-      <div class="page-title">📐 Formula Sheets</div>
-      <p class="page-subtitle">Complete formula reference for Maths, Physics, and Chemistry</p>
-      <div style="display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
-        <button class="style-pill active" onclick="showFormulas(this,'maths')">📐 Mathematics</button>
-        <button class="style-pill" onclick="showFormulas(this,'physics')">⚡ Physics</button>
-        <button class="style-pill" onclick="showFormulas(this,'chemistry')">⚗️ Chemistry</button>
-      </div>
-      <div id="formula-content"></div>
-    </div>
-
-
     <div class="subpage" id="sp-bookmarks">
       <div class="page-title">🔖 Bookmarks</div>
       <p class="page-subtitle">Questions, explanations, and examples you've saved</p>
@@ -8068,22 +8056,22 @@ function resetStatsForNewUser() {
 </button>
 
 <div id="pomodoro-widget">
-  <div class="pom-label" id="pom-phase-label">Focus Session</div>
+  <div class="pom-label" id="pom-widget-phase-label">Focus Session</div>
   <div class="pom-ring">
     <svg width="88" height="88" viewBox="0 0 88 88">
       <circle cx="44" cy="44" r="40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="4"/>
-      <circle id="pom-ring-circle" cx="44" cy="44" r="40" fill="none" stroke="#C9A84C" stroke-width="4"
+      <circle id="pom-widget-ring-circle" cx="44" cy="44" r="40" fill="none" stroke="#C9A84C" stroke-width="4"
         stroke-dasharray="251.2" stroke-dashoffset="0" stroke-linecap="round"/>
     </svg>
-    <div class="pom-time" id="pom-display">25:00</div>
+    <div class="pom-time" id="pom-widget-display">25:00</div>
   </div>
-  <div class="pom-phase" id="pom-phase-text">Stay focused — you've got this! 💪</div>
+  <div class="pom-phase" id="pom-widget-phase-text">Stay focused — you've got this! 💪</div>
   <div class="pom-controls">
-    <button class="pom-btn start" id="pom-start-btn" onclick="pomStart()">▶ Start</button>
+    <button class="pom-btn start" id="pom-widget-start-btn" onclick="pomToggle()">▶ Start</button>
     <button class="pom-btn" onclick="pomReset()">↺ Reset</button>
     <button class="pom-btn" onclick="togglePomodoro()">✕</button>
   </div>
-  <div class="pom-sessions" id="pom-sessions">
+  <div class="pom-sessions" id="pom-widget-sessions">
     <div class="pom-dot" id="pd0"></div>
     <div class="pom-dot" id="pd1"></div>
     <div class="pom-dot" id="pd2"></div>
@@ -15207,10 +15195,18 @@ function pomToggle() {
   if (pomState.running) pomStop(); else pomStart();
 }
 
+function pomSetBtnText(text) {
+  const b1 = document.getElementById('pom-start-btn');
+  const b2 = document.getElementById('pom-widget-start-btn');
+  if (b1) b1.innerHTML = text;
+  if (b2) b2.innerHTML = text;
+}
+
 function pomStart() {
   pomState.running = true;
-  document.getElementById('pom-start-btn').innerHTML = '⏸ Pause';
-  document.getElementById('pom-label').textContent = pomState.mode === 'work' ? 'Focus time!' : 'Taking a break…';
+  pomSetBtnText('⏸ Pause');
+  const lbl = document.getElementById('pom-label');
+  if (lbl) lbl.textContent = pomState.mode === 'work' ? 'Focus time!' : 'Taking a break…';
   pomState.interval = setInterval(() => {
     pomState.remaining--;
     updatePomDisplay();
@@ -15223,8 +15219,9 @@ function pomStart() {
 function pomStop() {
   pomState.running = false;
   clearInterval(pomState.interval);
-  document.getElementById('pom-start-btn').innerHTML = '▶ Resume';
-  document.getElementById('pom-label').textContent = 'Paused';
+  pomSetBtnText('▶ Resume');
+  const lbl = document.getElementById('pom-label');
+  if (lbl) lbl.textContent = 'Paused';
 }
 
 function pomReset() {
@@ -15275,12 +15272,24 @@ function pomComplete() {
 function updatePomDisplay() {
   const m = Math.floor(pomState.remaining / 60);
   const s = pomState.remaining % 60;
-  document.getElementById('pom-display').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  // Update ring
+  const str = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  // Update main subpage display
+  const mainDisp = document.getElementById('pom-display');
+  if (mainDisp) mainDisp.textContent = str;
+  // Update floating widget display
+  const widgetDisp = document.getElementById('pom-widget-display');
+  if (widgetDisp) widgetDisp.textContent = str;
+  // Update main ring
   const total = POM_MODES[pomState.mode];
   const circumference = 597;
   const offset = circumference * (1 - pomState.remaining / total);
-  document.getElementById('pom-ring').style.strokeDashoffset = offset;
+  const ring = document.getElementById('pom-ring');
+  if (ring) ring.style.strokeDashoffset = offset;
+  // Update widget ring
+  const widgetCirc = 251.2;
+  const widgetOffset = widgetCirc * (1 - pomState.remaining / total);
+  const wRing = document.getElementById('pom-widget-ring-circle');
+  if (wRing) wRing.style.strokeDashoffset = widgetOffset;
 }
 
 function updatePomStats() {
@@ -15290,6 +15299,12 @@ function updatePomStats() {
   if (el1) el1.textContent = pomState.sessionsToday;
   if (el2) el2.textContent = pomState.totalMinutes;
   if (el3) el3.textContent = pomState.sessionsToday;
+  // Update widget sessions
+  const ws = document.getElementById('pom-widget-sessions');
+  if (ws) {
+    const dots = ws.querySelectorAll('.pom-dot');
+    dots.forEach((d, i) => d.classList.toggle('done', i < (pomState.sessionsToday % 4)));
+  }
 }
 
 // Hook showDash for pomodoro init and pause when leaving
