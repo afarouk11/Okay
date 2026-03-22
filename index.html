@@ -560,89 +560,218 @@ body {
 /* ═══════════════════════════════════════
    AUTH PAGES
 ═══════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   GLOBAL ANIMATIONS & UTILITIES
+═══════════════════════════════════════ */
+@keyframes fadeInUp {
+  from { opacity:0; transform:translateY(20px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity:0; } to { opacity:1; }
+}
+@keyframes shimmer {
+  0%   { background-position:-200% center; }
+  100% { background-position:200% center; }
+}
+@keyframes pulse-glow {
+  0%,100% { box-shadow:0 0 20px rgba(201,168,76,0.2); }
+  50%      { box-shadow:0 0 40px rgba(201,168,76,0.5); }
+}
+@keyframes float {
+  0%,100% { transform:translateY(0); }
+  50%      { transform:translateY(-8px); }
+}
+@keyframes spin-slow { to { transform:rotate(360deg); } }
+
+/* ═══════════════════════════════════════
+   AUTH PAGE — Apple ID Inspired
+═══════════════════════════════════════ */
 #page-auth {
   display: none; align-items: center; justify-content: center;
   min-height: 100vh; padding: 2rem;
-  background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 60%);
+  position: relative; overflow: hidden;
+  background: var(--black);
 }
 #page-auth.active { display: flex; }
+#page-auth::before {
+  content:''; position:absolute; inset:0; z-index:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 20%, rgba(201,168,76,0.13) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 50% at 85% 75%, rgba(96,165,250,0.09) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 60% at 50% 50%, rgba(167,139,250,0.05) 0%, transparent 60%);
+  animation: authBgPulse 10s ease-in-out infinite alternate;
+}
+@keyframes authBgPulse {
+  0%   { opacity:.7; transform:scale(1); }
+  100% { opacity:1; transform:scale(1.04); }
+}
+#page-auth::after {
+  content:''; position:absolute; inset:0; z-index:0;
+  background-image:linear-gradient(rgba(201,168,76,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201,168,76,0.035) 1px, transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse 90% 90% at center, black 20%, transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse 90% 90% at center, black 20%, transparent 75%);
+}
 .auth-box {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: 24px; padding: 3rem;
-  width: 100%; max-width: 480px;
-  box-shadow: var(--shadow);
+  position:relative; z-index:10;
+  background:rgba(10,12,18,0.82);
+  backdrop-filter:blur(48px) saturate(1.6);
+  -webkit-backdrop-filter:blur(48px) saturate(1.6);
+  border:1px solid rgba(201,168,76,0.22);
+  border-radius:28px; padding:2.75rem 2.5rem;
+  width:100%; max-width:440px;
+  box-shadow:
+    0 32px 100px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(255,255,255,0.03),
+    inset 0 1px 0 rgba(255,255,255,0.07);
+  animation:authBoxIn .5s cubic-bezier(0.34,1.4,0.64,1) both;
+}
+@keyframes authBoxIn {
+  from { opacity:0; transform:translateY(28px) scale(0.96); }
+  to   { opacity:1; transform:translateY(0) scale(1); }
 }
 .auth-logo {
-  font-family: var(--font-head); font-size: 2rem; font-weight: 900;
-  text-align: center; margin-bottom: .5rem;
+  font-family:var(--font-head); font-size:2.2rem; font-weight:900;
+  text-align:center; margin-bottom:.4rem; letter-spacing:-.025em;
 }
-.auth-logo span { color: var(--gold); }
-.auth-sub { text-align: center; color: var(--muted); font-size: .875rem; margin-bottom: 2.5rem; }
+.auth-logo span {
+  background:linear-gradient(135deg,#C9A84C 0%,#F0D080 50%,#C9A84C 100%);
+  background-size:200% auto;
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:shimmer 4s linear infinite;
+}
+.auth-sub { text-align:center; color:var(--muted); font-size:.85rem; margin-bottom:2rem; line-height:1.55; }
+
+/* Social sign-in buttons */
+.auth-social-btn {
+  width:100%; display:flex; align-items:center; justify-content:center;
+  gap:.75rem; border-radius:14px; padding:.9rem 1rem;
+  cursor:pointer; font-size:.9rem; font-weight:600;
+  transition:all .2s cubic-bezier(.4,0,.2,1); border:none;
+  font-family:var(--font-body); letter-spacing:.01em;
+}
+.auth-social-btn.google {
+  background:#fff; color:#1f1f1f;
+  box-shadow:0 1px 4px rgba(0,0,0,0.35),0 4px 16px rgba(0,0,0,0.2);
+}
+.auth-social-btn.google:hover {
+  background:#f8f9fa; transform:translateY(-2px);
+  box-shadow:0 4px 20px rgba(0,0,0,0.45);
+}
+.auth-social-btn.apple {
+  background:#000; color:#fff; border:1.5px solid rgba(255,255,255,0.12);
+  box-shadow:0 1px 4px rgba(0,0,0,0.4),0 4px 16px rgba(0,0,0,0.25);
+}
+.auth-social-btn.apple:hover {
+  background:#111; transform:translateY(-2px);
+  box-shadow:0 4px 20px rgba(0,0,0,0.5);
+}
+.auth-divider {
+  display:flex; align-items:center; gap:.75rem; margin:1.35rem 0;
+}
+.auth-divider::before,.auth-divider::after {
+  content:''; flex:1; height:1px; background:rgba(255,255,255,0.07);
+}
+.auth-divider span { font-size:.72rem; color:rgba(136,146,164,0.6); font-weight:500; letter-spacing:.08em; text-transform:uppercase; }
+
+/* Segment toggle */
 .auth-tabs {
-  display: flex; background: var(--bg3); border-radius: 10px;
-  padding: .25rem; margin-bottom: 2rem;
+  display:flex; background:rgba(255,255,255,0.04); border-radius:14px;
+  padding:.22rem; margin-bottom:1.75rem; border:1px solid rgba(255,255,255,0.06);
 }
 .auth-tab {
-  flex: 1; padding: .6rem; border-radius: 8px;
-  border: none; background: transparent;
-  color: var(--muted); font-size: .875rem; font-weight: 600;
-  cursor: pointer; transition: all .2s;
+  flex:1; padding:.62rem; border-radius:12px; border:none;
+  background:transparent; color:var(--muted); font-size:.875rem; font-weight:600;
+  cursor:pointer; transition:all .25s;
 }
-.auth-tab.active { background: var(--gold); color: var(--black); }
-.form-group { margin-bottom: 1.25rem; }
-.form-group label { display: block; font-size: .8rem; font-weight: 600; color: var(--muted); margin-bottom: .5rem; text-transform: uppercase; letter-spacing: .05em; }
-.form-group input, .form-group select {
-  width: 100%; padding: .875rem 1rem;
-  background: var(--bg3); border: 1px solid var(--border);
-  border-radius: 10px; color: var(--white);
-  font-size: .925rem; font-family: var(--font-body);
-  transition: border .2s;
+.auth-tab.active {
+  background:linear-gradient(135deg,var(--gold),#D4A820);
+  color:var(--black); box-shadow:0 2px 14px rgba(201,168,76,0.4);
 }
-.form-group input:focus, .form-group select:focus {
-  outline: none; border-color: var(--gold);
+
+/* Inputs */
+.form-group { margin-bottom:1.1rem; }
+.form-group label {
+  display:block; font-size:.73rem; font-weight:700; color:rgba(136,146,164,0.8);
+  margin-bottom:.4rem; text-transform:uppercase; letter-spacing:.08em;
 }
-.form-group select option { background: var(--bg3); }
-.auth-step { display: none; }
-.auth-step.active { display: block; }
-.step-indicator {
-  display: flex; gap: .5rem; justify-content: center; margin-bottom: 2rem;
+.form-group input,.form-group select {
+  width:100%; padding:.9rem 1rem;
+  background:rgba(255,255,255,0.05); border:1.5px solid rgba(255,255,255,0.08);
+  border-radius:12px; color:var(--white);
+  font-size:.925rem; font-family:var(--font-body); transition:all .2s;
 }
-.step-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--bg4); transition: all .3s;
+.form-group input:focus,.form-group select:focus {
+  outline:none; border-color:var(--gold);
+  background:rgba(201,168,76,0.06);
+  box-shadow:0 0 0 3px rgba(201,168,76,0.12);
 }
-.step-dot.active { background: var(--gold); width: 24px; border-radius: 4px; }
-.difficulty-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.form-group select option { background:var(--bg3); }
+.form-group input::placeholder { color:rgba(136,146,164,0.5); }
+
+/* Step transitions */
+.auth-step { display:none; }
+.auth-step.active { display:block; animation:stepIn .3s ease both; }
+@keyframes stepIn {
+  from { opacity:0; transform:translateX(14px); }
+  to   { opacity:1; transform:translateX(0); }
+}
+.step-indicator { display:flex; gap:.5rem; justify-content:center; margin-bottom:1.75rem; }
+.step-dot { width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.1); transition:all .35s cubic-bezier(.34,1.56,.64,1); }
+.step-dot.active { background:var(--gold); width:26px; border-radius:3px; }
+
+/* Difficulty / plan grids */
+.difficulty-grid { display:grid; grid-template-columns:1fr 1fr; gap:.65rem; }
 .diff-card {
-  padding: 1rem; border-radius: 10px;
-  background: var(--bg3); border: 2px solid var(--border);
-  cursor: pointer; transition: all .2s; text-align: center;
+  padding:1rem; border-radius:14px;
+  background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.07);
+  cursor:pointer; transition:all .2s; text-align:center;
 }
-.diff-card:hover { border-color: rgba(201,168,76,0.4); }
-.diff-card.selected { border-color: var(--gold); background: rgba(201,168,76,0.08); }
-.diff-card .diff-icon { font-size: 1.5rem; margin-bottom: .4rem; }
-.diff-card .diff-name { font-size: .8rem; font-weight: 700; }
-.diff-card .diff-desc { font-size: .7rem; color: var(--muted); margin-top: .2rem; }
-.plan-options { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1.5rem; }
+.diff-card:hover { border-color:rgba(201,168,76,0.35); background:rgba(201,168,76,0.05); transform:translateY(-2px); }
+.diff-card.selected { border-color:var(--gold); background:rgba(201,168,76,0.1); box-shadow:0 0 24px rgba(201,168,76,0.12); }
+.diff-card .diff-icon { font-size:1.5rem; margin-bottom:.4rem; }
+.diff-card .diff-name { font-size:.8rem; font-weight:700; }
+.diff-card .diff-desc { font-size:.7rem; color:var(--muted); margin-top:.2rem; line-height:1.4; }
+.plan-options { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-bottom:1.5rem; }
 .plan-opt {
-  padding: 1.25rem 1rem; border-radius: 12px;
-  background: var(--bg3); border: 2px solid var(--border);
-  cursor: pointer; transition: all .2s; text-align: center;
+  padding:1.25rem 1rem; border-radius:16px;
+  background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.08);
+  cursor:pointer; transition:all .25s; text-align:center;
 }
-.plan-opt.selected { border-color: var(--gold); }
-.plan-opt .plan-name { font-weight: 700; margin-bottom: .25rem; }
-.plan-opt .plan-price { font-size: 1.2rem; color: var(--gold); font-weight: 800; }
-.plan-opt .plan-tag { font-size: .7rem; color: var(--muted); }
-.gdpr-check { display: flex; gap: .75rem; align-items: flex-start; margin-bottom: 1.5rem; }
-.gdpr-check input { width: auto; margin-top: .2rem; accent-color: var(--gold); }
-.gdpr-check label { font-size: .8rem; color: var(--muted); line-height: 1.5; cursor: pointer; }
-.gdpr-check a { color: var(--gold); text-decoration: none; }
-.btn-full { width: 100%; padding: 1rem; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; border: none; background: var(--gold); color: var(--black); transition: all .2s; margin-top: .5rem; }
-.btn-full:hover { background: var(--gold-light); }
-.btn-back { background: transparent; border: 1px solid var(--border); color: var(--muted); width: 100%; padding: .75rem; border-radius: 10px; cursor: pointer; font-size: .875rem; margin-top: .75rem; transition: all .2s; }
-.btn-back:hover { border-color: var(--muted); color: var(--white); }
-.login-form { display: none; }
-.login-form.active { display: block; }
+.plan-opt:hover { border-color:rgba(201,168,76,0.4); transform:translateY(-2px); }
+.plan-opt.selected { border-color:var(--gold); background:rgba(201,168,76,0.09); box-shadow:0 4px 28px rgba(201,168,76,0.18); }
+.plan-opt .plan-name { font-weight:700; margin-bottom:.25rem; font-size:.9rem; }
+.plan-opt .plan-price { font-size:1.3rem; color:var(--gold); font-weight:800; }
+.plan-opt .plan-tag { font-size:.7rem; color:var(--muted); margin-top:.3rem; }
+
+.gdpr-check { display:flex; gap:.75rem; align-items:flex-start; margin-bottom:1.5rem; }
+.gdpr-check input { width:auto; margin-top:.2rem; accent-color:var(--gold); }
+.gdpr-check label { font-size:.8rem; color:var(--muted); line-height:1.55; cursor:pointer; }
+.gdpr-check a { color:var(--gold); text-decoration:none; }
+
+.btn-full {
+  width:100%; padding:1rem 1.5rem; border-radius:14px;
+  font-size:.95rem; font-weight:700; cursor:pointer; border:none;
+  background:linear-gradient(135deg,#D4A820 0%,#C9A84C 40%,#E8C97A 70%,#C9A84C 100%);
+  background-size:250% auto;
+  color:var(--black); transition:all .3s; margin-top:.5rem; letter-spacing:.01em;
+  box-shadow:0 4px 20px rgba(201,168,76,0.25);
+}
+.btn-full:hover { background-position:right center; transform:translateY(-2px); box-shadow:0 8px 32px rgba(201,168,76,0.45); }
+.btn-full:active { transform:translateY(0); box-shadow:0 2px 10px rgba(201,168,76,0.3); }
+.btn-back {
+  background:transparent; border:1px solid rgba(255,255,255,0.1);
+  color:var(--muted); width:100%; padding:.75rem; border-radius:12px;
+  cursor:pointer; font-size:.875rem; margin-top:.5rem; transition:all .2s;
+}
+.btn-back:hover { border-color:rgba(255,255,255,0.2); color:var(--white); }
+
+.login-form { display:none; }
+.login-form.active { display:block; animation:fadeIn .25s ease; }
+
 
 /* ═══════════════════════════════════════
    DASHBOARD LAYOUT
@@ -2392,20 +2521,16 @@ body.mode-adhd .adhd-break { display: block; }
     <p class="auth-sub">Join 2,400+ A-Level Maths students achieving better grades</p>
 
     <!-- Google Sign-In -->
-    <button onclick="googleSignIn()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:.75rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.875rem 1rem;cursor:pointer;font-size:.9rem;font-weight:600;color:var(--white);transition:.15s;margin-bottom:.75rem" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+    <button onclick="googleSignIn()" class="auth-social-btn google" style="margin-bottom:.75rem">
       <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
       Continue with Google
     </button>
     <!-- Apple Sign-In -->
-    <button onclick="appleSignIn()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:.75rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.875rem 1rem;cursor:pointer;font-size:.9rem;font-weight:600;color:var(--white);transition:.15s;margin-bottom:1.25rem" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='var(--border)'">
+    <button onclick="appleSignIn()" class="auth-social-btn apple" style="margin-bottom:1.25rem">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
       Continue with Apple
     </button>
-    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem">
-      <div style="flex:1;height:1px;background:var(--border)"></div>
-      <span style="font-size:.75rem;color:var(--muted)">or</span>
-      <div style="flex:1;height:1px;background:var(--border)"></div>
-    </div>
+    <div class="auth-divider"><span>or</span></div>
 
     <!-- Signup flow -->
     <div id="signup-flow">
