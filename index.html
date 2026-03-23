@@ -16327,7 +16327,9 @@ function dcFinish() {
     document.getElementById('dc-question-area').style.display = 'none';
     document.getElementById('dc-done-badge').style.display = 'flex';
     document.getElementById('dc-subtitle').textContent = `Completed today! Score: ${score}/5 · Come back tomorrow`;
-    addXP(score * 10);
+    addXP(score * 10 + 20);
+    trackProgress('questions', 5);
+    addActivity('🔥', `Daily Challenge — ${score}/5 correct`, score >= 4 ? 'Excellent!' : score >= 2 ? 'Good effort!' : 'Keep practising!', 'now');
     showToast(`⚡ Challenge done! ${score}/5 correct. +${score * 10 + 20} XP`);
   }, 2500);
 }
