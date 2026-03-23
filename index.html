@@ -1748,10 +1748,13 @@ body.mode-adhd .adhd-break { display: block; }
 
 /* Skeleton loader */
 .skeleton {
-  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.05) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
   border-radius: 8px;
+}
+body.light .skeleton {
+  background: linear-gradient(90deg, rgba(0,0,0,0.03) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.03) 75%);
 }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 .skeleton-msg { height: 60px; margin-bottom: .75rem; border-radius: 12px; }
@@ -2181,6 +2184,41 @@ body.mode-adhd .adhd-break { display: block; }
 }
 .pom-float-btn:hover { border-color: var(--gold); color: var(--gold); }
 .pom-float-btn.show { display: flex; }
+
+/* ── KEYBOARD SHORTCUTS MODAL ── */
+.kb-modal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75); z-index: 9000;
+  align-items: center; justify-content: center;
+  backdrop-filter: blur(8px);
+}
+.kb-modal.show { display: flex !important; }
+.kb-box {
+  background: rgba(10,12,18,0.98);
+  backdrop-filter: blur(32px);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 18px; padding: 1.75rem;
+  max-width: 480px; width: 92%;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.05);
+  animation: fadeInUp .2s ease;
+}
+.kb-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .7rem .5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-size: .875rem; color: var(--muted);
+}
+.kb-row:last-child { border-bottom: none; }
+.kb-row:hover { color: var(--white); }
+.kb-row kbd {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-bottom: 2px solid rgba(255,255,255,0.08);
+  border-radius: 6px; padding: .2rem .55rem;
+  font-family: var(--font-mono); font-size: .72rem;
+  margin-left: .3rem; color: var(--gold);
+  letter-spacing: .04em;
+}
 
 /* ═══════════════════════════════════════
    SPACED REPETITION SYSTEM
@@ -4929,8 +4967,8 @@ body.mode-adhd .adhd-break { display: block; }
               stroke-dasharray="597" stroke-dashoffset="0" stroke-linecap="round" style="transition:stroke-dashoffset 1s linear,stroke .3s"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-            <div style="font-family:var(--font-head);font-size:3rem;font-weight:900;color:var(--white);line-height:1" id="pom-display">25:00</div>
-            <div style="font-size:.8rem;color:var(--muted);margin-top:.4rem" id="pom-label">Ready to focus</div>
+            <div style="font-family:var(--font-head);font-size:3rem;font-weight:900;background:linear-gradient(135deg,#F5F2EC,#C9A84C);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;letter-spacing:-.03em;text-shadow:none" id="pom-display">25:00</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem;text-transform:uppercase;letter-spacing:.07em;font-weight:600" id="pom-label">Ready to focus</div>
           </div>
         </div>
         <!-- Controls -->
@@ -10132,6 +10170,7 @@ async function saveNote() {
   document.getElementById('note-text-input').value = '';
   renderNotes();
   addXP(5, '📓 Note saved +5 XP');
+  addActivity('📓', 'Note saved', selectedNoteTag || 'Mathematics', 'now');
   showToast('✅ Note saved to your notebook!');
   // Sync to backend
   const token = localStorage.getItem('synaptiq_token');
@@ -10760,6 +10799,7 @@ Score each criterion 0-100 based on the ${board} mark scheme band descriptors. B
     document.getElementById('essay-improve-text').innerHTML = (result.improve || '').replace(/\n/g,'<br>');
     document.getElementById('essay-results').style.display = 'block';
     addXP(30, '✍️ Essay marked +30 XP');
+    addActivity('✅', `Working marked — Grade ${result.grade}`, subject || 'Mathematics', 'now');
     // Save to history
     saveChatToHistory(subject, `Essay: ${question || 'Marked essay'}`, `Grade ${result.grade} — ${result.marks}`);
   } catch(e) {
