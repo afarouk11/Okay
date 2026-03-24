@@ -3486,7 +3486,7 @@ body.light .skeleton {
       <div class="sidebar-item" id="si-flashcards" onclick="showDash('flashcards')"><i class="fas fa-clone"></i>Flashcards</div>
       <div class="sidebar-item" id="si-exams" onclick="showDash('exams')"><i class="fas fa-calendar"></i>Exam Countdown</div>
       <div class="sidebar-item" id="si-exam-sim" onclick="showDash('exam-sim')"><i class="fas fa-stopwatch"></i>Exam Simulator</div>
-      <div class="sidebar-item" id="si-predict" onclick="showDash('predict')"><i class="fas fa-crystal-ball"></i>Exam Prediction</div>
+      <div class="sidebar-item" id="si-predict" onclick="showDash('predict')"><i class="fas fa-wand-magic-sparkles"></i>Exam Prediction</div>
       <div class="sidebar-item" id="si-timetable" onclick="showDash('timetable')"><i class="fas fa-table"></i>Revision Timetable</div>
       <div class="sidebar-item" id="si-papers" onclick="showDash('papers')"><i class="fas fa-file-alt"></i>Past Papers</div>
       <div class="sidebar-item" id="si-glossary" onclick="showDash('glossary')"><i class="fas fa-book-open"></i>Glossary</div>
@@ -3494,7 +3494,7 @@ body.light .skeleton {
       <div class="sidebar-item" id="si-calculator" onclick="showDash('calculator')"><i class="fas fa-calculator"></i>Calculator</div>
       <div class="sidebar-item" id="si-formulas" onclick="showDash('formulas')"><i class="fas fa-square-root-alt"></i>Formula Sheets</div>
       <div class="sidebar-item" id="si-mindmap" onclick="showDash('mindmap')"><i class="fas fa-project-diagram"></i>Mind Map</div>
-      <div class="sidebar-item" id="si-markscheme" onclick="showDash('markscheme')"><i class="fas fa-star-half-alt"></i>Mark Scheme Coach</div>
+      <div class="sidebar-item" id="si-markscheme" onclick="showDash('markscheme')"><i class="fas fa-star-half-stroke"></i>Mark Scheme Coach</div>
       <div class="sidebar-item" id="si-cmdwords" onclick="showDash('cmdwords')"><i class="fas fa-spell-check"></i>Command Words</div>
       <div class="sidebar-item" id="si-checklist" onclick="showDash('checklist')"><i class="fas fa-list-check"></i>Topic Checklist</div>
       <div class="sidebar-item" id="si-blitz" onclick="showDash('blitz')"><i class="fas fa-bolt"></i>Quick Blitz</div>
@@ -3572,6 +3572,15 @@ body.light .skeleton {
             <div style="font-size:.85rem;color:var(--muted)" id="dc-result-sub"></div>
           </div>
         </div>
+      </div>
+      <!-- Daily tip banner -->
+      <div id="daily-tip-bar" style="display:flex;align-items:flex-start;gap:.85rem;background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.2);border-radius:14px;padding:.9rem 1.1rem;margin-bottom:1.5rem">
+        <span style="font-size:1.25rem;line-height:1;flex-shrink:0">💡</span>
+        <div>
+          <div style="font-size:.72rem;font-weight:700;color:rgba(96,165,250,0.8);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.2rem">Study Tip</div>
+          <div id="daily-tip-text" style="font-size:.855rem;color:var(--white);line-height:1.5"></div>
+        </div>
+        <button onclick="this.closest('#daily-tip-bar').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;margin-left:auto;flex-shrink:0;padding:0;line-height:1">×</button>
       </div>
       <div class="stats-row">
         <div class="stat-card"><div class="stat-card-label">Questions Answered</div><div class="stat-card-value" id="stat-q">0</div><div class="stat-card-change">↑ Start today!</div></div>
@@ -6144,8 +6153,8 @@ function nextStep(from) {
     const name = document.getElementById('reg-name').value.trim();
     const email = document.getElementById('reg-email').value.trim();
     const pass = document.getElementById('reg-pass').value;
-    if (!name || !email || !pass) { showToast('Please fill in all fields'); return; }
-    if (pass.length < 8) { showToast('Password must be at least 8 characters'); return; }
+    if (!name || !email || !pass) { showToast('Please fill in all fields', 'error'); return; }
+    if (pass.length < 8) { showToast('Password must be at least 8 characters', 'error'); return; }
   }
   document.getElementById('step' + from)?.classList.remove('active');
   document.getElementById('step' + (from + 1))?.classList.add('active');
@@ -6181,7 +6190,7 @@ function prevStep(to) {
 
 async function createAccount() {
   if (!document.getElementById('gdpr-check')?.checked) {
-    showToast('Please accept the privacy policy to continue'); return;
+    showToast('Please accept the privacy policy to continue', 'error'); return;
   }
   const name = document.getElementById('reg-name').value.trim();
   const email = document.getElementById('reg-email').value.trim();
@@ -6398,7 +6407,7 @@ function logout() {
   document.getElementById('a11y-bar').style.display = 'none';
   document.getElementById('xp-badge').style.display = 'none';
   nav('home');
-  showToast('Logged out successfully');
+  showToast('Logged out successfully', 'success');
 }
 
 function enterDashboard() {
@@ -6444,7 +6453,7 @@ async function sendPasswordReset() {
   const email = emailEl?.value.trim() || '';
   const btn   = document.getElementById('forgot-btn');
   const msg   = document.getElementById('forgot-msg');
-  if (!email) { showToast('Please enter your email address'); return; }
+  if (!email) { showToast('Please enter your email address', 'error'); return; }
   btn.disabled = true;
   btn.textContent = 'Sending…';
   try {
@@ -6509,7 +6518,7 @@ applyTheme();
   window.addEventListener('offline', updateBanner);
   window.addEventListener('online', () => {
     updateBanner();
-    showToast('✅ Back online — syncing…');
+    showToast('✅ Back online — syncing…', 'success');
     syncToCloud();
   });
   document.addEventListener('DOMContentLoaded', updateBanner);
@@ -7049,7 +7058,7 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
     updateStats({ questions: questions.length });
     addXP(20);
     addActivity('📝', `Generated ${questions.length} questions`, `${module} · ${board}`, 'now');
-    showToast('✦ Questions generated!');
+    showToast('✦ Questions generated!', 'success');
   } catch (e) {
     qContainer.innerHTML = `<div class="msg bot" style="max-width:100%">⚠️ Error: ${e.message}</div>`;
   }
@@ -7099,7 +7108,7 @@ Reply with ONLY this HTML (no markdown, no extra text):
   } catch(e) {
     btn.innerHTML = '✦ Check My Answer';
     btn.disabled = false;
-    showToast('Could not mark: ' + e.message);
+    showToast('Could not mark: ' + e.message, 'error');
   }
 }
 
@@ -7132,7 +7141,7 @@ function addToMistakesFromQ(qText) {
       date: new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short'})
     });
     localStorage.setItem('synaptiq_mistakes', JSON.stringify(mistakes.slice(0, 200)));
-    showToast('⚠️ Added to Mistakes Tracker');
+    showToast('⚠️ Added to Mistakes Tracker', 'info');
     renderStudyCoach();
   } catch(e) { showToast('Could not save'); }
 }
@@ -7613,7 +7622,7 @@ async function confirmUpload() {
   renderResourcesList();
   cancelUpload();
   trackEvent('resource_uploaded', { category, board, module });
-  showToast('✅ Resource uploaded! AI tutor will now use it.');
+  showToast('✅ Resource uploaded! AI tutor will now use it.', 'success');
   // Persist to Supabase (per-user, not global)
   if (state.user?.id) {
     fetch('/api/supabase-auth', {
@@ -7628,7 +7637,7 @@ function deleteResource(id) {
   state.uploads = state.uploads.filter(u => u.id !== id);
   saveUploadsToStorage();
   renderResourcesList();
-  showToast('Resource removed');
+  showToast('Resource removed', 'info');
 }
 
 function renderResourcesList() {
@@ -8507,7 +8516,7 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
     state.currentQGrade = gradeSuggestion ? gradeSuggestion.grade : grade;
     addXP(20);
     incrementQuestionCount();
-    showToast('✦ Questions generated!');
+    showToast('✦ Questions generated!', 'success');
   } catch (e) {
     qContainer.innerHTML = `<div class="msg bot" style="max-width:100%">⚠️ Error: ${sanitizeHTML(e.message)}</div>`;
   }
@@ -9200,9 +9209,15 @@ function buildHeatmap() {
 // ═══════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════
-function showToast(msg) {
+function showToast(msg, type) {
   const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
+  t.textContent = msg;
+  // type: 'success' (green), 'error' (red), 'info' (blue), default (gold)
+  const borders = { success:'rgba(74,222,128,0.45)', error:'rgba(251,113,133,0.45)', info:'rgba(96,165,250,0.45)' };
+  const glows  = { success:'rgba(74,222,128,0.12)', error:'rgba(251,113,133,0.12)', info:'rgba(96,165,250,0.12)' };
+  t.style.borderColor = borders[type] || 'rgba(201,168,76,0.35)';
+  t.style.boxShadow = `0 12px 40px rgba(0,0,0,0.5), 0 0 20px ${glows[type] || 'rgba(201,168,76,0.12)'}`;
+  t.classList.add('show');
   clearTimeout(window._toastTimer);
   window._toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
 }
@@ -14032,7 +14047,9 @@ function _checkGoalStreak() {
       } else if (stored.last === yesterday || stored.last === '') {
         streak++;
         localStorage.setItem('synaptiq_goal_streak', JSON.stringify({ streak, last: today }));
-        if (streak > 1) showToast(`🔥 ${streak}-day streak! Keep it up!`);
+        // First completion today — celebrate!
+        _launchConfetti();
+        showToast(streak > 1 ? `🔥 ${streak}-day streak! Goal complete!` : '🎉 Daily goal complete!', 'success');
       }
     }
     _renderGoalStreak(streak, goalMet);
@@ -16653,6 +16670,36 @@ if (typeof showDash === 'function') {
     }
   };
 }
+// Daily study tips — one per day, cycling through the array
+(function initDailyTip() {
+  const tips = [
+    'When stuck on a proof, try working backwards from what you want to show.',
+    'Always write the formula before substituting — examiners give method marks for this.',
+    'For integration, check by differentiating your answer. Always.',
+    'Sketch every graph question — even a rough sketch helps you spot mistakes.',
+    'In statistics, state H₀ and H₁ clearly before any working. This is a guaranteed mark.',
+    'Use the discriminant (b²−4ac) to quickly check how many real roots a quadratic has.',
+    'For mechanics, always draw a clear force diagram before writing equations of motion.',
+    'Chain rule: identify the outer and inner function first, then differentiate each.',
+    'Binomial expansion: check whether |x| < 1 before stating convergence conditions.',
+    'Flashcard tip: active recall beats re-reading. Test yourself, don\'t just review.',
+    'Pomodoro works: 25 min focused study + 5 min break = proven memory consolidation.',
+    'Past paper questions under timed conditions are the single best exam preparation.',
+    'For vectors, always check whether you need magnitude or direction in the question.',
+    'Exam technique: attempt every question. Partial marks for working are real marks.',
+    'Normal distribution: sketch the curve and shade the required area every time.',
+    'The product rule: (uv)' = u'v + uv'. Say it out loud until it\'s automatic.',
+    'Sequences: write out the first few terms before trying to find a formula.',
+    'For logarithm questions, remember ln e = 1 and log 10 = 1 as instant checks.',
+    'Parametric equations: eliminate the parameter to check your Cartesian equation.',
+    'Speed before accuracy — get all questions attempted, then go back to improve.',
+  ];
+  const el = document.getElementById('daily-tip-text');
+  if (!el) return;
+  const dayIndex = Math.floor(Date.now() / 86400000) % tips.length;
+  el.textContent = tips[dayIndex];
+})();
+
 // Also run on page load when dashboard is shown
 document.addEventListener('DOMContentLoaded', () => {
   initDailyChallenge();
