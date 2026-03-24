@@ -1436,10 +1436,11 @@ body.mode-adhd .adhd-break { display: block; }
 #calc-overlay {
   display: none;
   position: fixed; bottom: 80px; right: 20px;
-  background: var(--bg2); border: 1px solid var(--gold);
+  background: rgba(10,12,18,0.96); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(201,168,76,0.4);
   border-radius: 20px; padding: 1.5rem;
   z-index: 999; width: 300px;
-  box-shadow: var(--shadow), var(--glow);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5), var(--glow);
 }
 #calc-overlay.show { display: block; }
 .calc-title { font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; }
@@ -7591,7 +7592,7 @@ function renderResourcesList() {
   if (!list) return;
   if (count) count.textContent = state.uploads.length + ' file' + (state.uploads.length !== 1 ? 's' : '');
   if (state.uploads.length === 0) {
-    list.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--muted);font-size:.875rem;background:var(--bg2);border:1px solid var(--border);border-radius:12px">No resources uploaded yet. Upload a mark scheme or past paper to help the AI give more accurate answers.</div>';
+    list.innerHTML = '<div style="padding:2rem;text-align:center;color:var(--muted);font-size:.875rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px">No resources uploaded yet. Upload a mark scheme or past paper to help the AI give more accurate answers.</div>';
     return;
   }
   list.innerHTML = state.uploads.map(u => `
@@ -8249,7 +8250,7 @@ function renderDiagQuestion(idx) {
       <div style="display:flex;flex-direction:column;gap:.5rem">
         ${q.options.map((opt, i) => `
           <button onclick="selectDiagAnswer(${idx},${i})" id="diag-opt-${i}"
-            style="text-align:left;padding:.75rem 1rem;border-radius:12px;border:1px solid ${selected === i ? 'var(--gold)' : 'var(--border)'};background:${selected === i ? 'rgba(201,168,76,0.1)' : 'var(--bg2)'};color:var(--white);cursor:pointer;font-size:.95rem;transition:all .2s">${opt}</button>
+            style="text-align:left;padding:.75rem 1rem;border-radius:12px;border:1px solid ${selected === i ? 'var(--gold)' : 'rgba(255,255,255,0.08)'};background:${selected === i ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)'};color:var(--white);cursor:pointer;font-size:.95rem;transition:all .2s">${opt}</button>
         `).join('')}
       </div>
     </div>
@@ -15266,7 +15267,7 @@ function renderAdminResources() {
   const countEl = document.getElementById('admin-resource-count');
   if (countEl) countEl.textContent = global.length + ' resource' + (global.length !== 1 ? 's' : '');
   if (!global.length) {
-    list.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);background:var(--bg2);border:1px solid rgba(255,255,255,0.07);border-radius:10px">No shared resources yet. Upload your first mark scheme or past paper above.</div>';
+    list.innerHTML = '<div style="padding:1.5rem;text-align:center;color:var(--muted);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px">No shared resources yet. Upload your first mark scheme or past paper above.</div>';
     return;
   }
   list.innerHTML = global.map(u => `
