@@ -9830,6 +9830,7 @@ function revealSR() {
 function rateSR(difficulty) {
   const xpMap = { easy:5, ok:10, hard:15 };
   addXP(xpMap[difficulty], difficulty==='hard'?'💪 Kept at it +15 XP':'⭐ +' + xpMap[difficulty]+' XP');
+  trackProgress('questions', 1);  // Count flashcard reviews toward daily goal
   // Leitner spaced repetition scheduling
   const card = srCards[srIndex % srCards.length];
   if (card) {
