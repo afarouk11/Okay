@@ -3419,6 +3419,17 @@ body.light .skeleton {
       </div>
       <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
     </div>
+    <!-- Sidebar today stats -->
+    <div id="sb-today-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;padding:.75rem 1rem .25rem;border-bottom:1px solid rgba(255,255,255,0.05)">
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:.5rem .65rem;text-align:center">
+        <div style="font-size:1.1rem;font-weight:800;color:var(--gold)" id="sb-streak-val">1 🔥</div>
+        <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.1rem">Streak</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:.5rem .65rem;text-align:center">
+        <div style="font-size:1.1rem;font-weight:800;color:var(--gold)" id="sb-goal-pct-val">0%</div>
+        <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.1rem">Goal</div>
+      </div>
+    </div>
     <div class="sidebar-nav">
       <div class="sidebar-item active" id="si-home" onclick="showDash('home')"><i class="fas fa-house"></i>Dashboard</div>
       <div class="sidebar-section-label">LEARN</div>
@@ -7295,6 +7306,9 @@ function updateDashboardStats() {
     if (qEl)      qEl.textContent      = s.questionsAnswered || 0;
     if (topEl)    topEl.textContent    = (s.topicsExplored || []).length;
     if (streakEl) streakEl.textContent = (s.streak || 1) + ' 🔥';
+    // Update sidebar streak
+    const sbStreak = document.getElementById('sb-streak-val');
+    if (sbStreak) sbStreak.textContent = (s.streak || 1) + ' 🔥';
     // Progress page stats
     const ppQ      = document.getElementById('pp-stat-q');
     const ppTop    = document.getElementById('pp-stat-topics');
@@ -13894,6 +13908,10 @@ function updateGoalDisplay() {
   document.getElementById('goal-status').textContent = statuses.s;
   document.getElementById('goal-status').style.color = statuses.c;
   document.getElementById('goal-detail').textContent = statuses.d;
+
+  // Update sidebar today stats
+  const sbGoal = document.getElementById('sb-goal-pct-val');
+  if (sbGoal) sbGoal.textContent = overall + '%';
 
   // Set select values
   const qSel = document.getElementById('goal-questions');
