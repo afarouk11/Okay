@@ -13374,7 +13374,10 @@ function renderMistakes() {
         <span style="margin-left:auto;font-size:.75rem;color:var(--muted)">Last: ${m.last_seen ? new Date(m.last_seen).toLocaleDateString('en-GB') : 'Today'}</span>
       </div>
       <div style="font-size:.85rem;color:var(--muted)">${m.question || 'Practice this topic'}</div>
-      <button onclick="practiseTopic('${m.subject}','${m.topic}')" style="margin-top:.75rem;background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:.4rem .875rem;color:var(--white);cursor:pointer;font-size:.8rem">🎯 Practise this topic</button>
+      <div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap">
+        <button onclick="practiseTopic('${m.subject}','${m.topic}')" style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:8px;padding:.4rem .875rem;color:var(--gold);cursor:pointer;font-size:.8rem;font-weight:600">🎯 Practise</button>
+        <button onclick="showDash('tutor');setTimeout(()=>{const i=document.getElementById('tutor-input');if(i){i.value='Explain ${(m.topic||'').replace(/'/g,"\\'")} step by step with worked examples';tutorSend();}},300)" style="background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.25);border-radius:8px;padding:.4rem .875rem;color:var(--blue);cursor:pointer;font-size:.8rem;font-weight:600">📚 Teach me</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -17291,11 +17294,16 @@ function renderChecklist(filter) {
     if (!filteredTopics.length) return '';
     const items = filteredTopics.map(t => {
       const status = checklistData[t] || 'not-started';
-      return `<div onclick="toggleTopic(${JSON.stringify(t)})" style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .75rem;border-radius:8px;cursor:pointer;transition:background .15s;margin-bottom:.25rem" onmouseover="this.style.background='var(--bg4)'" onmouseout="this.style.background='transparent'">
-        <span style="font-size:.875rem">${t}</span>
+      const statusBg = status === 'confident' ? 'rgba(74,222,128,0.06)' : status === 'in-progress' ? 'rgba(251,191,36,0.06)' : 'transparent';
+      const statusBorder = status === 'confident' ? 'rgba(74,222,128,0.2)' : status === 'in-progress' ? 'rgba(251,191,36,0.2)' : 'transparent';
+      return `<div onclick="toggleTopic(${JSON.stringify(t)})" style="display:flex;justify-content:space-between;align-items:center;padding:.55rem .75rem;border-radius:8px;cursor:pointer;transition:all .15s;margin-bottom:.2rem;background:${statusBg};border:1px solid ${statusBorder}" onmouseover="this.style.background='rgba(255,255,255,0.05)';this.style.borderColor='rgba(201,168,76,0.2)'" onmouseout="this.style.background='${statusBg}';this.style.borderColor='${statusBorder}'">
+        <div style="display:flex;align-items:center;gap:.6rem">
+          <span style="font-size:.85rem;flex-shrink:0">${status === 'confident' ? '✓' : status === 'in-progress' ? '○' : '·'}</span>
+          <span style="font-size:.855rem">${t}</span>
+        </div>
         <div style="display:flex;align-items:center;gap:.5rem">
-          <span style="font-size:.75rem;color:${STATUS_COLOR[status]};white-space:nowrap">${STATUS_LABEL[status]}</span>
-          <button onclick="event.stopPropagation();showDash('tutor');setTimeout(()=>{const i=document.getElementById('tutor-input');if(i){i.value='Teach me about ${t.replace(/'/g,"\\'")}';tutorSend();}},250)" title="Study this topic" style="font-size:.7rem;padding:.2rem .45rem;background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.2);color:var(--blue);border-radius:6px;cursor:pointer">Study →</button>
+          <span style="font-size:.72rem;color:${STATUS_COLOR[status]};white-space:nowrap;font-weight:600">${STATUS_LABEL[status]}</span>
+          <button onclick="event.stopPropagation();showDash('tutor');setTimeout(()=>{const i=document.getElementById('tutor-input');if(i){i.value='Teach me about ${t.replace(/'/g,"\\'")}';tutorSend();}},250)" title="Study this topic" style="font-size:.68rem;padding:.2rem .45rem;background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);color:var(--blue);border-radius:5px;cursor:pointer;white-space:nowrap">Study →</button>
         </div>
       </div>`;
     }).join('');
@@ -17365,8 +17373,22 @@ function showBlitzQuestion() {
 function updateBlitzTimer() {
   const el = document.getElementById('blitz-timer');
   const bar = document.getElementById('blitz-timer-bar');
-  if (el) { el.textContent = blitzState.secondsLeft; el.style.color = blitzState.secondsLeft <= 10 ? '#EF4444' : 'var(--gold)'; }
-  if (bar) bar.style.width = (blitzState.secondsLeft / 60 * 100) + '%';
+  const s = blitzState.secondsLeft;
+  const pct = (s / 60 * 100);
+  const urgent = s <= 10;
+  const warning = s <= 20;
+  if (el) {
+    el.textContent = s;
+    el.style.color = urgent ? '#EF4444' : warning ? '#FBBF24' : 'var(--gold)';
+    el.style.transform = urgent && s % 2 === 0 ? 'scale(1.15)' : 'scale(1)';
+    el.style.transition = 'transform .1s, color .3s';
+  }
+  if (bar) {
+    bar.style.width = pct + '%';
+    bar.style.background = urgent ? '#EF4444' : warning ? '#FBBF24' : 'var(--gold)';
+    bar.style.transition = 'width 1s linear, background .3s';
+    bar.style.boxShadow = urgent ? '0 0 8px rgba(239,68,68,0.6)' : warning ? '0 0 8px rgba(251,191,36,0.4)' : 'none';
+  }
 }
 
 async function submitBlitzAnswer() {
