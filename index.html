@@ -1897,7 +1897,7 @@ body.light .skeleton {
   -webkit-backdrop-filter: blur(20px);
   align-items: center; justify-content: center;
 }
-#onboarding-modal.show { display: flex; }
+#onboarding-modal.show { display: flex !important; }
 .onboarding-box {
   background: rgba(10,12,18,0.95);
   backdrop-filter: blur(48px) saturate(1.6);
@@ -5601,7 +5601,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
 
     <!-- MOLECULE VIEWER PANEL (hidden tool) -->
     <div id="molecule-panel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:4000;align-items:center;justify-content:center">
-      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:500px;width:90%">
+      <div style="background:rgba(10,12,18,0.97);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:2rem;max-width:500px;width:90%;box-shadow:0 24px 60px rgba(0,0,0,0.6)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
           <h3 style="color:var(--white);font-weight:700">Molecular Viewer</h3>
           <button onclick="document.getElementById('molecule-panel').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer">×</button>
@@ -5612,7 +5612,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
 
     <!-- FORCE DIAGRAM PANEL (hidden tool) -->
     <div id="force-diagram-panel" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:4000;align-items:center;justify-content:center">
-      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:2rem;max-width:520px;width:90%">
+      <div style="background:rgba(10,12,18,0.97);backdrop-filter:blur(32px);-webkit-backdrop-filter:blur(32px);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:2rem;max-width:520px;width:90%;box-shadow:0 24px 60px rgba(0,0,0,0.6)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
           <h3 style="color:var(--white);font-weight:700">Force Diagram</h3>
           <button onclick="document.getElementById('force-diagram-panel').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:1.5rem;cursor:pointer">×</button>
@@ -5635,7 +5635,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
 
 <!-- ═══════════════════════ PARENT DASHBOARD MODAL ═══════════════════════ -->
 <div id="parent-dash-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:5000;align-items:center;justify-content:center;padding:1rem">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:2rem;max-width:680px;width:100%;max-height:90vh;overflow-y:auto">
+  <div style="background:rgba(10,12,18,0.97);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(201,168,76,0.18);border-radius:20px;padding:2rem;max-width:680px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,0.6)">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
       <div>
         <h2 style="color:var(--white);font-weight:800;margin:0">👨‍👩‍👧 Parent Dashboard</h2>
@@ -5683,7 +5683,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
 
 <!-- ═══════════════════════ ONBOARDING MODAL ═══════════════════════ -->
 <div id="onboarding-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;align-items:center;justify-content:center">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:2.5rem;max-width:480px;width:90%;position:relative">
+  <div style="background:rgba(10,12,18,0.97);backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);border:1px solid rgba(201,168,76,0.2);border-radius:24px;padding:2.5rem;max-width:480px;width:90%;position:relative;box-shadow:0 32px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(201,168,76,0.05)">
     <!-- Step indicators -->
     <div style="display:flex;gap:.5rem;margin-bottom:2rem;justify-content:center" id="ob-steps">
       <div class="ob-step ob-step-active" data-step="1"></div>
@@ -5746,20 +5746,20 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
         <p style="color:var(--muted);font-size:.9rem">Here's your 3-step starter plan to get the most from Synaptiq:</p>
       </div>
       <div style="display:flex;flex-direction:column;gap:.75rem;margin-bottom:1.5rem">
-        <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer" onclick="obGo('checklist')">
-          <div style="font-size:1.5rem">✅</div>
+        <div style="background:rgba(255,255,255,0.04);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.35)';this.style.background='rgba(201,168,76,0.05)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.04)'" onclick="obGo('checklist')">
+          <div style="font-size:1.5rem;flex-shrink:0">✅</div>
           <div><div style="font-weight:700;font-size:.9rem">Rate your topic confidence</div><div style="font-size:.8rem;color:var(--muted)">Mark each A-Level topic as not started, in progress, or confident</div></div>
-          <div style="margin-left:auto;color:var(--gold)">→</div>
+          <div style="margin-left:auto;color:var(--gold);flex-shrink:0">→</div>
         </div>
-        <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer" onclick="obGo('questions')">
-          <div style="font-size:1.5rem">📝</div>
+        <div style="background:rgba(255,255,255,0.04);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.35)';this.style.background='rgba(201,168,76,0.05)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.04)'" onclick="obGo('questions')">
+          <div style="font-size:1.5rem;flex-shrink:0">📝</div>
           <div><div style="font-weight:700;font-size:.9rem">Answer your first practice question</div><div style="font-size:.8rem;color:var(--muted)">Pick a topic and get an AI-marked exam question</div></div>
-          <div style="margin-left:auto;color:var(--gold)">→</div>
+          <div style="margin-left:auto;color:var(--gold);flex-shrink:0">→</div>
         </div>
-        <div style="background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer" onclick="obGo('flashcards')">
-          <div style="font-size:1.5rem">🗂</div>
+        <div style="background:rgba(255,255,255,0.04);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:1rem;display:flex;gap:.75rem;align-items:center;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.35)';this.style.background='rgba(201,168,76,0.05)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.background='rgba(255,255,255,0.04)'" onclick="obGo('flashcards')">
+          <div style="font-size:1.5rem;flex-shrink:0">🗂</div>
           <div><div style="font-weight:700;font-size:.9rem">Load your first flashcard pack</div><div style="font-size:.8rem;color:var(--muted)">60+ ready-made A-Level Maths cards with spaced repetition</div></div>
-          <div style="margin-left:auto;color:var(--gold)">→</div>
+          <div style="margin-left:auto;color:var(--gold);flex-shrink:0">→</div>
         </div>
       </div>
       <button class="btn btn-gold" style="width:100%;padding:.8rem" onclick="obComplete()">Start Learning →</button>
