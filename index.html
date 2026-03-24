@@ -2191,13 +2191,19 @@ body.light .skeleton {
 .pom-dot.done { background: var(--gold); border-color: var(--gold); }
 .pom-float-btn {
   position: fixed; top: 72px; right: 1rem; z-index: 799;
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: 12px; padding: .5rem .75rem;
+  background: rgba(10,12,18,0.92); border: 1px solid rgba(201,168,76,0.2);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-radius: 14px; padding: .5rem .85rem;
   font-size: .8rem; cursor: pointer; display: none;
   align-items: center; gap: .4rem; color: var(--muted);
-  transition: all .2s; box-shadow: var(--shadow);
+  transition: all .25s; box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  font-weight: 600;
 }
-.pom-float-btn:hover { border-color: var(--gold); color: var(--gold); }
+.pom-float-btn:hover {
+  border-color: rgba(201,168,76,0.5); color: var(--gold);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.5), 0 0 16px rgba(201,168,76,0.12);
+  transform: translateY(-1px);
+}
 .pom-float-btn.show { display: flex; }
 
 /* ── KEYBOARD SHORTCUTS MODAL ── */
@@ -6996,6 +7002,7 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
     if (window.MathJax) MathJax.typesetPromise([qContainer]).catch(() => {});
     updateStats({ questions: questions.length });
     addXP(20);
+    addActivity('📝', `Generated ${questions.length} questions`, `${module} · ${board}`, 'now');
     showToast('✦ Questions generated!');
   } catch (e) {
     qContainer.innerHTML = `<div class="msg bot" style="max-width:100%">⚠️ Error: ${e.message}</div>`;
@@ -7041,6 +7048,8 @@ Reply with ONLY this HTML (no markdown, no extra text):
     if (window.MathJax) MathJax.typesetPromise([fbDiv]).catch(() => {});
     btn.innerHTML = '✦ Re-check';
     btn.disabled = false;
+    trackProgress('questions', 1);
+    addXP(5, '📝 Answer checked +5 XP');
   } catch(e) {
     btn.innerHTML = '✦ Check My Answer';
     btn.disabled = false;
