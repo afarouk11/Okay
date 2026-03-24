@@ -190,7 +190,7 @@ body {
   cursor: pointer; text-decoration: none;
   transition: all .2s;
 }
-.nav-links a:hover, .nav-links a.active { color: var(--white); background: var(--bg4); }
+.nav-links a:hover, .nav-links a.active { color: var(--white); background: rgba(255,255,255,0.07); }
 .nav-right { display: flex; gap: .75rem; align-items: center; }
 
 /* Accessibility toggles */
@@ -6814,16 +6814,39 @@ function applyDyscalculiaColors(s) {
 
 function formatTutorMsg(text) {
   let s = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  // Code blocks
+  s = s.replace(/```[\w]*\n?([\s\S]*?)```/g, (_, code) =>
+    `<pre style="background:rgba(10,12,18,0.9);border:1px solid rgba(201,168,76,0.15);border-radius:10px;padding:.85rem 1rem;overflow-x:auto;margin:.6rem 0;font-family:var(--font-mono);font-size:.82rem;line-height:1.6"><code>${code.trim()}</code></pre>`
+  );
+
+  // Inline code
+  s = s.replace(/`([^`\n]+)`/g, '<code style="background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.2);border-radius:4px;padding:.1rem .35rem;font-family:var(--font-mono);font-size:.85em;color:var(--gold)">$1</code>');
+
+  // Headers
+  s = s.replace(/^### (.+)$/gm, '<div style="font-size:.9rem;font-weight:800;color:var(--gold);margin:.8rem 0 .3rem;letter-spacing:.02em">$1</div>');
+  s = s.replace(/^## (.+)$/gm, '<div style="font-size:1rem;font-weight:800;color:var(--white);margin:1rem 0 .4rem;border-bottom:1px solid rgba(201,168,76,0.15);padding-bottom:.3rem">$1</div>');
+
+  // Bold, italic
+  s = s.replace(/\*\*\*(.*?)\*\*\*/g,'<strong><em>$1</em></strong>');
   s = s.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
-  s = s.replace(/\*(.+?)\*/g,'<em>$1</em>');
+  s = s.replace(/\*(.*?)\*/g,'<em>$1</em>');
+
+  // Ordered lists
   s = s.replace(/((?:^\d+\. .+$\n?)+)/gm, blk => {
-    const items = blk.trim().split('\n').map(l=>`<li>${l.replace(/^\d+\.\s+/,'')}</li>`).join('');
-    return `<ol style="padding-left:1.25rem;margin:.5rem 0">${items}</ol>`;
+    const items = blk.trim().split('\n').map(l=>`<li style="margin:.2rem 0">${l.replace(/^\d+\.\s+/,'')}</li>`).join('');
+    return `<ol style="padding-left:1.4rem;margin:.5rem 0;display:flex;flex-direction:column;gap:.2rem">${items}</ol>`;
   });
-  s = s.replace(/((?:^[-•] .+$\n?)+)/gm, blk => {
-    const items = blk.trim().split('\n').map(l=>`<li>${l.replace(/^[-•]\s+/,'')}</li>`).join('');
-    return `<ul style="padding-left:1.25rem;margin:.5rem 0">${items}</ul>`;
+
+  // Unordered lists
+  s = s.replace(/((?:^[-•\*] .+$\n?)+)/gm, blk => {
+    const items = blk.trim().split('\n').map(l=>`<li style="margin:.2rem 0">${l.replace(/^[-•\*]\s+/,'')}</li>`).join('');
+    return `<ul style="padding-left:1.4rem;margin:.5rem 0;display:flex;flex-direction:column;gap:.2rem">${items}</ul>`;
   });
+
+  // HR
+  s = s.replace(/^---$/gm, '<hr style="border:none;border-top:1px solid rgba(201,168,76,0.12);margin:.75rem 0">');
+
   s = s.replace(/\n/g,'<br>');
   if (state.modes.dyscalculia) s = applyDyscalculiaColors(s);
   return s;
@@ -12771,6 +12794,7 @@ document.addEventListener('keydown', (e) => {
     document.getElementById('sr-modal').style.display = 'none';
     document.getElementById('forgot-modal').style.display = 'none';
     document.getElementById('share-modal').style.display = 'none';
+    closeMobMore();
   }
 });
 
