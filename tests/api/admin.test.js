@@ -95,7 +95,7 @@ describe('stats', () => {
     expect(r.body.total_users).toBe(120);
     expect(r.body.active_7d).toBe(45);
     expect(r.body.paying).toBe(30);
-    expect(r.body.mrr).toBe(30 * 60); // £60/subscriber
+    expect(r.body.mrr).toBe(30 * 35); // £35/subscriber
   });
 
   it('handles 0 counts gracefully (no null crash)', async () => {
