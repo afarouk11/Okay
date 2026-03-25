@@ -86,5 +86,21 @@ export default async function handler(req, res) {
     return res.status(200).json({ sent, failed });
   }
 
+  if (action === 'reset_users') {
+    const { data: { users }, error: listErr } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+    if (listErr) return res.status(500).json({ error: listErr.message });
+    let deleted = 0;
+    const tables = ['activity_log', 'notes', 'progress', 'chat_history', 'flashcards', 'mistakes'];
+    for (const user of (users || [])) {
+      for (const table of tables) {
+        await supabase.from(table).delete().eq('user_id', user.id);
+      }
+      await supabase.from('profiles').delete().eq('id', user.id);
+      await supabase.auth.admin.deleteUser(user.id);
+      deleted++;
+    }
+    return res.status(200).json({ ok: true, deleted, message: `Deleted ${deleted} account(s)` });
+  }
+
   return res.status(400).json({ error: 'Unknown action' });
 }
