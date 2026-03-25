@@ -6190,7 +6190,15 @@ function prevStep(to) {
 
 async function createAccount() {
   if (!document.getElementById('gdpr-check')?.checked) {
-    showToast('Please accept the privacy policy to continue', 'error'); return;
+    showToast('Please tick the privacy checkbox to continue', 'error');
+    const gdprEl = document.querySelector('.gdpr-check');
+    if (gdprEl) {
+      gdprEl.style.outline = '2px solid var(--gold)';
+      gdprEl.style.borderRadius = '8px';
+      gdprEl.style.padding = '6px';
+      setTimeout(() => { gdprEl.style.outline = ''; gdprEl.style.padding = ''; }, 2500);
+    }
+    return;
   }
   const name = document.getElementById('reg-name').value.trim();
   const email = document.getElementById('reg-email').value.trim();
@@ -6299,7 +6307,16 @@ async function createAccount() {
     addXP(100, '🎉 Welcome bonus!');
     setTimeout(() => showOnboarding(), 800);
   } catch(e) {
-    showToast('⚠️ ' + (e.message || 'Signup failed'));
+    const msg = e.message || 'Signup failed';
+    if (/already exists|already registered/i.test(msg)) {
+      // Account exists — switch to login with email pre-filled
+      showLogin();
+      const loginEmailEl = document.getElementById('login-email');
+      if (loginEmailEl) loginEmailEl.value = email;
+      showToast('An account with this email already exists — please log in instead');
+    } else {
+      showToast('⚠️ ' + msg);
+    }
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '🚀 Start Free Trial'; }
   }
