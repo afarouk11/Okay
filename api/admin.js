@@ -32,8 +32,8 @@ export default async function handler(req, res) {
       supabase.from('profiles').select('id', { count: 'exact', head: true })
         .in('subscription_status', ['active'])
     ]);
-    // MRR: count active subscribers × £60/month (student plan)
-    const mrr = (paying.count || 0) * 60;
+    // MRR: count active subscribers × £35/month (student plan)
+    const mrr = (paying.count || 0) * 35;
     return res.status(200).json({
       total_users: users.count || 0,
       active_7d: active.count || 0,
