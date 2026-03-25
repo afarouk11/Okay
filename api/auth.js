@@ -129,9 +129,23 @@ export default async function handler(req, res) {
       if (!email || !EMAIL_RE.test(email)) return res.status(400).json({ error: 'A valid email is required' });
       if (!password) return res.status(400).json({ error: 'Please enter your password' });
 
-      const { data, error } = await supabase.auth.signInWithPassword({
+      let { data, error } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase().trim(), password
       });
+
+      // If email isn't confirmed (e.g. created via Supabase dashboard), auto-confirm and retry
+      if (error && /email not confirmed/i.test(error.message)) {
+        try {
+          const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+          const match = users.find(u => u.email === email.toLowerCase().trim());
+          if (match) {
+            await supabase.auth.admin.updateUserById(match.id, { email_confirm: true });
+            const retry = await supabase.auth.signInWithPassword({ email: email.toLowerCase().trim(), password });
+            if (!retry.error) { data = retry.data; error = null; }
+          }
+        } catch (_) { /* fall through to original error */ }
+      }
+
       if (error) return res.status(401).json({ error: 'Invalid email or password' });
 
       // Fetch profile, create one if missing

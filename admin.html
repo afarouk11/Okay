@@ -61,6 +61,7 @@
       <span id="last-refresh" style="color:var(--muted);font-size:.8rem"></span>
       <button class="action-btn" onclick="loadDashboard()">↺ Refresh</button>
       <button class="action-btn" id="email-btn" onclick="sendWeeklyEmails()">📧 Send Weekly Emails</button>
+      <button class="action-btn" id="reset-btn" onclick="resetAllUsers()" style="border-color:var(--red);color:var(--red)">🗑 Reset All Users</button>
     </div>
   </header>
 
@@ -177,6 +178,23 @@ async function sendWeeklyEmails() {
     alert('Error sending emails — check the console.');
   } finally {
     btn.textContent = '📧 Send Weekly Emails';
+    btn.disabled = false;
+  }
+}
+
+async function resetAllUsers() {
+  const btn = document.getElementById('reset-btn');
+  if (!confirm('⚠️ This will permanently delete ALL user accounts and their data. This cannot be undone.\n\nAre you sure?')) return;
+  btn.textContent = 'Deleting…';
+  btn.disabled = true;
+  try {
+    const data = await fetchAdmin('reset_users');
+    alert(`✅ Done — ${data.deleted} account(s) deleted.`);
+    loadDashboard();
+  } catch (e) {
+    alert('Error resetting users — check the admin key and try again.');
+  } finally {
+    btn.textContent = '🗑 Reset All Users';
     btn.disabled = false;
   }
 }
