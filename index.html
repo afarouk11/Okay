@@ -5965,6 +5965,10 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
 
 <!-- ═══════════════════════ JAVASCRIPT ═══════════════════════ -->
 <script>
+// Stub defined here so enterDashboard (block 1) never throws if _sessionTick
+// (block 2) hasn't been parsed yet — block 2 overwrites this with the real fn.
+function _sessionTick() {}
+
 // ═══════════════════════════════════════
 // GDPR / COOKIE CONSENT
 // ═══════════════════════════════════════
@@ -6443,7 +6447,7 @@ function enterDashboard() {
   document.getElementById('a11y-bar').style.display = 'flex';
   document.getElementById('xp-badge').style.display = 'flex';
   const stBadge = document.getElementById('session-timer-badge');
-  if (stBadge) { stBadge.style.display = 'flex'; _sessionTick(); }
+  if (stBadge) { stBadge.style.display = 'flex'; if (typeof _sessionTick === 'function') _sessionTick(); }
   // Show target grade badge if set
   const tg = localStorage.getItem('synaptiq_target_grade') || state?.user?.target;
   const tgBadge = document.getElementById('target-grade-badge');
