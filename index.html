@@ -47,7 +47,27 @@ window._loadSupabase = () => new Promise(res => {
   "name": "Synaptiq",
   "description": "AI-powered A-Level Mathematics tutoring platform for UK students",
   "url": "https://synaptiqai.co.uk",
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.9",
+    "reviewCount": "2400",
+    "bestRating": "5"
+  },
   "offers": [
+    {
+      "@type": "Offer",
+      "name": "Student Plan",
+      "price": "35.00",
+      "priceCurrency": "GBP",
+      "priceSpecification": {
+        "@type": "UnitPriceSpecification",
+        "price": "35.00",
+        "priceCurrency": "GBP",
+        "unitCode": "MON"
+      },
+      "eligibleRegion": "GB",
+      "description": "Unlimited AI tutor, practice questions, flashcards, accessibility modes — A-Level Maths"
+    },
     {
       "@type": "Course",
       "name": "A-Level Mathematics — Pure 1 & 2",
@@ -59,6 +79,44 @@ window._loadSupabase = () => new Promise(res => {
       "name": "A-Level Mathematics — Statistics & Mechanics",
       "description": "A-Level Statistics and Mechanics with AI tutoring",
       "educationalLevel": "A-Level"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is there actually a free trial? Do I need a card?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes — 7 days completely free. Your card is stored securely via Stripe but not charged until the trial ends. Cancel any time with one click." }
+    },
+    {
+      "@type": "Question",
+      "name": "How is Synaptiq different from ChatGPT?",
+      "acceptedAnswer": { "@type": "Answer", "text": "ChatGPT is a general assistant. Synaptiq is trained specifically on A-Level Maths curricula — it knows AQA, Edexcel, OCR and WJEC mark schemes and shows working exactly how examiners expect." }
+    },
+    {
+      "@type": "Question",
+      "name": "Which exam boards does Synaptiq cover?",
+      "acceptedAnswer": { "@type": "Answer", "text": "AQA, Edexcel, OCR, and WJEC — all fully supported. You set your exam board during signup and every answer is aligned to that board's mark scheme style." }
+    },
+    {
+      "@type": "Question",
+      "name": "How much does it cost after the free trial?",
+      "acceptedAnswer": { "@type": "Answer", "text": "£35 per month, or £199 per year (saving £221). Cancel any time." }
+    },
+    {
+      "@type": "Question",
+      "name": "Is Synaptiq suitable for students with ADHD, dyslexia, or dyscalculia?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes — ADHD, dyslexia and dyscalculia modes are built-in first-class features. ADHD mode uses shorter steps and focus timers. Dyslexia mode uses Lexend font with increased spacing. Dyscalculia mode adds colour-coded working." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can parents see how their child is progressing?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Students can open the Parent View from their dashboard and email a progress report — including study streak, questions answered, XP, and topics needing attention — directly to a parent or guardian." }
     }
   ]
 }
@@ -3357,9 +3415,9 @@ body.light .skeleton {
         <div>
           <h4 style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:1.25rem">Resources</h4>
           <div style="display:flex;flex-direction:column;gap:.75rem">
-            <a style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">A-Level Maths Guide</a>
-            <a style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Exam Board Comparison</a>
-            <a style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Revision Tips Blog</a>
+            <a href="#features" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">A-Level Maths Guide</a>
+            <a href="#compare" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Exam Board Comparison</a>
+            <a href="#faq" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Revision Tips &amp; FAQ</a>
             <a href="mailto:schools@synaptiqai.co.uk" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Schools &amp; Tutors</a>
           </div>
         </div>
