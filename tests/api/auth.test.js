@@ -37,7 +37,7 @@ function makeBuilder(resolution = { data: null, error: null }) {
     _r: resolution,
     then(res, rej) { return Promise.resolve(b._r).then(res, rej); },
   };
-  ['select', 'insert', 'update', 'upsert', 'eq', 'single', 'order', 'limit'].forEach(m => {
+  ['select', 'insert', 'update', 'upsert', 'delete', 'eq', 'single', 'order', 'limit'].forEach(m => {
     b[m] = vi.fn().mockReturnValue(b);
   });
   return b;
@@ -243,5 +243,107 @@ describe('verify', () => {
     const r = res();
     await handler(req({ action: 'verify' }, 'POST', { authorization: 'Bearer valid-token' }), r);
     expect(r.statusCode).toBe(200);
+  });
+});
+
+// ─── Non-POST method ──────────────────────────────────────────────────────────
+
+describe('non-POST method', () => {
+  it('returns 405 for GET', async () => {
+    const r = res();
+    await handler(req({}, 'GET'), r);
+    expect(r.statusCode).toBe(405);
+  });
+});
+
+// ─── Invalid request body ─────────────────────────────────────────────────────
+
+describe('invalid request body', () => {
+  it('returns 400 for malformed JSON string', async () => {
+    const r = res();
+    await handler({ method: 'POST', body: '{bad json', headers: {} }, r);
+    expect(r.statusCode).toBe(400);
+    expect(r.body.error).toMatch(/invalid/i);
+  });
+});
+
+// ─── update_profile ───────────────────────────────────────────────────────────
+
+describe('update_profile', () => {
+  it('returns 401 when Authorization header is absent', async () => {
+    const r = res();
+    await handler(req({ action: 'update_profile', name: 'Bob' }), r);
+    expect(r.statusCode).toBe(401);
+  });
+
+  it('returns 401 for an invalid token', async () => {
+    mocks.supabase.auth.getUser.mockResolvedValueOnce({ data: null, error: { message: 'bad token' } });
+    const r = res();
+    await handler(req({ action: 'update_profile', name: 'Bob' }, 'POST', { authorization: 'Bearer bad' }), r);
+    expect(r.statusCode).toBe(401);
+  });
+
+  it('returns 200 with updated profile on success', async () => {
+    mocks.supabase.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'u1' } }, error: null });
+    mocks.supabase.from.mockReturnValueOnce(
+      makeBuilder({ data: { id: 'u1', name: 'Bob' }, error: null })
+    );
+    const r = res();
+    await handler(req({ action: 'update_profile', name: 'Bob' }, 'POST', { authorization: 'Bearer valid' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.success).toBe(true);
+    expect(r.body.profile.name).toBe('Bob');
+  });
+
+  it('returns 400 when the DB update fails', async () => {
+    mocks.supabase.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'u1' } }, error: null });
+    mocks.supabase.from.mockReturnValueOnce(
+      makeBuilder({ data: null, error: { message: 'update failed' } })
+    );
+    const r = res();
+    await handler(req({ action: 'update_profile', name: 'Bob' }, 'POST', { authorization: 'Bearer valid' }), r);
+    expect(r.statusCode).toBe(400);
+    expect(r.body.error).toMatch(/update failed/i);
+  });
+});
+
+// ─── delete_account ───────────────────────────────────────────────────────────
+
+describe('delete_account', () => {
+  beforeEach(() => {
+    mocks.supabase.auth.admin.deleteUser = vi.fn().mockResolvedValue({ error: null });
+  });
+
+  it('returns 401 when Authorization header is absent', async () => {
+    const r = res();
+    await handler(req({ action: 'delete_account' }), r);
+    expect(r.statusCode).toBe(401);
+  });
+
+  it('returns 401 for an invalid token', async () => {
+    mocks.supabase.auth.getUser.mockResolvedValueOnce({ data: null, error: { message: 'bad token' } });
+    const r = res();
+    await handler(req({ action: 'delete_account' }, 'POST', { authorization: 'Bearer bad' }), r);
+    expect(r.statusCode).toBe(401);
+  });
+
+  it('deletes all user data and returns 200 on success', async () => {
+    mocks.supabase.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'u1' } }, error: null });
+    const r = res();
+    await handler(req({ action: 'delete_account' }, 'POST', { authorization: 'Bearer valid' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.success).toBe(true);
+    expect(mocks.supabase.auth.admin.deleteUser).toHaveBeenCalledWith('u1');
+  });
+});
+
+// ─── Unknown action ───────────────────────────────────────────────────────────
+
+describe('unknown action', () => {
+  it('returns 400 with a helpful error message', async () => {
+    const r = res();
+    await handler(req({ action: 'fly_to_moon' }), r);
+    expect(r.statusCode).toBe(400);
+    expect(r.body.error).toMatch(/unknown action/i);
   });
 });
