@@ -3239,6 +3239,17 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
       <div style="text-align:center"><div style="font-size:2rem;font-weight:900;color:var(--gold)">+2 grades</div><div style="font-size:.8rem;color:var(--muted)">Avg improvement</div></div>
       <div style="text-align:center"><div style="font-size:2rem;font-weight:900;color:var(--gold)">97%</div><div style="font-size:.8rem;color:var(--muted)">Would recommend</div></div>
     </div>
+    <!-- Exam board logos trust bar -->
+    <div style="text-align:center;padding:2rem 0 0;margin-top:2rem;border-top:1px solid rgba(255,255,255,0.06)">
+      <p style="color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1rem">Aligned to all UK A-Level exam boards</p>
+      <div style="display:flex;gap:1.25rem;justify-content:center;flex-wrap:wrap;align-items:center">
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.02em">AQA</span>
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.02em">Edexcel</span>
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.02em">OCR</span>
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.02em">WJEC</span>
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.02em">OCR MEI</span>
+      </div>
+    </div>
   </section>
 
   <!-- Modules overview -->
@@ -3807,6 +3818,15 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
         <button onclick="showDash('questions')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">📝</span>Questions</button>
         <button onclick="showDash('flashcards')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">🃏</span>Flashcards</button>
         <button onclick="showDash('blitz')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">⚡</span>Blitz</button>
+      </div>
+      <!-- Continue Where You Left Off -->
+      <div id="continue-card" style="display:none;background:rgba(12,14,20,0.85);border:1px solid rgba(201,168,76,0.18);border-radius:16px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;backdrop-filter:blur(20px)">
+        <div style="font-size:1.5rem">📍</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.7rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.15rem">Continue where you left off</div>
+          <div style="font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="continue-label">Loading...</div>
+        </div>
+        <button id="continue-btn" class="btn btn-gold" style="font-size:.8rem;padding:.45rem 1rem;white-space:nowrap" onclick="continueLastSession()">Resume →</button>
       </div>
       <!-- Daily Challenge Card -->
       <div id="daily-challenge-card" class="daily-challenge-glow" style="background:linear-gradient(135deg,rgba(96,165,250,0.12),rgba(96,165,250,0.04));border:1px solid rgba(96,165,250,0.28);border-radius:18px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 32px rgba(0,0,0,0.3)">
@@ -5919,6 +5939,11 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
           <div class="a11y-info"><div class="a11y-name">Simplified Interface</div><div class="a11y-desc">Hides decorative elements and sidebars — shows only core study tools. Great for ADHD focus sessions.</div></div>
           <span id="a11y-simple-status" style="color:var(--muted);font-size:.8rem">Off</span>
         </button>
+        <button class="a11y-btn" id="a11y-sepia" onclick="toggleA11y('sepia')">
+          <span class="a11y-icon">🟤</span>
+          <div class="a11y-info"><div class="a11y-name">Sepia / Cream Reading Mode</div><div class="a11y-desc">Warm cream background with dark text — reduces eye strain for long reading sessions. Recommended for dyslexia.</div></div>
+          <span id="a11y-sepia-status" style="color:var(--muted);font-size:.8rem">Off</span>
+        </button>
         <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;margin-top:1rem">
           <div style="font-weight:700;margin-bottom:.75rem">Text Size</div>
           <div style="display:flex;align-items:center;gap:1rem">
@@ -6925,6 +6950,14 @@ function _restoreModes() {
     const saved = JSON.parse(localStorage.getItem('synaptiq_modes') || '{}');
     Object.entries(saved).forEach(([mode, on]) => { if (on) setMode(mode, true); });
   } catch(e) {}
+  // Restore notification toggle states
+  ['study_reminders', 'assignments', 'achievements'].forEach(key => {
+    const val = localStorage.getItem('notif_' + key);
+    const el = document.querySelector(`[data-notif="${key}"]`);
+    if (!el) return;
+    if (val === 'false') el.classList.remove('on');
+    else el.classList.add('on'); // default on
+  });
 }
 
 function setTheme(mode) {
@@ -8200,6 +8233,49 @@ function showDash(sub) {
     });
   }
   setMobNav(sub);
+  // Track last visited section for "continue where you left off"
+  if (sub !== 'home') {
+    const sectionLabels = {
+      tutor:'AI Tutor', questions:'Practice Questions', flashcards:'Flashcards', blitz:'Quick Blitz',
+      content:'AI Teacher', progress:'Progress Dashboard', notes:'My Notes', goals:'Daily Goals',
+      papers:'Past Papers', exam_sim:'Exam Simulator', predict:'Exam Prediction',
+      timetable:'Revision Timetable', formulas:'Formula Sheets', curriculum:'A-Level Curriculum',
+      flashcards:'Flashcards', bookmarks:'Bookmarks', checklist:'Topic Checklist',
+      glossary:'Glossary', mindmap:'Mind Map', mood:'Mood Check-in', focus:'Focus Music'
+    };
+    const label = sectionLabels[sub] || sub.charAt(0).toUpperCase() + sub.slice(1);
+    try {
+      const entry = { sub, label, topic: state.topic || null, ts: Date.now() };
+      localStorage.setItem('synaptiq_last_section', JSON.stringify(entry));
+    } catch(e) {}
+  } else {
+    _renderContinueCard();
+  }
+}
+
+function _renderContinueCard() {
+  try {
+    const card = document.getElementById('continue-card');
+    if (!card) return;
+    const entry = JSON.parse(localStorage.getItem('synaptiq_last_section') || 'null');
+    if (!entry) { card.style.display = 'none'; return; }
+    const ago = Date.now() - entry.ts;
+    const agoStr = ago < 60000 ? 'Just now' : ago < 3600000 ? Math.round(ago/60000) + 'm ago' :
+      ago < 86400000 ? Math.round(ago/3600000) + 'h ago' : Math.round(ago/86400000) + 'd ago';
+    const topicPart = entry.topic && entry.topic !== 'A-Level Maths — General' ? ` — ${entry.topic}` : '';
+    document.getElementById('continue-label').textContent = `${entry.label}${topicPart} · ${agoStr}`;
+    card.style.display = 'flex';
+  } catch(e) {}
+}
+
+function continueLastSession() {
+  try {
+    const entry = JSON.parse(localStorage.getItem('synaptiq_last_section') || 'null');
+    if (entry?.sub) {
+      if (entry.topic && entry.sub === 'tutor') state.topic = entry.topic;
+      showDash(entry.sub);
+    }
+  } catch(e) {}
 }
 
 // Hook into post-login to show new UI elements and load global resources
@@ -9512,6 +9588,17 @@ function toggleVoiceMode() {
 // ═══════════════════════════════════════
 function addXP(amount, msg) {
   state.xp += amount;
+  // Track daily XP for weekly leaderboard
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const activity = JSON.parse(localStorage.getItem('synaptiq_activity') || '{}');
+    activity[today] = (activity[today] || 0) + amount;
+    // Prune entries older than 14 days
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 14);
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+    Object.keys(activity).forEach(k => { if (k < cutoffStr) delete activity[k]; });
+    localStorage.setItem('synaptiq_activity', JSON.stringify(activity));
+  } catch(e) {}
   const newLevel = Math.floor(state.xp / 500) + 1;
   if (newLevel > state.level) {
     state.level = newLevel;
@@ -12770,6 +12857,25 @@ body.high-contrast .stat-card { background: #0A0A0A !important; border-color: rg
 body.high-contrast .btn-gold, body.high-contrast .btn.btn-gold { background: #FFD700 !important; color: #000 !important; }
 body.high-contrast input, body.high-contrast textarea, body.high-contrast select { background: #111 !important; border-color: rgba(255,255,255,0.5) !important; color: #FFF !important; }
 
+/* SEPIA / CREAM READING MODE */
+body.sepia-mode {
+  --bg1: #FAF3E0; --bg2: #F5EDD3; --bg3: #EDE3C8; --bg4: #E4D8B5;
+  --white: #2C1A0E; --muted: #6B5443; --border: rgba(100,70,40,0.25);
+  --gold: #8B4513; --gold-light: #A0522D;
+  background: #FAF3E0 !important;
+  color: #2C1A0E !important;
+}
+body.sepia-mode .sidebar, body.sepia-mode .main-content, body.sepia-mode .card,
+body.sepia-mode .msg.bot, body.sepia-mode .stat-card {
+  background: rgba(250,243,224,0.9) !important;
+  border-color: rgba(100,70,40,0.2) !important;
+  color: #2C1A0E !important;
+}
+body.sepia-mode input, body.sepia-mode textarea, body.sepia-mode select {
+  background: #F0E8D0 !important; border-color: rgba(100,70,40,0.3) !important; color: #2C1A0E !important;
+}
+body.sepia-mode .btn-gold, body.sepia-mode .btn.btn-gold { background: #8B4513 !important; color: #FAF3E0 !important; }
+
 /* DYSLEXIA — OpenDyslexic with proper spacing */
 body.dyslexia-font * { font-family: 'OpenDyslexic', 'Comic Sans MS', cursive !important; letter-spacing: .05em !important; line-height: 1.9 !important; }
 body.dyslexia-font p, body.dyslexia-font li, body.dyslexia-font .msg { font-size: 1.05em !important; word-spacing: .15em !important; }
@@ -14636,6 +14742,7 @@ function applyAllA11y() {
   document.body.classList.toggle('dyslexia-font', a11yState.dyslexia);
   document.body.classList.toggle('high-contrast', a11yState.contrast);
   document.body.classList.toggle('mode-simple', a11yState.simple);
+  document.body.classList.toggle('sepia-mode', a11yState.sepia);
   if (a11yState.motion) {
     document.documentElement.style.setProperty('--transition', 'none');
     document.querySelectorAll('*').forEach(el => { el.style.animationDuration = '0s'; el.style.transitionDuration = '0s'; });
@@ -14643,7 +14750,7 @@ function applyAllA11y() {
     document.documentElement.style.removeProperty('--transition');
   }
   // Update button states
-  ['dyslexia','contrast','motion','tts','simple'].forEach(f => {
+  ['dyslexia','contrast','motion','tts','simple','sepia'].forEach(f => {
     const btn = document.getElementById('a11y-' + f);
     const status = document.getElementById('a11y-' + f + '-status');
     if (btn) btn.classList.toggle('active', a11yState[f]);
@@ -14863,6 +14970,10 @@ function fcAnswer(rating) {
     localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
     syncToCloud();
   }
+  if (rating === 0) {
+    const fcEncs = ["That's okay — it'll come back sooner so you can nail it.", "Spaced repetition works. You'll see this card again soon.", "Every 'Again' makes the memory stronger in the end."];
+    showToast(fcEncs[Math.floor(Math.random() * fcEncs.length)], 2200);
+  }
   fcCurrent++;
   showFcCard();
 }
@@ -15017,6 +15128,29 @@ const UK_CURRICULUM = {
   }
 };
 
+function _getMastery() {
+  try { return JSON.parse(localStorage.getItem('synaptiq_mastery') || '{}'); } catch(e) { return {}; }
+}
+function cycleMastery(e, topicKey) {
+  e.stopPropagation();
+  const m = _getMastery();
+  const cur = m[topicKey] || 'none';
+  const next = cur === 'none' ? 'progress' : cur === 'progress' ? 'mastered' : 'none';
+  if (next === 'none') delete m[topicKey]; else m[topicKey] = next;
+  try { localStorage.setItem('synaptiq_mastery', JSON.stringify(m)); } catch(e2) {}
+  // Re-render the topic row
+  const el = document.getElementById('mastery-' + CSS.escape(topicKey));
+  if (el) _applyMasteryStyle(el, next);
+}
+function _applyMasteryStyle(el, state) {
+  const labels = { none: '○ Not started', progress: '◑ In progress', mastered: '✓ Mastered' };
+  const colors = { none: 'var(--muted)', progress: '#FBBF24', mastered: 'var(--green)' };
+  const borders = { none: 'rgba(255,255,255,0.06)', progress: 'rgba(251,191,36,0.35)', mastered: 'rgba(74,222,128,0.35)' };
+  el.style.borderLeft = `3px solid ${borders[state]}`;
+  el.style.paddingLeft = '.6rem';
+  const badge = el.querySelector('.mastery-badge');
+  if (badge) { badge.textContent = labels[state]; badge.style.color = colors[state]; }
+}
 function showCurriculum(btn, level) {
   document.querySelectorAll('#sp-curriculum .style-pill').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
@@ -15025,20 +15159,46 @@ function showCurriculum(btn, level) {
   const container = document.getElementById('curriculum-content');
   if (!container) return;
   const subjects = Object.keys(data);
+  const mastery = _getMastery();
+  // Legend
   container.innerHTML = `
+    <div style="display:flex;gap:1.25rem;flex-wrap:wrap;margin-bottom:1.25rem;font-size:.75rem;align-items:center">
+      <span style="color:var(--muted);font-weight:600">Mastery:</span>
+      <span style="color:var(--muted)">○ Not started</span>
+      <span style="color:#FBBF24">◑ In progress</span>
+      <span style="color:var(--green)">✓ Mastered</span>
+      <span style="color:var(--muted);margin-left:auto;font-style:italic">Click a topic badge to update</span>
+    </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem">
       ${subjects.map(subject => {
         const s = data[subject];
         const topicList = Object.keys(s.topics);
+        const masteredCount = topicList.filter(t => mastery[subject + '|' + t] === 'mastered').length;
+        const progressCount = topicList.filter(t => mastery[subject + '|' + t] === 'progress').length;
+        const pct = topicList.length ? Math.round((masteredCount / topicList.length) * 100) : 0;
         return `<div class="card" style="cursor:pointer" onclick="toggleCurriculumSubject(this,'${encodeURIComponent(subject)}','${level}')">
           <div class="card-header">
             <span class="card-title">${subject}</span>
-            <span style="font-size:.7rem;color:var(--muted)">${topicList.length} topics</span>
+            <span style="font-size:.7rem;color:var(--muted)">${topicList.length} topics · <span style="color:var(--green)">${pct}%</span></span>
           </div>
           <div class="card-body" style="font-size:.75rem;color:var(--muted)">
-            <div style="margin-bottom:.5rem">Boards: ${s.boards.join(', ')}</div>
+            <div style="margin-bottom:.6rem">Boards: ${s.boards.join(', ')}</div>
+            <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:2px;margin-bottom:.75rem;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--green);border-radius:2px;transition:width .4s"></div></div>
             <div id="curr-${encodeURIComponent(subject)}-topics" style="display:none">
-              ${topicList.map(t => `<div style="margin-bottom:.75rem"><div style="color:var(--gold);font-weight:600;margin-bottom:.25rem">${t}</div>${s.topics[t].map(st => `<div style="padding-left:.75rem;margin-bottom:.2rem">• ${st}</div>`).join('')}</div>`).join('')}
+              ${topicList.map(t => {
+                const key = subject + '|' + t;
+                const mState = mastery[key] || 'none';
+                const borderCol = mState === 'mastered' ? 'rgba(74,222,128,0.35)' : mState === 'progress' ? 'rgba(251,191,36,0.35)' : 'rgba(255,255,255,0.06)';
+                const badgeColor = mState === 'mastered' ? 'var(--green)' : mState === 'progress' ? '#FBBF24' : 'var(--muted)';
+                const badgeLabel = mState === 'mastered' ? '✓ Mastered' : mState === 'progress' ? '◑ In progress' : '○ Not started';
+                return `<div id="mastery-${encodeURIComponent(key)}" style="margin-bottom:.75rem;border-left:3px solid ${borderCol};padding-left:.6rem;border-radius:2px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+                    <div style="color:var(--gold);font-weight:600">${t}</div>
+                    <button class="mastery-badge" onclick="cycleMastery(event,'${encodeURIComponent(key)}')" style="font-size:.68rem;color:${badgeColor};background:none;border:none;cursor:pointer;padding:.1rem .35rem;border-radius:4px;white-space:nowrap;hover:opacity:.7">${badgeLabel}</button>
+                  </div>
+                  ${s.topics[t].map(st => `<div style="padding-left:.5rem;margin-bottom:.2rem">• ${st}</div>`).join('')}
+                </div>`;
+              }).join('')}
             </div>
             <div style="color:var(--gold);font-size:.75rem;margin-top:.5rem">Click to expand topics ↓</div>
           </div>
@@ -17127,7 +17287,19 @@ function dcAnswer(isCorrect, btn, correctText) {
   fb.style.background = isCorrect ? 'rgba(74,222,128,0.08)' : 'rgba(239,68,68,0.08)';
   fb.style.border = isCorrect ? '1px solid rgba(74,222,128,0.2)' : '1px solid rgba(239,68,68,0.2)';
   fb.style.color = isCorrect ? 'var(--green)' : '#EF4444';
-  fb.textContent = isCorrect ? '✓ Correct! Well done.' : `✗ The correct answer was: ${correctText}`;
+  const encouragements = [
+    "Almost there — you had the right idea. Review this one and you'll nail it next time.",
+    "Don't worry — this trips up a lot of students. Check the worked solution and try again.",
+    "Good attempt! The gap between your answer and the mark scheme is smaller than you think.",
+    "Every wrong answer is a step forward — you've just found a gap to close.",
+    "Most A-Level students miss this one at first. You'll remember it now."
+  ];
+  if (isCorrect) {
+    fb.innerHTML = '✓ Correct! Well done.';
+  } else {
+    const enc = encouragements[Math.floor(Math.random() * encouragements.length)];
+    fb.innerHTML = `<div>✗ The correct answer was: <strong>${correctText}</strong></div><div style="margin-top:.5rem;font-size:.82rem;color:var(--muted);font-style:italic">${enc}</div>`;
+  }
   document.getElementById('dc-next-btn').style.display = 'block';
 }
 
@@ -18934,7 +19106,18 @@ function mqAnswer(qi, chosen, correct, explanation) {
     fb.style.background = ok ? 'rgba(74,222,128,0.08)' : 'rgba(239,68,68,0.08)';
     fb.style.border = ok ? '1px solid rgba(74,222,128,0.2)' : '1px solid rgba(239,68,68,0.2)';
     fb.style.color = ok ? 'var(--green)' : '#FB7185';
-    fb.textContent = (ok ? '✓ Correct! ' : '✗ Incorrect. ') + (explanation || '');
+    if (ok) {
+      fb.textContent = '✓ Correct! ' + (explanation || '');
+    } else {
+      const mqEncs = [
+        "Almost — you had the right instinct. Here's what separates a C from an A:",
+        "Good try — this is one of the most commonly missed question types.",
+        "Close! The mark scheme rewards a specific method — let's look at it:",
+        "Don't be discouraged — understanding why you missed this is more valuable than getting it right by luck:"
+      ];
+      const enc = mqEncs[Math.floor(Math.random() * mqEncs.length)];
+      fb.innerHTML = `<div>✗ ${enc}</div>${explanation ? `<div style="margin-top:.4rem;color:var(--muted)">${explanation}</div>` : ''}`;
+    }
     if (ok) addXP(15);
   }
 }
