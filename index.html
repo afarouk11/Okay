@@ -2433,6 +2433,12 @@ body.light .skeleton {
   transition: all .2s;
 }
 .fc-wrong:hover, .fc-right:hover { transform: translateY(-2px); }
+.fc-srs-btn {
+  flex: 1; padding: .6rem .5rem; border-radius: 10px;
+  font-size: .85rem; cursor: pointer; transition: all .2s;
+  text-align: center; line-height: 1.3;
+}
+.fc-srs-btn:hover { transform: translateY(-2px); filter: brightness(1.15); }
 .fc-input {
   width: 100%; background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.1);
   border-radius: 10px; color: var(--white);
@@ -4417,8 +4423,10 @@ body.light .skeleton {
           </div>
         </div>
         <div class="flashcard-actions" id="fc-actions" style="display:none">
-          <button class="fc-wrong" onclick="fcAnswer(false)"><i class="fas fa-times"></i> Didn't Know</button>
-          <button class="fc-right" onclick="fcAnswer(true)"><i class="fas fa-check"></i> Got It!</button>
+          <button class="fc-srs-btn" style="background:rgba(251,113,133,0.15);border:1px solid rgba(251,113,133,0.3);color:var(--red)" onclick="fcAnswer(0)"><div style="font-weight:700">Again</div><div style="font-size:.7rem;opacity:.8" id="fc-lbl-0">< 1d</div></button>
+          <button class="fc-srs-btn" style="background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.3);color:#fbbf24" onclick="fcAnswer(1)"><div style="font-weight:700">Hard</div><div style="font-size:.7rem;opacity:.8" id="fc-lbl-1">1d</div></button>
+          <button class="fc-srs-btn" style="background:rgba(96,165,250,0.12);border:1px solid rgba(96,165,250,0.3);color:var(--blue)" onclick="fcAnswer(2)"><div style="font-weight:700">Good</div><div style="font-size:.7rem;opacity:.8" id="fc-lbl-2">3d</div></button>
+          <button class="fc-srs-btn" style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.3);color:var(--green)" onclick="fcAnswer(3)"><div style="font-weight:700">Easy</div><div style="font-size:.7rem;opacity:.8" id="fc-lbl-3">7d</div></button>
         </div>
         <div style="text-align:center;margin-top:.75rem;font-size:.75rem;color:var(--muted)">
           <kbd style="background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:.1rem .4rem;font-family:monospace">Space</kbd> flip &nbsp;
@@ -5752,9 +5760,25 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
             </div>
           </div>
         </div>
-        <div id="goal-streak-display" style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem">
+        <div id="goal-streak-display" style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem;margin-bottom:1rem">
           <div style="font-weight:700;margin-bottom:.75rem">🔥 Goal Streak</div>
           <div id="goal-streak-content" style="color:var(--muted);font-size:.875rem">Complete your daily goal to build a streak!</div>
+        </div>
+        <div id="streak-freeze-card" style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(100,160,255,0.2);border-radius:16px;padding:1.5rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+            <div>
+              <div style="font-weight:700;margin-bottom:.25rem">🧊 Streak Freeze</div>
+              <div style="color:var(--muted);font-size:.8rem">Earn 1 freeze per 5 questions answered. Used automatically if you miss a day.</div>
+            </div>
+            <div style="text-align:center;background:rgba(100,160,255,0.12);border-radius:12px;padding:.75rem 1.25rem;min-width:80px">
+              <div style="font-size:1.8rem;font-weight:900;color:#64a0ff" id="streak-freeze-count">0</div>
+              <div style="font-size:.75rem;color:var(--muted)">freezes</div>
+            </div>
+          </div>
+          <div style="margin-top:.75rem;height:4px;background:rgba(255,255,255,0.06);border-radius:99px;overflow:hidden">
+            <div id="freeze-progress-bar" style="height:100%;background:linear-gradient(90deg,#3a6fc4,#64a0ff);border-radius:99px;width:0%;transition:width .5s ease"></div>
+          </div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:.35rem" id="freeze-progress-label">0 / 5 questions toward next freeze</div>
         </div>
       </div>
     </div>
@@ -6968,6 +6992,25 @@ When explaining concepts: Start with the core idea, then show a worked example, 
 
   const a11y = getA11yInstructions();
   if (a11y) sys += '\n\n' + a11y;
+
+  // Mood check-in context
+  try {
+    const moodData = JSON.parse(localStorage.getItem('synaptiq_mood') || '{}');
+    if (moodData.mood && moodData.date) {
+      const moodAge = Date.now() - new Date(moodData.date).getTime();
+      if (moodAge < 8 * 60 * 60 * 1000) {
+        const moodMap = { great:'energised and confident', good:'in a positive mood', okay:'feeling okay', tired:'tired and low energy', stressed:'stressed and anxious', low:'feeling low' };
+        const desc = moodMap[moodData.mood] || moodData.mood;
+        let moodAdv = '';
+        if (moodData.mood === 'tired') moodAdv = 'Keep responses shorter than usual. Use simple analogies. After each topic, suggest a 5-minute break.';
+        else if (moodData.mood === 'stressed') moodAdv = 'Be extra encouraging. Normalise mistakes. Celebrate small wins. Avoid overwhelming with too much at once.';
+        else if (moodData.mood === 'low') moodAdv = 'Be warm and supportive. Keep tasks small and achievable. Acknowledge that some days are harder than others.';
+        else if (moodData.mood === 'great') moodAdv = 'The student is energised — you can challenge them with harder questions and go into more depth.';
+        sys += `\n\nWELLBEING CONTEXT: The student checked in as feeling ${desc} today.${moodAdv ? ' ' + moodAdv : ''}`;
+      }
+    }
+  } catch(_) {}
+
   return sys;
 }
 
@@ -12042,7 +12085,21 @@ Rules:
 - If the student seems confused, try a completely different angle or a real-life analogy
 - Be encouraging, patient and friendly — like a great human tutor
 - Reference the lesson content when relevant, but also go beyond it if asked
-- After answering, optionally ask a short follow-up question to check understanding`;
+- After answering, optionally ask a short follow-up question to check understanding` + (() => {
+  try {
+    const moodData = JSON.parse(localStorage.getItem('synaptiq_mood') || '{}');
+    if (moodData.mood && moodData.date && Date.now() - new Date(moodData.date).getTime() < 8*60*60*1000) {
+      const moodMap = { great:'energised and confident', good:'in a positive mood', okay:'feeling okay', tired:'tired and low energy', stressed:'stressed and anxious', low:'feeling low' };
+      const desc = moodMap[moodData.mood] || moodData.mood;
+      let adv = moodData.mood === 'tired' ? ' Keep explanations brief and use simple language.' :
+                moodData.mood === 'stressed' ? ' Be extra gentle and encouraging.' :
+                moodData.mood === 'low' ? ' Be warm and supportive.' :
+                moodData.mood === 'great' ? ' Feel free to challenge them with harder questions.' : '';
+      return `\n\nWELLBEING: Student is feeling ${desc} today.${adv}`;
+    }
+  } catch(_) {}
+  return '';
+})();
 }
 
 async function tvHandleInput(text) {
@@ -12206,11 +12263,41 @@ function switchLBTab(tab, btn) {
   renderLeaderboard();
 }
 
-function renderLeaderboard() {
+async function renderLeaderboard() {
   const container = document.getElementById('lb-list');
   const yourRank = document.getElementById('lb-your-rank');
   if (!container) return;
-  const data = lbData[lbTab] || lbData.weekly;
+
+  // Show skeleton while loading
+  container.innerHTML = '<div style="display:flex;flex-direction:column;gap:.5rem">' +
+    Array(6).fill('<div style="height:52px;border-radius:12px;background:rgba(255,255,255,0.04);animation:shimmer 1.4s linear infinite;background-size:200% 100%"></div>').join('') + '</div>';
+
+  let data;
+  let userRank = null;
+
+  try {
+    const r = await fetch('/api/supabase-auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'leaderboard', payload: { tab: lbTab, userId: state.user?.id } })
+    });
+    const json = await r.json();
+    if (json.top && json.top.length > 0) {
+      data = json.top.map(u => ({
+        name: u.name || 'Student',
+        emoji: u.avatar_emoji || '⭐',
+        xp: u.xp || 0,
+        badge: u.xp >= 5000 ? '👑 Legend' : u.xp >= 2000 ? '💎 Diamond' : u.xp >= 1000 ? '🔥 On Fire' : u.xp >= 500 ? '⚡ Rising Star' : '📚 Learner'
+      }));
+      userRank = json.userRank;
+    } else {
+      throw new Error('no data');
+    }
+  } catch (_) {
+    // Fall back to demo data if real data unavailable
+    data = lbData[lbTab] || lbData.weekly;
+  }
+
   const ranks = ['🥇','🥈','🥉'];
   const rankClasses = ['gold','silver','bronze'];
   container.innerHTML = data.map((p,i) => `
@@ -12223,13 +12310,12 @@ function renderLeaderboard() {
     </div>`).join('');
 
   // Your rank
-  const userXP = (state.user?.xp || 0);
-  const yourPos = data.filter(p => p.xp > userXP).length + 1;
-  // Dynamic badge based on XP
+  const userXP = (state.user?.xp || state.xp || 0);
+  const yourPos = userRank || (data.filter(p => p.xp > userXP).length + 1);
   const userBadge = userXP >= 5000 ? '👑 Legend' : userXP >= 2000 ? '💎 Diamond' : userXP >= 1000 ? '🔥 On Fire' : userXP >= 500 ? '⚡ Rising Star' : userXP >= 100 ? '📚 Learner' : '🌱 Growing';
   const xpToNext = data[yourPos - 2];
-  const xpGap = xpToNext ? `${(xpToNext.xp - userXP).toLocaleString()} XP to reach #${yourPos - 1}` : '🏆 You\'re in the top!';
-  yourRank.innerHTML = `<div class="lb-row you" style="border:1px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.06);border-radius:12px;animation:fadeInUp .3s ease">
+  const xpGap = xpToNext ? `${(xpToNext.xp - userXP).toLocaleString()} XP to reach #${yourPos - 1}` : '🏆 You\'re at the top!';
+  if (yourRank) yourRank.innerHTML = `<div class="lb-row you" style="border:1px solid rgba(201,168,76,0.3);background:rgba(201,168,76,0.06);border-radius:12px;animation:fadeInUp .3s ease">
     <div class="lb-rank">${yourPos}</div>
     <div class="lb-avatar">${state.user?.name ? state.user.name[0].toUpperCase() : '⭐'}</div>
     <div class="lb-name" style="font-weight:700">You${state.user?.name ? ' ('+state.user.name.split(' ')[0]+')' : ''}</div>
@@ -12905,11 +12991,20 @@ window.enterDashboard = function() {
 
 
 // ─── SHARE QUESTION ──────────────────────────────────
-function shareQuestion() {
+function shareQuestion(questionText) {
   const questions = document.getElementById('generated-questions');
   const first = questions?.querySelector('.question-text');
-  const preview = first?.textContent?.slice(0,120) || 'Practice question';
-  document.getElementById('share-question-preview').textContent = preview + '...';
+  const fullText = questionText || first?.textContent || 'Practice question';
+  const preview = fullText.slice(0, 200);
+  document.getElementById('share-question-preview').textContent = preview + (fullText.length > 200 ? '...' : '');
+  // Encode full question as base64 into URL ?q= param
+  try {
+    const encoded = btoa(unescape(encodeURIComponent(fullText)));
+    const shareUrl = `${location.origin}${location.pathname}?q=${encoded}`;
+    document.getElementById('share-link').value = shareUrl;
+  } catch(_) {
+    document.getElementById('share-link').value = location.href;
+  }
   document.getElementById('share-modal').style.display = 'flex';
 }
 function copyShareLink() {
@@ -12917,13 +13012,37 @@ function copyShareLink() {
   showToast('🔗 Link copied!');
 }
 function shareViaWhatsApp() {
+  const url = document.getElementById('share-link').value;
   const text = document.getElementById('share-question-preview').textContent;
-  window.open(`https://wa.me/?text=${encodeURIComponent('Check out this practice question from Synaptiq: ' + text)}`);
+  window.open(`https://wa.me/?text=${encodeURIComponent('A-Level Maths practice question from Synaptiq:\n\n' + text + '\n\n' + url)}`);
 }
 function shareViaEmail() {
+  const url = document.getElementById('share-link').value;
   const text = document.getElementById('share-question-preview').textContent;
-  window.open(`mailto:?subject=Practice Question from Synaptiq&body=${encodeURIComponent(text)}`);
+  window.open(`mailto:?subject=A-Level Maths Practice Question&body=${encodeURIComponent(text + '\n\nView at: ' + url)}`);
 }
+
+// On page load: if ?q= param exists, decode and show the shared question
+(function _handleSharedQuestion() {
+  try {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('q');
+    if (!q) return;
+    const decoded = decodeURIComponent(escape(atob(q)));
+    // Show when page has loaded
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const modal = document.getElementById('share-modal');
+        const preview = document.getElementById('share-question-preview');
+        if (modal && preview) {
+          preview.textContent = decoded;
+          document.getElementById('share-link').value = location.href;
+          modal.style.display = 'flex';
+        }
+      }, 800);
+    });
+  } catch(_) {}
+})();
 
 // ─── WELSH LANGUAGE ───────────────────────────────────
 const welshTranslations = {
@@ -14250,6 +14369,7 @@ function trackProgress(type, amount) {
   try { localStorage.setItem('synaptiq_progress_' + today, JSON.stringify(todayProgress)); } catch(e) {}
   updateGoalDisplay();
   _checkGoalStreak();
+  if (type === 'questions') { for (let i = 0; i < amount; i++) _earnFreezeProgress(); }
 }
 
 function _checkGoalStreak() {
@@ -14267,12 +14387,54 @@ function _checkGoalStreak() {
       } else if (stored.last === yesterday || stored.last === '') {
         streak++;
         localStorage.setItem('synaptiq_goal_streak', JSON.stringify({ streak, last: today }));
-        // First completion today — celebrate!
         _launchConfetti();
         showToast(streak > 1 ? `🔥 ${streak}-day streak! Goal complete!` : '🎉 Daily goal complete!', 'success');
+      } else if (stored.last && stored.last !== today) {
+        // Missed day(s) — check for freeze
+        const freezeData = JSON.parse(localStorage.getItem('synaptiq_streak_freezes') || '{"count":0,"questionsToward":0}');
+        if (freezeData.count > 0) {
+          freezeData.count--;
+          localStorage.setItem('synaptiq_streak_freezes', JSON.stringify(freezeData));
+          showToast('🧊 Streak freeze used! Your streak is protected.', 'info');
+          // Don't reset streak — keep it
+          streak++;
+          localStorage.setItem('synaptiq_goal_streak', JSON.stringify({ streak, last: today }));
+        } else {
+          streak = 1;
+          localStorage.setItem('synaptiq_goal_streak', JSON.stringify({ streak, last: today }));
+          showToast('🔥 New streak started!', 'success');
+        }
       }
     }
     _renderGoalStreak(streak, goalMet);
+  } catch(e) {}
+  _updateFreezeUI();
+}
+
+function _updateFreezeUI() {
+  try {
+    const freezeData = JSON.parse(localStorage.getItem('synaptiq_streak_freezes') || '{"count":0,"questionsToward":0}');
+    const countEl = document.getElementById('streak-freeze-count');
+    const barEl = document.getElementById('freeze-progress-bar');
+    const labelEl = document.getElementById('freeze-progress-label');
+    if (countEl) countEl.textContent = freezeData.count || 0;
+    const toward = (freezeData.questionsToward || 0) % 5;
+    const pct = (toward / 5) * 100;
+    if (barEl) barEl.style.width = pct + '%';
+    if (labelEl) labelEl.textContent = `${toward} / 5 questions toward next freeze`;
+  } catch(e) {}
+}
+
+function _earnFreezeProgress() {
+  try {
+    const freezeData = JSON.parse(localStorage.getItem('synaptiq_streak_freezes') || '{"count":0,"questionsToward":0}');
+    freezeData.questionsToward = (freezeData.questionsToward || 0) + 1;
+    if (freezeData.questionsToward % 5 === 0) {
+      freezeData.count = (freezeData.count || 0) + 1;
+      showToast('🧊 Streak Freeze earned! You now have ' + freezeData.count + ' freeze' + (freezeData.count > 1 ? 's' : '') + '.', 'info');
+    }
+    localStorage.setItem('synaptiq_streak_freezes', JSON.stringify(freezeData));
+    _updateFreezeUI();
   } catch(e) {}
 }
 
@@ -14427,7 +14589,7 @@ window.showDash = function(sub) {
     if (firstBtn) showFormulas(firstBtn, 'maths');
   }
   if (sub === 'bookmarks') renderBookmarks();
-  if (sub === 'goals') { loadGoals(); updateGoalDisplay(); _checkGoalStreak(); }
+  if (sub === 'goals') { loadGoals(); updateGoalDisplay(); _checkGoalStreak(); _updateFreezeUI(); }
   if (sub === 'repetition') refreshSRPage();
   if (sub === 'curriculum') showCurriculum(document.getElementById('curr-alevel-btn'), 'alevel');
 };
@@ -14516,23 +14678,39 @@ function showFcCard() {
   card.classList.remove('flipped');
   actions.style.display = 'flex';
   prog.textContent = `Card ${fcCurrent + 1} of ${fcDue.length}`;
+  _updateFcSrsLabels();
 }
 
-function fcAnswer(correct) {
+function fcAnswer(rating) {
+  // rating: 0=Again, 1=Hard, 2=Good, 3=Easy
   const c = fcDue[fcCurrent];
   const idx = fcCards.findIndex(x => x.id === c.id);
   if (idx >= 0) {
-    const days = correct ? fcCards[idx].ease * 2 : 1;
+    const ease = fcCards[idx].ease || 1;
+    let days;
+    if (rating === 0) { days = 1; fcCards[idx].ease = Math.max(1, ease - 2); }
+    else if (rating === 1) { days = 1; fcCards[idx].ease = Math.max(1, ease - 1); }
+    else if (rating === 2) { days = Math.max(1, ease); fcCards[idx].ease = Math.min(ease + 1, 10); }
+    else { days = Math.max(1, ease * 2); fcCards[idx].ease = Math.min(ease + 2, 10); }
     const next = new Date();
     next.setDate(next.getDate() + days);
     fcCards[idx].nextReview = next.toISOString().split('T')[0];
-    if (correct) fcCards[idx].ease = Math.min(fcCards[idx].ease + 1, 10);
-    else fcCards[idx].ease = Math.max(1, fcCards[idx].ease - 1);
     localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
     syncToCloud();
   }
   fcCurrent++;
   showFcCard();
+}
+
+function _updateFcSrsLabels() {
+  const c = fcDue[fcCurrent];
+  if (!c) return;
+  const ease = c.ease || 1;
+  const fmt = d => d <= 1 ? '1d' : d < 7 ? d + 'd' : Math.round(d / 7) + 'w';
+  const el0 = document.getElementById('fc-lbl-0'); if (el0) el0.textContent = '< 1d';
+  const el1 = document.getElementById('fc-lbl-1'); if (el1) el1.textContent = '1d';
+  const el2 = document.getElementById('fc-lbl-2'); if (el2) el2.textContent = fmt(Math.max(1, ease));
+  const el3 = document.getElementById('fc-lbl-3'); if (el3) el3.textContent = fmt(Math.max(1, ease * 2));
 }
 
 document.getElementById('fc-subject')?.addEventListener('change', loadFcDue);
@@ -16680,35 +16858,63 @@ function initDailyChallenge() {
   dcState.current = 0; dcState.correct = 0; dcState.answered = false;
 }
 
-function startDailyChallenge() {
+async function startDailyChallenge() {
   const today = new Date().toISOString().split('T')[0];
   const saved = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_dc') || 'null'); } catch(e) { return null; } })();
   if (saved && saved.date === today && saved.done) return;
-  // Seed questions
+  // Seed 4 static questions
   const seed = parseInt(today.replace(/-/g, ''));
   const shuffled = DC_QUESTIONS.slice().sort((a,b) => { const h = (n) => ((n ^ seed) * 2654435761) >>> 0; return h(DC_QUESTIONS.indexOf(a)) - h(DC_QUESTIONS.indexOf(b)); });
-  dcState.questions = shuffled.slice(0, 5);
+  dcState.questions = shuffled.slice(0, 4);
   dcState.current = 0; dcState.correct = 0; dcState.answered = false;
   document.getElementById('dc-start-btn').style.display = 'none';
   document.getElementById('dc-question-area').style.display = 'block';
   document.getElementById('dc-progress-wrap').style.display = 'flex';
   renderDCDots(); dcShowQuestion();
+  // Async: generate AI bonus question (5th) in background
+  try {
+    const aiCacheKey = 'synaptiq_dc_ai_' + today;
+    const aiCached = (() => { try { return JSON.parse(localStorage.getItem(aiCacheKey) || 'null'); } catch(e) { return null; } })();
+    if (aiCached) {
+      dcState.questions.push(aiCached);
+    } else {
+      const board = state.user?.board || localStorage.getItem('synaptiq_exam_board') || 'AQA';
+      const prompt = `Generate 1 A-Level Maths multiple-choice question for ${board}. Return ONLY valid JSON in this format: {"q":"question text","opts":["A","B","C","D"],"ans":0} where ans is the index (0-3) of the correct option. Make it challenging but fair. Topic: any core maths topic.`;
+      const data = await callClaude([{ role: 'user', content: prompt }], 'You are an A-Level Maths question generator. Respond ONLY with valid JSON, nothing else.');
+      const raw = getReply(data);
+      const match = raw.match(/\{[\s\S]*\}/);
+      if (match) {
+        const aiQ = JSON.parse(match[0]);
+        if (aiQ.q && Array.isArray(aiQ.opts) && aiQ.opts.length === 4 && typeof aiQ.ans === 'number') {
+          aiQ._ai = true;
+          localStorage.setItem(aiCacheKey, JSON.stringify(aiQ));
+          dcState.questions.push(aiQ);
+        }
+      }
+    }
+  } catch(_) {
+    // Fallback: use a 5th static question
+    dcState.questions.push(shuffled[4] || DC_QUESTIONS[0]);
+  }
 }
 
 function renderDCDots() {
   const wrap = document.getElementById('dc-dots');
+  const total = dcState.questions.length || 5;
   wrap.innerHTML = dcState.questions.map((_, i) => {
     let bg = 'var(--border)';
     if (i < dcState.current) bg = 'var(--green)';
     else if (i === dcState.current) bg = 'var(--blue)';
     return `<div style="width:10px;height:10px;border-radius:50%;background:${bg};transition:background .3s"></div>`;
   }).join('');
-  document.getElementById('dc-score-label').textContent = `${dcState.current}/5`;
+  document.getElementById('dc-score-label').textContent = `${dcState.current}/${total}`;
 }
 
 function dcShowQuestion() {
   const q = dcState.questions[dcState.current];
-  document.getElementById('dc-q-text').innerHTML = `<span style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Question ${dcState.current + 1} of 5</span><br>${q.q}`;
+  const total = dcState.questions.length;
+  const aiBadge = q._ai ? ` <span style="font-size:.7rem;background:rgba(96,165,250,0.18);color:#64a0ff;border-radius:6px;padding:.1rem .4rem;vertical-align:middle">✦ AI</span>` : '';
+  document.getElementById('dc-q-text').innerHTML = `<span style="font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Question ${dcState.current + 1} of ${total}${aiBadge}</span><br>${q.q}`;
   document.getElementById('dc-feedback').style.display = 'none';
   document.getElementById('dc-next-btn').style.display = 'none';
   document.getElementById('dc-results').style.display = 'none';
@@ -16765,7 +16971,7 @@ function dcAnswer(isCorrect, btn, correctText) {
 function dcNext() {
   dcState.current++;
   renderDCDots();
-  if (dcState.current >= 5) {
+  if (dcState.current >= dcState.questions.length) {
     dcFinish();
   } else {
     dcShowQuestion();
@@ -16778,27 +16984,29 @@ function dcFinish() {
   document.getElementById('dc-next-btn').style.display = 'none';
   const res = document.getElementById('dc-results');
   res.style.display = 'block';
+  const total = dcState.questions.length;
   const score = dcState.correct;
-  const emojis = ['😢', '😕', '🙂', '😊', '🎉', '🏆'];
-  const msgs = ['Keep practising!', 'Getting there!', 'Good effort!', 'Well done!', 'Excellent!', 'Perfect score! 🌟'];
-  const subs = ['Practice makes perfect. Come back tomorrow!', 'You\'re improving! Review your weak areas.', 'Solid work! Try the AI Teacher for more depth.', 'Great session! Your hard work is paying off.', 'Brilliant! Open the Practice Questions for a challenge.', 'Flawless! You\'re mastering A-Level Maths!'];
-  document.getElementById('dc-result-emoji').textContent = emojis[score];
-  document.getElementById('dc-result-text').textContent = `${score}/5 correct — ${msgs[score]}`;
-  document.getElementById('dc-result-sub').textContent = subs[score];
-  document.getElementById('dc-score-label').textContent = `${score}/5 ✓`;
+  const pct = Math.round((score / total) * 100);
+  const emojis = pct >= 100 ? '🏆' : pct >= 80 ? '🎉' : pct >= 60 ? '😊' : pct >= 40 ? '🙂' : '😕';
+  const msgs = pct >= 100 ? 'Perfect score! 🌟' : pct >= 80 ? 'Excellent!' : pct >= 60 ? 'Well done!' : pct >= 40 ? 'Good effort!' : 'Keep practising!';
+  const subs = pct >= 100 ? 'Flawless! You\'re mastering A-Level Maths!' : pct >= 80 ? 'Brilliant! Open Practice Questions for more.' : pct >= 60 ? 'Great session! Keep it up.' : 'Try the AI Teacher to review your weak areas.';
+  document.getElementById('dc-result-emoji').textContent = emojis;
+  document.getElementById('dc-result-text').textContent = `${score}/${total} correct — ${msgs}`;
+  document.getElementById('dc-result-sub').textContent = subs;
+  document.getElementById('dc-score-label').textContent = `${score}/${total} ✓`;
   document.getElementById('dc-q-text').textContent = '';
   // Save completion
   const today = new Date().toISOString().split('T')[0];
-  try { localStorage.setItem('synaptiq_dc', JSON.stringify({ date: today, done: true, score })); } catch(e) {}
+  try { localStorage.setItem('synaptiq_dc', JSON.stringify({ date: today, done: true, score, total })); } catch(e) {}
   // Update done badge
   setTimeout(() => {
     document.getElementById('dc-question-area').style.display = 'none';
     document.getElementById('dc-done-badge').style.display = 'flex';
-    document.getElementById('dc-subtitle').textContent = `Completed today! Score: ${score}/5 · Come back tomorrow`;
+    document.getElementById('dc-subtitle').textContent = `Completed today! Score: ${score}/${total} · Come back tomorrow`;
     addXP(score * 10 + 20);
-    trackProgress('questions', 5);
-    addActivity('🔥', `Daily Challenge — ${score}/5 correct`, score >= 4 ? 'Excellent!' : score >= 2 ? 'Good effort!' : 'Keep practising!', 'now');
-    showToast(`⚡ Challenge done! ${score}/5 correct. +${score * 10 + 20} XP`);
+    trackProgress('questions', total);
+    addActivity('🔥', `Daily Challenge — ${score}/${total} correct`, score >= Math.ceil(total * 0.8) ? 'Excellent!' : score >= Math.ceil(total * 0.4) ? 'Good effort!' : 'Keep practising!', 'now');
+    showToast(`⚡ Challenge done! ${score}/${total} correct. +${score * 10 + 20} XP`);
   }, 2500);
 }
 
@@ -16900,6 +17108,14 @@ if (typeof showDash === 'function') {
 document.addEventListener('DOMContentLoaded', () => {
   initDailyChallenge();
   renderStudyCoach();
+  // Auto-resize for tutor and dash chat textareas
+  ['tutor-input', 'dash-input'].forEach(id => {
+    const ta = document.getElementById(id);
+    if (!ta) return;
+    const resize = () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 150) + 'px'; };
+    ta.addEventListener('input', resize);
+    ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { ta.style.height = ''; } });
+  });
 });
 
 // ═══════════════════════════════════════
