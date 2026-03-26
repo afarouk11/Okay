@@ -153,6 +153,46 @@ export default async function handler(req, res) {
       return res.status(r.status).json({ data: Array.isArray(data) ? data : [] });
     }
 
+    // ─── LEADERBOARD: top 20 users by XP + current user's rank ─────────────
+    if (action === 'leaderboard') {
+      const { tab = 'xp', userId: uid } = payload || {};
+      // Fetch top 20 profiles ordered by xp descending
+      const r = await fetch(
+        `${supabaseUrl}/rest/v1/profiles?select=name,xp,streak,avatar_emoji&order=xp.desc&limit=20`,
+        { headers: supabaseHeaders }
+      );
+      const rows = await r.json();
+      const top = Array.isArray(rows) ? rows : [];
+
+      let userRank = null;
+      if (uid) {
+        // Count how many users have more XP than the current user
+        const countR = await fetch(
+          `${supabaseUrl}/rest/v1/profiles?select=id&xp=gt.${
+            top.find((_,i) => i === 0) ? (top[top.length - 1]?.xp || 0) : 0
+          }`,
+          { headers: supabaseHeaders }
+        );
+        // Simpler: find the current user's own XP then count users above them
+        const meR = await fetch(
+          `${supabaseUrl}/rest/v1/profiles?id=eq.${uid}&select=xp,name`,
+          { headers: supabaseHeaders }
+        );
+        const meRows = await meR.json();
+        if (Array.isArray(meRows) && meRows[0]) {
+          const myXp = meRows[0].xp || 0;
+          const aboveR = await fetch(
+            `${supabaseUrl}/rest/v1/profiles?xp=gt.${myXp}&select=id`,
+            { headers: supabaseHeaders }
+          );
+          const aboveRows = await aboveR.json();
+          userRank = (Array.isArray(aboveRows) ? aboveRows.length : 0) + 1;
+        }
+      }
+
+      return res.status(200).json({ top, userRank });
+    }
+
     return res.status(400).json({ error: 'Unknown action: ' + action });
   } catch (e) {
     return res.status(500).json({ error: e.message });
