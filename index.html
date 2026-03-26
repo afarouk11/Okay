@@ -20,6 +20,7 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=Space+Mono&family=Lexend:wght@300;400;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/opendyslexic@latest/opendyslexic-regular.css" media="print" onload="this.media='all'">
 <!-- FontAwesome: load only after page is interactive to avoid blocking render -->
 <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.0/css/all.min.css"></noscript>
@@ -135,7 +136,7 @@ window._loadSupabase = () => new Promise(res => {
   --bg3: #151821;
   --bg4: #1C2030;
   --white: #F5F2EC;
-  --muted: #8892A4;
+  --muted: #9BA4B7; /* Improved: ~5.2:1 contrast on --bg1 */
   --border: rgba(201,168,76,0.15);
   --green: #4ADE80;
   --red: #FB7185;
@@ -161,7 +162,7 @@ body.light {
   --bg3: #DDD9CE;
   --bg4: #D2CEC2;
   --white: #1A1A1A;
-  --muted: #5A5A6A;
+  --muted: #4A4A5A;
   --border: rgba(140,110,40,0.2);
   --shadow: 0 8px 32px rgba(0,0,0,0.12);
   --glow: 0 0 40px rgba(201,168,76,0.08);
@@ -189,12 +190,82 @@ body.light .msg.bot { background: var(--bg3); color: var(--white); }
 }
 .theme-toggle:hover { border-color: var(--gold); color: var(--gold); }
 
-/* ACCESSIBILITY MODES */
-body.mode-dyslexia { font-family: 'Lexend', sans-serif !important; letter-spacing: 0.05em; line-height: 2; }
+/* ═══════════════════════════════════════
+   ACCESSIBILITY MODES — COMPREHENSIVE
+═══════════════════════════════════════ */
+
+/* DYSLEXIA MODE — Lexend with optimal reading settings */
+body.mode-dyslexia { font-family: 'Lexend', sans-serif !important; letter-spacing: 0.03em; line-height: 1.9; word-spacing: .12em; }
 body.mode-dyslexia * { font-family: inherit !important; }
-body.mode-adhd .content-block { border-left: 3px solid var(--gold); margin-bottom: 1.5rem; }
-body.mode-adhd .step-badge { display: inline-flex !important; }
+body.mode-dyslexia p, body.mode-dyslexia li, body.mode-dyslexia .msg { font-size: 1.05rem !important; }
+body.mode-dyslexia .msg.bot { background: rgba(18,22,40,0.95) !important; border-left: 4px solid var(--blue) !important; }
+
+/* ADHD MODE — Maximum scannability, focus cues, reduced cognitive load */
+body.mode-adhd { --adhd-accent: #60A5FA; }
+
+/* Chunked content with visual separators */
+body.mode-adhd .content-block {
+  border-left: 4px solid var(--adhd-accent);
+  padding-left: 1.25rem;
+  margin-bottom: 2rem;
+  background: rgba(96,165,250,0.03);
+  border-radius: 0 12px 12px 0;
+}
+
+/* Step badges always visible */
+body.mode-adhd .step-badge {
+  display: inline-flex !important;
+  min-width: 28px; height: 28px;
+  background: var(--gold); color: var(--black);
+  border-radius: 50%; align-items: center; justify-content: center;
+  font-weight: 800; font-size: .75rem; margin-right: .5rem;
+  flex-shrink: 0;
+}
+
+/* Bot messages: wider spacing, clearer chunks */
+body.mode-adhd .msg.bot {
+  line-height: 2 !important;
+  font-size: 1rem !important;
+  padding: 1.5rem !important;
+  border-left: 4px solid var(--adhd-accent) !important;
+  background: rgba(10,12,18,0.9) !important;
+}
+
+/* Heading emphasis */
+body.mode-adhd h3, body.mode-adhd h4 { letter-spacing: .02em; }
+
+/* Focus indicator — strong keyboard navigation */
+body.mode-adhd *:focus {
+  outline: 3px solid var(--adhd-accent) !important;
+  outline-offset: 3px !important;
+}
+
+/* Break reminders */
+body.mode-adhd .adhd-break {
+  display: block !important;
+  background: rgba(96,165,250,0.12);
+  border: 1.5px solid rgba(96,165,250,0.35);
+  border-radius: 12px; padding: .875rem 1.25rem;
+  color: var(--adhd-accent); font-weight: 700;
+  margin: 1.5rem 0; text-align: center; font-size: .95rem;
+  animation: adhd-pulse 3s ease-in-out infinite;
+}
+@keyframes adhd-pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+
+/* Reduce sidebar visual noise in ADHD mode */
+body.mode-adhd .sidebar-item { padding: .65rem 1rem; }
+body.mode-adhd .sidebar { border-right: 2px solid rgba(96,165,250,0.15) !important; }
+
+/* Tutor input area gets emphasis */
+body.mode-adhd .tutor-input-area { border-top: 2px solid rgba(96,165,250,0.25) !important; }
+body.mode-adhd .tutor-input:focus { border-color: var(--adhd-accent) !important; box-shadow: 0 0 0 4px rgba(96,165,250,0.12) !important; }
+
+/* Timer/pomodoro always visible for ADHD */
+body.mode-adhd .pom-float-btn { opacity: 1 !important; border: 2px solid var(--adhd-accent) !important; }
+
+/* DYSCALCULIA MODE */
 body.mode-dyscalculia .math-visual { display: block !important; }
+body.mode-dyscalculia .calc-overlay { display: flex !important; }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -996,7 +1067,7 @@ body {
 .auth-divider::before,.auth-divider::after {
   content:''; flex:1; height:1px; background:rgba(255,255,255,0.07);
 }
-.auth-divider span { font-size:.72rem; color:rgba(136,146,164,0.6); font-weight:500; letter-spacing:.08em; text-transform:uppercase; }
+.auth-divider span { font-size:.72rem; color:rgba(136,146,164,0.85); font-weight:500; letter-spacing:.08em; text-transform:uppercase; }
 
 /* Segment toggle */
 .auth-tabs {
@@ -1026,7 +1097,7 @@ body {
   outline: none; border-color: rgba(201,168,76,0.5); box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
 }
 .form-group select option { background:var(--bg3); }
-.form-group input::placeholder { color:rgba(136,146,164,0.5); }
+.form-group input::placeholder { color:rgba(136,146,164,0.75); }
 
 /* Step transitions */
 .auth-step { display:none; }
@@ -1374,7 +1445,7 @@ body {
 .tutor-subjects::-webkit-scrollbar { width: 3px; }
 .tutor-subjects::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 2px; }
 .tutor-subjects h4 {
-  font-size: .7rem; font-weight: 700; color: rgba(136,146,164,0.6);
+  font-size: .7rem; font-weight: 700; color: rgba(136,146,164,0.85);
   text-transform: uppercase; letter-spacing: .12em; margin-bottom: 1rem;
   padding: 0 .5rem;
 }
@@ -2546,7 +2617,7 @@ body.light .skeleton {
   border-color: rgba(201,168,76,0.5);
   box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
 }
-.form-input::placeholder { color: rgba(136,146,164,0.5); }
+.form-input::placeholder { color: rgba(136,146,164,0.75); }
 .form-select option { background: var(--bg3); }
 .style-pill {
   padding: .4rem 1rem; border-radius: 99px;
@@ -2769,6 +2840,30 @@ body.light .skeleton {
 .ai-feedback.show{display:block}
 .feedback-grade{font-size:1.1rem;font-weight:700;color:var(--gold);margin-bottom:.5rem}
 @media print{.sidebar,#mobile-nav,.show-answer-btn,header,.teacher-tabs,.teacher-chapter-list,.lesson-toolbar{display:none!important}.dashboard-layout{display:block!important}.teacher-content{padding:0!important}body{background:white!important;color:black!important}.lesson-section h3{color:black!important;border-color:#ccc!important}.worked-example,.practice-q,.key-formulas-box{border-color:#ccc!important;background:#f9f9f9!important}}
+
+/* ═══════════════════════════════════════
+   PROFESSIONAL UI POLISH
+═══════════════════════════════════════ */
+:focus-visible { outline: 2.5px solid var(--gold); outline-offset: 3px; border-radius: 4px; }
+.btn:active { transform: translateY(1px) scale(0.98); }
+.btn-gold:active { transform: translateY(1px) scale(0.98); box-shadow: 0 2px 12px rgba(201,168,76,0.35) !important; }
+.stat-card { cursor: default; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.stat-card:hover { transform: translateY(-3px); border-color: rgba(201,168,76,0.22); box-shadow: 0 12px 36px rgba(0,0,0,0.35); }
+.sidebar-item.active { background: rgba(201,168,76,0.1) !important; border-left: 3px solid var(--gold); padding-left: calc(1rem - 3px); color: var(--white) !important; }
+input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !important; box-shadow: 0 0 0 3px rgba(201,168,76,0.08) !important; outline: none; }
+.card-header { border-bottom: 1px solid rgba(201,168,76,0.08); }
+.skeleton-block { background: linear-gradient(90deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 100%); background-size: 200% 100%; animation: shimmer 1.5s ease-in-out infinite; border-radius: 10px; }
+#toast { font-weight: 600; letter-spacing: .01em; box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.07) !important; }
+.page-title { background: linear-gradient(135deg, var(--white) 0%, rgba(201,168,76,0.9) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: inline-block; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.25); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(201,168,76,0.45); }
+.mob-nav-btn.active::after { content: ''; display: block; width: 18px; height: 3px; background: var(--gold); border-radius: 99px; margin: 2px auto 0; }
+.msg.bot { border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+.msg.user { box-shadow: 0 2px 12px rgba(201,168,76,0.15); }
+#xp-popup { font-weight: 800; letter-spacing: .02em; text-shadow: 0 0 16px rgba(201,168,76,0.6); }
+.exam-badge { display: inline-flex; align-items: center; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25); border-radius: 20px; padding: .2rem .7rem; font-size: .72rem; font-weight: 700; color: var(--gold); letter-spacing: .04em; }
 </style>
 </head>
 <body>
@@ -3143,6 +3238,17 @@ body.light .skeleton {
       <div style="text-align:center"><div style="font-size:2rem;font-weight:900;color:var(--gold)">2,400+</div><div style="font-size:.8rem;color:var(--muted)">Active students</div></div>
       <div style="text-align:center"><div style="font-size:2rem;font-weight:900;color:var(--gold)">+2 grades</div><div style="font-size:.8rem;color:var(--muted)">Avg improvement</div></div>
       <div style="text-align:center"><div style="font-size:2rem;font-weight:900;color:var(--gold)">97%</div><div style="font-size:.8rem;color:var(--muted)">Would recommend</div></div>
+    </div>
+    <!-- Exam board logos trust bar -->
+    <div style="text-align:center;padding:2rem 0 0;margin-top:2rem;border-top:1px solid rgba(255,255,255,0.06)">
+      <p style="color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1rem">Aligned to all UK A-Level exam boards</p>
+      <div style="display:flex;gap:1.25rem;justify-content:center;flex-wrap:wrap;align-items:center">
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.02em">AQA</span>
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.02em">Edexcel</span>
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.02em">OCR</span>
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.02em">WJEC</span>
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.02em">OCR MEI</span>
+      </div>
     </div>
   </section>
 
@@ -3712,6 +3818,15 @@ body.light .skeleton {
         <button onclick="showDash('questions')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">📝</span>Questions</button>
         <button onclick="showDash('flashcards')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">🃏</span>Flashcards</button>
         <button onclick="showDash('blitz')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">⚡</span>Blitz</button>
+      </div>
+      <!-- Continue Where You Left Off -->
+      <div id="continue-card" style="display:none;background:rgba(12,14,20,0.85);border:1px solid rgba(201,168,76,0.18);border-radius:16px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;backdrop-filter:blur(20px)">
+        <div style="font-size:1.5rem">📍</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.7rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.15rem">Continue where you left off</div>
+          <div style="font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="continue-label">Loading...</div>
+        </div>
+        <button id="continue-btn" class="btn btn-gold" style="font-size:.8rem;padding:.45rem 1rem;white-space:nowrap" onclick="continueLastSession()">Resume →</button>
       </div>
       <!-- Daily Challenge Card -->
       <div id="daily-challenge-card" class="daily-challenge-glow" style="background:linear-gradient(135deg,rgba(96,165,250,0.12),rgba(96,165,250,0.04));border:1px solid rgba(96,165,250,0.28);border-radius:18px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 32px rgba(0,0,0,0.3)">
@@ -5787,14 +5902,26 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
       <div class="page-title">♿ Accessibility</div>
       <p class="page-subtitle">Make Synaptiq work better for you — all settings save automatically</p>
       <div style="max-width:600px">
+        <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem">Learning Differences</div>
+        <button class="a11y-btn" id="a11y-adhd" onclick="toggleMode('adhd');toggleA11ySync('adhd')">
+          <span class="a11y-icon">⚡</span>
+          <div class="a11y-info"><div class="a11y-name">ADHD Mode</div><div class="a11y-desc">Shorter steps, bold focus headers, break reminders, and extra line spacing. AI adapts its responses too.</div></div>
+          <span id="a11y-adhd-status" style="color:var(--muted);font-size:.8rem">Off</span>
+        </button>
         <button class="a11y-btn" id="a11y-dyslexia" onclick="toggleA11y('dyslexia')">
           <span class="a11y-icon">📖</span>
-          <div class="a11y-info"><div class="a11y-name">Dyslexia-Friendly Font</div><div class="a11y-desc">Uses OpenDyslexic font — wider letter spacing and distinctive letterforms to reduce letter confusion</div></div>
+          <div class="a11y-info"><div class="a11y-name">Dyslexia-Friendly Font</div><div class="a11y-desc">Uses OpenDyslexic font — distinctive letterforms to reduce letter confusion and improve reading speed</div></div>
           <span id="a11y-dyslexia-status" style="color:var(--muted);font-size:.8rem">Off</span>
         </button>
+        <button class="a11y-btn" id="a11y-dyscalculia" onclick="toggleMode('dyscalculia');toggleA11ySync('dyscalculia')">
+          <span class="a11y-icon">🧮</span>
+          <div class="a11y-info"><div class="a11y-name">Dyscalculia Support</div><div class="a11y-desc">Colour-coded maths operations, word-first notation, and an always-visible on-screen calculator</div></div>
+          <span id="a11y-dyscalculia-status" style="color:var(--muted);font-size:.8rem">Off</span>
+        </button>
+        <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:.75rem 0">Visual & Audio</div>
         <button class="a11y-btn" id="a11y-contrast" onclick="toggleA11y('contrast')">
           <span class="a11y-icon">🔆</span>
-          <div class="a11y-info"><div class="a11y-name">High Contrast Mode</div><div class="a11y-desc">Increases contrast for better readability in bright conditions or for visual impairments</div></div>
+          <div class="a11y-info"><div class="a11y-name">High Contrast Mode</div><div class="a11y-desc">Maximum text contrast — white on black backgrounds, bright borders. WCAG AAA level readability.</div></div>
           <span id="a11y-contrast-status" style="color:var(--muted);font-size:.8rem">Off</span>
         </button>
         <button class="a11y-btn" id="a11y-motion" onclick="toggleA11y('motion')">
@@ -5809,8 +5936,13 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
         </button>
         <button class="a11y-btn" id="a11y-simple" onclick="toggleA11y('simple')">
           <span class="a11y-icon">✨</span>
-          <div class="a11y-info"><div class="a11y-name">Simplified Interface</div><div class="a11y-desc">Reduces visual clutter — shows only the most important elements. Great for ADHD</div></div>
+          <div class="a11y-info"><div class="a11y-name">Simplified Interface</div><div class="a11y-desc">Hides decorative elements and sidebars — shows only core study tools. Great for ADHD focus sessions.</div></div>
           <span id="a11y-simple-status" style="color:var(--muted);font-size:.8rem">Off</span>
+        </button>
+        <button class="a11y-btn" id="a11y-sepia" onclick="toggleA11y('sepia')">
+          <span class="a11y-icon">🟤</span>
+          <div class="a11y-info"><div class="a11y-name">Sepia / Cream Reading Mode</div><div class="a11y-desc">Warm cream background with dark text — reduces eye strain for long reading sessions. Recommended for dyslexia.</div></div>
+          <span id="a11y-sepia-status" style="color:var(--muted);font-size:.8rem">Off</span>
         </button>
         <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.25rem;margin-top:1rem">
           <div style="font-weight:700;margin-bottom:.75rem">Text Size</div>
@@ -5842,28 +5974,15 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
     <!-- MUSIC / FOCUS TRACKS SUBPAGE -->
     <div class="subpage" id="sp-focus">
       <div class="page-title">🎵 Focus Music</div>
-      <p class="page-subtitle">Background music for deep study sessions</p>
-      <div id="music-tracks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem">
-        <div class="card" style="cursor:pointer;text-align:center;padding:1.5rem" onclick="playTrack('lofi')">
-          <div style="font-size:2rem;margin-bottom:.5rem">🎧</div>
-          <div style="font-weight:700">Lo-Fi Study</div>
-          <div style="font-size:.8rem;color:var(--muted)">Calm focus beats</div>
+      <p class="page-subtitle">Background music to boost focus during study sessions</p>
+      <div id="music-tracks" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem"></div>
+      <div id="focus-music-now-playing" style="display:none;margin-top:1.5rem;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.25);border-radius:14px;padding:1rem 1.25rem;display:none;align-items:center;gap:1rem">
+        <div style="font-size:1.5rem" id="focus-music-emoji">🎵</div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:.9rem" id="focus-music-name">Playing</div>
+          <div style="font-size:.75rem;color:var(--muted)">Playing · Click track again to pause</div>
         </div>
-        <div class="card" style="cursor:pointer;text-align:center;padding:1.5rem" onclick="playTrack('nature')">
-          <div style="font-size:2rem;margin-bottom:.5rem">🌊</div>
-          <div style="font-weight:700">Nature Sounds</div>
-          <div style="font-size:.8rem;color:var(--muted)">Rain and forest</div>
-        </div>
-        <div class="card" style="cursor:pointer;text-align:center;padding:1.5rem" onclick="playTrack('classical')">
-          <div style="font-size:2rem;margin-bottom:.5rem">🎹</div>
-          <div style="font-weight:700">Classical Piano</div>
-          <div style="font-size:.8rem;color:var(--muted)">Focus and flow</div>
-        </div>
-        <div class="card" style="cursor:pointer;text-align:center;padding:1.5rem" onclick="playTrack('binaural')">
-          <div style="font-size:2rem;margin-bottom:.5rem">🧠</div>
-          <div style="font-weight:700">Binaural Beats</div>
-          <div style="font-size:.8rem;color:var(--muted)">Deep concentration</div>
-        </div>
+        <button onclick="if(musicAudio){musicAudio.pause();document.getElementById('focus-music-now-playing').style.display='none';currentTrack=-1;}" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer">⏹</button>
       </div>
     </div>
 
@@ -6810,9 +6929,35 @@ function setMode(mode, on) {
   if (btn) { btn.classList.toggle('on', on); btn.setAttribute('aria-pressed', String(on)); }
   const tog = document.getElementById('tog-' + mode);
   if (tog) tog.classList.toggle('on', on);
+  // Sync to settings page a11y toggle if exists
+  const a11yBtn = document.getElementById('a11y-' + mode);
+  const a11yStatus = document.getElementById('a11y-' + mode + '-status');
+  if (a11yBtn) a11yBtn.classList.toggle('active', on);
+  if (a11yStatus) { a11yStatus.textContent = on ? 'On' : 'Off'; a11yStatus.style.color = on ? 'var(--green)' : 'var(--muted)'; }
   if (mode === 'dyscalculia') {
     document.getElementById('calc-overlay')?.classList.toggle('show', on);
   }
+  // Persist modes to localStorage
+  try {
+    const saved = JSON.parse(localStorage.getItem('synaptiq_modes') || '{}');
+    saved[mode] = on;
+    localStorage.setItem('synaptiq_modes', JSON.stringify(saved));
+  } catch(e) {}
+}
+
+function _restoreModes() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('synaptiq_modes') || '{}');
+    Object.entries(saved).forEach(([mode, on]) => { if (on) setMode(mode, true); });
+  } catch(e) {}
+  // Restore notification toggle states
+  ['study_reminders', 'assignments', 'achievements'].forEach(key => {
+    const val = localStorage.getItem('notif_' + key);
+    const el = document.querySelector(`[data-notif="${key}"]`);
+    if (!el) return;
+    if (val === 'false') el.classList.remove('on');
+    else el.classList.add('on'); // default on
+  });
 }
 
 function setTheme(mode) {
@@ -7161,8 +7306,15 @@ function addTutorMsg(role, text) {
 }
 
 function formatADHD(text) {
-  return formatTutorMsg(text)
-    .replace(/(\d+\.) /g, '<span class="step-badge" style="display:inline-block">$1</span> ');
+  let s = formatTutorMsg(text);
+  // Step badges for numbered items
+  s = s.replace(/(\d+\.\s)/g, '<span class="step-badge">$1</span>');
+  // Highlight FOCUS markers
+  s = s.replace(/🎯 FOCUS:/g, '<span style="display:inline-block;background:rgba(201,168,76,0.2);border:1.5px solid rgba(201,168,76,0.5);border-radius:8px;padding:.2rem .6rem;font-weight:800;color:var(--gold);margin:.4rem 0">🎯 FOCUS:</span>');
+  // Style break reminders as ADHD break blocks
+  s = s.replace(/⏸️ QUICK BREAK[^<]*/g, m => `<div class="adhd-break">${m}</div>`);
+  // Wrap in content-block for ADHD border styling
+  return `<div class="content-block">${s}</div>`;
 }
 
 async function tutorSend() {
@@ -8081,6 +8233,49 @@ function showDash(sub) {
     });
   }
   setMobNav(sub);
+  // Track last visited section for "continue where you left off"
+  if (sub !== 'home') {
+    const sectionLabels = {
+      tutor:'AI Tutor', questions:'Practice Questions', flashcards:'Flashcards', blitz:'Quick Blitz',
+      content:'AI Teacher', progress:'Progress Dashboard', notes:'My Notes', goals:'Daily Goals',
+      papers:'Past Papers', exam_sim:'Exam Simulator', predict:'Exam Prediction',
+      timetable:'Revision Timetable', formulas:'Formula Sheets', curriculum:'A-Level Curriculum',
+      flashcards:'Flashcards', bookmarks:'Bookmarks', checklist:'Topic Checklist',
+      glossary:'Glossary', mindmap:'Mind Map', mood:'Mood Check-in', focus:'Focus Music'
+    };
+    const label = sectionLabels[sub] || sub.charAt(0).toUpperCase() + sub.slice(1);
+    try {
+      const entry = { sub, label, topic: state.topic || null, ts: Date.now() };
+      localStorage.setItem('synaptiq_last_section', JSON.stringify(entry));
+    } catch(e) {}
+  } else {
+    _renderContinueCard();
+  }
+}
+
+function _renderContinueCard() {
+  try {
+    const card = document.getElementById('continue-card');
+    if (!card) return;
+    const entry = JSON.parse(localStorage.getItem('synaptiq_last_section') || 'null');
+    if (!entry) { card.style.display = 'none'; return; }
+    const ago = Date.now() - entry.ts;
+    const agoStr = ago < 60000 ? 'Just now' : ago < 3600000 ? Math.round(ago/60000) + 'm ago' :
+      ago < 86400000 ? Math.round(ago/3600000) + 'h ago' : Math.round(ago/86400000) + 'd ago';
+    const topicPart = entry.topic && entry.topic !== 'A-Level Maths — General' ? ` — ${entry.topic}` : '';
+    document.getElementById('continue-label').textContent = `${entry.label}${topicPart} · ${agoStr}`;
+    card.style.display = 'flex';
+  } catch(e) {}
+}
+
+function continueLastSession() {
+  try {
+    const entry = JSON.parse(localStorage.getItem('synaptiq_last_section') || 'null');
+    if (entry?.sub) {
+      if (entry.topic && entry.sub === 'tutor') state.topic = entry.topic;
+      showDash(entry.sub);
+    }
+  } catch(e) {}
 }
 
 // Hook into post-login to show new UI elements and load global resources
@@ -9393,6 +9588,17 @@ function toggleVoiceMode() {
 // ═══════════════════════════════════════
 function addXP(amount, msg) {
   state.xp += amount;
+  // Track daily XP for weekly leaderboard
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const activity = JSON.parse(localStorage.getItem('synaptiq_activity') || '{}');
+    activity[today] = (activity[today] || 0) + amount;
+    // Prune entries older than 14 days
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 14);
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+    Object.keys(activity).forEach(k => { if (k < cutoffStr) delete activity[k]; });
+    localStorage.setItem('synaptiq_activity', JSON.stringify(activity));
+  } catch(e) {}
   const newLevel = Math.floor(state.xp / 500) + 1;
   if (newLevel > state.level) {
     state.level = newLevel;
@@ -12324,14 +12530,7 @@ async function renderLeaderboard() {
   </div><p style="font-size:.8rem;color:var(--muted);margin-top:.75rem;text-align:center">${xpGap}</p>`;
 }
 
-// ─── FONT SIZE CONTROL ───────────────────────────────
-let fontSize = 100;
-function changeFontSize(dir) {
-  fontSize = Math.max(80, Math.min(130, fontSize + dir * 5));
-  document.documentElement.style.fontSize = fontSize + '%';
-  document.getElementById('fs-display').textContent = fontSize + '%';
-  try { localStorage.setItem('synaptiq_fontsize', fontSize); } catch(e) {}
-}
+// ─── FONT SIZE CONTROL — see definition below ─────────
 
 // ─── PDF EXPORT ──────────────────────────────────────
 function exportQuestionsPDF() {
@@ -12459,7 +12658,7 @@ function exportQuestionsPDF() {
   transition: border .2s, box-shadow .2s;
 }
 .glossary-search-bar:focus { outline: none; border-color: rgba(201,168,76,0.5); box-shadow: 0 0 0 3px rgba(201,168,76,0.08); }
-.glossary-search-bar::placeholder { color: rgba(136,146,164,0.5); }
+.glossary-search-bar::placeholder { color: rgba(136,146,164,0.75); }
 .glossary-term { background: rgba(12,14,20,0.75); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: .75rem; transition: all .2s; animation: fadeInUp .3s ease; }
 .glossary-term:hover { border-color: rgba(201,168,76,0.2); }
 .glossary-term-word { font-weight: 700; font-size: 1rem; color: var(--gold); margin-bottom: .4rem; }
@@ -12646,8 +12845,49 @@ function exportQuestionsPDF() {
 .a11y-info { flex: 1; text-align: left; }
 .a11y-name { font-weight: 700; font-size: .875rem; }
 .a11y-desc { font-size: .78rem; color: var(--muted); margin-top: .15rem; }
-body.high-contrast { filter: contrast(1.4) brightness(1.1); }
+/* HIGH CONTRAST — real CSS overrides, not filter */
+body.high-contrast {
+  --bg1: #000000; --bg2: #0A0A0A; --bg3: #111111; --bg4: #1A1A1A;
+  --white: #FFFFFF; --muted: #CCCCCC; --border: rgba(255,255,255,0.4);
+  --gold: #FFD700; --gold-light: #FFE44D;
+}
+body.high-contrast .msg.bot,
+body.high-contrast .card,
+body.high-contrast .stat-card { background: #0A0A0A !important; border-color: rgba(255,255,255,0.35) !important; }
+body.high-contrast .btn-gold, body.high-contrast .btn.btn-gold { background: #FFD700 !important; color: #000 !important; }
+body.high-contrast input, body.high-contrast textarea, body.high-contrast select { background: #111 !important; border-color: rgba(255,255,255,0.5) !important; color: #FFF !important; }
+
+/* SEPIA / CREAM READING MODE */
+body.sepia-mode {
+  --bg1: #FAF3E0; --bg2: #F5EDD3; --bg3: #EDE3C8; --bg4: #E4D8B5;
+  --white: #2C1A0E; --muted: #6B5443; --border: rgba(100,70,40,0.25);
+  --gold: #8B4513; --gold-light: #A0522D;
+  background: #FAF3E0 !important;
+  color: #2C1A0E !important;
+}
+body.sepia-mode .sidebar, body.sepia-mode .main-content, body.sepia-mode .card,
+body.sepia-mode .msg.bot, body.sepia-mode .stat-card {
+  background: rgba(250,243,224,0.9) !important;
+  border-color: rgba(100,70,40,0.2) !important;
+  color: #2C1A0E !important;
+}
+body.sepia-mode input, body.sepia-mode textarea, body.sepia-mode select {
+  background: #F0E8D0 !important; border-color: rgba(100,70,40,0.3) !important; color: #2C1A0E !important;
+}
+body.sepia-mode .btn-gold, body.sepia-mode .btn.btn-gold { background: #8B4513 !important; color: #FAF3E0 !important; }
+
+/* DYSLEXIA — OpenDyslexic with proper spacing */
 body.dyslexia-font * { font-family: 'OpenDyslexic', 'Comic Sans MS', cursive !important; letter-spacing: .05em !important; line-height: 1.9 !important; }
+body.dyslexia-font p, body.dyslexia-font li, body.dyslexia-font .msg { font-size: 1.05em !important; word-spacing: .15em !important; }
+
+/* SIMPLE MODE — reduce clutter, focus on core content */
+body.mode-simple .sidebar-section:not(.sidebar-section-primary) { display: none !important; }
+body.mode-simple .stat-card:nth-child(n+3) { display: none !important; }
+body.mode-simple #daily-tip-bar { display: none !important; }
+body.mode-simple .tutor-quick-actions { display: none !important; }
+body.mode-simple #exam-countdown-card { display: none !important; }
+body.mode-simple .pom-float-btn { opacity: 0.4; }
+body.mode-simple .subpage { max-width: 720px !important; margin: 0 auto !important; }
 /* ── PRINT STYLES ── */
 @media print {
   .sidebar, .top-nav, .mobile-nav, .chat-input-area, .btn-gold, button { display: none !important; }
@@ -13622,21 +13862,38 @@ function renderMusicTracks() {
 }
 
 function playTrack(idx) {
+  if (typeof idx === 'string') {
+    // Called from old simple cards — map string to index
+    const nameMap = { lofi: 0, classical: 1, nature: 2, ambient: 3, piano: 4, binaural: 3 };
+    idx = nameMap[idx] ?? 0;
+  }
   if (currentTrack === idx && musicAudio && !musicAudio.paused) {
     musicAudio.pause();
-    document.getElementById(`play-track-${idx}`).textContent = '▶';
-    document.getElementById(`play-track-${idx}`).classList.remove('playing');
-    currentTrack = -1; return;
+    const btn = document.getElementById(`play-track-${idx}`);
+    if (btn) { btn.textContent = '▶'; btn.classList.remove('playing'); }
+    currentTrack = -1;
+    const np = document.getElementById('focus-music-now-playing'); if (np) np.style.display = 'none';
+    return;
   }
-  if (musicAudio) { musicAudio.pause(); if (currentTrack >= 0) { document.getElementById(`play-track-${currentTrack}`).textContent = '▶'; document.getElementById(`play-track-${currentTrack}`).classList.remove('playing'); } }
-  musicAudio = new Audio(musicTracks[idx].url);
+  if (musicAudio) {
+    musicAudio.pause();
+    if (currentTrack >= 0) {
+      const prevBtn = document.getElementById(`play-track-${currentTrack}`);
+      if (prevBtn) { prevBtn.textContent = '▶'; prevBtn.classList.remove('playing'); }
+    }
+  }
+  const track = musicTracks[idx];
+  if (!track) { showToast('⚠️ Track not found'); return; }
+  musicAudio = new Audio(track.url);
   musicAudio.loop = true; musicAudio.volume = 0.4;
   musicAudio.play().then(() => {
     currentTrack = idx;
-    document.getElementById(`play-track-${idx}`).textContent = '⏸';
-    document.getElementById(`play-track-${idx}`).classList.add('playing');
-    showToast(`🎵 Playing: ${musicTracks[idx].name}`);
-  }).catch(() => showToast('⚠️ Could not play audio — browser may have blocked autoplay'));
+    const btn = document.getElementById(`play-track-${idx}`);
+    if (btn) { btn.textContent = '⏸'; btn.classList.add('playing'); }
+    showToast(`🎵 Playing: ${track.name}`);
+    const np = document.getElementById('focus-music-now-playing');
+    if (np) { np.style.display = 'flex'; document.getElementById('focus-music-name').textContent = track.name; document.getElementById('focus-music-emoji').textContent = track.emoji; }
+  }).catch(() => showToast('⚠️ Could not play audio — try a different browser or check network'));
 }
 
 // ─── COMPARISON TOOL ─────────────────────────────────
@@ -14465,6 +14722,15 @@ function initA11y() {
   } catch(e) {}
 }
 
+// Sync settings page button to reflect state.modes toggle (called alongside toggleMode)
+function toggleA11ySync(mode) {
+  const on = state.modes[mode];
+  const btn = document.getElementById('a11y-' + mode);
+  const status = document.getElementById('a11y-' + mode + '-status');
+  if (btn) btn.classList.toggle('active', on);
+  if (status) { status.textContent = on ? 'On' : 'Off'; status.style.color = on ? 'var(--green)' : 'var(--muted)'; }
+}
+
 function toggleA11y(feature) {
   a11yState[feature] = !a11yState[feature];
   applyAllA11y();
@@ -14475,12 +14741,16 @@ function toggleA11y(feature) {
 function applyAllA11y() {
   document.body.classList.toggle('dyslexia-font', a11yState.dyslexia);
   document.body.classList.toggle('high-contrast', a11yState.contrast);
+  document.body.classList.toggle('mode-simple', a11yState.simple);
+  document.body.classList.toggle('sepia-mode', a11yState.sepia);
   if (a11yState.motion) {
     document.documentElement.style.setProperty('--transition', 'none');
     document.querySelectorAll('*').forEach(el => { el.style.animationDuration = '0s'; el.style.transitionDuration = '0s'; });
+  } else {
+    document.documentElement.style.removeProperty('--transition');
   }
   // Update button states
-  ['dyslexia','contrast','motion','tts','simple'].forEach(f => {
+  ['dyslexia','contrast','motion','tts','simple','sepia'].forEach(f => {
     const btn = document.getElementById('a11y-' + f);
     const status = document.getElementById('a11y-' + f + '-status');
     if (btn) btn.classList.toggle('active', a11yState[f]);
@@ -14592,6 +14862,7 @@ window.showDash = function(sub) {
   if (sub === 'goals') { loadGoals(); updateGoalDisplay(); _checkGoalStreak(); _updateFreezeUI(); }
   if (sub === 'repetition') refreshSRPage();
   if (sub === 'curriculum') showCurriculum(document.getElementById('curr-alevel-btn'), 'alevel');
+  if (sub === 'focus') renderMusicTracks();
 };
 
 // ─── PATCH enterDashboard ─────────────────────────────
@@ -14600,6 +14871,7 @@ window.enterDashboard = function() {
   if (_v11PrevEnter) _v11PrevEnter();
   initCookieBanner();
   initA11y();
+  _restoreModes();
   loadGoals();
   // Add footer links to app
   if (!document.getElementById('app-footer')) {
@@ -14697,6 +14969,10 @@ function fcAnswer(rating) {
     fcCards[idx].nextReview = next.toISOString().split('T')[0];
     localStorage.setItem('synaptiq_fc', JSON.stringify(fcCards));
     syncToCloud();
+  }
+  if (rating === 0) {
+    const fcEncs = ["That's okay — it'll come back sooner so you can nail it.", "Spaced repetition works. You'll see this card again soon.", "Every 'Again' makes the memory stronger in the end."];
+    showToast(fcEncs[Math.floor(Math.random() * fcEncs.length)], 2200);
   }
   fcCurrent++;
   showFcCard();
@@ -14852,6 +15128,29 @@ const UK_CURRICULUM = {
   }
 };
 
+function _getMastery() {
+  try { return JSON.parse(localStorage.getItem('synaptiq_mastery') || '{}'); } catch(e) { return {}; }
+}
+function cycleMastery(e, topicKey) {
+  e.stopPropagation();
+  const m = _getMastery();
+  const cur = m[topicKey] || 'none';
+  const next = cur === 'none' ? 'progress' : cur === 'progress' ? 'mastered' : 'none';
+  if (next === 'none') delete m[topicKey]; else m[topicKey] = next;
+  try { localStorage.setItem('synaptiq_mastery', JSON.stringify(m)); } catch(e2) {}
+  // Re-render the topic row
+  const el = document.getElementById('mastery-' + CSS.escape(topicKey));
+  if (el) _applyMasteryStyle(el, next);
+}
+function _applyMasteryStyle(el, state) {
+  const labels = { none: '○ Not started', progress: '◑ In progress', mastered: '✓ Mastered' };
+  const colors = { none: 'var(--muted)', progress: '#FBBF24', mastered: 'var(--green)' };
+  const borders = { none: 'rgba(255,255,255,0.06)', progress: 'rgba(251,191,36,0.35)', mastered: 'rgba(74,222,128,0.35)' };
+  el.style.borderLeft = `3px solid ${borders[state]}`;
+  el.style.paddingLeft = '.6rem';
+  const badge = el.querySelector('.mastery-badge');
+  if (badge) { badge.textContent = labels[state]; badge.style.color = colors[state]; }
+}
 function showCurriculum(btn, level) {
   document.querySelectorAll('#sp-curriculum .style-pill').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
@@ -14860,20 +15159,46 @@ function showCurriculum(btn, level) {
   const container = document.getElementById('curriculum-content');
   if (!container) return;
   const subjects = Object.keys(data);
+  const mastery = _getMastery();
+  // Legend
   container.innerHTML = `
+    <div style="display:flex;gap:1.25rem;flex-wrap:wrap;margin-bottom:1.25rem;font-size:.75rem;align-items:center">
+      <span style="color:var(--muted);font-weight:600">Mastery:</span>
+      <span style="color:var(--muted)">○ Not started</span>
+      <span style="color:#FBBF24">◑ In progress</span>
+      <span style="color:var(--green)">✓ Mastered</span>
+      <span style="color:var(--muted);margin-left:auto;font-style:italic">Click a topic badge to update</span>
+    </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem">
       ${subjects.map(subject => {
         const s = data[subject];
         const topicList = Object.keys(s.topics);
+        const masteredCount = topicList.filter(t => mastery[subject + '|' + t] === 'mastered').length;
+        const progressCount = topicList.filter(t => mastery[subject + '|' + t] === 'progress').length;
+        const pct = topicList.length ? Math.round((masteredCount / topicList.length) * 100) : 0;
         return `<div class="card" style="cursor:pointer" onclick="toggleCurriculumSubject(this,'${encodeURIComponent(subject)}','${level}')">
           <div class="card-header">
             <span class="card-title">${subject}</span>
-            <span style="font-size:.7rem;color:var(--muted)">${topicList.length} topics</span>
+            <span style="font-size:.7rem;color:var(--muted)">${topicList.length} topics · <span style="color:var(--green)">${pct}%</span></span>
           </div>
           <div class="card-body" style="font-size:.75rem;color:var(--muted)">
-            <div style="margin-bottom:.5rem">Boards: ${s.boards.join(', ')}</div>
+            <div style="margin-bottom:.6rem">Boards: ${s.boards.join(', ')}</div>
+            <div style="height:4px;background:rgba(255,255,255,0.06);border-radius:2px;margin-bottom:.75rem;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--green);border-radius:2px;transition:width .4s"></div></div>
             <div id="curr-${encodeURIComponent(subject)}-topics" style="display:none">
-              ${topicList.map(t => `<div style="margin-bottom:.75rem"><div style="color:var(--gold);font-weight:600;margin-bottom:.25rem">${t}</div>${s.topics[t].map(st => `<div style="padding-left:.75rem;margin-bottom:.2rem">• ${st}</div>`).join('')}</div>`).join('')}
+              ${topicList.map(t => {
+                const key = subject + '|' + t;
+                const mState = mastery[key] || 'none';
+                const borderCol = mState === 'mastered' ? 'rgba(74,222,128,0.35)' : mState === 'progress' ? 'rgba(251,191,36,0.35)' : 'rgba(255,255,255,0.06)';
+                const badgeColor = mState === 'mastered' ? 'var(--green)' : mState === 'progress' ? '#FBBF24' : 'var(--muted)';
+                const badgeLabel = mState === 'mastered' ? '✓ Mastered' : mState === 'progress' ? '◑ In progress' : '○ Not started';
+                return `<div id="mastery-${encodeURIComponent(key)}" style="margin-bottom:.75rem;border-left:3px solid ${borderCol};padding-left:.6rem;border-radius:2px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem">
+                    <div style="color:var(--gold);font-weight:600">${t}</div>
+                    <button class="mastery-badge" onclick="cycleMastery(event,'${encodeURIComponent(key)}')" style="font-size:.68rem;color:${badgeColor};background:none;border:none;cursor:pointer;padding:.1rem .35rem;border-radius:4px;white-space:nowrap;hover:opacity:.7">${badgeLabel}</button>
+                  </div>
+                  ${s.topics[t].map(st => `<div style="padding-left:.5rem;margin-bottom:.2rem">• ${st}</div>`).join('')}
+                </div>`;
+              }).join('')}
             </div>
             <div style="color:var(--gold);font-size:.75rem;margin-top:.5rem">Click to expand topics ↓</div>
           </div>
@@ -14902,7 +15227,7 @@ function addActivity(icon, text, sub, time) {
   const item = document.createElement('div');
   item.className = 'activity-item';
   item.style.cssText = 'opacity:0;transform:translateX(12px);transition:all .3s ease';
-  item.innerHTML = `<div class="activity-icon" style="background:${colors[icon]||'rgba(201,168,76,0.15)'};color:${textColors[icon]||'var(--gold)'};border:1px solid rgba(255,255,255,0.06)">${icon}</div><div style="flex:1;min-width:0"><div class="activity-text fw700" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${text}</div><div style="font-size:.73rem;color:var(--muted);margin-top:.1rem">${sub||''}</div></div><div class="activity-time" style="font-size:.7rem;color:rgba(136,146,164,0.6);flex-shrink:0">${time||'now'}</div>`;
+  item.innerHTML = `<div class="activity-icon" style="background:${colors[icon]||'rgba(201,168,76,0.15)'};color:${textColors[icon]||'var(--gold)'};border:1px solid rgba(255,255,255,0.06)">${icon}</div><div style="flex:1;min-width:0"><div class="activity-text fw700" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${text}</div><div style="font-size:.73rem;color:var(--muted);margin-top:.1rem">${sub||''}</div></div><div class="activity-time" style="font-size:.7rem;color:rgba(136,146,164,0.85);flex-shrink:0">${time||'now'}</div>`;
   requestAnimationFrame(() => { item.style.opacity = '1'; item.style.transform = 'translateX(0)'; });
   feed.insertBefore(item, feed.firstChild);
   // Keep max 10 items
@@ -16285,9 +16610,7 @@ function copyGeneratedQuestions() {
   }).catch(() => showToast('Copy failed — select and copy manually'));
 }
 
-function playTrack(type) {
-  showToast(`🎵 ${type.charAt(0).toUpperCase()+type.slice(1)} music — coming in next update!`);
-}
+// (playTrack for focus music is defined in the music player section above)
 
 
 // Auto-open parent modal when #parent-dash-btn exists and state.user is set
@@ -16964,7 +17287,19 @@ function dcAnswer(isCorrect, btn, correctText) {
   fb.style.background = isCorrect ? 'rgba(74,222,128,0.08)' : 'rgba(239,68,68,0.08)';
   fb.style.border = isCorrect ? '1px solid rgba(74,222,128,0.2)' : '1px solid rgba(239,68,68,0.2)';
   fb.style.color = isCorrect ? 'var(--green)' : '#EF4444';
-  fb.textContent = isCorrect ? '✓ Correct! Well done.' : `✗ The correct answer was: ${correctText}`;
+  const encouragements = [
+    "Almost there — you had the right idea. Review this one and you'll nail it next time.",
+    "Don't worry — this trips up a lot of students. Check the worked solution and try again.",
+    "Good attempt! The gap between your answer and the mark scheme is smaller than you think.",
+    "Every wrong answer is a step forward — you've just found a gap to close.",
+    "Most A-Level students miss this one at first. You'll remember it now."
+  ];
+  if (isCorrect) {
+    fb.innerHTML = '✓ Correct! Well done.';
+  } else {
+    const enc = encouragements[Math.floor(Math.random() * encouragements.length)];
+    fb.innerHTML = `<div>✗ The correct answer was: <strong>${correctText}</strong></div><div style="margin-top:.5rem;font-size:.82rem;color:var(--muted);font-style:italic">${enc}</div>`;
+  }
   document.getElementById('dc-next-btn').style.display = 'block';
 }
 
@@ -18324,7 +18659,7 @@ function renderStreakCalendar() {
            title="${key}" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
         ${hasActivity ? '✓' : isToday ? '◉' : ''}
       </div>
-      <div style="font-size:.6rem;color:${hasActivity ? '#E8C97A' : isToday ? 'rgba(201,168,76,0.7)' : 'rgba(136,146,164,0.6)'};font-weight:${isToday?'700':'500'};letter-spacing:.03em">${dayName}</div>
+      <div style="font-size:.6rem;color:${hasActivity ? '#E8C97A' : isToday ? 'rgba(201,168,76,0.7)' : 'rgba(136,146,164,0.85)'};font-weight:${isToday?'700':'500'};letter-spacing:.03em">${dayName}</div>
     </div>`);
   }
   cal.innerHTML = cells.join('');
@@ -18771,7 +19106,18 @@ function mqAnswer(qi, chosen, correct, explanation) {
     fb.style.background = ok ? 'rgba(74,222,128,0.08)' : 'rgba(239,68,68,0.08)';
     fb.style.border = ok ? '1px solid rgba(74,222,128,0.2)' : '1px solid rgba(239,68,68,0.2)';
     fb.style.color = ok ? 'var(--green)' : '#FB7185';
-    fb.textContent = (ok ? '✓ Correct! ' : '✗ Incorrect. ') + (explanation || '');
+    if (ok) {
+      fb.textContent = '✓ Correct! ' + (explanation || '');
+    } else {
+      const mqEncs = [
+        "Almost — you had the right instinct. Here's what separates a C from an A:",
+        "Good try — this is one of the most commonly missed question types.",
+        "Close! The mark scheme rewards a specific method — let's look at it:",
+        "Don't be discouraged — understanding why you missed this is more valuable than getting it right by luck:"
+      ];
+      const enc = mqEncs[Math.floor(Math.random() * mqEncs.length)];
+      fb.innerHTML = `<div>✗ ${enc}</div>${explanation ? `<div style="margin-top:.4rem;color:var(--muted)">${explanation}</div>` : ''}`;
+    }
     if (ok) addXP(15);
   }
 }
