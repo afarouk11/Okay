@@ -9351,10 +9351,17 @@ ${getA11yInstructions()}`;
 
   try {
     const data = await callClaude([{role:'user', content:`Here is my current A-Level Maths progress:\n\n${userSummary}\n\nAnalyse my strengths and weaknesses and give me a personalised study plan.`}], sys, 1200);
-    body.innerHTML = sanitizeAIHTML(getReply(data));
+    const html = sanitizeAIHTML(getReply(data));
+    body.innerHTML = html;
     addXP(15, '🎯 Strengths analysed +15 XP');
-    // Also update strengths/weaknesses list panels
-    document.getElementById('strengths-list').innerHTML = body.querySelectorAll ? '' : '';
+    // Mirror strength/weakness items into the sidebar panels
+    const tmp = document.createElement('div'); tmp.innerHTML = html;
+    const sItems = tmp.querySelectorAll('.strength-item');
+    const wItems = tmp.querySelectorAll('.weakness-item');
+    const sList = document.getElementById('strengths-list');
+    const wList = document.getElementById('weaknesses-list');
+    if (sList && sItems.length) sList.innerHTML = [...sItems].map(el => el.outerHTML).join('');
+    if (wList && wItems.length) wList.innerHTML = [...wItems].map(el => el.outerHTML).join('');
   } catch (e) {
     body.innerHTML = `<p style="color:var(--red)">⚠️ ${sanitizeHTML(e.message)}</p>`;
   }
@@ -13558,6 +13565,8 @@ window.showDash = function(sub) {
   if (sub === 'history') renderHistory();
   if (sub === 'papers') renderPapers();
   if (sub === 'exams') renderExams();
+  if (sub === 'exam-sim') renderExamHistory();
+  if (sub === 'diagnostic') renderPrevDiagnostic();
   if (sub === 'glossary') renderGlossary();
   if (sub === 'assignments') renderStudentAssignments();
 };
