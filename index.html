@@ -8,6 +8,7 @@
 <title>Synaptiq — UK A-Level Maths AI Tutor | AQA, Edexcel, OCR &amp; WJEC</title>
 <meta name="description" content="Synaptiq is the UK's only AI tutor built for A-Level Maths mark schemes — AQA, Edexcel, OCR, WJEC. Step-by-step working, ADHD/dyslexia modes, and spaced repetition. Start free.">
 <meta name="robots" content="index, follow">
+<link rel="manifest" href="/manifest.json">
 <meta property="og:title" content="Synaptiq — UK A-Level Maths AI Tutor | AQA, Edexcel, OCR &amp; WJEC">
 <meta property="og:description" content="Master A-Level Maths with AI. Step-by-step working, past paper practice, and personalised revision. Free 7-day trial.">
 <meta property="og:type" content="website">
@@ -8343,10 +8344,14 @@ function updateStats(delta) {
     const s = raw ? JSON.parse(raw) : { questionsAnswered: 0, topicsExplored: [], lastSeen: null, streak: 1 };
     if (delta.questions) s.questionsAnswered = (s.questionsAnswered || 0) + delta.questions;
     if (delta.topic && !s.topicsExplored.includes(delta.topic)) s.topicsExplored.push(delta.topic);
-    const today = new Date().toDateString();
-    if (s.lastSeen && s.lastSeen !== today) {
-      const diff = Math.round((new Date(today) - new Date(s.lastSeen)) / 86400000);
-      s.streak = diff <= 1 ? (s.streak || 1) + 1 : 1;
+    const today = new Date().toISOString().split('T')[0];
+    if (s.lastSeen) {
+      // Support both ISO ('2026-03-27') and legacy toDateString ('Mon Mar 27 2026') formats
+      const lastSeenISO = s.lastSeen.includes('-') ? s.lastSeen : new Date(s.lastSeen).toISOString().split('T')[0];
+      if (lastSeenISO !== today) {
+        const diff = Math.round((new Date(today).getTime() - new Date(lastSeenISO).getTime()) / 86400000);
+        s.streak = diff <= 1 ? (s.streak || 1) + 1 : 1;
+      }
     }
     s.lastSeen = today;
     safeSetItem('synaptiq_stats', JSON.stringify(s));
@@ -16195,6 +16200,37 @@ if ('serviceWorker' in navigator) {
   }).catch(() => {});
   navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
+
+// ── PWA Install Prompt ──────────────────────────────────
+(function initPWAInstall() {
+  let _deferredPrompt = null;
+  if (localStorage.getItem('synaptiq_pwa_dismissed')) return;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    _deferredPrompt = e;
+    // Show install banner after 30 seconds of use
+    setTimeout(() => {
+      if (!_deferredPrompt || localStorage.getItem('synaptiq_pwa_dismissed')) return;
+      const bar = document.createElement('div');
+      bar.id = 'pwa-install-bar';
+      bar.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9999;background:rgba(12,14,20,0.97);border-top:1px solid rgba(201,168,76,0.3);padding:.85rem 1.25rem;display:flex;align-items:center;gap:.75rem;backdrop-filter:blur(12px);animation:fadeInUp .3s ease both';
+      bar.innerHTML = `<span style="font-size:1.5rem">📲</span><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.875rem">Add Synaptiq to your home screen</div><div style="font-size:.775rem;color:var(--muted)">Fast access, no browser chrome, works offline</div></div><button onclick="(function(){document.getElementById('pwa-install-bar')?.remove();localStorage.setItem('synaptiq_pwa_dismissed','1')})()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:.25rem;flex-shrink:0">✕</button><button id="pwa-install-btn" class="btn btn-gold" style="font-size:.8rem;padding:.45rem 1rem;flex-shrink:0;white-space:nowrap">Install App</button>`;
+      document.body.appendChild(bar);
+      document.getElementById('pwa-install-btn')?.addEventListener('click', async () => {
+        bar.remove();
+        if (!_deferredPrompt) return;
+        _deferredPrompt.prompt();
+        const { outcome } = await _deferredPrompt.userChoice;
+        if (outcome === 'accepted') showToast('✅ Synaptiq added to home screen!');
+        _deferredPrompt = null;
+      });
+    }, 30000);
+  });
+  window.addEventListener('appinstalled', () => {
+    document.getElementById('pwa-install-bar')?.remove();
+    showToast('✅ Synaptiq installed!');
+  });
+})();
 
 window.addEventListener('online', () => showToast('Back online!'));
 window.addEventListener('offline', () => showToast('You are offline — some features unavailable'));
