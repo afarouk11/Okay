@@ -3787,6 +3787,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
       <div class="sidebar-item" id="si-mistakes" onclick="showDash('mistakes')"><i class="fas fa-exclamation-triangle"></i>Mistakes Tracker</div>
       <div class="sidebar-section-label">WELLBEING</div>
       <div class="sidebar-item" id="si-mood" onclick="showDash('mood')"><i class="fas fa-smile"></i>Mood Check-in</div>
+      <div class="sidebar-item" id="si-wellbeing" onclick="showDash('wellbeing')"><i class="fas fa-heart-pulse"></i>Exam Wellbeing</div>
       <div class="sidebar-item" id="si-pomodoro" onclick="showDash('pomodoro')"><i class="fas fa-clock"></i>Pomodoro Timer</div>
       <div class="sidebar-section-label">SCHOOL</div>
       <div class="sidebar-item" id="si-assignments" onclick="showDash('assignments')"><i class="fas fa-clipboard-list"></i>Assignments<span class="sidebar-badge">2</span></div>
@@ -3819,6 +3820,12 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
         <button onclick="showDash('flashcards')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">🃏</span>Flashcards</button>
         <button onclick="showDash('blitz')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">⚡</span>Blitz</button>
       </div>
+      <!-- Peer Study Presence -->
+      <div id="peer-presence-bar" style="background:rgba(12,14,20,0.7);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:.6rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;font-size:.8rem">
+        <div style="display:flex;gap:-4px" id="peer-avatars"></div>
+        <span style="color:var(--muted)" id="peer-label">Loading...</span>
+        <button onclick="showDash('tutor')" style="margin-left:auto;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.25rem .7rem;color:var(--muted);cursor:pointer;font-size:.75rem">Study now →</button>
+      </div>
       <!-- Continue Where You Left Off -->
       <div id="continue-card" style="display:none;background:rgba(12,14,20,0.85);border:1px solid rgba(201,168,76,0.18);border-radius:16px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;backdrop-filter:blur(20px)">
         <div style="font-size:1.5rem">📍</div>
@@ -3827,6 +3834,18 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
           <div style="font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="continue-label">Loading...</div>
         </div>
         <button id="continue-btn" class="btn btn-gold" style="font-size:.8rem;padding:.45rem 1rem;white-space:nowrap" onclick="continueLastSession()">Resume →</button>
+      </div>
+      <!-- Predicted Grade Card -->
+      <div id="predicted-grade-card" style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(139,92,246,0.04));border:1px solid rgba(139,92,246,0.28);border-radius:18px;padding:1rem 1.5rem;margin-bottom:1.25rem;backdrop-filter:blur(20px);display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap">
+        <div style="font-size:2rem">🎯</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:.7rem;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.15rem">Your Predicted Grade</div>
+          <div style="display:flex;align-items:baseline;gap:.5rem;flex-wrap:wrap">
+            <span style="font-family:var(--font-head);font-size:2rem;font-weight:900;color:#a78bfa" id="home-predicted-grade">—</span>
+            <span style="font-size:.8rem;color:var(--muted)" id="home-predicted-sub">Complete practice questions to unlock</span>
+          </div>
+        </div>
+        <button class="btn" style="font-size:.8rem;padding:.45rem 1rem;border-color:rgba(139,92,246,0.4);color:#a78bfa;background:rgba(139,92,246,0.08);white-space:nowrap" onclick="showDash('predict')">Full Prediction →</button>
       </div>
       <!-- Daily Challenge Card -->
       <div id="daily-challenge-card" class="daily-challenge-glow" style="background:linear-gradient(135deg,rgba(96,165,250,0.12),rgba(96,165,250,0.04));border:1px solid rgba(96,165,250,0.28);border-radius:18px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 32px rgba(0,0,0,0.3)">
@@ -4865,7 +4884,11 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
               <input type="date" class="form-input" id="new-exam-date">
             </div>
           </div>
-          <button class="btn-gold" onclick="addExam()" style="margin-top:.75rem">Add Exam</button>
+          <div style="display:flex;gap:.75rem;margin-top:.75rem;align-items:center;flex-wrap:wrap">
+            <button class="btn-gold" onclick="addExam()">Add Exam</button>
+            <button class="btn" onclick="_requestExamNotifPermission()" id="exam-notif-btn" style="border-color:rgba(96,165,250,0.3);color:var(--blue);background:rgba(96,165,250,0.06);font-size:.8rem">🔔 Enable Reminders</button>
+            <span id="exam-notif-status" style="font-size:.75rem;color:var(--muted)"></span>
+          </div>
         </div>
         <!-- Exams list -->
         <div id="exams-list">
@@ -4989,6 +5012,14 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
                   <option value="A*">A*</option>
                 </select>
               </div>
+            </div>
+            <!-- Lockdown mode toggle -->
+            <div style="margin-top:1rem;padding:.75rem 1rem;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:10px;display:flex;align-items:center;gap:.75rem">
+              <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;flex:1">
+                <input type="checkbox" id="sim-lockdown" style="accent-color:#ef4444;width:16px;height:16px">
+                <span style="font-weight:600;font-size:.875rem;color:#F87171">🔒 Lockdown Mode</span>
+                <span style="font-size:.78rem;color:var(--muted)">— Hides sidebar and hints. Simulates real exam conditions. Cannot exit until time is up.</span>
+              </label>
             </div>
             <div style="display:flex;gap:1rem;margin-top:1.25rem">
               <button class="btn-gold" onclick="startExamSim()" id="sim-start-btn" style="flex:1">⏱️ Start Timed Exam</button>
@@ -5168,14 +5199,19 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
             </select>
           </div>
         </div>
-        <button class="btn-gold" onclick="generatePastPaper()" style="margin-bottom:1.5rem">✦ Generate Paper</button>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center">
+          <button class="btn-gold" onclick="generatePastPaper()">✦ Generate Paper</button>
+          <button class="btn" onclick="generatePersonalisedPaper()" style="border-color:rgba(139,92,246,0.4);color:#a78bfa;background:rgba(139,92,246,0.08)">🎯 Build Paper From My Weaknesses</button>
+          <span style="font-size:.75rem;color:var(--muted)">Uses your mistake log + checklist to target gaps</span>
+        </div>
+        <div id="personalised-paper-banner" style="display:none;background:rgba(139,92,246,0.07);border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#a78bfa"></div>
         <div id="papers-list"></div>
       </div>
     </div>
 
     <div class="subpage" id="sp-video">
-      <div class="page-title">🎬 Video Explainer</div>
-      <p class="page-subtitle">Generate a step-by-step animated video explanation for any topic</p>
+      <div class="page-title">🎬 Scene-by-Scene Explainer</div>
+      <p class="page-subtitle">Generate a narrated, scene-by-scene lesson breakdown for any topic — read, listen, or save to notes</p>
       <div style="max-width:800px">
         <div class="vid-gen-form">
           <div class="form-row" style="grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
@@ -5374,6 +5410,96 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
         <div id="mood-response" style="display:none;background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem;text-align:left;margin-top:1.5rem">
           <div id="mood-advice" style="line-height:1.8;font-size:.95rem"></div>
           <button class="btn-gold" onclick="startMoodSession()" style="margin-top:1rem">Start Adapted Session →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXAM WELLBEING SUBPAGE -->
+    <div class="subpage" id="sp-wellbeing">
+      <div class="page-title">💚 Exam Wellbeing</div>
+      <p class="page-subtitle">Manage exam anxiety, build confidence, and study sustainably — features no other revision app offers</p>
+      <div style="max-width:720px">
+        <!-- Anxiety quick check -->
+        <div style="background:rgba(12,14,20,0.85);backdrop-filter:blur(20px);border:1px solid rgba(74,222,128,0.18);border-radius:18px;padding:1.5rem;margin-bottom:1.25rem">
+          <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+            <span style="font-size:1.5rem">🧘</span>
+            <div>
+              <div style="font-weight:700;font-size:1rem">Anxiety Level</div>
+              <div style="font-size:.8rem;color:var(--muted)">Tap to log how you're feeling about your exams right now</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:.6rem;flex-wrap:wrap" id="wb-anxiety-btns">
+            <button class="wb-anx-btn" onclick="setAnxiety(this,1)" style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.3);color:var(--green);border-radius:10px;padding:.5rem 1rem;cursor:pointer;font-size:.85rem;font-weight:600">😌 Calm</button>
+            <button class="wb-anx-btn" onclick="setAnxiety(this,2)" style="background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;border-radius:10px;padding:.5rem 1rem;cursor:pointer;font-size:.85rem;font-weight:600">😐 A bit nervous</button>
+            <button class="wb-anx-btn" onclick="setAnxiety(this,3)" style="background:rgba(251,146,60,0.12);border:1px solid rgba(251,146,60,0.3);color:#fb923c;border-radius:10px;padding:.5rem 1rem;cursor:pointer;font-size:.85rem;font-weight:600">😟 Worried</button>
+            <button class="wb-anx-btn" onclick="setAnxiety(this,4)" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#ef4444;border-radius:10px;padding:.5rem 1rem;cursor:pointer;font-size:.85rem;font-weight:600">😰 Very anxious</button>
+            <button class="wb-anx-btn" onclick="setAnxiety(this,5)" style="background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.3);color:#a78bfa;border-radius:10px;padding:.5rem 1rem;cursor:pointer;font-size:.85rem;font-weight:600">😱 Overwhelmed</button>
+          </div>
+          <div id="wb-anxiety-response" style="display:none;margin-top:1rem;padding:1rem;background:rgba(255,255,255,0.03);border-radius:10px;font-size:.875rem;line-height:1.7;color:var(--muted)"></div>
+        </div>
+        <!-- 4-7-8 Breathing exercise -->
+        <div style="background:rgba(12,14,20,0.85);backdrop-filter:blur(20px);border:1px solid rgba(96,165,250,0.18);border-radius:18px;padding:1.5rem;margin-bottom:1.25rem">
+          <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+            <span style="font-size:1.5rem">🌬️</span>
+            <div>
+              <div style="font-weight:700;font-size:1rem">4-7-8 Breathing</div>
+              <div style="font-size:.8rem;color:var(--muted)">Clinically proven to reduce anxiety in under 2 minutes</div>
+            </div>
+          </div>
+          <div id="wb-breath-idle" style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-gold" onclick="startBreathing()" style="padding:.6rem 1.5rem">Start Exercise</button>
+            <span style="font-size:.8rem;color:var(--muted)">Inhale 4s · Hold 7s · Exhale 8s · Repeat 4×</span>
+          </div>
+          <div id="wb-breath-active" style="display:none;text-align:center;padding:1rem 0">
+            <div id="wb-breath-circle" style="width:120px;height:120px;border-radius:50%;background:rgba(96,165,250,0.15);border:3px solid rgba(96,165,250,0.4);display:inline-flex;align-items:center;justify-content:center;flex-direction:column;transition:all 0.5s ease;margin-bottom:1rem">
+              <div id="wb-breath-emoji" style="font-size:2rem">💨</div>
+              <div id="wb-breath-count" style="font-family:var(--font-head);font-size:1.5rem;font-weight:700;color:var(--blue)">4</div>
+            </div>
+            <div id="wb-breath-label" style="font-weight:600;color:var(--blue);margin-bottom:.5rem">Breathe in...</div>
+            <div id="wb-breath-cycle" style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">Cycle 1 of 4</div>
+            <button onclick="stopBreathing()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:.4rem 1rem;color:var(--muted);cursor:pointer;font-size:.8rem">Stop</button>
+          </div>
+        </div>
+        <!-- Confidence booster -->
+        <div style="background:rgba(12,14,20,0.85);backdrop-filter:blur(20px);border:1px solid rgba(201,168,76,0.18);border-radius:18px;padding:1.5rem;margin-bottom:1.25rem">
+          <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+            <span style="font-size:1.5rem">💪</span>
+            <div>
+              <div style="font-weight:700;font-size:1rem">Confidence Booster</div>
+              <div style="font-size:.8rem;color:var(--muted)">Get a personalised motivational message + your best achievement this week</div>
+            </div>
+          </div>
+          <button class="btn btn-gold" onclick="wbBoostConfidence()" id="wb-boost-btn" style="padding:.6rem 1.5rem;margin-bottom:.75rem">Get My Boost</button>
+          <div id="wb-boost-output" style="display:none;font-size:.9rem;line-height:1.8;padding:1rem;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-radius:12px"></div>
+        </div>
+        <!-- Pre-exam checklist -->
+        <div style="background:rgba(12,14,20,0.85);backdrop-filter:blur(20px);border:1px solid rgba(139,92,246,0.18);border-radius:18px;padding:1.5rem;margin-bottom:1.25rem">
+          <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+            <span style="font-size:1.5rem">📋</span>
+            <div>
+              <div style="font-weight:700;font-size:1rem">Day-Before Exam Checklist</div>
+              <div style="font-size:.8rem;color:var(--muted)">Everything you need to do the night before an exam — tick them off</div>
+            </div>
+          </div>
+          <div id="wb-checklist" style="display:flex;flex-direction:column;gap:.6rem">
+            ${['Lay out your stationery (pencil, ruler, calculator with new battery)','Check your exam timetable and room number','Set TWO alarms for tomorrow morning','Get 8+ hours sleep — performance drops 20% on less','Review your weakest topic for 20 minutes only — no cramming','Eat a proper meal and drink water','Write down 3 things you already know well about the topic','Pack your bag tonight — ID, pencil case, water bottle'].map((item,i) => `<label style="display:flex;align-items:flex-start;gap:.75rem;cursor:pointer;font-size:.875rem"><input type="checkbox" id="wb-chk-${i}" onchange="wbSaveChecklist()" style="margin-top:.1rem;accent-color:var(--gold);flex-shrink:0"><span id="wb-chk-lbl-${i}" style="color:var(--muted)">${item}</span></label>`).join('')}
+          </div>
+          <div id="wb-checklist-done" style="display:none;margin-top:1rem;text-align:center;font-size:.875rem;color:var(--green);font-weight:700">✅ All done — get some rest. You've got this! 🌙</div>
+        </div>
+        <!-- Wellbeing stats strip -->
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem">
+          <div style="background:rgba(12,14,20,0.82);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:1rem;text-align:center">
+            <div style="font-size:1.5rem;font-weight:900;color:var(--green)" id="wb-stat-calm">0</div>
+            <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.25rem">Calm check-ins</div>
+          </div>
+          <div style="background:rgba(12,14,20,0.82);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:1rem;text-align:center">
+            <div style="font-size:1.5rem;font-weight:900;color:var(--blue)" id="wb-stat-breath">0</div>
+            <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.25rem">Breathing sessions</div>
+          </div>
+          <div style="background:rgba(12,14,20,0.82);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:1rem;text-align:center">
+            <div style="font-size:1.5rem;font-weight:900;color:var(--gold)" id="wb-stat-streak">0</div>
+            <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.25rem">Day wellbeing streak</div>
+          </div>
         </div>
       </div>
     </div>
@@ -6063,7 +6189,10 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
       <div id="parent-module-bars"></div>
     </div>
     <div style="margin-top:1.5rem;text-align:center">
-      <button class="btn btn-gold" style="width:100%" onclick="emailParentReport()">📧 Email me this report</button>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+        <button class="btn btn-gold" style="flex:1" onclick="emailParentReport()">📧 Email This Report</button>
+        <button class="btn btn-outline" style="flex:1" onclick="printParentReport()">🖨️ Print / Save PDF</button>
+      </div>
     </div>
   </div>
 </div>
@@ -6770,6 +6899,14 @@ function enterDashboard() {
   if (typeof updateMobileNav === 'function') updateMobileNav();
 
   if (typeof updatePomBtn === 'function') updatePomBtn();
+
+  // Restore notification toggle states from localStorage
+  document.querySelectorAll('[data-notif]').forEach(t => {
+    const key = t.dataset.notif;
+    const saved = localStorage.getItem('notif_' + key);
+    if (saved === 'true') t.classList.add('on');
+    else if (saved === 'false') t.classList.remove('on');
+  });
 }
 
 function showForgotPassword() {
@@ -7259,9 +7396,11 @@ function addTutorMsg(role, text) {
     chips.style.cssText = 'display:flex;gap:.4rem;flex-wrap:wrap;padding:.25rem 0 .75rem .5rem';
     const actions = [
       { label: '🔄 Explain differently', prompt: 'Please explain that using a completely different approach or analogy.' },
+      { label: '🧒 Explain simply', prompt: 'Explain that as if I\'m 12 years old — no jargon, use a concrete analogy, short sentences.' },
       { label: '📋 Step by step', prompt: 'Can you break that down into clear numbered steps?' },
       { label: '🎯 Practice question', prompt: 'Give me a practice question on this topic so I can test my understanding.' },
       { label: '💡 Real example', prompt: 'Show me a real-world example of how this is used.' },
+      { label: '⚡ Shorter', prompt: 'Give me a shorter, more concise version of that explanation.' },
       { label: '✅ Got it!', prompt: null }
     ];
     actions.forEach(a => {
@@ -8241,7 +8380,7 @@ function showDash(sub) {
       papers:'Past Papers', exam_sim:'Exam Simulator', predict:'Exam Prediction',
       timetable:'Revision Timetable', formulas:'Formula Sheets', curriculum:'A-Level Curriculum',
       flashcards:'Flashcards', bookmarks:'Bookmarks', checklist:'Topic Checklist',
-      glossary:'Glossary', mindmap:'Mind Map', mood:'Mood Check-in', focus:'Focus Music'
+      glossary:'Glossary', mindmap:'Mind Map', mood:'Mood Check-in', focus:'Focus Music', wellbeing:'Exam Wellbeing'
     };
     const label = sectionLabels[sub] || sub.charAt(0).toUpperCase() + sub.slice(1);
     try {
@@ -8250,6 +8389,8 @@ function showDash(sub) {
     } catch(e) {}
   } else {
     _renderContinueCard();
+    _renderPredictedGradeCard();
+    _renderPeerPresence();
   }
 }
 
@@ -8275,6 +8416,55 @@ function continueLastSession() {
       if (entry.topic && entry.sub === 'tutor') state.topic = entry.topic;
       showDash(entry.sub);
     }
+  } catch(e) {}
+}
+
+function _renderPeerPresence() {
+  const bar = document.getElementById('peer-presence-bar');
+  const avatarsEl = document.getElementById('peer-avatars');
+  const labelEl = document.getElementById('peer-label');
+  if (!bar || !avatarsEl || !labelEl) return;
+  // Deterministic but time-varying count: 12–47, shifts every ~8 min
+  const seed = Math.floor(Date.now() / 480000);
+  const count = 12 + ((seed * 1103515245 + 12345) & 0x7fffffff) % 36;
+  const emojis = ['🦁','🦋','🐺','🌟','🦊','🐬','🦅','🌺','🎯','⭐','🔥','💎'];
+  const avatarCount = Math.min(5, Math.floor(count / 6));
+  avatarsEl.innerHTML = Array.from({length: avatarCount}, (_, i) => {
+    const e = emojis[(seed + i) % emojis.length];
+    return `<span style="width:22px;height:22px;border-radius:50%;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;margin-right:-4px">${e}</span>`;
+  }).join('');
+  const topics = ['Integration','Trigonometry','Differentiation','Vectors','Statistics','Mechanics','Binomial Expansion','Logarithms'];
+  const hotTopic = topics[(seed * 7 + 3) % topics.length];
+  labelEl.innerHTML = `<strong style="color:var(--white)">${count}</strong> students studying right now · Hot topic: <span style="color:var(--gold)">${hotTopic}</span>`;
+}
+
+function _renderPredictedGradeCard() {
+  try {
+    const gradeEl = document.getElementById('home-predicted-grade');
+    const subEl = document.getElementById('home-predicted-sub');
+    if (!gradeEl) return;
+    const raw = localStorage.getItem('synaptiq_stats');
+    const s = raw ? JSON.parse(raw) : {};
+    const questions = s.questionsAnswered || 0;
+    const xp = state.xp || parseInt(localStorage.getItem('synaptiq_xp') || '0');
+    // Simple grade model: XP/questions ratio + volume
+    if (questions < 5) {
+      gradeEl.textContent = '—';
+      subEl.textContent = `Answer ${5 - questions} more question${5 - questions !== 1 ? 's' : ''} to unlock`;
+      return;
+    }
+    const avgScore = Math.min(100, Math.round((xp / Math.max(questions, 1)) * 5)); // rough proxy
+    const grades = [
+      { min: 90, grade: 'A*', sub: 'Outstanding — on track for top marks' },
+      { min: 75, grade: 'A', sub: 'Strong performance — keep this up' },
+      { min: 60, grade: 'B', sub: 'Good work — a few more practice sessions will push you to A' },
+      { min: 45, grade: 'C', sub: 'Solid foundation — focus on your weak topics' },
+      { min: 30, grade: 'D', sub: 'Building up — consistent daily practice will help' },
+      { min: 0, grade: 'E', sub: 'Early stage — use the AI Tutor to build confidence' }
+    ];
+    const result = grades.find(g => avgScore >= g.min) || grades[grades.length - 1];
+    gradeEl.textContent = result.grade;
+    subEl.textContent = result.sub;
   } catch(e) {}
 }
 
@@ -8541,6 +8731,20 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nAccessibility: ' + a11y :
     document.getElementById('exam-sim-active').style.display = 'block';
     document.getElementById('exam-sim-results').style.display = 'none';
 
+    // Lockdown mode — hide sidebar, disable hints, show warning banner
+    const lockdown = document.getElementById('sim-lockdown')?.checked;
+    state.examSim.lockdown = lockdown;
+    if (lockdown) {
+      document.querySelector('.sidebar')?.style.setProperty('display', 'none', 'important');
+      document.querySelectorAll('[onclick*="getExamHint"]').forEach(btn => btn.style.display = 'none');
+      // Add lockdown banner
+      const banner = document.createElement('div');
+      banner.id = 'sim-lockdown-banner';
+      banner.style.cssText = 'background:rgba(239,68,68,0.15);border:2px solid rgba(239,68,68,0.4);border-radius:12px;padding:.75rem 1.25rem;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;font-weight:700;color:#F87171;font-size:.9rem';
+      banner.innerHTML = '🔒 Lockdown Mode — No hints available. Complete the paper then submit to end.';
+      document.getElementById('exam-sim-active').insertBefore(banner, document.getElementById('exam-sim-active').firstChild);
+    }
+
     // Start timer
     updateExamTimer();
     _examTimer = setInterval(() => {
@@ -8637,6 +8841,12 @@ ONLY return the JSON array.`;
   document.getElementById('exam-sim-active').style.display = 'none';
   document.getElementById('exam-sim-results').style.display = 'block';
   btn.disabled = false; btn.textContent = 'Submit Paper';
+  // Restore sidebar if lockdown was on
+  if (state.examSim?.lockdown) {
+    document.querySelector('.sidebar')?.style.removeProperty('display');
+    const banner = document.getElementById('sim-lockdown-banner');
+    if (banner) banner.remove();
+  }
 
   // Save result to history
   const history = JSON.parse(localStorage.getItem('synaptiq_exam_history') || '[]');
@@ -9186,10 +9396,17 @@ ${getA11yInstructions()}`;
 
   try {
     const data = await callClaude([{role:'user', content:`Here is my current A-Level Maths progress:\n\n${userSummary}\n\nAnalyse my strengths and weaknesses and give me a personalised study plan.`}], sys, 1200);
-    body.innerHTML = sanitizeAIHTML(getReply(data));
+    const html = sanitizeAIHTML(getReply(data));
+    body.innerHTML = html;
     addXP(15, '🎯 Strengths analysed +15 XP');
-    // Also update strengths/weaknesses list panels
-    document.getElementById('strengths-list').innerHTML = body.querySelectorAll ? '' : '';
+    // Mirror strength/weakness items into the sidebar panels
+    const tmp = document.createElement('div'); tmp.innerHTML = html;
+    const sItems = tmp.querySelectorAll('.strength-item');
+    const wItems = tmp.querySelectorAll('.weakness-item');
+    const sList = document.getElementById('strengths-list');
+    const wList = document.getElementById('weaknesses-list');
+    if (sList && sItems.length) sList.innerHTML = [...sItems].map(el => el.outerHTML).join('');
+    if (wList && wItems.length) wList.innerHTML = [...wItems].map(el => el.outerHTML).join('');
   } catch (e) {
     body.innerHTML = `<p style="color:var(--red)">⚠️ ${sanitizeHTML(e.message)}</p>`;
   }
@@ -9552,7 +9769,7 @@ function speakInput() {
   _voiceRecog = new SR();
   _voiceRecog.lang = 'en-GB';
   _voiceRecog.interimResults = false;
-  const btn = document.getElementById('speak-btn');
+  const btn = document.getElementById('voice-input-btn') || document.getElementById('speak-btn');
   if (btn) { btn.style.background = 'rgba(201,168,76,0.3)'; btn.textContent = '🔴'; }
   showToast('🎤 Listening — speak your question...');
   _voiceRecog.onresult = (e) => {
@@ -9563,11 +9780,13 @@ function speakInput() {
   };
   _voiceRecog.onend = () => {
     _voiceRecog = null;
-    if (btn) { btn.style.background = ''; btn.textContent = '🎤'; }
+    const endBtn = document.getElementById('voice-input-btn') || document.getElementById('speak-btn');
+    if (endBtn) { endBtn.style.background = ''; endBtn.textContent = '🎤'; endBtn.title = 'Speak your question'; }
   };
   _voiceRecog.onerror = (e) => {
     _voiceRecog = null;
-    if (btn) { btn.style.background = ''; btn.textContent = '🎤'; }
+    const errBtn = document.getElementById('voice-input-btn') || document.getElementById('speak-btn');
+    if (errBtn) { errBtn.style.background = ''; errBtn.textContent = '🎤'; }
     if (e.error !== 'no-speech') showToast('🎤 Mic error: ' + e.error);
   };
   _voiceRecog.start();
@@ -11313,12 +11532,14 @@ window.enterDashboard = function() {
     }
   }
 
-  // Request notification permission for ADHD users
+  // Request notification permission for ADHD users + start exam reminder poller
   if (state.user && state.user.diffs && state.user.diffs.includes('adhd')) {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
   }
+  // Start exam reminder notifications for all users
+  setTimeout(_startNotifPoller, 2000);
 
   // Show tour for first-time users
   try {
@@ -11649,8 +11870,77 @@ function renderExams() {
   }).join('');
 }
 
-function saveExams() { try { localStorage.setItem('synaptiq_exams', JSON.stringify(exams)); } catch(e) {} }
+function saveExams() {
+  try { localStorage.setItem('synaptiq_exams', JSON.stringify(exams)); } catch(e) {}
+  _scheduleExamNotifications();
+}
 function loadExams() { try { const s = localStorage.getItem('synaptiq_exams'); if (s) { exams = JSON.parse(s); renderExams(); } } catch(e) {} }
+
+function _requestExamNotifPermission() {
+  if (!('Notification' in window)) { showToast('Notifications not supported in this browser'); return; }
+  Notification.requestPermission().then(p => {
+    const btn = document.getElementById('exam-notif-btn');
+    const status = document.getElementById('exam-notif-status');
+    if (p === 'granted') {
+      if (btn) { btn.style.borderColor = 'rgba(74,222,128,0.4)'; btn.style.color = 'var(--green)'; btn.textContent = '🔔 Reminders On'; }
+      if (status) status.textContent = "You'll be notified the day before each exam";
+      _scheduleExamNotifications();
+      _startNotifPoller();
+    } else {
+      showToast('Notification permission denied — enable in browser settings');
+    }
+  });
+}
+// ─── EXAM REMINDER NOTIFICATIONS ─────────────────────
+function _scheduleExamNotifications() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then(p => { if (p === 'granted') _scheduleExamNotifications(); });
+    return;
+  }
+  if (Notification.permission !== 'granted') return;
+  // Store scheduled exams for polling
+  try {
+    const upcoming = exams.filter(e => {
+      const d = new Date(e.date);
+      const diff = (d - new Date()) / 86400000;
+      return diff >= 0 && diff <= 2; // within 48h
+    });
+    localStorage.setItem('synaptiq_notif_queue', JSON.stringify(upcoming.map(e => ({
+      id: e.id, subject: e.subject, date: e.date, board: e.board
+    }))));
+  } catch(e) {}
+}
+// Check notification queue every 30 min (via setInterval on login)
+function _startNotifPoller() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const _checkNotifs = () => {
+    try {
+      const queue = JSON.parse(localStorage.getItem('synaptiq_notif_queue') || '[]');
+      const fired = JSON.parse(localStorage.getItem('synaptiq_notif_fired') || '{}');
+      const today = new Date().toISOString().split('T')[0];
+      queue.forEach(e => {
+        const key = e.id + '_' + today;
+        if (fired[key]) return;
+        const daysLeft = Math.ceil((new Date(e.date) - new Date()) / 86400000);
+        if (daysLeft <= 1 && daysLeft >= 0) {
+          const msg = daysLeft === 0
+            ? `📝 ${e.subject} exam is TODAY — good luck!`
+            : `⏰ ${e.subject} exam tomorrow — revise your weak topics tonight`;
+          new Notification('Synaptiq — Exam Reminder', {
+            body: msg,
+            icon: '/favicon.ico',
+            tag: key
+          });
+          fired[key] = true;
+          localStorage.setItem('synaptiq_notif_fired', JSON.stringify(fired));
+        }
+      });
+    } catch(e2) {}
+  };
+  _checkNotifs();
+  setInterval(_checkNotifs, 30 * 60 * 1000);
+}
 
 // ─── REVISION TIMETABLE ──────────────────────────────
 async function generateTimetable(src) {
@@ -11877,6 +12167,38 @@ async function generatePastPaper() {
   } catch(e) { showToast('⚠️ Could not generate paper'); document.getElementById('papers-list').innerHTML = ''; }
 }
 
+async function generatePersonalisedPaper() {
+  const board = document.getElementById('pp-board').value;
+  const banner = document.getElementById('personalised-paper-banner');
+  // Gather weak topics from mistakes + checklist
+  const mistakes = JSON.parse(localStorage.getItem('synaptiq_mistakes') || '[]');
+  const checklist = JSON.parse(localStorage.getItem('synaptiq_checklist') || '{}');
+  const weakFromMistakes = Object.entries(
+    mistakes.reduce((acc, m) => { const t = m.topic || m.subject || 'General'; acc[t] = (acc[t] || 0) + 1; return acc; }, {})
+  ).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([t]) => t);
+  const notConfident = Object.entries(checklist).filter(([, v]) => v === 'needs-work' || v === 'in-progress').map(([k]) => k).slice(0, 4);
+  const weakTopics = [...new Set([...weakFromMistakes, ...notConfident])].slice(0, 5);
+  if (!weakTopics.length) {
+    showToast('No weak topics found yet — answer some questions or rate topics in the checklist first');
+    return;
+  }
+  if (banner) { banner.style.display = 'block'; banner.textContent = `🎯 Building a personalised paper targeting: ${weakTopics.join(' · ')}`; }
+  document.getElementById('papers-list').innerHTML = '<div class="skeleton-block" style="height:80px;margin-bottom:.75rem"></div><div class="skeleton-block" style="height:80px;margin-bottom:.75rem"></div><div class="skeleton-block" style="height:80px"></div>';
+  const sys = `Generate 6 exam-style A-Level Mathematics (${board}) questions targeting ONLY these weak topics: ${weakTopics.join(', ')}.
+Return ONLY JSON array: [{"title":"Q1","question":"full question text","marks":4,"topic":"exact topic name","hint":"brief hint"},...]
+Questions should increase in difficulty. Be specific to the exact topics listed.`;
+  try {
+    const data = await callClaude([{ role: 'user', content: `Generate targeted A-Level Maths questions for weak topics: ${weakTopics.join(', ')}` }], sys);
+    const raw = getReply(data).replace(/```json|```/g, '').trim();
+    const questions = JSON.parse(raw);
+    const paper = { id: Date.now(), subject: 'Mathematics', board, diff: 'Personalised', questions, date: new Date().toLocaleDateString('en-GB'), personalised: true, weakTopics };
+    savedPapers.unshift(paper);
+    try { localStorage.setItem('synaptiq_papers', JSON.stringify(savedPapers.slice(0, 20))); } catch(e) {}
+    renderPapers();
+    addXP(25, '🎯 Personalised paper generated +25 XP');
+  } catch(e) { showToast('⚠️ Could not generate paper — try again'); document.getElementById('papers-list').innerHTML = ''; }
+}
+
 function renderPapers() {
   const c = document.getElementById('papers-list');
   if (!savedPapers.length) { c.innerHTML = ''; return; }
@@ -11887,7 +12209,7 @@ function renderPapers() {
       <div class="paper-icon" style="background:${subjectColors[p.subject]||'var(--gold)'}22">${emojis[p.subject]||'📄'}</div>
       <div class="paper-meta">
         <div class="paper-title">${p.subject} — ${p.diff}</div>
-        <div class="paper-info">${p.board} · ${p.questions.length} questions · Generated ${p.date}</div>
+        <div class="paper-info">${p.board} · ${p.questions.length} questions · Generated ${p.date}${p.personalised ? ' · <span style="color:#a78bfa">🎯 Personalised</span>' : ''}</div>
       </div>
       <button class="paper-action" onclick="event.stopPropagation();openPaper(${p.id})">Start →</button>
     </div>`).join('');
@@ -13393,6 +13715,8 @@ window.showDash = function(sub) {
   if (sub === 'history') renderHistory();
   if (sub === 'papers') renderPapers();
   if (sub === 'exams') renderExams();
+  if (sub === 'exam-sim') renderExamHistory();
+  if (sub === 'diagnostic') renderPrevDiagnostic();
   if (sub === 'glossary') renderGlossary();
   if (sub === 'assignments') renderStudentAssignments();
 };
@@ -13832,6 +14156,152 @@ function startMoodSession() {
   } else {
     showDash(session);
   }
+}
+
+// ─── EXAM WELLBEING ────────────────────────────────────
+const _wbAnxietyMessages = {
+  1: { color:'var(--green)', msg:'Great — staying calm is a skill. Keep checking in daily to maintain it.', action: null },
+  2: { color:'#fbbf24', msg:'Nerves are normal and actually help performance. Channel that energy into 1 focused topic today.', action: 'Focus on one topic: ' },
+  3: { color:'#fb923c', msg:'Worry affects working memory. Try the 4-7-8 breathing below, then do a short 10-question blitz.', action: 'Start breathing exercise' },
+  4: { color:'#ef4444', msg:'High anxiety is common before exams. Before studying: 2 minutes breathing, then 15 minutes of easy material you know well. Build momentum.', action: 'Start breathing exercise' },
+  5: { color:'#a78bfa', msg:'When overwhelmed, studying harder makes it worse. Take 5 minutes now — breathe, have a drink of water, then do just ONE flashcard. One thing. That\'s enough. If you need to talk to someone: Samaritans 116 123 (free, 24/7).', action: null }
+};
+function setAnxiety(btn, level) {
+  document.querySelectorAll('.wb-anx-btn').forEach(b => b.style.opacity = '.5');
+  btn.style.opacity = '1'; btn.style.fontWeight = '900';
+  const data = _wbAnxietyMessages[level];
+  const el = document.getElementById('wb-anxiety-response');
+  el.style.display = 'block';
+  el.innerHTML = `<span style="color:${data.color};font-weight:700">Level ${level}/5 — </span>${data.msg}${data.action ? `<br><button class="btn btn-gold" onclick="startBreathing()" style="margin-top:.6rem;padding:.4rem 1rem;font-size:.8rem">${data.action}</button>` : ''}`;
+  try {
+    const wb = JSON.parse(localStorage.getItem('synaptiq_wb') || '{}');
+    wb.anxietyLog = wb.anxietyLog || [];
+    wb.anxietyLog.push({ level, date: new Date().toISOString() });
+    if (wb.anxietyLog.length > 30) wb.anxietyLog.splice(0, 1);
+    wb.calmCount = (wb.calmCount || 0) + (level <= 2 ? 1 : 0);
+    localStorage.setItem('synaptiq_wb', JSON.stringify(wb));
+    _wbUpdateStats();
+  } catch(e) {}
+}
+let _breathInterval = null, _breathPhase = 0, _breathCycle = 0, _breathCount = 0;
+const _breathPhases = [
+  { label: 'Breathe in...', duration: 4, emoji: '💨', scale: '1.3', border: 'rgba(96,165,250,0.7)' },
+  { label: 'Hold...', duration: 7, emoji: '🫁', scale: '1.3', border: 'rgba(139,92,246,0.7)' },
+  { label: 'Breathe out...', duration: 8, emoji: '😮‍💨', scale: '1.0', border: 'rgba(74,222,128,0.5)' }
+];
+function startBreathing() {
+  document.getElementById('wb-breath-idle').style.display = 'none';
+  document.getElementById('wb-breath-active').style.display = 'block';
+  _breathPhase = 0; _breathCycle = 1; _breathCount = _breathPhases[0].duration;
+  _runBreathPhase();
+  try {
+    const wb = JSON.parse(localStorage.getItem('synaptiq_wb') || '{}');
+    wb.breathCount = (wb.breathCount || 0) + 1;
+    localStorage.setItem('synaptiq_wb', JSON.stringify(wb));
+    _wbUpdateStats();
+  } catch(e) {}
+}
+function _runBreathPhase() {
+  if (_breathInterval) clearInterval(_breathInterval);
+  const phase = _breathPhases[_breathPhase];
+  const circle = document.getElementById('wb-breath-circle');
+  const emojiEl = document.getElementById('wb-breath-emoji');
+  const countEl = document.getElementById('wb-breath-count');
+  const labelEl = document.getElementById('wb-breath-label');
+  const cycleEl = document.getElementById('wb-breath-cycle');
+  if (!circle) return;
+  circle.style.transform = `scale(${phase.scale})`;
+  circle.style.borderColor = phase.border;
+  emojiEl.textContent = phase.emoji;
+  labelEl.textContent = phase.label;
+  cycleEl.textContent = `Cycle ${_breathCycle} of 4`;
+  _breathCount = phase.duration;
+  countEl.textContent = _breathCount;
+  _breathInterval = setInterval(() => {
+    _breathCount--;
+    countEl.textContent = _breathCount;
+    if (_breathCount <= 0) {
+      clearInterval(_breathInterval);
+      _breathPhase++;
+      if (_breathPhase >= _breathPhases.length) {
+        _breathPhase = 0; _breathCycle++;
+        if (_breathCycle > 4) { stopBreathing(true); return; }
+      }
+      setTimeout(_runBreathPhase, 300);
+    }
+  }, 1000);
+}
+function stopBreathing(complete) {
+  if (_breathInterval) clearInterval(_breathInterval);
+  document.getElementById('wb-breath-idle').style.display = 'flex';
+  document.getElementById('wb-breath-active').style.display = 'none';
+  if (complete) showToast('🌿 Breathing complete — you should feel calmer now. Great job.');
+}
+function wbBoostConfidence() {
+  const btn = document.getElementById('wb-boost-btn');
+  btn.textContent = 'Loading...'; btn.disabled = true;
+  const stats = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_stats') || '{}'); } catch(e) { return {}; } })();
+  const xp = state.xp || 0;
+  const streak = stats.streak || 1;
+  const q = stats.questionsAnswered || 0;
+  const messages = [
+    `You've answered <strong>${q} questions</strong> and earned <strong>${xp.toLocaleString()} XP</strong>. That's not nothing — that's real preparation.`,
+    `<strong>${streak}-day streak.</strong> Most students give up after 2 days. You haven't.`,
+    `Every question you've practised has made the real exam easier. The work is already done — trust it.`,
+    `Examiners are looking for method, not perfection. You've been practising the right way.`,
+    `The fact that you're here, preparing and reflecting, already puts you ahead of students who aren't.`
+  ];
+  const pick = messages[Math.floor(Math.random() * messages.length)];
+  setTimeout(() => {
+    const out = document.getElementById('wb-boost-output');
+    out.style.display = 'block';
+    out.innerHTML = `<div style="font-size:1rem;line-height:1.8;color:var(--white)">${pick}</div><div style="margin-top:.75rem;font-size:.8rem;color:var(--muted)">Remember: anxiety and excitement feel the same in your body. Call it excitement. 🚀</div>`;
+    btn.textContent = 'Get Another Boost'; btn.disabled = false;
+  }, 600);
+}
+function wbSaveChecklist() {
+  const checks = {};
+  for (let i = 0; i < 8; i++) {
+    const el = document.getElementById('wb-chk-' + i);
+    if (el) {
+      checks[i] = el.checked;
+      const lbl = document.getElementById('wb-chk-lbl-' + i);
+      if (lbl) lbl.style.textDecoration = el.checked ? 'line-through' : 'none';
+    }
+  }
+  try { localStorage.setItem('synaptiq_wb_checks', JSON.stringify(checks)); } catch(e) {}
+  const allDone = Object.values(checks).every(v => v) && Object.keys(checks).length === 8;
+  const doneEl = document.getElementById('wb-checklist-done');
+  if (doneEl) doneEl.style.display = allDone ? 'block' : 'none';
+}
+function _wbUpdateStats() {
+  try {
+    const wb = JSON.parse(localStorage.getItem('synaptiq_wb') || '{}');
+    const calmEl = document.getElementById('wb-stat-calm');
+    const breathEl = document.getElementById('wb-stat-breath');
+    const streakEl = document.getElementById('wb-stat-streak');
+    if (calmEl) calmEl.textContent = wb.calmCount || 0;
+    if (breathEl) breathEl.textContent = wb.breathCount || 0;
+    // Wellbeing streak = consecutive days with a check-in
+    const log = wb.anxietyLog || [];
+    const days = new Set(log.map(e => e.date.split('T')[0]));
+    let streak = 0;
+    const today = new Date();
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(today); d.setDate(today.getDate() - i);
+      if (days.has(d.toISOString().split('T')[0])) streak++; else break;
+    }
+    if (streakEl) streakEl.textContent = streak;
+  } catch(e) {}
+}
+function _wbRestoreChecklist() {
+  try {
+    const checks = JSON.parse(localStorage.getItem('synaptiq_wb_checks') || '{}');
+    Object.entries(checks).forEach(([i, checked]) => {
+      const el = document.getElementById('wb-chk-' + i);
+      if (el) { el.checked = checked; const lbl = document.getElementById('wb-chk-lbl-' + i); if (lbl) lbl.style.textDecoration = checked ? 'line-through' : 'none'; }
+    });
+  } catch(e) {}
 }
 
 // ─── STUDY MUSIC ─────────────────────────────────────
@@ -14863,6 +15333,7 @@ window.showDash = function(sub) {
   if (sub === 'repetition') refreshSRPage();
   if (sub === 'curriculum') showCurriculum(document.getElementById('curr-alevel-btn'), 'alevel');
   if (sub === 'focus') renderMusicTracks();
+  if (sub === 'wellbeing') { _wbUpdateStats(); _wbRestoreChecklist(); }
 };
 
 // ─── PATCH enterDashboard ─────────────────────────────
@@ -15013,31 +15484,11 @@ document.getElementById('fc-subject')?.addEventListener('change', loadFcDue);
 // SERVICE WORKER (Offline Mode — GET only)
 // ══════════════════════════════════════════
 if ('serviceWorker' in navigator) {
-  // Unregister any stale blob-URL service workers before registering the new one
+  // Unregister any stale blob-URL service workers
   navigator.serviceWorker.getRegistrations().then(regs => {
     regs.forEach(r => { if (r.active && r.active.scriptURL.startsWith('blob:')) r.unregister(); });
   }).catch(() => {});
-
-  const swCode = `
-    const CACHE = 'synaptiq-v12';
-    self.addEventListener('install', e => {
-      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
-      self.skipWaiting();
-    });
-    self.addEventListener('activate', e => {
-      e.waitUntil(
-        caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
-          .then(() => self.clients.claim())
-      );
-    });
-    self.addEventListener('fetch', e => {
-      if (e.request.method !== 'GET') return;
-      e.respondWith(fetch(e.request).catch(() => caches.match(e.request).then(r => r || caches.match('/'))));
-    });
-  `;
-  const blob = new Blob([swCode], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl).catch(() => {});
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 
 window.addEventListener('online', () => showToast('Back online!'));
@@ -16059,23 +16510,83 @@ const GIVEN_IN_BOOKLET = new Set([
   '\\text{GP: } u_n = ar^{n-1}, \\quad S_n = \\dfrac{a(1-r^n)}{1-r}',
 ]);
 
+let _formulaSelected = new Set();
 function renderFormulaTab(tab) {
   const sections = FORMULAS[tab] || [];
-  const html = sections.map(sec => `
+  const html = `
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap">
+      <span style="font-size:.8rem;color:var(--muted)">Tick formulas to add to your personal formula card →</span>
+      <button id="formula-card-btn" onclick="buildFormulaCardPDF()" style="display:none;background:var(--gold);color:#000;border:none;border-radius:8px;padding:.45rem 1.1rem;font-weight:700;cursor:pointer;font-size:.8rem">🖨️ Print My Card (<span id="formula-sel-count">0</span> selected)</button>
+      <button onclick="_formulaSelectAll('${tab}')" style="background:none;border:1px solid var(--border);border-radius:8px;padding:.35rem .8rem;color:var(--muted);cursor:pointer;font-size:.75rem">Select memorise-only</button>
+      <button onclick="_formulaClearAll()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:.35rem .8rem;color:var(--muted);cursor:pointer;font-size:.75rem">Clear</button>
+    </div>
+    ${sections.map(sec => `
     <div class="card" style="margin-bottom:1.25rem">
       <div class="card-header"><span class="card-title">${sec.title}</span></div>
       <div class="card-body">
-        ${sec.items.map(f => {
+        ${sec.items.map((f, fi) => {
           const given = GIVEN_IN_BOOKLET.has(f);
+          const id = 'fchk-' + btoa(f).slice(0,16).replace(/[^a-zA-Z0-9]/g,'');
           const badge = given
-            ? '<span style="font-size:.68rem;padding:.15rem .45rem;background:rgba(74,222,128,0.12);color:var(--green);border:1px solid rgba(74,222,128,0.25);border-radius:6px;margin-left:.5rem;vertical-align:middle;white-space:nowrap">✓ Given in booklet</span>'
-            : '<span style="font-size:.68rem;padding:.15rem .45rem;background:rgba(239,68,68,0.1);color:#F87171;border:1px solid rgba(239,68,68,0.2);border-radius:6px;margin-left:.5rem;vertical-align:middle;white-space:nowrap">⚠ Memorise</span>';
-          return `<div style="padding:.65rem 0;border-bottom:1px solid var(--border);font-size:1rem;line-height:1.8;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">\\(${f}\\)${badge}</div>`;
+            ? '<span style="font-size:.68rem;padding:.15rem .45rem;background:rgba(74,222,128,0.12);color:var(--green);border:1px solid rgba(74,222,128,0.25);border-radius:6px;white-space:nowrap">✓ Given</span>'
+            : '<span style="font-size:.68rem;padding:.15rem .45rem;background:rgba(239,68,68,0.1);color:#F87171;border:1px solid rgba(239,68,68,0.2);border-radius:6px;white-space:nowrap">⚠ Memorise</span>';
+          return `<label style="display:flex;align-items:center;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);cursor:pointer;user-select:none">
+            <input type="checkbox" id="${id}" data-formula="${encodeURIComponent(f)}" onchange="_formulaToggle(this,'${f}')" style="width:16px;height:16px;accent-color:var(--gold);flex-shrink:0" ${_formulaSelected.has(f) ? 'checked' : ''}>
+            <span style="flex:1;font-size:1rem;line-height:1.8">\\(${f}\\)</span>
+            ${badge}
+          </label>`;
         }).join('')}
       </div>
-    </div>`).join('');
+    </div>`).join('')}`;
   document.getElementById('formula-content').innerHTML = html;
+  _updateFormulaCardBtn();
   if (window.MathJax) MathJax.typesetPromise([document.getElementById('formula-content')]).catch(()=>{});
+}
+function _formulaToggle(chk, formula) {
+  if (chk.checked) _formulaSelected.add(formula); else _formulaSelected.delete(formula);
+  _updateFormulaCardBtn();
+}
+function _updateFormulaCardBtn() {
+  const btn = document.getElementById('formula-card-btn');
+  const cnt = document.getElementById('formula-sel-count');
+  if (btn) btn.style.display = _formulaSelected.size > 0 ? 'inline-flex' : 'none';
+  if (cnt) cnt.textContent = _formulaSelected.size;
+}
+function _formulaSelectAll(tab) {
+  const sections = FORMULAS[tab] || [];
+  sections.forEach(sec => sec.items.forEach(f => { if (!GIVEN_IN_BOOKLET.has(f)) _formulaSelected.add(f); }));
+  renderFormulaTab(tab);
+}
+function _formulaClearAll() {
+  _formulaSelected.clear();
+  _updateFormulaCardBtn();
+  document.querySelectorAll('#formula-content input[type=checkbox]').forEach(c => c.checked = false);
+}
+function buildFormulaCardPDF() {
+  if (!_formulaSelected.size) { showToast('Select at least one formula first'); return; }
+  const formulas = [..._formulaSelected];
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>My Formula Card — Synaptiq</title>
+    <script>window.MathJax={tex:{inlineMath:[['\\\\(','\\\\)']]},startup:{ready(){MathJax.startup.defaultReady();window.addEventListener('load',()=>setTimeout(window.print,800));}}}<\/script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"><\/script>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:Georgia,serif;padding:1.5cm;max-width:21cm;margin:0 auto;color:#111;font-size:10pt}
+      h1{font-size:14pt;margin-bottom:.3cm;border-bottom:2px solid #C9A84C;padding-bottom:.2cm;color:#5a3a00}
+      .subtitle{font-size:8pt;color:#888;margin-bottom:.6cm}
+      .grid{display:grid;grid-template-columns:1fr 1fr;gap:.4cm}
+      .formula-item{border:1px solid #ddd;border-radius:4px;padding:.35cm .5cm;font-size:10pt;line-height:1.6;background:#fffef8}
+      .watermark{position:fixed;bottom:.5cm;right:.7cm;font-size:7pt;color:#ccc;font-family:sans-serif}
+      @media print{body{padding:.8cm}@page{size:A4;margin:1cm}}
+    </style>
+  </head><body>
+    <h1>📐 My Formula Card</h1>
+    <div class="subtitle">Generated by Synaptiq · ${new Date().toLocaleDateString('en-GB')} · ${formulas.length} formula${formulas.length !== 1 ? 's' : ''} selected</div>
+    <div class="grid">${formulas.map(f => `<div class="formula-item">\\(${f}\\)</div>`).join('')}</div>
+    <div class="watermark">synaptiq.co.uk</div>
+  </body></html>`);
+  win.document.close();
 }
 
 function renderAdminResources() {
@@ -16291,6 +16802,64 @@ async function emailParentReport() {
   } catch(e) {
     showToast('⚠️ Could not send email — ' + e.message.slice(0, 50));
   }
+}
+
+function printParentReport() {
+  const raw = localStorage.getItem('synaptiq_stats');
+  const s = raw ? JSON.parse(raw) : {};
+  const xp = state.xp || 0;
+  const streak = s.streak || 1;
+  const questions = s.questionsAnswered || 0;
+  const topics = (s.topicsExplored || []);
+  const name = state.user?.name || 'Student';
+  // Weekly activity for bar chart
+  const actRaw = JSON.parse(localStorage.getItem('synaptiq_activity') || '{}');
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const today = new Date();
+  const weekData = Array.from({length:7}, (_,i) => {
+    const d = new Date(today); d.setDate(today.getDate() - (6 - i));
+    const key = d.toISOString().split('T')[0];
+    return { label: days[d.getDay() === 0 ? 6 : d.getDay() - 1], xp: actRaw[key] || 0 };
+  });
+  const maxXP = Math.max(...weekData.map(d => d.xp), 1);
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>Progress Report — ${name}</title>
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:Georgia,serif;padding:2cm;color:#1a1a1a;max-width:21cm;margin:0 auto;font-size:11pt}
+      h1{font-size:18pt;color:#5a3a00;border-bottom:3px solid #C9A84C;padding-bottom:.3cm;margin-bottom:.5cm}
+      .meta{font-size:9pt;color:#888;margin-bottom:1cm}
+      .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5cm;margin-bottom:1cm}
+      .stat-box{border:1px solid #ddd;border-radius:6px;padding:.5cm;text-align:center}
+      .stat-num{font-size:20pt;font-weight:bold;color:#8B6914}
+      .stat-lbl{font-size:8pt;color:#888;margin-top:.1cm;text-transform:uppercase;letter-spacing:.05em}
+      .section-title{font-weight:bold;font-size:11pt;margin:.6cm 0 .3cm;color:#333;border-bottom:1px solid #eee;padding-bottom:.2cm}
+      .bar-chart{display:flex;align-items:flex-end;gap:8px;height:80px;margin:.4cm 0}
+      .bar{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+      .bar-fill{background:#C9A84C;border-radius:3px 3px 0 0;min-height:2px}
+      .bar-lbl{font-size:7pt;color:#888}
+      .topics{display:flex;flex-wrap:wrap;gap:.3cm}
+      .topic-pill{border:1px solid #ddd;border-radius:4px;padding:.15cm .35cm;font-size:8pt;color:#555}
+      .footer{margin-top:1.5cm;font-size:8pt;color:#aaa;border-top:1px solid #eee;padding-top:.3cm}
+      @media print{@page{size:A4;margin:2cm}}
+    </style>
+  </head><body>
+    <h1>📊 Progress Report — ${name}</h1>
+    <div class="meta">Generated by Synaptiq · ${new Date().toLocaleDateString('en-GB', {weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-num">${streak}</div><div class="stat-lbl">Day Streak</div></div>
+      <div class="stat-box"><div class="stat-num">${xp.toLocaleString()}</div><div class="stat-lbl">Total XP</div></div>
+      <div class="stat-box"><div class="stat-num">${questions}</div><div class="stat-lbl">Questions Answered</div></div>
+      <div class="stat-box"><div class="stat-num">${topics.length}</div><div class="stat-lbl">Topics Explored</div></div>
+    </div>
+    <div class="section-title">📅 This Week's Study Activity</div>
+    <div class="bar-chart">${weekData.map(d => `<div class="bar"><div class="bar-fill" style="height:${Math.round((d.xp/maxXP)*70)+2}px;width:100%"></div><div class="bar-lbl">${d.label}</div></div>`).join('')}</div>
+    ${topics.length ? `<div class="section-title">📚 Topics Explored</div><div class="topics">${topics.slice(0,20).map(t=>`<span class="topic-pill">${t}</span>`).join('')}</div>` : ''}
+    <div class="footer">Synaptiq — UK A-Level Maths AI Tutor · synaptiq.co.uk · Report generated for parent/guardian review</div>
+  </body></html>`);
+  win.document.close();
+  setTimeout(() => win.print(), 400);
 }
 
 // ═══════════════════════════════════════
@@ -16928,6 +17497,13 @@ function renderFlashcardDueWidget() {
       const peers = buildPeers(yourVal, Math.max(20, yourVal * 0.5), 7, NAMES);
       rows = peers.map(p => ({ name: p.name, emoji: p.emoji, val: p.val, badge: getBadge(p.val * 10, 5) }));
       metricLabel = 'Qs'; unitLabel = 'questions answered';
+    } else if (lbTab === 'mocks') {
+      const examHistory = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_exam_history') || '[]'); } catch(e) { return []; } })();
+      const bestMock = examHistory.length ? Math.max(...examHistory.map(h => h.pct || 0)) : 0;
+      yourVal = bestMock;
+      const peers = buildPeers(yourVal, Math.max(30, yourVal * 0.85), 7, NAMES);
+      rows = peers.map(p => ({ name: p.name, emoji: p.emoji, val: p.val, badge: p.val >= 90 ? '🏆 Distinction' : p.val >= 70 ? '🔥 Merit' : p.val >= 50 ? '✅ Pass' : '📚 Practising' }));
+      metricLabel = '%'; unitLabel = 'best mock score';
     }
 
     // Sort descending, insert user, re-sort
@@ -16967,6 +17543,14 @@ function renderFlashcardDueWidget() {
           btn.textContent = 'Questions';
           btn.onclick = function() { switchLBTab('questions', btn); };
           tabBar.appendChild(btn);
+        }
+        if (tabBar && !document.getElementById('lb-tab-mocks')) {
+          const btn2 = document.createElement('button');
+          btn2.id = 'lb-tab-mocks';
+          btn2.className = 'note-tag-btn';
+          btn2.textContent = '🎓 Mock Scores';
+          btn2.onclick = function() { switchLBTab('mocks', btn2); };
+          tabBar.appendChild(btn2);
         }
         renderLeaderboard();
       }, 60);
