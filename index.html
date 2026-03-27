@@ -596,6 +596,35 @@ body {
 .vq-opt.correct { background: rgba(74,222,128,0.2); border-color: var(--green); color: var(--green); }
 .vq-opt.wrong { background: rgba(251,113,133,0.2); border-color: var(--red); color: var(--red); }
 
+/* Video controls bar */
+.vid-controls {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .65rem 1rem;
+  background: rgba(5,6,10,0.98);
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+.vid-ctrl-play {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--gold); border: none; color: #000;
+  font-size: .8rem; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .15s;
+}
+.vid-ctrl-play:hover { transform: scale(1.12); }
+.vid-progress-wrap {
+  flex: 1; height: 4px; background: rgba(255,255,255,0.1);
+  border-radius: 2px; cursor: pointer; position: relative; overflow: hidden;
+}
+.vid-progress-fill { height: 100%; background: var(--gold); border-radius: 2px; width: 0%; transition: width .18s linear; }
+.vid-time { font-size: .72rem; color: var(--muted); font-variant-numeric: tabular-nums; flex-shrink: 0; white-space: nowrap; }
+.vid-mute-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: .9rem; flex-shrink: 0; padding: 0 .15rem; line-height: 1; }
+.vid-mute-btn:hover { color: var(--white); }
+
+/* Scene animations */
+@keyframes vidFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes vidFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes vidBarFill { from { width: 0%; } to { width: var(--target, 80%); } }
+
 /* FEATURES */
 .features-section {
   position: relative; z-index: 1;
@@ -2949,27 +2978,42 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
     <h2>Watch How Synaptiq Works</h2>
     <p>A 90-second walkthrough showing how A-Level Maths students use the AI tutor, practise past papers, and navigate the full curriculum.</p>
     <div class="video-player">
-      <div class="video-main" id="video-main" onclick="startVideo()">
-        <div class="video-preview-content">
+      <div class="video-main" id="video-main">
+        <!-- Preview / splash screen -->
+        <div class="video-preview-content" id="vid-preview" onclick="vidPlay()" style="cursor:pointer">
           <div class="video-play-btn"><i class="fas fa-play"></i></div>
           <h3>How Synaptiq Works</h3>
-          <p>AI Tutor · A-Level Content · Past Papers · Mark Schemes</p>
+          <p>Click to watch the 90-second AI walkthrough — narrated, animated</p>
         </div>
+        <!-- Animated scene layer -->
+        <div id="vid-scene-layer" style="display:none;position:absolute;inset:0;overflow:hidden"></div>
       </div>
+      <!-- Controls bar -->
+      <div class="vid-controls">
+        <button class="vid-ctrl-play" id="vid-ctrl-play" onclick="vidToggle()" title="Play / Pause">
+          <i class="fas fa-play" id="vid-play-icon"></i>
+        </button>
+        <div class="vid-progress-wrap" id="vid-progress-wrap" onclick="vidSeek(event)" title="Click to seek">
+          <div class="vid-progress-fill" id="vid-progress-fill"></div>
+        </div>
+        <span class="vid-time" id="vid-time-display">0:00 / 1:40</span>
+        <button class="vid-mute-btn" id="vid-mute-btn" onclick="vidToggleMute()" title="Mute narration">🔊</button>
+      </div>
+      <!-- Chapter tabs -->
       <div class="video-chapters">
-        <button class="chapter-btn active" onclick="playChapter(0)">
+        <button class="chapter-btn active" id="chbtn-0" onclick="vidJumpChapter(0)">
           <span class="chapter-icon">👋</span>Welcome<br><span class="chapter-time">0:00</span>
         </button>
-        <button class="chapter-btn" onclick="playChapter(1)">
+        <button class="chapter-btn" id="chbtn-1" onclick="vidJumpChapter(1)">
           <span class="chapter-icon">🤖</span>AI Tutor<br><span class="chapter-time">0:22</span>
         </button>
-        <button class="chapter-btn" onclick="playChapter(2)">
+        <button class="chapter-btn" id="chbtn-2" onclick="vidJumpChapter(2)">
           <span class="chapter-icon">📝</span>Questions<br><span class="chapter-time">0:45</span>
         </button>
-        <button class="chapter-btn" onclick="playChapter(3)">
+        <button class="chapter-btn" id="chbtn-3" onclick="vidJumpChapter(3)">
           <span class="chapter-icon">📊</span>Progress<br><span class="chapter-time">1:05</span>
         </button>
-        <button class="chapter-btn" onclick="playChapter(4)">
+        <button class="chapter-btn" id="chbtn-4" onclick="vidJumpChapter(4)">
           <span class="chapter-icon">♿</span>Accessibility<br><span class="chapter-time">1:22</span>
         </button>
       </div>
@@ -9583,34 +9627,281 @@ function openAssignment(id) {
 }
 
 // ═══════════════════════════════════════
-// VIDEO PLAYER (Interactive)
+// VIDEO PLAYER (AI Walkthrough)
 // ═══════════════════════════════════════
-const videoChapters = [
-  { title: 'Welcome to Synaptiq', desc: 'Learn how the platform transforms your studying', q: null },
-  { title: 'AI Tutor', desc: 'Ask Synaptiq anything — step by step explanations', q: { text: 'What makes Synaptiq\'s AI tutor different from Google?', opts: ['It uses Synaptiq, the most advanced AI model', 'It has better images', 'It plays videos', 'It\'s cheaper'], correct: 0 } },
-  { title: 'Question Generator', desc: 'Create real exam-style questions for any topic', q: { text: 'Which exam boards does Synaptiq support?', opts: ['Only AQA', 'AQA, Edexcel, OCR, and WJEC', 'Only Edexcel', 'No specific board'], correct: 1 } },
-  { title: 'Progress Tracking', desc: 'See exactly how you\'re improving over time', q: null },
-  { title: 'Accessibility Features', desc: 'ADHD, Dyslexia, and Dyscalculia support', q: { text: 'Which accessibility modes does Synaptiq offer?', opts: ['Only ADHD', 'Only dyslexia fonts', 'ADHD, Dyslexia AND Dyscalculia — separately', 'Colour blindness only'], correct: 2 } }
+const vidChapterData = [
+  { start: 0,  tts: 'Welcome to Synaptiq — the AI study tool built specifically for UK A-Level students. More than two thousand eight hundred students use Synaptiq to get top grades across AQA, Edexcel, OCR, and WJEC.', render: vidScene_Welcome },
+  { start: 22, tts: 'Ask the AI tutor anything, any time. Get step-by-step explanations aligned to your exact mark scheme — so you learn exactly what an examiner would award full marks for.', render: vidScene_Tutor },
+  { start: 45, tts: 'Generate unlimited exam-style practice questions for any topic, instantly. Every question comes with a full worked solution and mark scheme breakdown.', render: vidScene_Questions },
+  { start: 65, tts: 'Track your progress with XP, daily streaks, and a topic-by-topic breakdown showing exactly which areas to revise next to hit your target grade.', render: vidScene_Progress },
+  { start: 82, tts: 'Synaptiq has built-in support for ADHD, dyslexia, and dyscalculia. These are first-class features, not afterthoughts — and they are completely free for every subscriber.', render: vidScene_Accessibility }
 ];
-let currentChapter = 0;
+const VID_TOTAL = 100;
+let _vid = { playing: false, elapsed: 0, chapter: -1, interval: null, muted: false, cancelTTS: null, started: false };
 
-function playChapter(i) {
-  currentChapter = i;
-  document.querySelectorAll('.chapter-btn').forEach((b, j) => b.classList.toggle('active', j === i));
-  const chapter = videoChapters[i];
-  const main = document.getElementById('video-main');
-  const colors = ['#C9A84C', '#60A5FA', '#4ADE80', '#F472B6', '#A78BFA'];
-  main.style.background = `radial-gradient(ellipse at center, ${colors[i]}22 0%, rgba(12,14,20,0.95) 70%)`;
-  main.querySelector('.video-preview-content h3').textContent = chapter.title;
-  main.querySelector('.video-preview-content p').textContent = chapter.desc;
-  const existing = main.querySelector('.video-question');
-  if (existing) existing.remove();
-  if (chapter.q) {
-    setTimeout(() => showVideoQuestion(chapter.q), 1500);
+function vidPlay() {
+  const preview = document.getElementById('vid-preview');
+  const sceneLayer = document.getElementById('vid-scene-layer');
+  if (preview) preview.style.display = 'none';
+  if (sceneLayer) sceneLayer.style.display = 'block';
+  _vid.playing = true;
+  _vid.elapsed = 0;
+  _vid.chapter = -1;
+  _vid.started = true;
+  const icon = document.getElementById('vid-play-icon');
+  if (icon) icon.className = 'fas fa-pause';
+  _vidTick();
+  clearInterval(_vid.interval);
+  _vid.interval = setInterval(_vidTick, 200);
+}
+
+function vidToggle() {
+  if (!_vid.started) { vidPlay(); return; }
+  _vid.playing = !_vid.playing;
+  const icon = document.getElementById('vid-play-icon');
+  if (icon) icon.className = _vid.playing ? 'fas fa-pause' : 'fas fa-play';
+  if (_vid.playing) {
+    clearInterval(_vid.interval);
+    _vid.interval = setInterval(_vidTick, 200);
+  } else {
+    clearInterval(_vid.interval);
+    if (_vid.cancelTTS) { _vid.cancelTTS(); _vid.cancelTTS = null; }
   }
 }
 
-function startVideo() { playChapter(1); }
+function vidToggleMute() {
+  _vid.muted = !_vid.muted;
+  const btn = document.getElementById('vid-mute-btn');
+  if (btn) btn.textContent = _vid.muted ? '🔇' : '🔊';
+  if (_vid.muted && _vid.cancelTTS) { _vid.cancelTTS(); _vid.cancelTTS = null; }
+}
+
+function vidSeek(e) {
+  const wrap = document.getElementById('vid-progress-wrap');
+  if (!wrap) return;
+  const rect = wrap.getBoundingClientRect();
+  const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  const wasPlaying = _vid.playing;
+  clearInterval(_vid.interval);
+  if (_vid.cancelTTS) { _vid.cancelTTS(); _vid.cancelTTS = null; }
+  _vid.elapsed = pct * VID_TOTAL;
+  _vid.chapter = -1; // force chapter re-render
+  const preview = document.getElementById('vid-preview');
+  const sceneLayer = document.getElementById('vid-scene-layer');
+  if (preview) preview.style.display = 'none';
+  if (sceneLayer) sceneLayer.style.display = 'block';
+  _vid.started = true;
+  if (wasPlaying) {
+    _vid.playing = true;
+    const icon = document.getElementById('vid-play-icon');
+    if (icon) icon.className = 'fas fa-pause';
+    _vidTick();
+    _vid.interval = setInterval(_vidTick, 200);
+  } else {
+    _vidUpdateUI();
+    _vidCheckChapter();
+  }
+}
+
+function vidJumpChapter(i) {
+  clearInterval(_vid.interval);
+  if (_vid.cancelTTS) { _vid.cancelTTS(); _vid.cancelTTS = null; }
+  const preview = document.getElementById('vid-preview');
+  const sceneLayer = document.getElementById('vid-scene-layer');
+  if (preview) preview.style.display = 'none';
+  if (sceneLayer) sceneLayer.style.display = 'block';
+  _vid.elapsed = vidChapterData[i].start;
+  _vid.chapter = -1;
+  _vid.playing = true;
+  _vid.started = true;
+  const icon = document.getElementById('vid-play-icon');
+  if (icon) icon.className = 'fas fa-pause';
+  _vidTick();
+  _vid.interval = setInterval(_vidTick, 200);
+}
+
+function _vidTick() {
+  if (!_vid.playing) return;
+  _vid.elapsed = Math.min(_vid.elapsed + 0.2, VID_TOTAL);
+  _vidUpdateUI();
+  _vidCheckChapter();
+  if (_vid.elapsed >= VID_TOTAL) {
+    clearInterval(_vid.interval);
+    _vid.playing = false;
+    const icon = document.getElementById('vid-play-icon');
+    if (icon) icon.className = 'fas fa-play';
+  }
+}
+
+function _vidCheckChapter() {
+  let newChapter = 0;
+  for (let i = vidChapterData.length - 1; i >= 0; i--) {
+    if (_vid.elapsed >= vidChapterData[i].start) { newChapter = i; break; }
+  }
+  if (newChapter !== _vid.chapter) {
+    _vid.chapter = newChapter;
+    _vidRenderChapter(newChapter);
+  }
+}
+
+function _vidUpdateUI() {
+  const pct = (_vid.elapsed / VID_TOTAL) * 100;
+  const fill = document.getElementById('vid-progress-fill');
+  if (fill) fill.style.width = pct + '%';
+  const timeEl = document.getElementById('vid-time-display');
+  if (timeEl) {
+    const m = Math.floor(_vid.elapsed / 60);
+    const s = Math.floor(_vid.elapsed % 60);
+    timeEl.textContent = `${m}:${s.toString().padStart(2,'0')} / 1:40`;
+  }
+  vidChapterData.forEach((_, i) => {
+    const btn = document.getElementById('chbtn-' + i);
+    if (btn) btn.classList.toggle('active', i === _vid.chapter);
+  });
+}
+
+function _vidRenderChapter(i) {
+  const layer = document.getElementById('vid-scene-layer');
+  if (!layer) return;
+  layer.innerHTML = '';
+  vidChapterData[i].render(layer);
+  if (!_vid.muted) {
+    if (_vid.cancelTTS) { _vid.cancelTTS(); _vid.cancelTTS = null; }
+    if (typeof elSpeak === 'function') _vid.cancelTTS = elSpeak(vidChapterData[i].tts);
+  }
+}
+
+// ── Scene renderers ──────────────────────────────────────────
+function vidScene_Welcome(el) {
+  el.innerHTML = `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 40%,rgba(201,168,76,.18) 0%,rgba(12,14,20,.98) 70%);padding:2rem;text-align:center">
+    <div style="font-size:3rem;animation:vidFloat 3s ease-in-out infinite;margin-bottom:.75rem;color:var(--gold)">✦</div>
+    <h2 style="font-family:var(--font-head);font-size:clamp(1.3rem,2.8vw,2rem);margin-bottom:.4rem;animation:vidFadeIn .6s .1s both">Synaptiq</h2>
+    <p style="color:var(--gold);font-size:clamp(.8rem,1.4vw,.95rem);animation:vidFadeIn .6s .4s both;margin-bottom:1.5rem">AI-Powered A-Level Maths Tutor</p>
+    <div style="display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center;animation:vidFadeIn .6s .7s both;margin-bottom:1.25rem">
+      <div style="text-align:center"><div style="font-family:var(--font-head);font-size:1.5rem;color:var(--gold)">2,847</div><div style="font-size:.7rem;color:var(--muted)">students</div></div>
+      <div style="text-align:center"><div style="font-family:var(--font-head);font-size:1.5rem;color:var(--gold)">98%</div><div style="font-size:.7rem;color:var(--muted)">recommend</div></div>
+      <div style="text-align:center"><div style="font-family:var(--font-head);font-size:1.5rem;color:var(--gold)">4</div><div style="font-size:.7rem;color:var(--muted)">exam boards</div></div>
+    </div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;animation:vidFadeIn .6s 1s both">
+      <span style="background:rgba(255,255,255,.06);border-radius:7px;padding:.3rem .85rem;font-size:.78rem;font-weight:700">AQA</span>
+      <span style="background:rgba(255,255,255,.06);border-radius:7px;padding:.3rem .85rem;font-size:.78rem;font-weight:700">Edexcel</span>
+      <span style="background:rgba(255,255,255,.06);border-radius:7px;padding:.3rem .85rem;font-size:.78rem;font-weight:700">OCR</span>
+      <span style="background:rgba(255,255,255,.06);border-radius:7px;padding:.3rem .85rem;font-size:.78rem;font-weight:700">WJEC</span>
+    </div>
+  </div>`;
+}
+
+function vidScene_Tutor(el) {
+  el.innerHTML = `<div style="width:100%;height:100%;display:flex;flex-direction:column;background:rgba(8,10,16,.98);padding:1.1rem;overflow:hidden">
+    <div style="font-size:.7rem;color:var(--muted);margin-bottom:.65rem;opacity:.9">✦ AI Tutor · AQA A-Level Maths</div>
+    <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:.55rem">
+      <div style="align-self:flex-end;background:rgba(96,165,250,.13);border:1px solid rgba(96,165,250,.3);border-radius:12px 12px 4px 12px;padding:.55rem .9rem;font-size:clamp(.72rem,1.2vw,.82rem);max-width:72%;animation:vidFadeIn .4s .2s both">
+        Explain integration by parts — AQA style
+      </div>
+      <div style="align-self:flex-start;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:12px 12px 12px 4px;padding:.7rem .9rem;font-size:clamp(.68rem,1.1vw,.78rem);max-width:84%;animation:vidFadeIn .4s 1.1s both;line-height:1.65">
+        <span style="color:var(--gold);font-weight:700;font-size:.8rem">✦ Synaptiq</span><br>
+        Integration by parts formula: <span style="color:var(--gold);font-family:monospace">∫ u dv = uv − ∫ v du</span><br><br>
+        <span style="color:#4ADE80">① Identify u and dv/dx</span> — pick u to simplify when differentiated<br>
+        <span style="color:#60A5FA">② Find du/dx and integrate dv/dx → v</span><br>
+        <span style="color:#A78BFA">③ Substitute: uv − ∫ v·(du/dx) dx</span><br>
+        <span style="color:#F472B6">④ Evaluate remaining integral, add +C</span>
+      </div>
+      <div style="align-self:flex-start;display:flex;gap:.35rem;flex-wrap:wrap;animation:vidFadeIn .3s 2.8s both">
+        <button style="background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);color:var(--gold);border-radius:20px;padding:.28rem .7rem;font-size:.68rem;cursor:default">📋 Step by step</button>
+        <button style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--muted);border-radius:20px;padding:.28rem .7rem;font-size:.68rem;cursor:default">🎯 Practice question</button>
+        <button style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--muted);border-radius:20px;padding:.28rem .7rem;font-size:.68rem;cursor:default">🧒 Explain simply</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function vidScene_Questions(el) {
+  el.innerHTML = `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,16,.98);padding:1.4rem">
+    <div style="font-size:.7rem;color:var(--muted);margin-bottom:.9rem;animation:vidFadeIn .4s both">📝 Question Generator · Pure Maths · Year 2</div>
+    <div style="background:rgba(255,255,255,.03);border:1px solid rgba(201,168,76,.25);border-radius:16px;padding:1.2rem 1.4rem;max-width:540px;width:100%;animation:vidFadeIn .5s .3s both">
+      <div style="display:flex;gap:.4rem;margin-bottom:.9rem;flex-wrap:wrap">
+        <span style="background:rgba(201,168,76,.15);color:var(--gold);border-radius:6px;padding:.18rem .55rem;font-size:.68rem;font-weight:700">AQA</span>
+        <span style="background:rgba(255,255,255,.06);color:var(--muted);border-radius:6px;padding:.18rem .55rem;font-size:.68rem">Integration · 6 marks</span>
+        <span style="background:rgba(74,222,128,.1);color:#4ADE80;border-radius:6px;padding:.18rem .55rem;font-size:.68rem">A-Level Year 2</span>
+      </div>
+      <p style="font-size:clamp(.75rem,1.2vw,.84rem);line-height:1.65;margin-bottom:.9rem;animation:vidFadeIn .4s .7s both">
+        Find <span style="color:var(--gold);font-family:monospace">∫ x·ln(x) dx</span>, giving your answer in terms of x. Show all working clearly. <span style="color:var(--muted)">[6]</span>
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.45rem;animation:vidFadeIn .4s 1.2s both">
+        <div style="background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.3);border-radius:8px;padding:.45rem .7rem;font-size:.72rem;color:#4ADE80">✓ Mark scheme aligned</div>
+        <div style="background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.3);border-radius:8px;padding:.45rem .7rem;font-size:.72rem;color:#60A5FA">📋 Full worked solution</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function vidScene_Progress(el) {
+  el.innerHTML = `<div style="width:100%;height:100%;display:flex;flex-direction:column;background:rgba(8,10,16,.98);padding:1.1rem;overflow:hidden">
+    <div style="font-size:.7rem;color:var(--muted);margin-bottom:.65rem">📊 Progress Dashboard</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-bottom:.65rem">
+      <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:11px;padding:.7rem;animation:vidFadeIn .4s .15s both">
+        <div style="font-size:.68rem;color:var(--muted)">XP This Week</div>
+        <div style="font-family:var(--font-head);font-size:1.3rem;color:var(--gold)">1,240</div>
+        <div style="height:4px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:.45rem;overflow:hidden"><div style="height:100%;background:var(--gold);border-radius:2px;animation:vidBarFill 1.4s .6s both ease-out;--target:72%"></div></div>
+      </div>
+      <div style="background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);border-radius:11px;padding:.7rem;animation:vidFadeIn .4s .3s both">
+        <div style="font-size:.68rem;color:var(--muted)">Study Streak</div>
+        <div style="font-family:var(--font-head);font-size:1.3rem;color:#4ADE80">🔥 14</div>
+        <div style="font-size:.68rem;color:var(--muted);margin-top:.2rem">days in a row</div>
+      </div>
+    </div>
+    <div style="font-size:.68rem;color:var(--muted);margin-bottom:.45rem;animation:vidFadeIn .4s .5s both">Topic mastery</div>
+    <div style="display:flex;flex-direction:column;gap:.38rem;animation:vidFadeIn .4s .6s both">
+      <div style="display:flex;align-items:center;gap:.55rem;font-size:.73rem">
+        <span style="width:88px;color:var(--muted);flex-shrink:0">Integration</span>
+        <div style="flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden"><div style="height:100%;background:#4ADE80;animation:vidBarFill 1s .8s both ease-out;--target:85%"></div></div>
+        <span style="color:#4ADE80;flex-shrink:0;width:30px;text-align:right">85%</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:.55rem;font-size:.73rem">
+        <span style="width:88px;color:var(--muted);flex-shrink:0">Differentiation</span>
+        <div style="flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden"><div style="height:100%;background:#FBBF24;animation:vidBarFill 1s 1s both ease-out;--target:62%"></div></div>
+        <span style="color:#FBBF24;flex-shrink:0;width:30px;text-align:right">62%</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:.55rem;font-size:.73rem">
+        <span style="width:88px;color:var(--muted);flex-shrink:0">Statistics</span>
+        <div style="flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden"><div style="height:100%;background:#F87171;animation:vidBarFill 1s 1.2s both ease-out;--target:38%"></div></div>
+        <span style="color:#F87171;flex-shrink:0;width:30px;text-align:right">38%</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function vidScene_Accessibility(el) {
+  el.innerHTML = `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(8,10,16,.98);padding:1.4rem;text-align:center">
+    <h3 style="font-family:var(--font-head);font-size:clamp(.95rem,1.9vw,1.35rem);margin-bottom:.25rem;animation:vidFadeIn .4s both">Accessibility First</h3>
+    <p style="color:var(--muted);font-size:.75rem;margin-bottom:1.25rem;animation:vidFadeIn .4s .2s both">Built-in support — free for every subscriber</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.65rem;max-width:520px;width:100%">
+      <div style="background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.3);border-radius:11px;padding:.85rem .65rem;animation:vidFadeIn .4s .4s both">
+        <div style="font-size:1.3rem;margin-bottom:.35rem">⚡</div>
+        <div style="font-weight:700;font-size:.78rem;margin-bottom:.22rem;color:#60A5FA">ADHD</div>
+        <div style="font-size:.68rem;color:var(--muted);line-height:1.4">Shorter steps, focus timers</div>
+      </div>
+      <div style="background:rgba(167,139,250,.07);border:1px solid rgba(167,139,250,.3);border-radius:11px;padding:.85rem .65rem;animation:vidFadeIn .4s .6s both">
+        <div style="font-size:1.3rem;margin-bottom:.35rem">📖</div>
+        <div style="font-weight:700;font-size:.78rem;margin-bottom:.22rem;color:#A78BFA">Dyslexia</div>
+        <div style="font-size:.68rem;color:var(--muted);line-height:1.4">Lexend font, wider spacing</div>
+      </div>
+      <div style="background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.3);border-radius:11px;padding:.85rem .65rem;animation:vidFadeIn .4s .8s both">
+        <div style="font-size:1.3rem;margin-bottom:.35rem">🔢</div>
+        <div style="font-weight:700;font-size:.78rem;margin-bottom:.22rem;color:#4ADE80">Dyscalculia</div>
+        <div style="font-size:.68rem;color:var(--muted);line-height:1.4">Colour-coded steps</div>
+      </div>
+    </div>
+    <p style="color:var(--gold);font-size:.75rem;margin-top:1.1rem;animation:vidFadeIn .4s 1.1s both">Toggle any mode in Settings in under 5 seconds</p>
+  </div>`;
+}
+
+// Legacy aliases — keep old callers working
+function playChapter(i) { vidJumpChapter(i); }
+function startVideo() { vidPlay(); }
+function showVideoQuestion() {}
+function answerVQ() {}
 
 // Alias used in legacy demo widget
 const formatChatText = (text) => formatTutorMsg(text);
