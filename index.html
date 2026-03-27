@@ -6601,7 +6601,7 @@ function _showDashCore(sub) {
     if (state.dashHistory.length === 0) addDashMsg('bot', "Hello! I'm your Synaptiq A-Level Maths tutor. Ask me anything — from Pure 1 algebra to Mechanics projectiles. What shall we work on? ✦");
   }
   if (sub === 'tutor') {
-    if (state.tutorHistory.length === 0) addTutorMsg('bot', `Hello! I'm your A-Level Maths tutor, powered by Synaptiq AI ✦\n\nI can explain any topic with full step-by-step working, generate practice questions, or help you understand mark scheme requirements.\n\nSelect a topic on the left, or just ask me anything!`);
+    if (state.tutorHistory.length === 0) addTutorMsg('bot', typeof _buildTutorGreeting === 'function' ? _buildTutorGreeting() : `Hey! I'm Synaptiq ✦ — your AI study friend for A-Level Maths. Ask me anything!`);
   }
 }
 
@@ -7256,6 +7256,112 @@ function getReply(data) {
 }
 
 // ═══════════════════════════════════════
+// STUDENT FRIEND-MEMORY SYSTEM
+// ═══════════════════════════════════════
+function _getTutorMemory() {
+  try { return JSON.parse(localStorage.getItem('synaptiq_friend_memory') || '{}'); } catch(e) { return {}; }
+}
+function _saveTutorMemory(patch) {
+  try { localStorage.setItem('synaptiq_friend_memory', JSON.stringify(Object.assign(_getTutorMemory(), patch))); } catch(e) {}
+}
+
+// Called after the AI responds — track topics + session count
+function _recordTutorInteraction(topic) {
+  const m = _getTutorMemory();
+  const topics = [topic || state.topic || 'General', ...(m.lastSession?.topics || [])].slice(0, 6).filter(Boolean);
+  _saveTutorMemory({
+    sessionCount: (m.sessionCount || 0) + 1,
+    lastSession: { topics, date: new Date().toISOString() }
+  });
+}
+
+// Build the persona + memory context injected into every system prompt
+function _buildFriendPersonaCtx() {
+  const m = _getTutorMemory();
+  const name = (state.user?.name || '').split(' ')[0];
+  let ctx = '';
+  if (name) ctx += `\n\nThe student's name is ${name}. Use their name naturally — roughly once every 3-4 replies, never every message. Never call them "student" — they're a person.`;
+
+  // Communication style from memory
+  if (m.prefStyle === 'casual')   ctx += '\nCommunication style: casual and friendly. Use contractions, everyday language, the odd bit of humour. Like a knowledgeable mate.';
+  else if (m.prefStyle === 'formal') ctx += '\nCommunication style: professional and precise. Clear, structured, textbook-quality explanations.';
+  else if (m.prefStyle === 'chat')   ctx += '\nCommunication style: conversational. Build on their answers, ask Socratic questions, think out loud together.';
+  else ctx += '\nCommunication style: warm but clear. Like a brilliant older student who really gets this stuff and wants to help.';
+
+  if (m.prefLength === 'short')    ctx += '\nLength: CONCISE. Max 4-5 lines per response — student prefers tight, punchy answers.';
+  else if (m.prefLength === 'detailed') ctx += '\nLength: Go deep. Student wants thorough explanations with all the working and detail.';
+
+  if (m.prefApproach === 'examples') ctx += '\nApproach: Always lead with a concrete example before the theory.';
+  else if (m.prefApproach === 'visual')  ctx += '\nApproach: Use visual descriptions, spatial thinking, diagrams described in words.';
+
+  const confusionStreak = m.confusionStreak || 0;
+  if (confusionStreak >= 2) ctx += `\n⚡ PATIENCE ALERT: This student has needed re-explanations ${confusionStreak} times in this session. Go VERY slow. Use the simplest possible analogy. Break every step into tiny pieces. End with "Does that make more sense now?"`;
+
+  if ((m.sessionCount || 0) > 3) ctx += `\nThis student has had ${m.sessionCount} sessions with you — skip the introductory pleasantries, just be natural.`;
+
+  return ctx;
+}
+
+// Detect the intent/emotion in the student's message
+let _lastTutorSignal = null;
+function _detectTutorSignal(text) {
+  const t = text.toLowerCase();
+  if (/don'?t (get|understand)|confused|lost|no idea|what does|what is that|what'?s|i'?m lost|makes no sense|still not|doesn'?t make/i.test(t)) return 'confused';
+  if (/thanks?|got it$|makes sense|i (get|understand) (it|now)|that'?s (clear|helpful|great|perfect)|cheers|brilliant|nice one|ah ok/i.test(t)) return 'understood';
+  if (/too long|shorter|simpler|just (give|tell|show)|cut to|brief|summarise|summary|tl;?dr|quick(er)?/i.test(t)) return 'wants-shorter';
+  if (/more detail|deeper|explain more|why does|why is|can you (expand|go deeper)|tell me more|elaborate/i.test(t)) return 'wants-more';
+  if (/hard|difficult|struggling|hate (this|maths?)|this (sucks|is hard|is impossible)|can'?t do|never (get|understand)|frustrat/i.test(t)) return 'struggling';
+  if (/give me (a )?question|practice (question|q$)|test me|quiz me|have a go|try one/i.test(t)) return 'wants-practice';
+  return null;
+}
+
+function _getSignalInstruction(signal) {
+  switch(signal) {
+    case 'confused':
+      _saveTutorMemory({ confusionStreak: (_getTutorMemory().confusionStreak || 0) + 1 });
+      return `\n\n⚡ ADAPT NOW — Student is confused. Do NOT repeat the same explanation. Try a completely different approach: use an analogy, a simpler numerical example, or start from an even more basic premise. Open by acknowledging it: "Yeah, this one trips people up — let me try it a completely different way." Short sentences. Check in at the end: "Does that make more sense?"`;
+    case 'understood':
+      _saveTutorMemory({ confusionStreak: 0 });
+      return `\n\n⚡ Student understood! Acknowledge their progress briefly and naturally ("Nice — you've got it!"), then offer the next step: a harder example, a practice question, or the next related topic. Keep momentum.`;
+    case 'struggling':
+      return `\n\n⚡ Student is struggling emotionally. Before the maths: be warm and human first. Normalise it — "This genuinely is one of the harder parts of the course, you're not alone." Then break it into the SMALLEST possible first step. Make the first thing they do feel achievable.`;
+    case 'wants-shorter':
+      _saveTutorMemory({ prefLength: 'short' });
+      return `\n\n⚡ Student wants shorter answers. Be BRIEF — 3-5 lines maximum. Essential idea + one clear example. Cut everything else.`;
+    case 'wants-more':
+      _saveTutorMemory({ prefLength: 'detailed' });
+      return `\n\n⚡ Student wants more depth. Go thorough: full derivation, multiple examples, edge cases, common mistakes, exam tips.`;
+    case 'wants-practice':
+      return `\n\n⚡ Student wants to practise. Give them one exam-style question at the right difficulty. State marks and board style. End with "Have a go — show me your working when you're ready."`;
+    default: return '';
+  }
+}
+
+// Personalized greeting when entering the tutor
+function _buildTutorGreeting() {
+  const m = _getTutorMemory();
+  const name = (state.user?.name || '').split(' ')[0];
+  const hour = new Date().getHours();
+  const timeGreet = hour < 12 ? 'Morning' : hour < 17 ? 'Hey' : 'Evening';
+  const hi = name ? `${timeGreet}, ${name}!` : `${timeGreet}!`;
+  const sessions = m.sessionCount || 0;
+  const lastTopics = m.lastSession?.topics || [];
+  const lastDate = m.lastSession?.date ? new Date(m.lastSession.date) : null;
+  const isRecent = lastDate && (Date.now() - lastDate.getTime() < 24 * 60 * 60 * 1000);
+
+  if (sessions === 0 || !lastTopics.length) {
+    // First ever session
+    return `${hi} I'm Synaptiq — your AI study friend for A-Level Maths ✦\n\nI'm not just here to give answers. I want you to actually understand this stuff — so you walk into your exam feeling ready for anything.\n\n**Quick question before we start:** how do you like to learn?\n\n- **Fast and direct** — just give me the answer and key steps\n- **Full explanation** — take me through it properly, don't skip anything\n- **Chat it through** — let's think through it together\n\nJust let me know, or skip it and ask me anything!`;
+  } else if (isRecent) {
+    return `${hi} Good to see you back. We were working on **${lastTopics[0]}** earlier — want to carry on with that, or something new today?`;
+  } else {
+    const daysSince = lastDate ? Math.floor((Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24)) : null;
+    const since = daysSince === 1 ? 'yesterday' : daysSince ? `${daysSince} days ago` : 'last time';
+    return `${hi} Good to have you back — last time we looked at **${lastTopics[0]}** (${since}). Shall we pick up from there, or is there something else you need today?`;
+  }
+}
+
+// ═══════════════════════════════════════
 // LEARNING PROFILE SYSTEM PROMPT
 // ═══════════════════════════════════════
 function getA11yInstructions() {
@@ -7298,23 +7404,34 @@ function getTutorSystem() {
     if (notStarted.length) personalCtx += `\nTopics not yet started: ${notStarted.join(', ')}. Encourage them to try these.`;
   } catch(e) {}
 
-  let sys = `You are Synaptiq, an expert A-Level Mathematics tutor for UK students.
-You are specialising in ${board} ${year}, targeting grade ${target}.
-Current topic focus: ${topic}.${personalCtx}
+  const friendCtx = _buildFriendPersonaCtx();
+  const signalCtx = _lastTutorSignal ? _getSignalInstruction(_lastTutorSignal) : '';
+  _lastTutorSignal = null; // consume the signal
 
-Your personality: Encouraging, patient, and brilliant at making complex maths feel achievable.
-Your method: Always show FULL step-by-step working. Never skip steps — A-Level mark schemes award method marks.
-Use UK mathematical notation and terminology. Follow ${board} conventions exactly.
-Use LaTeX math notation throughout: inline math with $...$ delimiters and display equations with $$...$$. For example: $x^2 + 3x - 4 = 0$ and $$\frac{d}{dx}(x^n) = nx^{n-1}$$. Never write x^2 or sqrt(x) in plain text — always use proper LaTeX so notation renders correctly.
+  let sys = `You are Synaptiq — not just a maths tutor, but a brilliant friend who knows A-Level Mathematics inside out and genuinely cares whether this person understands it.
 
-When answering maths questions:
-1. State the method/approach first
-2. Show every algebraic step clearly
-3. Box or highlight the final answer
-4. Mention any common mistakes to avoid
-5. Reference mark scheme language where relevant (e.g. "B1 for...", "M1 for method...", "A1 cao")
+Board: ${board} | Year: ${year} | Target: ${target} | Topic: ${topic}.${personalCtx}${friendCtx}
 
-When explaining concepts: Start with the core idea, then show a worked example, then give a practice question.${uploadsCtx}`;
+YOUR PERSONALITY & VOICE:
+You talk like a knowledgeable friend, not a formal lecturer. Concretely:
+- React naturally to what they say: "Oh, this one trips a lot of people up!", "Good question — this is subtler than it looks", "Ah, classic mistake — easy to fix"
+- Use natural language: "So basically what's happening here is...", "The thing to lock in is...", "Right, so..."
+- Be honest about difficulty: "Yeah, I'm not going to pretend this is easy — but once it clicks, it clicks"
+- Show genuine enthusiasm where it exists: "This is actually one of the more satisfying techniques once you see it"
+- Celebrate understanding naturally: "Nice — you've got it", "That's exactly right, well done"
+- Acknowledge confusion without judgement: "That's a completely valid place to get stuck", "Yeah, the notation here is genuinely confusing"
+
+YOU ARE ALSO A GREAT TEACHER — THIS IS NON-NEGOTIABLE:
+- Show full step-by-step working for every maths question. Never skip a step — A-Level mark schemes award method marks
+- Anticipate the next question before they ask it: "You might be wondering why we do X here — the reason is..."
+- Use Socratic moments: occasionally ask "What do you think the first step might be?" before jumping in
+- Connect new topics to things they already know
+- Use UK notation and ${board} mark scheme language: B1 (fact marks), M1 (method), A1 cao (final answer)
+- End most responses with one of: a checking question ("Does that click?"), a mini challenge, or an offer ("Want me to give you one to try?")
+
+LaTeX: ALL maths must use LaTeX. Inline: $...$, display: $$...$$. Never write x^2 or sqrt(x) in plain text.
+
+The goal of every answer: leave them able to do the NEXT question on their own.${signalCtx}${uploadsCtx}`;
 
   const a11y = getA11yInstructions();
   if (a11y) sys += '\n\n' + a11y;
@@ -7438,26 +7555,66 @@ function addTutorMsg(role, text) {
     const chips = document.createElement('div');
     chips.className = 'tutor-quick-actions';
     chips.style.cssText = 'display:flex;gap:.4rem;flex-wrap:wrap;padding:.25rem 0 .75rem .5rem';
+    // Reaction chips — feed back into memory for adaptive behaviour
     const actions = [
-      { label: '🔄 Explain differently', prompt: 'Please explain that using a completely different approach or analogy.' },
-      { label: '🧒 Explain simply', prompt: 'Explain that as if I\'m 12 years old — no jargon, use a concrete analogy, short sentences.' },
-      { label: '📋 Step by step', prompt: 'Can you break that down into clear numbered steps?' },
-      { label: '🎯 Practice question', prompt: 'Give me a practice question on this topic so I can test my understanding.' },
-      { label: '💡 Real example', prompt: 'Show me a real-world example of how this is used.' },
-      { label: '⚡ Shorter', prompt: 'Give me a shorter, more concise version of that explanation.' },
-      { label: '✅ Got it!', prompt: null }
+      {
+        label: '✅ Got it!', color: 'rgba(74,222,128,0.25)', border: 'rgba(74,222,128,0.4)', textColor: '#4ADE80',
+        action: () => {
+          if (typeof _saveTutorMemory === 'function') _saveTutorMemory({ confusionStreak: 0 });
+          chips.remove();
+          showToast && showToast('Nice work! 🎉');
+        }
+      },
+      {
+        label: '😕 Still confused', color: 'rgba(251,113,133,0.1)', border: 'rgba(251,113,133,0.3)', textColor: '#F87171',
+        action: () => {
+          chips.remove();
+          if (typeof _saveTutorMemory === 'function') _saveTutorMemory({ confusionStreak: (_getTutorMemory().confusionStreak || 0) + 1 });
+          document.getElementById('tutor-input').value = "I'm still confused — can you explain it a completely different way?";
+          tutorSend();
+        }
+      },
+      {
+        label: '⚡ Too long', color: 'rgba(251,191,36,0.1)', border: 'rgba(251,191,36,0.3)', textColor: '#FBBF24',
+        action: () => {
+          chips.remove();
+          if (typeof _saveTutorMemory === 'function') _saveTutorMemory({ prefLength: 'short' });
+          document.getElementById('tutor-input').value = 'Can you give me a shorter version — just the key idea in 3-4 lines?';
+          tutorSend();
+        }
+      },
+      {
+        label: '🎯 Give me a question', color: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.3)', textColor: '#A78BFA',
+        action: () => {
+          chips.remove();
+          document.getElementById('tutor-input').value = 'Give me a practice question on this topic so I can test my understanding.';
+          tutorSend();
+        }
+      },
+      {
+        label: '🔄 Different angle', color: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.3)', textColor: '#60A5FA',
+        action: () => {
+          chips.remove();
+          document.getElementById('tutor-input').value = 'Can you explain that using a completely different approach or analogy?';
+          tutorSend();
+        }
+      },
+      {
+        label: '📋 Step by step', color: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.1)', textColor: null,
+        action: () => { chips.remove(); document.getElementById('tutor-input').value = 'Can you break that down into clear numbered steps?'; tutorSend(); }
+      },
+      {
+        label: '💡 Real example', color: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.1)', textColor: null,
+        action: () => { chips.remove(); document.getElementById('tutor-input').value = 'Show me a real-world example of how this is used.'; tutorSend(); }
+      }
     ];
     actions.forEach(a => {
       const btn = document.createElement('button');
-      btn.style.cssText = 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:.35rem .9rem;font-size:.78rem;color:var(--muted);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px)';
-      btn.onmouseover = () => { btn.style.borderColor = 'rgba(201,168,76,0.45)'; btn.style.color = 'var(--gold)'; btn.style.background = 'rgba(201,168,76,0.08)'; };
-      btn.onmouseout = () => { btn.style.borderColor = 'rgba(255,255,255,0.1)'; btn.style.color = 'var(--muted)'; btn.style.background = 'rgba(255,255,255,0.04)'; };
+      btn.style.cssText = `background:${a.color};border:1px solid ${a.border};border-radius:20px;padding:.35rem .9rem;font-size:.78rem;color:${a.textColor || 'var(--muted)'};cursor:pointer;transition:all .2s`;
+      btn.onmouseover = () => { btn.style.opacity = '0.85'; btn.style.transform = 'translateY(-1px)'; };
+      btn.onmouseout = () => { btn.style.opacity = '1'; btn.style.transform = ''; };
       btn.textContent = a.label;
-      if (a.prompt) {
-        btn.onclick = () => { chips.remove(); document.getElementById('tutor-input').value = a.prompt; tutorSend(); };
-      } else {
-        btn.onclick = () => chips.remove();
-      }
+      btn.onclick = a.action;
       chips.appendChild(btn);
     });
     // Add copy + save to notes buttons
@@ -7505,6 +7662,13 @@ async function tutorSend() {
   const text = input.value.trim();
   if (!text) return;
   input.value = '';
+  // Detect emotion / intent before clearing (signal is read by getTutorSystem via _lastTutorSignal)
+  _lastTutorSignal = typeof _detectTutorSignal === 'function' ? _detectTutorSignal(text) : null;
+  // Handle learning style preference messages
+  const styleLower = text.toLowerCase();
+  if (/fast.*direct|just.*answer|quick.*answer|direct.*answer/i.test(styleLower)) _saveTutorMemory({ prefStyle: 'casual', prefLength: 'short' });
+  else if (/full.*explain|don'?t skip|thorough|detailed/i.test(styleLower)) _saveTutorMemory({ prefStyle: 'formal', prefLength: 'detailed' });
+  else if (/chat.*through|think.*together|socratic/i.test(styleLower)) _saveTutorMemory({ prefStyle: 'chat' });
   addTutorMsg('user', text);
   state.tutorHistory.push({ role: 'user', content: text });
   const typing = document.createElement('div');
@@ -7521,6 +7685,9 @@ async function tutorSend() {
     addXP(10);
     updateStats({});
     trackProgress('questions', 1);
+    _recordTutorInteraction(state.topic);
+    // Reset confusion streak on positive interactions
+    if (_lastTutorSignal === 'understood') _saveTutorMemory({ confusionStreak: 0 });
     addActivity('🤖', text.length > 48 ? text.slice(0,48)+'…' : text, state.topic || 'AI Tutor', 'now');
     trackEvent('tutor_message_sent', { topic: state.topic });
   } catch (e) {
@@ -7541,7 +7708,9 @@ function tutorQuick(prompt) {
 function clearTutor() {
   state.tutorHistory = [];
   document.getElementById('tutor-messages').innerHTML = '';
-  addTutorMsg('bot', `Chat cleared! Ready to help with A-Level Maths. ✦`);
+  if (typeof _saveTutorMemory === 'function') _saveTutorMemory({ confusionStreak: 0 });
+  const name = (state.user?.name || '').split(' ')[0];
+  addTutorMsg('bot', `Fresh start${name ? ', ' + name : ''}! What are we tackling? ✦`);
 }
 
 // ═══════════════════════════════════════
@@ -10319,7 +10488,7 @@ function updateGreeting() {
 // Init welcome tutor message if on tutor subpage
 function initTutor() {
   if (!document.getElementById('tutor-messages').children.length) {
-    addTutorMsg('bot', `Hello! I'm your A-Level Maths tutor ✦\n\nI can explain any topic step by step — Pure, Stats, or Mechanics. Ask me about differentiation, integration, probability, vectors, or anything else.\n\nWhat would you like to work on today?`);
+    addTutorMsg('bot', typeof _buildTutorGreeting === 'function' ? _buildTutorGreeting() : `Hey! I'm Synaptiq ✦ — your AI study friend for A-Level Maths. What are we working on today?`);
   }
 }
 
@@ -12092,10 +12261,12 @@ window.callTutor = async function(userText) {
 };
 
 function buildTutorSystem() {
-  let sys = `You are Synaptiq, a friendly and expert UK A-Level Mathematics tutor. Explain clearly, use examples, and adapt to the student's level. Use UK English and follow UK curriculum standards. Always show working step by step. If an image is provided, analyse it thoroughly.`;
-  if (state.modes?.adhd) sys += '\nADHD MODE: Use numbered steps, short sentences, clear structure.';
-  if (state.modes?.dyslexia) sys += '\nDYSLEXIA MODE: Short sentences, bullet points, simple vocabulary.';
-  if (state.modes?.dyscalculia) sys += '\nDYSCALCULIA MODE: Explain maths visually, step by step, words first then numbers.';
+  const friendCtx = typeof _buildFriendPersonaCtx === 'function' ? _buildFriendPersonaCtx() : '';
+  const signalCtx = (typeof _lastTutorSignal !== 'undefined' && _lastTutorSignal) ? _getSignalInstruction(_lastTutorSignal) : '';
+  if (typeof _lastTutorSignal !== 'undefined') _lastTutorSignal = null;
+  let sys = `You are Synaptiq — a brilliant friend who knows A-Level Mathematics inside out and genuinely cares whether this student understands. Talk like a knowledgeable friend, not a formal lecturer. React naturally, be warm, celebrate understanding. But also be a great teacher: show full step-by-step working, use LaTeX ($...$ inline, $$...$$ display), follow UK mark scheme conventions. If an image is provided, analyse it thoroughly and walk through every step. The goal: leave them able to do the next question on their own.${friendCtx}${signalCtx}`;
+  const a11y = typeof getA11yInstructions === 'function' ? getA11yInstructions() : '';
+  if (a11y) sys += '\n\n' + a11y;
   return sys;
 }
 
