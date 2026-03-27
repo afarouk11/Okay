@@ -6899,6 +6899,14 @@ function enterDashboard() {
   if (typeof updateMobileNav === 'function') updateMobileNav();
 
   if (typeof updatePomBtn === 'function') updatePomBtn();
+
+  // Restore notification toggle states from localStorage
+  document.querySelectorAll('[data-notif]').forEach(t => {
+    const key = t.dataset.notif;
+    const saved = localStorage.getItem('notif_' + key);
+    if (saved === 'true') t.classList.add('on');
+    else if (saved === 'false') t.classList.remove('on');
+  });
 }
 
 function showForgotPassword() {
