@@ -2900,6 +2900,36 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
 .msg.user { box-shadow: 0 2px 12px rgba(201,168,76,0.15); }
 #xp-popup { font-weight: 800; letter-spacing: .02em; text-shadow: 0 0 16px rgba(201,168,76,0.6); }
 .exam-badge { display: inline-flex; align-items: center; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25); border-radius: 20px; padding: .2rem .7rem; font-size: .72rem; font-weight: 700; color: var(--gold); letter-spacing: .04em; }
+
+/* ═══════════════════════════════════════
+   GAME MODE CSS
+   ═══════════════════════════════════════ */
+@keyframes achUnlock {
+  0%   { transform: scale(0.6) rotate(-8deg); opacity: 0; }
+  60%  { transform: scale(1.12) rotate(3deg); opacity: 1; }
+  80%  { transform: scale(0.96) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes achGoldPulse {
+  0%,100% { box-shadow: 0 0 30px rgba(201,168,76,0.4), 0 0 80px rgba(201,168,76,0.15); }
+  50%      { box-shadow: 0 0 60px rgba(201,168,76,0.7), 0 0 120px rgba(201,168,76,0.3); }
+}
+@keyframes newBadgePulse {
+  0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.6; transform:scale(1.15); }
+}
+@keyframes questComplete {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+.ach-card.just-earned { animation: achGoldPulse 1.5s ease-in-out 3; border-color: rgba(201,168,76,0.7) !important; }
+.ach-new-badge { position:absolute; top:5px; right:5px; font-size:.55rem; font-weight:800; color:#000;
+  background:linear-gradient(135deg,#C9A84C,#F0D080); border-radius:20px; padding:2px 6px;
+  animation:newBadgePulse 1.2s ease-in-out infinite; letter-spacing:.03em; z-index:1; }
+.ach-progress-bar-wrap { margin-top:.45rem; height:3px; background:rgba(255,255,255,0.08); border-radius:99px; overflow:hidden; }
+.ach-progress-bar-fill { height:100%; background:linear-gradient(90deg,#C9A84C,#F0D080); border-radius:99px; transition:width .6s ease; }
+.ach-progress-label { font-size:.58rem; color:rgba(136,146,164,0.65); margin-top:.2rem; }
+.quest-row-done { animation: questComplete .35s ease; }
 </style>
 </head>
 <body>
@@ -3797,6 +3827,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
       <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:.5rem .65rem;text-align:center">
         <div style="font-size:1.1rem;font-weight:800;color:var(--gold)" id="sb-streak-val">1 🔥</div>
         <div style="font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:.1rem">Streak</div>
+        <div style="font-size:.6rem;color:#64a0ff;margin-top:.1rem;min-height:.8rem" id="sb-freeze-val"></div>
       </div>
       <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:.5rem .65rem;text-align:center">
         <div style="font-size:1.1rem;font-weight:800;color:var(--gold)" id="sb-goal-pct-val">0%</div>
@@ -3928,6 +3959,10 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
             <div style="font-size:.85rem;color:var(--muted)" id="dc-result-sub"></div>
           </div>
         </div>
+      </div>
+      <!-- Daily Quests Card -->
+      <div id="daily-quests-card" style="background:linear-gradient(135deg,rgba(167,139,250,0.1),rgba(167,139,250,0.04));border:1px solid rgba(167,139,250,0.28);border-radius:18px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)">
+        <div style="color:var(--muted);font-size:.875rem;text-align:center;padding:.5rem 0">⚔️ Loading quests...</div>
       </div>
       <!-- Daily tip banner -->
       <div id="daily-tip-bar" style="display:flex;align-items:flex-start;gap:.85rem;background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.2);border-radius:14px;padding:.9rem 1.1rem;margin-bottom:1.5rem">
@@ -6605,6 +6640,7 @@ function _showDashCore(sub) {
     updateGreeting();
     updateDashboardStats();
     updateExamCountdown();
+    if (typeof _initDailyQuests === 'function') _initDailyQuests();
     if (state.dashHistory.length === 0) addDashMsg('bot', "Hello! I'm your Synaptiq A-Level Maths tutor. Ask me anything — from Pure 1 algebra to Mechanics projectiles. What shall we work on? ✦");
   }
   if (sub === 'tutor') {
@@ -7925,6 +7961,7 @@ async function tutorSend() {
     addXP(10);
     updateStats({});
     trackProgress('questions', 1);
+    _updateQuestProgress('tutor', 1);
     _recordTutorInteraction(state.topic);
     if (_lastTutorSignal === 'understood') _saveTutorMemory({ confusionStreak: 0 });
     // Background memory extraction every 6th message — completely silent, no await
@@ -8343,7 +8380,7 @@ function updateStats(delta) {
     const raw = localStorage.getItem('synaptiq_stats');
     const s = raw ? JSON.parse(raw) : { questionsAnswered: 0, topicsExplored: [], lastSeen: null, streak: 1 };
     if (delta.questions) s.questionsAnswered = (s.questionsAnswered || 0) + delta.questions;
-    if (delta.topic && !s.topicsExplored.includes(delta.topic)) s.topicsExplored.push(delta.topic);
+    if (delta.topic && !s.topicsExplored.includes(delta.topic)) { s.topicsExplored.push(delta.topic); _updateQuestProgress('topic', 1); }
     const today = new Date().toISOString().split('T')[0];
     if (s.lastSeen) {
       // Support both ISO ('2026-03-27') and legacy toDateString ('Mon Mar 27 2026') formats
@@ -8351,6 +8388,8 @@ function updateStats(delta) {
       if (lastSeenISO !== today) {
         const diff = Math.round((new Date(today).getTime() - new Date(lastSeenISO).getTime()) / 86400000);
         s.streak = diff <= 1 ? (s.streak || 1) + 1 : 1;
+        const _milestones = [3, 7, 14, 30, 100];
+        if (_milestones.includes(s.streak)) setTimeout(() => _celebrateStreak(s.streak), 800);
       }
     }
     s.lastSeen = today;
@@ -8370,8 +8409,8 @@ function updateDashboardStats() {
     const qEl      = document.getElementById('stat-q');
     const topEl    = document.getElementById('stat-topics');
     const streakEl = document.getElementById('stat-streak');
-    if (qEl)      qEl.textContent      = s.questionsAnswered || 0;
-    if (topEl)    topEl.textContent    = (s.topicsExplored || []).length;
+    if (qEl)  { const _pv = parseInt(qEl.dataset.prev || qEl.textContent) || 0; const _nv = s.questionsAnswered || 0; qEl.dataset.prev = _nv; _animateCounter(qEl, _pv, _nv, 700); }
+    if (topEl){ const _pv = parseInt(topEl.dataset.prev || topEl.textContent) || 0; const _nv = (s.topicsExplored || []).length; topEl.dataset.prev = _nv; _animateCounter(topEl, _pv, _nv, 700); }
     if (streakEl) streakEl.textContent = (s.streak || 1) + ' 🔥';
     // Update sidebar streak
     const sbStreak = document.getElementById('sb-streak-val');
@@ -8420,14 +8459,33 @@ function checkAchievements() {
   if (!grid) return;
   try {
     const s = JSON.parse(localStorage.getItem('synaptiq_stats') || '{}');
+    const storedSet = new Set(JSON.parse(localStorage.getItem('synaptiq_earned_badges') || '[]'));
+    const newlyEarned = [];
     grid.innerHTML = ACHIEVEMENTS.map(a => {
       const earned = a.earned(s, state.xp, state.level);
-      return `<div class="ach-card ${earned ? 'earned' : 'locked'}" title="${earned ? '✅ Earned!' : '🔒 ' + a.desc}">
+      const isNew = earned && !storedSet.has(a.name);
+      if (isNew) newlyEarned.push(a);
+      let progressHTML = '';
+      if (!earned) {
+        const prog = _getAchievementProgress(a, s);
+        if (prog) {
+          const pct = Math.min(100, Math.round(prog.value / prog.max * 100));
+          progressHTML = `<div class="ach-progress-bar-wrap"><div class="ach-progress-bar-fill" style="width:${pct}%"></div></div><div class="ach-progress-label">${prog.value}/${prog.max} ${prog.unit}</div>`;
+        }
+      }
+      return `<div class="ach-card ${earned ? 'earned' : 'locked'}${isNew ? ' just-earned' : ''}" title="${earned ? '✅ Earned!' : '🔒 ' + a.desc}" style="position:relative">
+        ${isNew ? '<div class="ach-new-badge">✨ New!</div>' : ''}
         <div class="ach-icon">${a.icon}</div>
         <div class="ach-name">${a.name}</div>
         <div class="ach-desc">${a.desc}</div>
+        ${progressHTML}
       </div>`;
     }).join('');
+    if (newlyEarned.length > 0) {
+      newlyEarned.forEach(a => storedSet.add(a.name));
+      safeSetItem('synaptiq_earned_badges', JSON.stringify([...storedSet]));
+      newlyEarned.forEach((a, i) => setTimeout(() => _celebrateAchievement(a), i * 3600));
+    }
   } catch(e) {}
 }
 
@@ -10538,6 +10596,7 @@ function addXP(amount, msg) {
     clearTimeout(popup._t);
     popup._t = setTimeout(() => popup.classList.remove('show'), 2200);
   }
+  _checkXPMilestones(state.xp);
 }
 
 function _showLevelUp(level) {
@@ -10569,6 +10628,7 @@ function _showLevelUp(level) {
     el.style.opacity = '0';
     setTimeout(() => el.remove(), 400);
   }, 2500);
+  _launchConfetti();
   showToast(`🎉 Level Up! You're now Level ${level}!`);
 }
 
@@ -15806,7 +15866,7 @@ function trackProgress(type, amount) {
   try { localStorage.setItem('synaptiq_progress_' + today, JSON.stringify(todayProgress)); } catch(e) {}
   updateGoalDisplay();
   _checkGoalStreak();
-  if (type === 'questions') { for (let i = 0; i < amount; i++) _earnFreezeProgress(); }
+  if (type === 'questions') { for (let i = 0; i < amount; i++) _earnFreezeProgress(); _updateQuestProgress('questions', amount); }
 }
 
 function _checkGoalStreak() {
@@ -15859,6 +15919,8 @@ function _updateFreezeUI() {
     const pct = (toward / 5) * 100;
     if (barEl) barEl.style.width = pct + '%';
     if (labelEl) labelEl.textContent = `${toward} / 5 questions toward next freeze`;
+    const sbFreeze = document.getElementById('sb-freeze-val');
+    if (sbFreeze) { const c = freezeData.count || 0; sbFreeze.textContent = c > 0 ? `❄️ ${c} freeze${c!==1?'s':''}` : ''; }
   } catch(e) {}
 }
 
@@ -16231,6 +16293,197 @@ if ('serviceWorker' in navigator) {
     showToast('✅ Synaptiq installed!');
   });
 })();
+
+// ═══════════════════════════════════════
+// GAME MODE — Celebrations, Quests, Milestones
+// ═══════════════════════════════════════
+
+// ── Achievement progress helper ──────────────────────
+function _getAchievementProgress(a, s) {
+  const q  = s.questionsAnswered || 0;
+  const st = s.streak || 0;
+  const tp = (s.topicsExplored || []).length;
+  let fcLen = 0; try { fcLen = JSON.parse(localStorage.getItem('synaptiq_fc') || '[]').length; } catch(e) {}
+  let cc = 0; try { cc = Object.values(JSON.parse(localStorage.getItem('synaptiq_checklist') || '{}')).filter(v=>v==='confident').length; } catch(e) {}
+  const map = {
+    'On a Roll':       { value:st, max:3,   unit:'days' },
+    '7-Day Streak':    { value:st, max:7,   unit:'days' },
+    'Star Student':    { value:st, max:30,  unit:'days' },
+    'Getting Started': { value:q,  max:10,  unit:'questions' },
+    'Fast Learner':    { value:q,  max:100, unit:'questions' },
+    'Century':         { value:q,  max:500, unit:'questions' },
+    'Explorer':        { value:tp, max:5,   unit:'topics' },
+    'Broad Thinker':   { value:tp, max:20,  unit:'topics' },
+    'Graduate':        { value:tp, max:50,  unit:'topics' },
+    'Rising Star':     { value:state.level, max:5,  unit:'levels' },
+    'Top of Class':    { value:state.level, max:10, unit:'levels' },
+    'Diamond':         { value:state.level, max:20, unit:'levels' },
+    'Card Collector':  { value:fcLen, max:10, unit:'cards' },
+    'Memory Master':   { value:fcLen, max:50, unit:'cards' },
+    'Spec Starter':    { value:cc, max:5,  unit:'topics' },
+    'Spec Master':     { value:cc, max:20, unit:'topics' },
+  };
+  return map[a.name] || null;
+}
+
+// ── Achievement celebration modal ─────────────────────
+function _celebrateAchievement(a) {
+  _launchConfetti();
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;inset:0;z-index:100000;pointer-events:none;display:flex;align-items:center;justify-content:center;';
+  el.innerHTML = `<div style="background:rgba(10,12,18,0.97);backdrop-filter:blur(32px);border:2px solid rgba(201,168,76,0.65);border-radius:28px;padding:2.5rem 3rem;text-align:center;max-width:340px;box-shadow:0 0 100px rgba(201,168,76,0.35),0 32px 80px rgba(0,0,0,0.8);animation:achUnlock .6s cubic-bezier(0.34,1.4,0.64,1) both,achGoldPulse 1.5s ease-in-out 1.2s infinite">
+    <div style="font-size:.7rem;font-weight:800;color:rgba(201,168,76,0.8);text-transform:uppercase;letter-spacing:.15em;margin-bottom:.75rem">🏆 Achievement Unlocked</div>
+    <div style="font-size:3.5rem;line-height:1;margin-bottom:.6rem;animation:float 2s ease-in-out infinite">${a.icon}</div>
+    <div style="font-family:var(--font-head);font-size:1.5rem;font-weight:900;background:linear-gradient(135deg,#C9A84C,#F0D080,#C9A84C);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 2s linear infinite">${a.name}</div>
+    <div style="color:rgba(136,146,164,0.85);font-size:.875rem;margin-top:.4rem">${a.desc}</div>
+  </div>`;
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.transition='opacity .4s ease'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, 3000);
+  showToast(`🏆 ${a.name} unlocked!`, 'success');
+}
+
+// ── Streak milestone celebration ──────────────────────
+function _celebrateStreak(n) {
+  const tiers = {
+    3:  { emoji:'🔥', msg:'3-Day Streak!',   sub:'You\'re building a habit!',         xp:25,  big:false },
+    7:  { emoji:'🔥', msg:'7-Day Streak!',   sub:'One full week — incredible focus!', xp:75,  big:true  },
+    14: { emoji:'💎', msg:'14-Day Streak!',  sub:'Two weeks straight. Unstoppable!',  xp:150, big:true  },
+    30: { emoji:'⭐', msg:'30-Day Streak!',  sub:'A whole month — you\'re elite!',    xp:300, big:true  },
+    100:{ emoji:'🏆', msg:'100-Day Streak!', sub:'Legendary. Truly legendary.',       xp:500, big:true  },
+  };
+  const tier = tiers[n]; if (!tier) return;
+  if (tier.big) _launchConfetti();
+  addXP(tier.xp, `🔥 ${n}-day streak! +${tier.xp} bonus XP`);
+  showToast(`${tier.emoji} ${tier.msg} +${tier.xp} Bonus XP!`, 'success');
+  if (!tier.big) return;
+  const el = document.createElement('div');
+  el.style.cssText = 'position:fixed;inset:0;z-index:100000;pointer-events:none;display:flex;align-items:center;justify-content:center;';
+  el.innerHTML = `<div style="background:rgba(10,12,18,0.97);backdrop-filter:blur(32px);border:2px solid rgba(251,146,60,0.55);border-radius:28px;padding:2.5rem 3rem;text-align:center;max-width:340px;box-shadow:0 0 80px rgba(251,146,60,0.25),0 32px 80px rgba(0,0,0,0.8);animation:authBoxIn .5s cubic-bezier(0.34,1.4,0.64,1) both">
+    <div style="font-size:3.5rem;line-height:1;margin-bottom:.6rem;animation:float 2s ease-in-out infinite">${tier.emoji}</div>
+    <div style="font-family:var(--font-head);font-size:1.75rem;font-weight:900;background:linear-gradient(135deg,#fb923c,#fde68a,#fb923c);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 2s linear infinite">${tier.msg}</div>
+    <div style="color:rgba(136,146,164,0.85);font-size:.9rem;margin-top:.5rem">${tier.sub}</div>
+    <div style="margin-top:.75rem;font-size:.875rem;font-weight:700;color:rgba(201,168,76,0.9)">+${tier.xp} Bonus XP</div>
+  </div>`;
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.transition='opacity .4s ease'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, n>=30?4000:3000);
+}
+
+// ── XP Milestones ─────────────────────────────────────
+const XP_MILESTONES = [1000, 2500, 5000, 10000, 25000];
+function _checkXPMilestones(xp) {
+  try {
+    const hit = new Set(JSON.parse(localStorage.getItem('synaptiq_xp_milestones') || '[]'));
+    const newHits = XP_MILESTONES.filter(m => xp >= m && !hit.has(m));
+    if (!newHits.length) return;
+    newHits.forEach(m => hit.add(m));
+    safeSetItem('synaptiq_xp_milestones', JSON.stringify([...hit]));
+    const highest = Math.max(...newHits);
+    setTimeout(() => {
+      _launchConfetti();
+      const el = document.createElement('div');
+      el.style.cssText = 'position:fixed;inset:0;z-index:100000;pointer-events:none;display:flex;align-items:center;justify-content:center;';
+      el.innerHTML = `<div style="background:rgba(10,12,18,0.97);backdrop-filter:blur(32px);border:2px solid rgba(201,168,76,0.65);border-radius:28px;padding:2.5rem 3rem;text-align:center;max-width:360px;box-shadow:0 0 100px rgba(201,168,76,0.3),0 32px 80px rgba(0,0,0,0.8);animation:authBoxIn .5s cubic-bezier(0.34,1.4,0.64,1) both">
+        <div style="font-size:.7rem;font-weight:800;color:rgba(201,168,76,0.8);text-transform:uppercase;letter-spacing:.15em;margin-bottom:.75rem">⭐ XP Milestone</div>
+        <div style="font-family:var(--font-head);font-size:2.5rem;font-weight:900;background:linear-gradient(135deg,#C9A84C,#F0D080,#C9A84C);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 2s linear infinite">${highest.toLocaleString()} XP</div>
+        <div style="color:rgba(136,146,164,0.85);font-size:.875rem;margin-top:.4rem">Incredible progress — ${highest.toLocaleString()} total XP earned!</div>
+      </div>`;
+      document.body.appendChild(el);
+      setTimeout(() => { el.style.transition='opacity .4s ease'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, 3500);
+      showToast(`⭐ ${highest.toLocaleString()} XP Milestone!`, 'success');
+    }, 600);
+  } catch(e) {}
+}
+
+// ── Number counter animation ──────────────────────────
+function _animateCounter(el, from, to, duration) {
+  if (!el || from === to) { if (el) el.textContent = to; return; }
+  const start = performance.now();
+  function step(now) {
+    const t = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - t, 3);
+    el.textContent = Math.round(from + (to - from) * eased);
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+// ── Daily Quests System ───────────────────────────────
+const QUEST_POOL = [
+  { id:'tutor_5',     text:'Ask the AI Tutor 5 questions',  target:5,  xp:30, track:'tutor' },
+  { id:'fc_10',       text:'Review 10 flashcards',          target:10, xp:25, track:'flashcard' },
+  { id:'dc_done',     text:'Complete the Daily Challenge',  target:1,  xp:50, track:'dc' },
+  { id:'topic_2',     text:'Explore 2 new topics',          target:2,  xp:35, track:'topic' },
+  { id:'spec_3',      text:'Check off 3 spec topics',       target:3,  xp:30, track:'spec' },
+  { id:'questions_10',text:'Answer 10 practice questions',  target:10, xp:30, track:'questions' },
+  { id:'blitz_1',     text:'Complete a Quick Blitz',        target:1,  xp:40, track:'blitz' },
+];
+
+function _initDailyQuests() {
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const stored = JSON.parse(localStorage.getItem('synaptiq_daily_quests') || 'null');
+    if (stored && stored.date === today) { _renderDailyQuests(stored.quests); return; }
+  } catch(e) {}
+  // Deterministic shuffle by date — same 3 quests all day
+  const seed = parseInt(today.replace(/-/g,'')) || 0;
+  const shuffled = [...QUEST_POOL].sort((a,b) => {
+    const ha = (seed * a.id.charCodeAt(0) * 31) % 97;
+    const hb = (seed * b.id.charCodeAt(0) * 31) % 97;
+    return ha - hb;
+  });
+  const quests = shuffled.slice(0, 3).map(q => ({...q, progress:0, done:false}));
+  safeSetItem('synaptiq_daily_quests', JSON.stringify({ date:today, quests }));
+  _renderDailyQuests(quests);
+}
+
+function _renderDailyQuests(quests) {
+  const card = document.getElementById('daily-quests-card');
+  if (!card) return;
+  const done = quests.filter(q=>q.done).length;
+  card.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <div style="display:flex;align-items:center;gap:.65rem">
+        <span style="font-size:1.5rem">⚔️</span>
+        <div>
+          <div style="font-weight:700;font-size:.95rem;color:var(--white)">Daily Quests</div>
+          <div style="font-size:.75rem;color:var(--muted)">${done}/3 complete · Resets at midnight</div>
+        </div>
+      </div>
+      ${done===3 ? '<div style="background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.3);border-radius:20px;padding:.3rem .9rem;font-size:.8rem;font-weight:700;color:var(--green)">✓ All done!</div>' : ''}
+    </div>
+    ${quests.map(q => `
+      <div style="margin-bottom:.65rem;padding:.8rem 1rem;background:${q.done?'rgba(74,222,128,0.06)':'rgba(255,255,255,0.03)'};border:1px solid ${q.done?'rgba(74,222,128,0.25)':'rgba(167,139,250,0.18)'};border-radius:12px;transition:all .3s ease">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.45rem">
+          <div style="font-size:.855rem;font-weight:600;color:${q.done?'var(--green)':'var(--white)'};${q.done?'text-decoration:line-through;opacity:.7':''}">${q.done?'✅ ':''}${q.text}</div>
+          <div style="font-size:.75rem;font-weight:700;color:var(--gold);white-space:nowrap;margin-left:.5rem">+${q.xp} XP</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.65rem">
+          <div style="flex:1;height:4px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden">
+            <div style="height:100%;width:${Math.min(100,Math.round(q.progress/q.target*100))}%;background:${q.done?'var(--green)':'linear-gradient(90deg,#a78bfa,#C9A84C)'};border-radius:99px;transition:width .5s ease"></div>
+          </div>
+          <div style="font-size:.68rem;color:var(--muted);white-space:nowrap">${q.progress}/${q.target}</div>
+        </div>
+      </div>`).join('')}`;
+}
+
+function _updateQuestProgress(trackType, amount) {
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const data = JSON.parse(localStorage.getItem('synaptiq_daily_quests') || 'null');
+    if (!data || data.date !== today) return;
+    let changed = false;
+    data.quests.forEach(q => {
+      if (q.done || q.track !== trackType) return;
+      q.progress = Math.min(q.target, (q.progress || 0) + amount);
+      if (q.progress >= q.target) {
+        q.done = true; changed = true;
+        setTimeout(() => { addXP(q.xp, `⚔️ Quest done! +${q.xp} XP`); _launchConfetti(); showToast(`⚔️ Quest complete: "${q.text}"`, 'success'); }, 250);
+      }
+    });
+    safeSetItem('synaptiq_daily_quests', JSON.stringify(data));
+    if (changed || amount > 0) _renderDailyQuests(data.quests);
+  } catch(e) {}
+}
 
 window.addEventListener('online', () => showToast('Back online!'));
 window.addEventListener('offline', () => showToast('You are offline — some features unavailable'));
@@ -18663,8 +18916,19 @@ function dcFinish() {
     document.getElementById('dc-question-area').style.display = 'none';
     document.getElementById('dc-done-badge').style.display = 'flex';
     document.getElementById('dc-subtitle').textContent = `Completed today! Score: ${score}/${total} · Come back tomorrow`;
+    if (score === total) {
+      setTimeout(() => {
+        _launchConfetti();
+        const _pb = document.createElement('div');
+        _pb.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-60%);z-index:100000;pointer-events:none;text-align:center;animation:fadeInUp .4s ease both';
+        _pb.innerHTML = '<div style="font-size:3rem;line-height:1;filter:drop-shadow(0 0 20px rgba(201,168,76,0.8))">🏆</div><div style="font-family:var(--font-head);font-size:2rem;font-weight:900;background:linear-gradient(135deg,#C9A84C,#F0D080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;margin-top:.25rem">PERFECT!</div>';
+        document.body.appendChild(_pb);
+        setTimeout(() => { _pb.style.transition='opacity .4s'; _pb.style.opacity='0'; setTimeout(()=>_pb.remove(),400); }, 2200);
+      }, 300);
+    }
     addXP(score * 10 + 20);
     trackProgress('questions', total);
+    _updateQuestProgress('dc', 1);
     addActivity('🔥', `Daily Challenge — ${score}/${total} correct`, score >= Math.ceil(total * 0.8) ? 'Excellent!' : score >= Math.ceil(total * 0.4) ? 'Good effort!' : 'Keep practising!', 'now');
     showToast(`⚡ Challenge done! ${score}/${total} correct. +${score * 10 + 20} XP`);
   }, 2500);
@@ -19526,7 +19790,9 @@ function endBlitz() {
   // Log activity
   addActivity('⚡', `Blitz Quiz — ${pct}% (${blitzState.score}/${maxScore} pts)`, blitzState.topic || 'Mixed Topics', 'now');
   // Confetti for good scores
-  if (pct >= 70) _launchConfetti();
+  if (pct === 100) { _launchConfetti(); setTimeout(_launchConfetti, 700); showToast('🏆 PERFECT BLITZ! Flawless!', 'success'); }
+  else if (pct >= 70) _launchConfetti();
+  _updateQuestProgress('blitz', 1);
   const xp = 20 + blitzState.score * 5;
   addXP(xp, `⚡ Blitz complete! +${xp} XP`);
   try { localStorage.setItem('synaptiq_blitz', JSON.stringify({ date: new Date().toISOString(), score: blitzState.score })); } catch(e) {}
