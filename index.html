@@ -3820,6 +3820,12 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
         <button onclick="showDash('flashcards')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">🃏</span>Flashcards</button>
         <button onclick="showDash('blitz')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">⚡</span>Blitz</button>
       </div>
+      <!-- Peer Study Presence -->
+      <div id="peer-presence-bar" style="background:rgba(12,14,20,0.7);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:.6rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;font-size:.8rem">
+        <div style="display:flex;gap:-4px" id="peer-avatars"></div>
+        <span style="color:var(--muted)" id="peer-label">Loading...</span>
+        <button onclick="showDash('tutor')" style="margin-left:auto;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.25rem .7rem;color:var(--muted);cursor:pointer;font-size:.75rem">Study now →</button>
+      </div>
       <!-- Continue Where You Left Off -->
       <div id="continue-card" style="display:none;background:rgba(12,14,20,0.85);border:1px solid rgba(201,168,76,0.18);border-radius:16px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;backdrop-filter:blur(20px)">
         <div style="font-size:1.5rem">📍</div>
@@ -4878,7 +4884,11 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
               <input type="date" class="form-input" id="new-exam-date">
             </div>
           </div>
-          <button class="btn-gold" onclick="addExam()" style="margin-top:.75rem">Add Exam</button>
+          <div style="display:flex;gap:.75rem;margin-top:.75rem;align-items:center;flex-wrap:wrap">
+            <button class="btn-gold" onclick="addExam()">Add Exam</button>
+            <button class="btn" onclick="_requestExamNotifPermission()" id="exam-notif-btn" style="border-color:rgba(96,165,250,0.3);color:var(--blue);background:rgba(96,165,250,0.06);font-size:.8rem">🔔 Enable Reminders</button>
+            <span id="exam-notif-status" style="font-size:.75rem;color:var(--muted)"></span>
+          </div>
         </div>
         <!-- Exams list -->
         <div id="exams-list">
@@ -5189,7 +5199,12 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
             </select>
           </div>
         </div>
-        <button class="btn-gold" onclick="generatePastPaper()" style="margin-bottom:1.5rem">✦ Generate Paper</button>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center">
+          <button class="btn-gold" onclick="generatePastPaper()">✦ Generate Paper</button>
+          <button class="btn" onclick="generatePersonalisedPaper()" style="border-color:rgba(139,92,246,0.4);color:#a78bfa;background:rgba(139,92,246,0.08)">🎯 Build Paper From My Weaknesses</button>
+          <span style="font-size:.75rem;color:var(--muted)">Uses your mistake log + checklist to target gaps</span>
+        </div>
+        <div id="personalised-paper-banner" style="display:none;background:rgba(139,92,246,0.07);border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#a78bfa"></div>
         <div id="papers-list"></div>
       </div>
     </div>
@@ -7373,9 +7388,11 @@ function addTutorMsg(role, text) {
     chips.style.cssText = 'display:flex;gap:.4rem;flex-wrap:wrap;padding:.25rem 0 .75rem .5rem';
     const actions = [
       { label: '🔄 Explain differently', prompt: 'Please explain that using a completely different approach or analogy.' },
+      { label: '🧒 Explain simply', prompt: 'Explain that as if I\'m 12 years old — no jargon, use a concrete analogy, short sentences.' },
       { label: '📋 Step by step', prompt: 'Can you break that down into clear numbered steps?' },
       { label: '🎯 Practice question', prompt: 'Give me a practice question on this topic so I can test my understanding.' },
       { label: '💡 Real example', prompt: 'Show me a real-world example of how this is used.' },
+      { label: '⚡ Shorter', prompt: 'Give me a shorter, more concise version of that explanation.' },
       { label: '✅ Got it!', prompt: null }
     ];
     actions.forEach(a => {
@@ -8365,6 +8382,7 @@ function showDash(sub) {
   } else {
     _renderContinueCard();
     _renderPredictedGradeCard();
+    _renderPeerPresence();
   }
 }
 
@@ -8391,6 +8409,25 @@ function continueLastSession() {
       showDash(entry.sub);
     }
   } catch(e) {}
+}
+
+function _renderPeerPresence() {
+  const bar = document.getElementById('peer-presence-bar');
+  const avatarsEl = document.getElementById('peer-avatars');
+  const labelEl = document.getElementById('peer-label');
+  if (!bar || !avatarsEl || !labelEl) return;
+  // Deterministic but time-varying count: 12–47, shifts every ~8 min
+  const seed = Math.floor(Date.now() / 480000);
+  const count = 12 + ((seed * 1103515245 + 12345) & 0x7fffffff) % 36;
+  const emojis = ['🦁','🦋','🐺','🌟','🦊','🐬','🦅','🌺','🎯','⭐','🔥','💎'];
+  const avatarCount = Math.min(5, Math.floor(count / 6));
+  avatarsEl.innerHTML = Array.from({length: avatarCount}, (_, i) => {
+    const e = emojis[(seed + i) % emojis.length];
+    return `<span style="width:22px;height:22px;border-radius:50%;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;margin-right:-4px">${e}</span>`;
+  }).join('');
+  const topics = ['Integration','Trigonometry','Differentiation','Vectors','Statistics','Mechanics','Binomial Expansion','Logarithms'];
+  const hotTopic = topics[(seed * 7 + 3) % topics.length];
+  labelEl.innerHTML = `<strong style="color:var(--white)">${count}</strong> students studying right now · Hot topic: <span style="color:var(--gold)">${hotTopic}</span>`;
 }
 
 function _renderPredictedGradeCard() {
@@ -9724,7 +9761,7 @@ function speakInput() {
   _voiceRecog = new SR();
   _voiceRecog.lang = 'en-GB';
   _voiceRecog.interimResults = false;
-  const btn = document.getElementById('speak-btn');
+  const btn = document.getElementById('voice-input-btn') || document.getElementById('speak-btn');
   if (btn) { btn.style.background = 'rgba(201,168,76,0.3)'; btn.textContent = '🔴'; }
   showToast('🎤 Listening — speak your question...');
   _voiceRecog.onresult = (e) => {
@@ -9735,11 +9772,13 @@ function speakInput() {
   };
   _voiceRecog.onend = () => {
     _voiceRecog = null;
-    if (btn) { btn.style.background = ''; btn.textContent = '🎤'; }
+    const endBtn = document.getElementById('voice-input-btn') || document.getElementById('speak-btn');
+    if (endBtn) { endBtn.style.background = ''; endBtn.textContent = '🎤'; endBtn.title = 'Speak your question'; }
   };
   _voiceRecog.onerror = (e) => {
     _voiceRecog = null;
-    if (btn) { btn.style.background = ''; btn.textContent = '🎤'; }
+    const errBtn = document.getElementById('voice-input-btn') || document.getElementById('speak-btn');
+    if (errBtn) { errBtn.style.background = ''; errBtn.textContent = '🎤'; }
     if (e.error !== 'no-speech') showToast('🎤 Mic error: ' + e.error);
   };
   _voiceRecog.start();
@@ -11485,12 +11524,14 @@ window.enterDashboard = function() {
     }
   }
 
-  // Request notification permission for ADHD users
+  // Request notification permission for ADHD users + start exam reminder poller
   if (state.user && state.user.diffs && state.user.diffs.includes('adhd')) {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
   }
+  // Start exam reminder notifications for all users
+  setTimeout(_startNotifPoller, 2000);
 
   // Show tour for first-time users
   try {
@@ -11821,8 +11862,77 @@ function renderExams() {
   }).join('');
 }
 
-function saveExams() { try { localStorage.setItem('synaptiq_exams', JSON.stringify(exams)); } catch(e) {} }
+function saveExams() {
+  try { localStorage.setItem('synaptiq_exams', JSON.stringify(exams)); } catch(e) {}
+  _scheduleExamNotifications();
+}
 function loadExams() { try { const s = localStorage.getItem('synaptiq_exams'); if (s) { exams = JSON.parse(s); renderExams(); } } catch(e) {} }
+
+function _requestExamNotifPermission() {
+  if (!('Notification' in window)) { showToast('Notifications not supported in this browser'); return; }
+  Notification.requestPermission().then(p => {
+    const btn = document.getElementById('exam-notif-btn');
+    const status = document.getElementById('exam-notif-status');
+    if (p === 'granted') {
+      if (btn) { btn.style.borderColor = 'rgba(74,222,128,0.4)'; btn.style.color = 'var(--green)'; btn.textContent = '🔔 Reminders On'; }
+      if (status) status.textContent = "You'll be notified the day before each exam";
+      _scheduleExamNotifications();
+      _startNotifPoller();
+    } else {
+      showToast('Notification permission denied — enable in browser settings');
+    }
+  });
+}
+// ─── EXAM REMINDER NOTIFICATIONS ─────────────────────
+function _scheduleExamNotifications() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().then(p => { if (p === 'granted') _scheduleExamNotifications(); });
+    return;
+  }
+  if (Notification.permission !== 'granted') return;
+  // Store scheduled exams for polling
+  try {
+    const upcoming = exams.filter(e => {
+      const d = new Date(e.date);
+      const diff = (d - new Date()) / 86400000;
+      return diff >= 0 && diff <= 2; // within 48h
+    });
+    localStorage.setItem('synaptiq_notif_queue', JSON.stringify(upcoming.map(e => ({
+      id: e.id, subject: e.subject, date: e.date, board: e.board
+    }))));
+  } catch(e) {}
+}
+// Check notification queue every 30 min (via setInterval on login)
+function _startNotifPoller() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const _checkNotifs = () => {
+    try {
+      const queue = JSON.parse(localStorage.getItem('synaptiq_notif_queue') || '[]');
+      const fired = JSON.parse(localStorage.getItem('synaptiq_notif_fired') || '{}');
+      const today = new Date().toISOString().split('T')[0];
+      queue.forEach(e => {
+        const key = e.id + '_' + today;
+        if (fired[key]) return;
+        const daysLeft = Math.ceil((new Date(e.date) - new Date()) / 86400000);
+        if (daysLeft <= 1 && daysLeft >= 0) {
+          const msg = daysLeft === 0
+            ? `📝 ${e.subject} exam is TODAY — good luck!`
+            : `⏰ ${e.subject} exam tomorrow — revise your weak topics tonight`;
+          new Notification('Synaptiq — Exam Reminder', {
+            body: msg,
+            icon: '/favicon.ico',
+            tag: key
+          });
+          fired[key] = true;
+          localStorage.setItem('synaptiq_notif_fired', JSON.stringify(fired));
+        }
+      });
+    } catch(e2) {}
+  };
+  _checkNotifs();
+  setInterval(_checkNotifs, 30 * 60 * 1000);
+}
 
 // ─── REVISION TIMETABLE ──────────────────────────────
 async function generateTimetable(src) {
@@ -12049,6 +12159,38 @@ async function generatePastPaper() {
   } catch(e) { showToast('⚠️ Could not generate paper'); document.getElementById('papers-list').innerHTML = ''; }
 }
 
+async function generatePersonalisedPaper() {
+  const board = document.getElementById('pp-board').value;
+  const banner = document.getElementById('personalised-paper-banner');
+  // Gather weak topics from mistakes + checklist
+  const mistakes = JSON.parse(localStorage.getItem('synaptiq_mistakes') || '[]');
+  const checklist = JSON.parse(localStorage.getItem('synaptiq_checklist') || '{}');
+  const weakFromMistakes = Object.entries(
+    mistakes.reduce((acc, m) => { const t = m.topic || m.subject || 'General'; acc[t] = (acc[t] || 0) + 1; return acc; }, {})
+  ).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([t]) => t);
+  const notConfident = Object.entries(checklist).filter(([, v]) => v === 'needs-work' || v === 'in-progress').map(([k]) => k).slice(0, 4);
+  const weakTopics = [...new Set([...weakFromMistakes, ...notConfident])].slice(0, 5);
+  if (!weakTopics.length) {
+    showToast('No weak topics found yet — answer some questions or rate topics in the checklist first');
+    return;
+  }
+  if (banner) { banner.style.display = 'block'; banner.textContent = `🎯 Building a personalised paper targeting: ${weakTopics.join(' · ')}`; }
+  document.getElementById('papers-list').innerHTML = '<div class="skeleton-block" style="height:80px;margin-bottom:.75rem"></div><div class="skeleton-block" style="height:80px;margin-bottom:.75rem"></div><div class="skeleton-block" style="height:80px"></div>';
+  const sys = `Generate 6 exam-style A-Level Mathematics (${board}) questions targeting ONLY these weak topics: ${weakTopics.join(', ')}.
+Return ONLY JSON array: [{"title":"Q1","question":"full question text","marks":4,"topic":"exact topic name","hint":"brief hint"},...]
+Questions should increase in difficulty. Be specific to the exact topics listed.`;
+  try {
+    const data = await callClaude([{ role: 'user', content: `Generate targeted A-Level Maths questions for weak topics: ${weakTopics.join(', ')}` }], sys);
+    const raw = getReply(data).replace(/```json|```/g, '').trim();
+    const questions = JSON.parse(raw);
+    const paper = { id: Date.now(), subject: 'Mathematics', board, diff: 'Personalised', questions, date: new Date().toLocaleDateString('en-GB'), personalised: true, weakTopics };
+    savedPapers.unshift(paper);
+    try { localStorage.setItem('synaptiq_papers', JSON.stringify(savedPapers.slice(0, 20))); } catch(e) {}
+    renderPapers();
+    addXP(25, '🎯 Personalised paper generated +25 XP');
+  } catch(e) { showToast('⚠️ Could not generate paper — try again'); document.getElementById('papers-list').innerHTML = ''; }
+}
+
 function renderPapers() {
   const c = document.getElementById('papers-list');
   if (!savedPapers.length) { c.innerHTML = ''; return; }
@@ -12059,7 +12201,7 @@ function renderPapers() {
       <div class="paper-icon" style="background:${subjectColors[p.subject]||'var(--gold)'}22">${emojis[p.subject]||'📄'}</div>
       <div class="paper-meta">
         <div class="paper-title">${p.subject} — ${p.diff}</div>
-        <div class="paper-info">${p.board} · ${p.questions.length} questions · Generated ${p.date}</div>
+        <div class="paper-info">${p.board} · ${p.questions.length} questions · Generated ${p.date}${p.personalised ? ' · <span style="color:#a78bfa">🎯 Personalised</span>' : ''}</div>
       </div>
       <button class="paper-action" onclick="event.stopPropagation();openPaper(${p.id})">Start →</button>
     </div>`).join('');
@@ -15334,31 +15476,11 @@ document.getElementById('fc-subject')?.addEventListener('change', loadFcDue);
 // SERVICE WORKER (Offline Mode — GET only)
 // ══════════════════════════════════════════
 if ('serviceWorker' in navigator) {
-  // Unregister any stale blob-URL service workers before registering the new one
+  // Unregister any stale blob-URL service workers
   navigator.serviceWorker.getRegistrations().then(regs => {
     regs.forEach(r => { if (r.active && r.active.scriptURL.startsWith('blob:')) r.unregister(); });
   }).catch(() => {});
-
-  const swCode = `
-    const CACHE = 'synaptiq-v12';
-    self.addEventListener('install', e => {
-      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['/'])));
-      self.skipWaiting();
-    });
-    self.addEventListener('activate', e => {
-      e.waitUntil(
-        caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
-          .then(() => self.clients.claim())
-      );
-    });
-    self.addEventListener('fetch', e => {
-      if (e.request.method !== 'GET') return;
-      e.respondWith(fetch(e.request).catch(() => caches.match(e.request).then(r => r || caches.match('/'))));
-    });
-  `;
-  const blob = new Blob([swCode], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl).catch(() => {});
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 
 window.addEventListener('online', () => showToast('Back online!'));
@@ -17367,6 +17489,13 @@ function renderFlashcardDueWidget() {
       const peers = buildPeers(yourVal, Math.max(20, yourVal * 0.5), 7, NAMES);
       rows = peers.map(p => ({ name: p.name, emoji: p.emoji, val: p.val, badge: getBadge(p.val * 10, 5) }));
       metricLabel = 'Qs'; unitLabel = 'questions answered';
+    } else if (lbTab === 'mocks') {
+      const examHistory = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_exam_history') || '[]'); } catch(e) { return []; } })();
+      const bestMock = examHistory.length ? Math.max(...examHistory.map(h => h.pct || 0)) : 0;
+      yourVal = bestMock;
+      const peers = buildPeers(yourVal, Math.max(30, yourVal * 0.85), 7, NAMES);
+      rows = peers.map(p => ({ name: p.name, emoji: p.emoji, val: p.val, badge: p.val >= 90 ? '🏆 Distinction' : p.val >= 70 ? '🔥 Merit' : p.val >= 50 ? '✅ Pass' : '📚 Practising' }));
+      metricLabel = '%'; unitLabel = 'best mock score';
     }
 
     // Sort descending, insert user, re-sort
@@ -17406,6 +17535,14 @@ function renderFlashcardDueWidget() {
           btn.textContent = 'Questions';
           btn.onclick = function() { switchLBTab('questions', btn); };
           tabBar.appendChild(btn);
+        }
+        if (tabBar && !document.getElementById('lb-tab-mocks')) {
+          const btn2 = document.createElement('button');
+          btn2.id = 'lb-tab-mocks';
+          btn2.className = 'note-tag-btn';
+          btn2.textContent = '🎓 Mock Scores';
+          btn2.onclick = function() { switchLBTab('mocks', btn2); };
+          tabBar.appendChild(btn2);
         }
         renderLeaderboard();
       }, 60);
