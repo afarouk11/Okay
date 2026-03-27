@@ -596,6 +596,12 @@ body {
 .vq-opt.correct { background: rgba(74,222,128,0.2); border-color: var(--green); color: var(--green); }
 .vq-opt.wrong { background: rgba(251,113,133,0.2); border-color: var(--red); color: var(--red); }
 
+/* Today's plan task rows */
+.plan-task-row { display:flex;align-items:flex-start;gap:.6rem;padding:.38rem 0;font-size:.83rem;color:var(--white);cursor:pointer;transition:opacity .2s;user-select:none; }
+.plan-task-row:hover { opacity:.8; }
+.plan-task-row input[type=checkbox] { margin-top:2px;accent-color:var(--gold);flex-shrink:0;cursor:pointer; }
+.plan-task-row.done { opacity:.4;text-decoration:line-through;color:var(--muted); }
+
 /* Video controls bar */
 .vid-controls {
   display: flex; align-items: center; gap: .75rem;
@@ -6601,6 +6607,8 @@ function _showDashCore(sub) {
     if (state.dashHistory.length === 0) addDashMsg('bot', "Hello! I'm your Synaptiq A-Level Maths tutor. Ask me anything — from Pure 1 algebra to Mechanics projectiles. What shall we work on? ✦");
   }
   if (sub === 'tutor') {
+    // Render today's plan card before greeting (async, handles its own skeleton)
+    if (typeof _renderTodaysPlan === 'function') _renderTodaysPlan();
     if (state.tutorHistory.length === 0) addTutorMsg('bot', typeof _buildTutorGreeting === 'function' ? _buildTutorGreeting() : `Hey! I'm Synaptiq ✦ — your AI study friend for A-Level Maths. Ask me anything!`);
   }
 }
@@ -7297,7 +7305,24 @@ function _buildFriendPersonaCtx() {
   const confusionStreak = m.confusionStreak || 0;
   if (confusionStreak >= 2) ctx += `\n⚡ PATIENCE ALERT: This student has needed re-explanations ${confusionStreak} times in this session. Go VERY slow. Use the simplest possible analogy. Break every step into tiny pieces. End with "Does that make more sense now?"`;
 
-  if ((m.sessionCount || 0) > 3) ctx += `\nThis student has had ${m.sessionCount} sessions with you — skip the introductory pleasantries, just be natural.`;
+  const sessionCount = m.sessionCount || 0;
+  if (sessionCount > 3) ctx += `\nYou have worked with ${name || 'this student'} for ${sessionCount} sessions — skip introductory pleasantries, just be natural and direct.`;
+
+  // Inject all stored facts
+  const facts = m.facts || [];
+  if (facts.length) {
+    ctx += `\n\nWHAT YOU REMEMBER ABOUT ${(name || 'THIS STUDENT').toUpperCase()} (from past sessions):\n`;
+    ctx += facts.map(f => `- ${f.text}`).join('\n');
+    ctx += `\n\nReference these NATURALLY when relevant — never list them all at once. Say things like "I remember you mentioned...", "Given that your exam is coming up...", "You've mentioned this trips you up before — let's be extra careful". This is your long-term memory.`;
+  }
+
+  // Inject today's plan if tasks remain
+  const pendingTasks = (m.todaysPlan?.tasks || []).filter(t => !t.done);
+  if (pendingTasks.length) {
+    ctx += `\n\nTODAY'S PLAN YOU SET FOR ${(name || 'THEM').toUpperCase()}:\n`;
+    ctx += pendingTasks.map(t => `- ${t.text}`).join('\n');
+    ctx += `\nNudge them toward these tasks naturally when the opportunity arises — don't force it, but do remind them if relevant ("By the way, this connects to one of your tasks for today...").`;
+  }
 
   return ctx;
 }
@@ -7337,7 +7362,7 @@ function _getSignalInstruction(signal) {
   }
 }
 
-// Personalized greeting when entering the tutor
+// Personalized greeting — references stored memory facts
 function _buildTutorGreeting() {
   const m = _getTutorMemory();
   const name = (state.user?.name || '').split(' ')[0];
@@ -7347,18 +7372,210 @@ function _buildTutorGreeting() {
   const sessions = m.sessionCount || 0;
   const lastTopics = m.lastSession?.topics || [];
   const lastDate = m.lastSession?.date ? new Date(m.lastSession.date) : null;
+  const isToday = lastDate && (Date.now() - lastDate.getTime() < 6 * 60 * 60 * 1000);
   const isRecent = lastDate && (Date.now() - lastDate.getTime() < 24 * 60 * 60 * 1000);
+  const facts = m.facts || [];
+
+  // Pick a relevant fact to reference in the greeting
+  const examFact = facts.find(f => f.category === 'exam_date');
+  const weaknessFact = facts.find(f => f.category === 'weakness');
+  const goalFact = facts.find(f => f.category === 'goal');
 
   if (sessions === 0 || !lastTopics.length) {
-    // First ever session
-    return `${hi} I'm Synaptiq — your AI study friend for A-Level Maths ✦\n\nI'm not just here to give answers. I want you to actually understand this stuff — so you walk into your exam feeling ready for anything.\n\n**Quick question before we start:** how do you like to learn?\n\n- **Fast and direct** — just give me the answer and key steps\n- **Full explanation** — take me through it properly, don't skip anything\n- **Chat it through** — let's think through it together\n\nJust let me know, or skip it and ask me anything!`;
-  } else if (isRecent) {
-    return `${hi} Good to see you back. We were working on **${lastTopics[0]}** earlier — want to carry on with that, or something new today?`;
-  } else {
-    const daysSince = lastDate ? Math.floor((Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24)) : null;
-    const since = daysSince === 1 ? 'yesterday' : daysSince ? `${daysSince} days ago` : 'last time';
-    return `${hi} Good to have you back — last time we looked at **${lastTopics[0]}** (${since}). Shall we pick up from there, or is there something else you need today?`;
+    // First session — onboarding
+    return `${hi} I'm Synaptiq — your personal AI teacher for A-Level Maths ✦\n\nI'm not just here to answer questions. I remember what you tell me, I'll build a study plan for you, and I'll keep track of what we work on together — so every session builds on the last.\n\n**Quick question first:** how do you like to learn?\n- **Fast and direct** — just the key steps, no fluff\n- **Full explanation** — take me through it properly\n- **Chat it through** — let's think together\n\nOr just ask me anything and we'll figure it out as we go!`;
   }
+
+  // Returning student — build a contextual greeting
+  let greeting = hi + ' ';
+
+  if (isToday) {
+    greeting += `Back again! `;
+    if (lastTopics[0]) greeting += `Still working on **${lastTopics[0]}**, or something new?`;
+    else greeting += `What are we tackling?`;
+    return greeting;
+  }
+
+  if (isRecent) {
+    greeting += `Good to see you. `;
+    if (lastTopics[0]) greeting += `Earlier we were on **${lastTopics[0]}** — `;
+    if (weaknessFact) greeting += `and I remember ${weaknessFact.text.toLowerCase()}. `;
+    greeting += `Want to pick up from there, or is there something else on your mind today?`;
+    return greeting;
+  }
+
+  // Multi-day gap — richer reference
+  const daysSince = lastDate ? Math.floor((Date.now() - lastDate.getTime()) / (1000 * 60 * 60 * 24)) : null;
+  const since = daysSince === 1 ? 'yesterday' : daysSince ? `${daysSince} days ago` : 'last time';
+  greeting += `Good to have you back — it's been ${since}. `;
+
+  if (examFact) greeting += `${examFact.text} — `;
+  if (lastTopics[0]) greeting += `last time we were working on **${lastTopics[0]}**. `;
+  if (weaknessFact) greeting += `I've noted that ${weaknessFact.text.toLowerCase()}. `;
+  else if (goalFact) greeting += `You mentioned ${goalFact.text.toLowerCase()}. `;
+
+  greeting += `Shall we pick up from there, or is there something specific you need today?`;
+  return greeting;
+}
+
+// ═══════════════════════════════════════
+// BACKGROUND MEMORY EXTRACTION
+// ═══════════════════════════════════════
+
+// Silently extracts new facts from conversation — runs every 6th message, no UI feedback
+function _extractMemoryFacts(history) {
+  if (!history || history.length < 4) return;
+  const existing = (_getTutorMemory().facts || []).map(f => f.text);
+  const existingStr = existing.length ? `\n\nAlready known (do NOT repeat these):\n${existing.map(t => '- ' + t).join('\n')}` : '';
+  const sys = `You are a memory extractor. From this A-Level tutoring conversation, identify any NEW facts about the student: exam dates, personal goals, fears, recurring mistakes, strengths, things they mentioned about themselves or their life. Return ONLY a JSON array: [{"text":"fact as a statement about the student","category":"exam_date|weakness|strength|goal|personal|style"}]. Only include genuinely new facts. Return [] if nothing new.${existingStr}`;
+  const msgs = history.slice(-8);
+  callClaude(msgs, sys, 300).then(data => {
+    try {
+      const raw = getReply(data).replace(/```json|```/g, '').trim();
+      const newFacts = JSON.parse(raw);
+      if (!Array.isArray(newFacts) || !newFacts.length) return;
+      const m = _getTutorMemory();
+      const existing2 = m.facts || [];
+      const merged = [
+        ...newFacts.map(f => ({ id: Date.now().toString(36) + Math.random().toString(36).slice(2,5), text: f.text, category: f.category || 'general', addedAt: new Date().toISOString() })),
+        ...existing2
+      ].slice(0, 20); // cap at 20 facts
+      _saveTutorMemory({ facts: merged });
+    } catch(e) {} // silent failure is fine
+  }).catch(() => {}); // fully silent
+}
+
+// ═══════════════════════════════════════
+// DAILY PLAN GENERATION
+// ═══════════════════════════════════════
+
+async function _generateDailyPlan() {
+  const m = _getTutorMemory();
+  // Only regenerate once per day
+  if (m.todaysPlan?.generatedAt) {
+    const age = Date.now() - new Date(m.todaysPlan.generatedAt).getTime();
+    if (age < 23 * 60 * 60 * 1000) return; // < 23h old, skip
+  }
+
+  // Compile student context
+  const name = (state.user?.name || '').split(' ')[0] || 'the student';
+  const board = state.user?.board || localStorage.getItem('synaptiq_exam_board') || 'AQA';
+  const target = state.user?.target || 'A';
+  const facts = (m.facts || []).map(f => f.text);
+
+  let ctx = `Student: ${name} | Board: ${board} | Target grade: ${target}\n`;
+  if (facts.length) ctx += `Known about them:\n${facts.map(t => '- ' + t).join('\n')}\n`;
+
+  try {
+    const mistakes = JSON.parse(localStorage.getItem('synaptiq_mistakes') || '[]');
+    const weakTopics = Object.entries(
+      mistakes.slice(0, 20).reduce((a, mk) => { const t = mk.topic || mk.subject || ''; if (t) a[t] = (a[t] || 0) + 1; return a; }, {})
+    ).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([t]) => t);
+    if (weakTopics.length) ctx += `Topics with most mistakes: ${weakTopics.join(', ')}\n`;
+
+    const checklist = JSON.parse(localStorage.getItem('synaptiq_checklist') || '{}');
+    const notStarted = Object.entries(checklist).filter(([, v]) => v === 'not-started').map(([k]) => k).slice(0, 3);
+    if (notStarted.length) ctx += `Topics not yet started: ${notStarted.join(', ')}\n`;
+
+    const exams = JSON.parse(localStorage.getItem('synaptiq_exams') || '[]');
+    exams.filter(e => new Date(e.date) > new Date()).sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 2)
+      .forEach(e => {
+        const weeks = Math.round((new Date(e.date) - new Date()) / (7 * 24 * 60 * 60 * 1000));
+        ctx += `Upcoming exam: ${e.subject} (${e.board}) in ${weeks} week${weeks !== 1 ? 's' : ''}\n`;
+      });
+
+    const lastTopics = m.lastSession?.topics || [];
+    if (lastTopics.length) ctx += `Recent session topics: ${lastTopics.slice(0, 3).join(', ')}\n`;
+  } catch(e) {}
+
+  const sys = `You are a personal study planner for a UK A-Level Maths student. Based on this context, generate EXACTLY 3 specific, actionable, motivating study tasks for today. Each task should be concrete (not vague like "revise maths"). Prioritise: (1) upcoming exam topics, (2) repeated mistakes, (3) topics not yet started. Return ONLY a JSON array: [{"id":1,"text":"task description — keep it under 12 words, add a brief reason in brackets"},{"id":2,...},{"id":3,...}]`;
+
+  try {
+    const data = await callClaude([{ role: 'user', content: ctx }], sys, 300);
+    const raw = getReply(data).replace(/```json|```/g, '').trim();
+    const tasks = JSON.parse(raw);
+    if (Array.isArray(tasks) && tasks.length) {
+      _saveTutorMemory({
+        todaysPlan: {
+          tasks: tasks.map(t => ({ id: t.id, text: t.text, done: false, source: 'ai' })),
+          generatedAt: new Date().toISOString()
+        }
+      });
+    }
+  } catch(e) {} // silent failure
+}
+
+function _regenerateDailyPlan() {
+  _saveTutorMemory({ todaysPlan: { tasks: [], generatedAt: null } });
+  _renderTodaysPlan(true);
+}
+
+function _togglePlanTask(id, cb) {
+  const m = _getTutorMemory();
+  const plan = m.todaysPlan || { tasks: [] };
+  const task = plan.tasks.find(t => t.id === id);
+  if (!task) return;
+  task.done = cb.checked;
+  _saveTutorMemory({ todaysPlan: plan });
+  const row = cb.closest('.plan-task-row');
+  if (row) row.classList.toggle('done', task.done);
+  if (task.done && typeof showToast === 'function') showToast('✅ Task done! Keep going 🔥');
+}
+
+// ═══════════════════════════════════════
+// TODAY'S PLAN CARD (injected into tutor)
+// ═══════════════════════════════════════
+
+async function _renderTodaysPlan(force) {
+  const container = document.getElementById('tutor-messages');
+  if (!container) return;
+
+  // Don't re-render if already present and not forced
+  if (!force && document.getElementById('todays-plan-card')) return;
+
+  // Remove old card if forcing refresh
+  const old = document.getElementById('todays-plan-card');
+  if (old) old.remove();
+
+  const m = _getTutorMemory();
+  const needsGenerate = !m.todaysPlan?.generatedAt || !m.todaysPlan?.tasks?.length ||
+    (Date.now() - new Date(m.todaysPlan.generatedAt).getTime() > 23 * 60 * 60 * 1000);
+
+  // Show skeleton while generating
+  const card = document.createElement('div');
+  card.id = 'todays-plan-card';
+  card.style.cssText = 'background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.18);border-radius:14px;padding:1rem 1.25rem;margin-bottom:.75rem';
+  card.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+    <span style="font-weight:700;font-size:.85rem;color:var(--gold)">📋 Today's study plan</span>
+    <button onclick="_regenerateDailyPlan()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:.2rem .4rem;border-radius:6px" title="Generate new plan" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">↻ Refresh</button>
+  </div>
+  <div id="plan-tasks-list"><div style="color:var(--muted);font-size:.8rem;padding:.25rem 0">✦ Generating your plan...</div></div>`;
+  // Insert before all messages, or at top
+  container.style.display = '';
+  container.insertBefore(card, container.firstChild);
+
+  if (needsGenerate) {
+    await _generateDailyPlan();
+  }
+
+  // Render tasks
+  const m2 = _getTutorMemory();
+  const tasks = m2.todaysPlan?.tasks || [];
+  const list = document.getElementById('plan-tasks-list');
+  if (!list) return;
+
+  if (!tasks.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:.25rem 0">Ask me anything to get started — I\'ll build your plan as we go.</div>';
+    return;
+  }
+
+  list.innerHTML = '';
+  tasks.forEach(task => {
+    const row = document.createElement('label');
+    row.className = 'plan-task-row' + (task.done ? ' done' : '');
+    row.innerHTML = `<input type="checkbox" ${task.done ? 'checked' : ''} onchange="_togglePlanTask(${task.id}, this)"><span>${task.text}</span>`;
+    list.appendChild(row);
+  });
 }
 
 // ═══════════════════════════════════════
@@ -7406,32 +7623,54 @@ function getTutorSystem() {
 
   const friendCtx = _buildFriendPersonaCtx();
   const signalCtx = _lastTutorSignal ? _getSignalInstruction(_lastTutorSignal) : '';
-  _lastTutorSignal = null; // consume the signal
+  _lastTutorSignal = null;
 
-  let sys = `You are Synaptiq — not just a maths tutor, but a brilliant friend who knows A-Level Mathematics inside out and genuinely cares whether this person understands it.
+  const fm = _getTutorMemory();
+  const studentName = (state.user?.name || '').split(' ')[0] || 'your student';
+  const sessionCount = fm.sessionCount || 0;
+  const examFact = (fm.facts || []).find(f => f.category === 'exam_date');
+  const examCtx = examFact ? `\n${examFact.text}.` : '';
+  const weeksToExam = (() => {
+    try {
+      const ex = JSON.parse(localStorage.getItem('synaptiq_exams') || '[]')
+        .filter(e => new Date(e.date) > new Date())
+        .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+      if (ex) { const w = Math.round((new Date(ex.date) - new Date()) / (7*24*60*60*1000)); return ` Their nearest exam is in ${w} week${w!==1?'s':''}.`; }
+    } catch(e) {} return '';
+  })();
 
-Board: ${board} | Year: ${year} | Target: ${target} | Topic: ${topic}.${personalCtx}${friendCtx}
+  let sys = `IDENTITY: You are Synaptiq — ${studentName}'s personal A-Level Mathematics teacher. Not a chatbot. Not an assistant. A teacher — with memory, continuity, and genuine investment in ${studentName}'s success.
 
-YOUR PERSONALITY & VOICE:
-You talk like a knowledgeable friend, not a formal lecturer. Concretely:
-- React naturally to what they say: "Oh, this one trips a lot of people up!", "Good question — this is subtler than it looks", "Ah, classic mistake — easy to fix"
-- Use natural language: "So basically what's happening here is...", "The thing to lock in is...", "Right, so..."
-- Be honest about difficulty: "Yeah, I'm not going to pretend this is easy — but once it clicks, it clicks"
-- Show genuine enthusiasm where it exists: "This is actually one of the more satisfying techniques once you see it"
-- Celebrate understanding naturally: "Nice — you've got it", "That's exactly right, well done"
-- Acknowledge confusion without judgement: "That's a completely valid place to get stuck", "Yeah, the notation here is genuinely confusing"
+YOUR TEACHING CONTEXT:
+Board: ${board} | Year: ${year} | Target grade: ${target} | Today's topic: ${topic}.${examCtx}${weeksToExam}${personalCtx}
+${sessionCount > 0 ? `You have worked with ${studentName} for ${sessionCount} sessions.` : `This is your first session with ${studentName}.`}${friendCtx}
 
-YOU ARE ALSO A GREAT TEACHER — THIS IS NON-NEGOTIABLE:
-- Show full step-by-step working for every maths question. Never skip a step — A-Level mark schemes award method marks
-- Anticipate the next question before they ask it: "You might be wondering why we do X here — the reason is..."
-- Use Socratic moments: occasionally ask "What do you think the first step might be?" before jumping in
+YOUR VOICE — HOW YOU TALK:
+You sound like a brilliant, experienced teacher who genuinely knows this student. Concretely:
+- React to what they say: "Oh, this is a classic one to mix up", "That's actually a really sharp observation", "Ah — I see exactly where this is going wrong"
+- Use natural, confident language: "Here's the thing about this...", "Right, so the key insight is...", "Actually, this is one of my favourite techniques"
+- Be honest about difficulty: "Yeah, this catches a lot of people out — you're not the first", "I won't pretend this is easy, but the click when it comes is satisfying"
+- Celebrate understanding warmly: "Nice — that's exactly right", "See? You've got it"
+- Use ${studentName}'s name naturally, roughly once every 3-4 replies
+
+AS A TEACHER, YOU TAKE OWNERSHIP:
+- You have opinions: "I think we should nail integration before moving on — it comes up everywhere"
+- You notice patterns: if they keep asking the same type of question, point it out — "You've asked about this a few times — let's make sure it really sticks this time"
+- You plan ahead: "With ${weeksToExam ? 'the exam coming up' : 'A-Level coming up'}, I want us to prioritise topics that'll get you the most marks"
+- You are proactively helpful: occasionally suggest something unprompted ("Actually — while you're here, have you looked at [related topic]? It'll save you confusion later")
+- You follow through: if you suggested something last session (from your memory), check in on it
+
+YOUR TEACHING METHOD — NON-NEGOTIABLE:
+- Show FULL step-by-step working. Never skip steps — A-Level mark schemes award method marks
+- Anticipate the next question: "You might be wondering why we do this here — the reason is..."
+- Use the Socratic method: occasionally ask "What do you think the first step is?" before answering
 - Connect new topics to things they already know
-- Use UK notation and ${board} mark scheme language: B1 (fact marks), M1 (method), A1 cao (final answer)
-- End most responses with one of: a checking question ("Does that click?"), a mini challenge, or an offer ("Want me to give you one to try?")
+- Use ${board} mark scheme language: B1 (fact/recall marks), M1 (method marks), A1 cao (final answer)
+- End most responses with a checking question, a mini challenge, or "Want to try one?"
 
-LaTeX: ALL maths must use LaTeX. Inline: $...$, display: $$...$$. Never write x^2 or sqrt(x) in plain text.
+LaTeX: ALL maths must use LaTeX. Inline: $...$  Display: $$...$$  Never write x^2 or sqrt(x) in plain text.
 
-The goal of every answer: leave them able to do the NEXT question on their own.${signalCtx}${uploadsCtx}`;
+YOUR ULTIMATE GOAL: Leave ${studentName} able to do the next question entirely on their own.${signalCtx}${uploadsCtx}`;
 
   const a11y = getA11yInstructions();
   if (a11y) sys += '\n\n' + a11y;
@@ -7686,8 +7925,11 @@ async function tutorSend() {
     updateStats({});
     trackProgress('questions', 1);
     _recordTutorInteraction(state.topic);
-    // Reset confusion streak on positive interactions
     if (_lastTutorSignal === 'understood') _saveTutorMemory({ confusionStreak: 0 });
+    // Background memory extraction every 6th message — completely silent, no await
+    if (state.tutorHistory.length >= 6 && state.tutorHistory.length % 6 === 0) {
+      _extractMemoryFacts(state.tutorHistory.slice(-8));
+    }
     addActivity('🤖', text.length > 48 ? text.slice(0,48)+'…' : text, state.topic || 'AI Tutor', 'now');
     trackEvent('tutor_message_sent', { topic: state.topic });
   } catch (e) {
@@ -10488,6 +10730,7 @@ function updateGreeting() {
 // Init welcome tutor message if on tutor subpage
 function initTutor() {
   if (!document.getElementById('tutor-messages').children.length) {
+    if (typeof _renderTodaysPlan === 'function') _renderTodaysPlan();
     addTutorMsg('bot', typeof _buildTutorGreeting === 'function' ? _buildTutorGreeting() : `Hey! I'm Synaptiq ✦ — your AI study friend for A-Level Maths. What are we working on today?`);
   }
 }
