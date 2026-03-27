@@ -1,0 +1,44 @@
+{
+  "name": "Synaptiq",
+  "short_name": "Synaptiq",
+  "description": "UK A-Level Maths AI Tutor — step-by-step working for AQA, Edexcel, OCR & WJEC",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#07080C",
+  "theme_color": "#C9A84C",
+  "orientation": "portrait-primary",
+  "categories": ["education"],
+  "lang": "en-GB",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "AI Tutor",
+      "short_name": "Tutor",
+      "description": "Ask the AI tutor a question",
+      "url": "/?section=tutor",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    },
+    {
+      "name": "Practice Questions",
+      "short_name": "Practice",
+      "description": "Generate exam-style questions",
+      "url": "/?section=questions",
+      "icons": [{ "src": "/icon.svg", "sizes": "any" }]
+    }
+  ]
+}
