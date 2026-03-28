@@ -17,12 +17,14 @@ const VOICE_IDS = {
   charlotte: 'XB0fDUnXU5powFXDhCwa', // young British female
   dorothy:   'ThT5KcBeYPX3keUQqHPh', // warm British female
   daniel:    'onwK4e9ZLuTAKqWW03F9', // calm British male
-  jarvis:    'JBFqnCBsd6RMkjVDRZzb', // deep authoritative British male (Jarvis style)
+  jarvis:    'onwK4e9ZLuTAKqWW03F9', // calm precise British male — closest to Jarvis
 };
 
 const VOICE_SETTINGS = {
-  jarvis: { stability: 0.82, similarity_boost: 0.45, style: 0.0, use_speaker_boost: true },
-  default: { stability: 0.5, similarity_boost: 0.75 },
+  // Jarvis: max stability = robotic consistency, low similarity = synthetic/processed,
+  // style=0 = no emotion variance, speaker_boost = crisp presence
+  jarvis:  { stability: 0.95, similarity_boost: 0.18, style: 0.0, use_speaker_boost: true },
+  default: { stability: 0.5,  similarity_boost: 0.75 },
 };
 
 export default async function handler(req, res) {
