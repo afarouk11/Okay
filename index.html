@@ -132,22 +132,24 @@ window._loadSupabase = () => new Promise(res => {
   --gold-light: #E8C97A;
   --gold-dark: #9A7A2E;
   --black: #07080C;
-  --bg1: #0A0C12;
-  --bg2: #0F1118;
-  --bg3: #151821;
-  --bg4: #1C2030;
-  --white: #F5F2EC;
-  --muted: #9BA4B7; /* Improved: ~5.2:1 contrast on --bg1 */
-  --border: rgba(201,168,76,0.15);
-  --green: #4ADE80;
-  --red: #FB7185;
-  --blue: #60A5FA;
-  --purple: #A78BFA;
-  --orange: #FB923C;
-  --pink: #F472B6;
-  --radius: 12px;
-  --shadow: 0 8px 32px rgba(0,0,0,0.4);
-  --glow: 0 0 40px rgba(201,168,76,0.15);
+  --bg1: #03050D;
+  --bg2: #080C18;
+  --bg3: #0D1220;
+  --bg4: #131828;
+  --white: #E8F0FF;
+  --muted: #5A7499;
+  --border: rgba(0,212,255,0.12);
+  --green: #00FF9D;
+  --red: #FF4060;
+  --blue: #00D4FF;
+  --purple: #B060FF;
+  --orange: #FF8C00;
+  --pink: #FF40A0;
+  --cyan: #00D4FF;
+  --neon: #00FF9D;
+  --radius: 10px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.6);
+  --glow: 0 0 40px rgba(0,212,255,0.12);
   --font-body: 'DM Sans', sans-serif;
   --font-head: 'Playfair Display', serif;
   --font-mono: 'Space Mono', monospace;
@@ -307,7 +309,7 @@ body {
   letter-spacing: -.02em;
 }
 .nav-logo span {
-  background: linear-gradient(135deg, #C9A84C 0%, #F0D080 50%, #C9A84C 100%);
+  background: linear-gradient(135deg, var(--gold) 0%, #F0D080 50%, var(--gold) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -385,8 +387,8 @@ body {
 .orb-3 { width: 300px; height: 300px; background: var(--blue); top: 40%; left: 40%; animation-delay: 5s; }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-30px) scale(1.05); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
 
 .hero {
@@ -440,7 +442,7 @@ body {
 }
 .hero h1 em {
   font-style: normal;
-  background: linear-gradient(135deg, #C9A84C 0%, #F0D080 50%, #E8C97A 100%);
+  background: linear-gradient(135deg, #00D4FF 0%, #7B40FF 50%, #00FF9D 100%);
   background-size: 200% auto;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -458,7 +460,7 @@ body {
 }
 .btn-hero-primary {
   padding: 1rem 2.5rem; border-radius: 12px;
-  background: linear-gradient(135deg,#D4A820 0%,#C9A84C 40%,#E8C97A 70%,#C9A84C 100%);
+  background: linear-gradient(135deg,#D4A820 0%,var(--gold) 40%,#E8C97A 70%,var(--gold) 100%);
   background-size: 250% auto;
   color: var(--black);
   font-size: 1rem; font-weight: 700; border: none;
@@ -707,20 +709,13 @@ body {
 }
 
 /* STATS */
-.stats-section {
-  position: relative; z-index: 1;
-  padding: 4rem 2rem;
-  background: rgba(10,12,18,0.5);
-  border-top: 1px solid rgba(255,255,255,0.06);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
 .stats-grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 2rem; max-width: 1000px; margin: 0 auto; text-align: center;
 }
 .stat-num {
   font-family: var(--font-head); font-size: 3.2rem; font-weight: 900;
-  background: linear-gradient(135deg, #C9A84C 0%, #F0D080 50%, #E8C97A 100%);
+  background: linear-gradient(135deg, #00D4FF 0%, #7B40FF 50%, #00FF9D 100%);
   background-size: 200% auto;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text; line-height: 1;
@@ -827,7 +822,7 @@ body {
 .price-card.featured::before {
   content: 'MOST POPULAR';
   position: absolute; top: 1.25rem; right: -2rem;
-  background: linear-gradient(135deg, #D4A820, #C9A84C);
+  background: linear-gradient(135deg, #D4A820, var(--gold));
   color: var(--black);
   font-size: .65rem; font-weight: 800; letter-spacing: .12em;
   padding: .35rem 3rem;
@@ -1065,7 +1060,7 @@ body {
   text-align:center; margin-bottom:.4rem; letter-spacing:-.025em;
 }
 .auth-logo span {
-  background:linear-gradient(135deg,#C9A84C 0%,#F0D080 50%,#C9A84C 100%);
+  background:linear-gradient(135deg,var(--gold) 0%,#F0D080 50%,var(--gold) 100%);
   background-size:200% auto;
   -webkit-background-clip:text; -webkit-text-fill-color:transparent;
   background-clip:text;
@@ -1178,7 +1173,7 @@ body {
 .btn-full {
   width:100%; padding:1rem 1.5rem; border-radius:14px;
   font-size:.95rem; font-weight:700; cursor:pointer; border:none;
-  background:linear-gradient(135deg,#D4A820 0%,#C9A84C 40%,#E8C97A 70%,#C9A84C 100%);
+  background:linear-gradient(135deg,#D4A820 0%,var(--gold) 40%,#E8C97A 70%,var(--gold) 100%);
   background-size:250% auto;
   color:var(--black); transition:all .3s; margin-top:.5rem; letter-spacing:.01em;
   box-shadow:0 4px 20px rgba(201,168,76,0.25);
@@ -1334,7 +1329,7 @@ body {
 }
 .stat-card-value {
   font-family: var(--font-head); font-size: 2.1rem; font-weight: 800;
-  background: linear-gradient(135deg, #F5F2EC 0%, #C9A84C 100%);
+  background: linear-gradient(135deg, #F5F2EC 0%, var(--gold) 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text; line-height: 1;
 }
@@ -1385,7 +1380,7 @@ body {
   box-shadow: 0 2px 12px rgba(0,0,0,0.2);
 }
 .msg.user {
-  background: linear-gradient(135deg, #D4A820, #C9A84C);
+  background: linear-gradient(135deg, #D4A820, var(--gold));
   color: var(--black); align-self: flex-end;
   border-bottom-right-radius: 4px; font-weight: 600;
   box-shadow: 0 4px 16px rgba(201,168,76,0.3);
@@ -1409,7 +1404,7 @@ body {
 }
 .chat-send {
   padding: .75rem 1.25rem;
-  background: linear-gradient(135deg, #D4A820 0%, #C9A84C 50%, #E8C97A 100%);
+  background: linear-gradient(135deg, #D4A820 0%, var(--gold) 50%, #E8C97A 100%);
   background-size: 200% auto;
   color: var(--black);
   border: none; border-radius: 10px;
@@ -1450,16 +1445,6 @@ body {
   100% { left: 200%; }
 }
 
-/* Activity feed */
-.activity-item {
-  display: flex; align-items: center; gap: .75rem;
-  padding: .75rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-.activity-icon {
-  width: 36px; height: 36px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: .9rem; flex-shrink: 0;
-}
 .activity-text { font-size: .85rem; }
 .activity-time { font-size: .75rem; color: var(--muted); margin-left: auto; flex-shrink: 0; }
 
@@ -1711,7 +1696,7 @@ body.mode-adhd .adhd-break { display: block; }
 .heat-cell:hover { transform: scale(1.25); z-index: 2; border-color: rgba(201,168,76,0.5); }
 .heat-cell.l1 { background: rgba(201,168,76,0.18); border-color: rgba(201,168,76,0.1); }
 .heat-cell.l2 { background: rgba(201,168,76,0.42); border-color: rgba(201,168,76,0.3); }
-.heat-cell.l3 { background: linear-gradient(135deg,#D4A820,#C9A84C); border-color: rgba(201,168,76,0.6); box-shadow: 0 0 8px rgba(201,168,76,0.3); }
+.heat-cell.l3 { background: linear-gradient(135deg,#D4A820,var(--gold)); border-color: rgba(201,168,76,0.6); box-shadow: 0 0 8px rgba(201,168,76,0.3); }
 .heat-cell.l4 { background: var(--gold); }
 .heat-cell:hover::after {
   content: attr(data-tip);
@@ -1971,7 +1956,6 @@ body.mode-adhd .adhd-break { display: block; }
 body.light .skeleton {
   background: linear-gradient(90deg, rgba(0,0,0,0.03) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.03) 75%);
 }
-@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 .skeleton-msg { height: 60px; margin-bottom: .75rem; border-radius: 12px; }
 .skeleton-msg.short { width: 55%; height: 44px; }
 .skeleton-msg.right { width: 45%; align-self: flex-end; }
@@ -2022,7 +2006,6 @@ body.light .skeleton {
 @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @keyframes bounce { 0%,80%,100% { transform: scale(1); } 40% { transform: scale(1.4); } }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
-@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
 .loading {
   background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
@@ -2039,7 +2022,7 @@ body.light .skeleton {
 .subj-geo { color: #34D399; }
 .subj-comp { color: #A78BFA; }
 .subj-lang { color: #FBBF24; }
-.subj-econ { color: #C9A84C; }
+.subj-econ { color: var(--gold); }
 
 .fw700 { font-weight: 700; }
 .text-gold { color: var(--gold); }
@@ -2604,7 +2587,7 @@ body.light .skeleton {
 .note-tag-btn.selected { background: rgba(201,168,76,0.15); border-color: rgba(201,168,76,0.4); color: var(--gold); }
 .save-note-btn {
   padding: .5rem 1.1rem; border-radius: 10px;
-  background: linear-gradient(135deg,#D4A820,#C9A84C);
+  background: linear-gradient(135deg,#D4A820,var(--gold));
   border: none; color: var(--black);
   font-size: .82rem; font-weight: 700; cursor: pointer;
   transition: all .2s;
@@ -2834,6 +2817,12 @@ body.light .skeleton {
 
   /* ── Footer ── */
   footer > div > div:first-child { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── Comparison table ── */
+  .comparison-table-wrap, table { overflow-x: auto; -webkit-overflow-scrolling: touch; display: block; max-width: 100%; }
+
+  /* ── How it works ── */
+  #how-it-works [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
 }
 
 @media(max-width:480px) {
@@ -2890,7 +2879,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
 .card-header { border-bottom: 1px solid rgba(201,168,76,0.08); }
 .skeleton-block { background: linear-gradient(90deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 100%); background-size: 200% 100%; animation: shimmer 1.5s ease-in-out infinite; border-radius: 10px; }
 #toast { font-weight: 600; letter-spacing: .01em; box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.07) !important; }
-.page-title { background: linear-gradient(135deg, var(--white) 0%, rgba(201,168,76,0.9) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: inline-block; }
+.page-title { background: linear-gradient(135deg, var(--white) 0%, var(--gold) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; display: inline-block; }
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.25); border-radius: 99px; }
@@ -2904,6 +2893,64 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
 /* ═══════════════════════════════════════
    GAME MODE CSS
    ═══════════════════════════════════════ */
+
+/* ── Rank System ── */
+.rank-badge {
+  display: inline-flex; align-items: center; gap: .35rem;
+  font-size: .72rem; font-weight: 800; letter-spacing: .04em;
+  padding: .22rem .65rem; border-radius: 20px;
+  text-transform: uppercase;
+}
+.rank-novice     { background: rgba(148,163,184,0.15); border: 1px solid rgba(148,163,184,0.35); color: #94A3B8; }
+.rank-apprentice { background: rgba(96,165,250,0.15);  border: 1px solid rgba(96,165,250,0.35);  color: #60A5FA; }
+.rank-scholar    { background: rgba(52,211,153,0.15);  border: 1px solid rgba(52,211,153,0.35);  color: #34D399; }
+.rank-elite      { background: rgba(251,191,36,0.15);  border: 1px solid rgba(251,191,36,0.35);  color: #FBBF24; }
+.rank-master     { background: rgba(201,168,76,0.2);   border: 1px solid rgba(201,168,76,0.5);   color: var(--gold); }
+.rank-legend     { background: linear-gradient(135deg,rgba(201,168,76,0.2),rgba(240,208,128,0.15)); border: 1px solid rgba(201,168,76,0.6); color: #F0D080;
+                   box-shadow: 0 0 12px rgba(201,168,76,0.2); }
+
+/* ── Quick Action buttons (game style) ── */
+.qa-btn {
+  display: flex; flex-direction: column; align-items: center; gap: .4rem;
+  padding: .9rem .5rem; border-radius: 14px; cursor: pointer;
+  font-size: .72rem; font-weight: 800; letter-spacing: .02em;
+  transition: all .18s cubic-bezier(.4,0,.2,1); border: 1px solid transparent;
+  position: relative; overflow: hidden;
+}
+.qa-btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(255,255,255,0); transition: background .18s;
+}
+.qa-btn:hover::after { background: rgba(255,255,255,0.04); }
+.qa-btn:hover { transform: translateY(-2px); }
+.qa-btn:active { transform: translateY(0) scale(.97); }
+.qa-icon { font-size: 1.5rem; line-height: 1; }
+
+.qa-tutor    { background: rgba(201,168,76,0.08);  border-color: rgba(201,168,76,0.22);  color: var(--gold); }
+.qa-tutor:hover    { background: rgba(201,168,76,0.14); border-color: rgba(201,168,76,0.4); box-shadow: 0 4px 20px rgba(201,168,76,0.15); }
+.qa-questions{ background: rgba(96,165,250,0.08);  border-color: rgba(96,165,250,0.22);  color: #60A5FA; }
+.qa-questions:hover{ background: rgba(96,165,250,0.14); border-color: rgba(96,165,250,0.4); box-shadow: 0 4px 20px rgba(96,165,250,0.15); }
+.qa-flash    { background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.22); color: #A78BFA; }
+.qa-flash:hover    { background: rgba(167,139,250,0.14); border-color: rgba(167,139,250,0.4); box-shadow: 0 4px 20px rgba(167,139,250,0.15); }
+.qa-blitz    { background: rgba(251,113,133,0.08); border-color: rgba(251,113,133,0.22); color: #FB7185; }
+.qa-blitz:hover    { background: rgba(251,113,133,0.14); border-color: rgba(251,113,133,0.4); box-shadow: 0 4px 20px rgba(251,113,133,0.15); }
+
+/* ── Player HUD ── */
+.player-hud {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  background: rgba(12,14,20,0.7); backdrop-filter: blur(20px);
+  border: 1px solid rgba(201,168,76,0.15); border-radius: 16px;
+  padding: .85rem 1.25rem; margin-bottom: 1.5rem;
+}
+.hud-stat {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .35rem .75rem; border-radius: 10px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  font-size: .82rem;
+}
+.hud-stat-icon { font-size: 1rem; line-height: 1; }
+.hud-stat-val  { font-weight: 800; color: var(--white); }
+.hud-stat-lbl  { font-size: .68rem; color: var(--muted); margin-left: .2rem; }
 @keyframes achUnlock {
   0%   { transform: scale(0.6) rotate(-8deg); opacity: 0; }
   60%  { transform: scale(1.12) rotate(3deg); opacity: 1; }
@@ -2924,12 +2971,360 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
 }
 .ach-card.just-earned { animation: achGoldPulse 1.5s ease-in-out 3; border-color: rgba(201,168,76,0.7) !important; }
 .ach-new-badge { position:absolute; top:5px; right:5px; font-size:.55rem; font-weight:800; color:#000;
-  background:linear-gradient(135deg,#C9A84C,#F0D080); border-radius:20px; padding:2px 6px;
+  background:linear-gradient(135deg,var(--gold),#F0D080); border-radius:20px; padding:2px 6px;
   animation:newBadgePulse 1.2s ease-in-out infinite; letter-spacing:.03em; z-index:1; }
 .ach-progress-bar-wrap { margin-top:.45rem; height:3px; background:rgba(255,255,255,0.08); border-radius:99px; overflow:hidden; }
-.ach-progress-bar-fill { height:100%; background:linear-gradient(90deg,#C9A84C,#F0D080); border-radius:99px; transition:width .6s ease; }
+.ach-progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--gold),#F0D080); border-radius:99px; transition:width .6s ease; }
 .ach-progress-label { font-size:.58rem; color:rgba(136,146,164,0.65); margin-top:.2rem; }
 .quest-row-done { animation: questComplete .35s ease; }
+
+/* ═══════════════════════════════════════
+   FUTURISTIC GAME THEME
+═══════════════════════════════════════ */
+
+/* ── Global scanline + grid overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.018) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.06) 2px,
+    rgba(0,0,0,0.06) 4px
+  );
+}
+
+/* ── Nav ── */
+#nav {
+  background: rgba(3,5,13,0.92) !important;
+  border-bottom: 1px solid rgba(0,212,255,0.2) !important;
+  box-shadow: 0 1px 0 rgba(0,212,255,0.08), 0 4px 32px rgba(0,0,0,0.8) !important;
+}
+.nav-logo {
+  background: linear-gradient(135deg, #00D4FF 0%, #7B40FF 60%, #00FF9D 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+#xp-badge {
+  background: rgba(0,212,255,0.08) !important;
+  border-color: rgba(0,212,255,0.4) !important;
+  color: #00D4FF !important;
+  box-shadow: 0 0 12px rgba(0,212,255,0.15) !important;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  background: rgba(3,5,13,0.97) !important;
+  border-right: 1px solid rgba(0,212,255,0.12) !important;
+}
+.sidebar-user {
+  border-bottom-color: rgba(0,212,255,0.1) !important;
+}
+.avatar {
+  background: linear-gradient(135deg, #00D4FF, #7B40FF) !important;
+  box-shadow: 0 0 20px rgba(0,212,255,0.3) !important;
+}
+.sidebar-xp {
+  background: rgba(0,212,255,0.04) !important;
+  border-color: rgba(0,212,255,0.2) !important;
+}
+.xp-level { color: #00D4FF !important; }
+.xp-bar { background: rgba(0,212,255,0.08) !important; }
+.xp-fill {
+  background: linear-gradient(90deg, #00D4FF, #7B40FF, #00FF9D) !important;
+  box-shadow: 0 0 10px rgba(0,212,255,0.5) !important;
+  animation: shimmer 3s linear infinite, neonPulse 2s ease-in-out infinite alternate !important;
+}
+@keyframes neonPulse {
+  0%   { box-shadow: 0 0 6px rgba(0,212,255,0.6); }
+  100% { box-shadow: 0 0 20px rgba(0,212,255,1), 0 0 40px rgba(0,212,255,0.4); }
+}
+.sidebar-item {
+  color: rgba(90,116,153,0.9) !important;
+  letter-spacing: .01em;
+}
+.sidebar-item:hover {
+  background: rgba(0,212,255,0.06) !important;
+  color: #00D4FF !important;
+  border-left: 2px solid rgba(0,212,255,0.5);
+}
+.sidebar-item.active {
+  background: rgba(0,212,255,0.08) !important;
+  color: #00D4FF !important;
+  border: 1px solid rgba(0,212,255,0.3) !important;
+  box-shadow: inset 2px 0 0 #00D4FF, 0 0 20px rgba(0,212,255,0.08) !important;
+}
+.sidebar-section-label {
+  color: rgba(0,212,255,0.35) !important;
+  letter-spacing: .15em !important;
+}
+#sb-today-stats > div {
+  border-color: rgba(0,212,255,0.12) !important;
+  background: rgba(0,212,255,0.03) !important;
+}
+#sb-streak-val { color: #00D4FF !important; }
+
+/* ── Cards ── */
+.card {
+  background: rgba(8,12,24,0.9) !important;
+  border-color: rgba(0,212,255,0.12) !important;
+}
+.card:hover {
+  border-color: rgba(0,212,255,0.35) !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,212,255,0.1), 0 0 30px rgba(0,212,255,0.06) !important;
+}
+.card-header { border-bottom-color: rgba(0,212,255,0.08) !important; }
+
+/* ── Stat cards ── */
+.stat-card {
+  background: rgba(5,8,20,0.9) !important;
+  border-color: rgba(0,212,255,0.1) !important;
+}
+.stat-card:hover {
+  border-color: rgba(0,212,255,0.3) !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 24px rgba(0,212,255,0.06) !important;
+}
+.stat-card::before {
+  background: linear-gradient(90deg, transparent, #00D4FF, transparent) !important;
+}
+.stat-card-value {
+  background: linear-gradient(135deg, #E8F0FF 0%, #00D4FF 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* ── Buttons ── */
+.btn-gold {
+  background: linear-gradient(135deg, #00D4FF, #7B40FF) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 4px 20px rgba(0,212,255,0.25) !important;
+}
+.btn-gold:hover {
+  background: linear-gradient(135deg, #33DEFF, #9A60FF) !important;
+  box-shadow: 0 6px 28px rgba(0,212,255,0.4), 0 0 0 1px rgba(0,212,255,0.3) !important;
+  transform: translateY(-1px) !important;
+}
+.btn-outline {
+  border-color: rgba(0,212,255,0.35) !important;
+  color: #00D4FF !important;
+}
+.btn-outline:hover {
+  border-color: #00D4FF !important;
+  color: #00D4FF !important;
+  box-shadow: 0 0 16px rgba(0,212,255,0.2) !important;
+  background: rgba(0,212,255,0.06) !important;
+}
+.btn-hero-primary {
+  background: linear-gradient(135deg, #00D4FF 0%, #7B40FF 100%) !important;
+  box-shadow: 0 8px 32px rgba(0,212,255,0.3), 0 0 0 1px rgba(0,212,255,0.2) !important;
+}
+.btn-hero-primary:hover {
+  box-shadow: 0 12px 40px rgba(0,212,255,0.45), 0 0 60px rgba(0,212,255,0.15) !important;
+}
+
+/* ── Quick Action buttons ── */
+.qa-tutor     { background: rgba(0,212,255,0.07)  !important; border-color: rgba(0,212,255,0.25)  !important; color: #00D4FF !important; }
+.qa-tutor:hover     { background: rgba(0,212,255,0.14) !important; border-color: rgba(0,212,255,0.5) !important; box-shadow: 0 4px 20px rgba(0,212,255,0.2) !important; }
+.qa-questions { background: rgba(123,64,255,0.07) !important; border-color: rgba(123,64,255,0.25) !important; color: #B060FF !important; }
+.qa-questions:hover { background: rgba(123,64,255,0.14) !important; border-color: rgba(123,64,255,0.5) !important; box-shadow: 0 4px 20px rgba(123,64,255,0.2) !important; }
+.qa-flash     { background: rgba(0,255,157,0.06)  !important; border-color: rgba(0,255,157,0.22)  !important; color: #00FF9D !important; }
+.qa-flash:hover     { background: rgba(0,255,157,0.12) !important; border-color: rgba(0,255,157,0.4) !important; box-shadow: 0 4px 20px rgba(0,255,157,0.15) !important; }
+.qa-blitz     { background: rgba(255,64,96,0.07)  !important; border-color: rgba(255,64,96,0.25)  !important; color: #FF4060 !important; }
+.qa-blitz:hover     { background: rgba(255,64,96,0.14) !important; border-color: rgba(255,64,96,0.5) !important; box-shadow: 0 4px 20px rgba(255,64,96,0.2) !important; }
+
+/* ── Player HUD ── */
+.player-hud {
+  background: rgba(3,5,13,0.8) !important;
+  border-color: rgba(0,212,255,0.18) !important;
+  box-shadow: 0 0 30px rgba(0,212,255,0.05), inset 0 1px 0 rgba(0,212,255,0.08) !important;
+}
+.hud-stat {
+  background: rgba(0,212,255,0.04) !important;
+  border-color: rgba(0,212,255,0.1) !important;
+}
+.hud-stat-val { color: #00D4FF !important; }
+#hud-xp-bar {
+  background: linear-gradient(90deg, #00D4FF, #7B40FF) !important;
+  box-shadow: 0 0 8px rgba(0,212,255,0.6) !important;
+}
+
+/* ── Rank badges ── */
+.rank-novice     { background: rgba(90,116,153,0.15) !important; border-color: rgba(90,116,153,0.4) !important; color: #7A96BA !important; }
+.rank-apprentice { background: rgba(0,212,255,0.1)   !important; border-color: rgba(0,212,255,0.4)  !important; color: #00D4FF !important; }
+.rank-scholar    { background: rgba(0,255,157,0.1)   !important; border-color: rgba(0,255,157,0.4)  !important; color: #00FF9D !important; }
+.rank-elite      { background: rgba(255,140,0,0.12)  !important; border-color: rgba(255,140,0,0.4)  !important; color: #FF8C00 !important; }
+.rank-master     { background: rgba(123,64,255,0.12) !important; border-color: rgba(123,64,255,0.5) !important; color: #B060FF !important; }
+.rank-legend     { background: linear-gradient(135deg,rgba(0,212,255,0.15),rgba(123,64,255,0.15)) !important;
+                   border-color: rgba(0,212,255,0.6) !important; color: #00D4FF !important;
+                   box-shadow: 0 0 16px rgba(0,212,255,0.25) !important; }
+
+/* ── XP popup ── */
+#xp-popup {
+  background: rgba(3,5,13,0.97) !important;
+  border-color: rgba(0,212,255,0.5) !important;
+  color: #00D4FF !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 24px rgba(0,212,255,0.2) !important;
+}
+#xp-popup::before { content: '⚡' !important; }
+
+/* ── Daily/Quests cards ── */
+#daily-challenge-card {
+  background: linear-gradient(135deg,rgba(0,212,255,0.08),rgba(0,212,255,0.02)) !important;
+  border-color: rgba(0,212,255,0.28) !important;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.4), 0 0 20px rgba(0,212,255,0.05) !important;
+}
+#daily-quests-card {
+  background: linear-gradient(135deg,rgba(123,64,255,0.08),rgba(123,64,255,0.02)) !important;
+  border-color: rgba(123,64,255,0.25) !important;
+}
+#exam-countdown-card {
+  background: linear-gradient(135deg,rgba(0,255,157,0.07),rgba(0,255,157,0.02)) !important;
+  border-color: rgba(0,255,157,0.22) !important;
+}
+#predicted-grade-card {
+  background: linear-gradient(135deg,rgba(123,64,255,0.1),rgba(123,64,255,0.03)) !important;
+  border-color: rgba(123,64,255,0.28) !important;
+}
+
+/* ── Dashboard search ── */
+#dash-search {
+  background: rgba(0,212,255,0.03) !important;
+  border-color: rgba(0,212,255,0.15) !important;
+  color: var(--white) !important;
+}
+#dash-search:focus {
+  border-color: rgba(0,212,255,0.5) !important;
+  box-shadow: 0 0 0 3px rgba(0,212,255,0.08) !important;
+}
+
+/* ── Page title gradient ── */
+.page-title {
+  background: linear-gradient(135deg, #E8F0FF 0%, #00D4FF 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* ── Glitch animation on logo hover ── */
+@keyframes glitch {
+  0%,100% { clip-path: inset(0 0 100% 0); transform: translateX(0); }
+  20% { clip-path: inset(20% 0 60% 0); transform: translateX(-3px); }
+  40% { clip-path: inset(50% 0 30% 0); transform: translateX(3px); }
+  60% { clip-path: inset(70% 0 10% 0); transform: translateX(-2px); }
+  80% { clip-path: inset(5% 0 85% 0);  transform: translateX(2px); }
+}
+@keyframes scanline {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+/* ── Neon glow on achievement cards ── */
+.ach-card.earned {
+  border-color: rgba(0,255,157,0.3) !important;
+  box-shadow: 0 0 16px rgba(0,255,157,0.08) !important;
+}
+.ach-card.just-earned {
+  border-color: rgba(0,212,255,0.7) !important;
+  box-shadow: 0 0 30px rgba(0,212,255,0.2) !important;
+  animation: achGoldPulse 1.5s ease-in-out 3 !important;
+}
+
+/* ── Stat bar top accent colors ── */
+.stat-card[style*="rgba(96,165,250"] { border-top-color: #00D4FF !important; }
+.stat-card[style*="rgba(74,222,128"] { border-top-color: #00FF9D !important; }
+.stat-card[style*="rgba(251,191,36"] { border-top-color: #FF8C00 !important; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.3) !important; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,212,255,0.5) !important; }
+
+/* ── Input focus rings ── */
+input:focus, textarea:focus, select:focus {
+  border-color: rgba(0,212,255,0.5) !important;
+  box-shadow: 0 0 0 3px rgba(0,212,255,0.08), 0 0 12px rgba(0,212,255,0.1) !important;
+  outline: none !important;
+}
+
+/* ── Toast ── */
+#toast {
+  background: rgba(3,5,13,0.97) !important;
+  border: 1px solid rgba(0,212,255,0.3) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(0,212,255,0.1) !important;
+}
+
+/* ── Landing page hero ── */
+.hero-badge {
+  background: rgba(0,212,255,0.08) !important;
+  border-color: rgba(0,212,255,0.3) !important;
+  color: #00D4FF !important;
+}
+.orb-1 { background: radial-gradient(circle, #7B40FF 0%, transparent 70%) !important; opacity:.18 !important; }
+.orb-2 { background: radial-gradient(circle, #00D4FF 0%, transparent 70%) !important; opacity:.14 !important; }
+.orb-3 { background: radial-gradient(circle, #00FF9D 0%, transparent 70%) !important; opacity:.10 !important; }
+
+/* ── Section labels ── */
+.section-label {
+  color: #00D4FF !important;
+  border-color: rgba(0,212,255,0.2) !important;
+}
+
+/* ── Feature cards ── */
+.feature-card {
+  border-color: rgba(0,212,255,0.1) !important;
+  background: rgba(5,8,20,0.85) !important;
+}
+.feature-card:hover {
+  border-color: rgba(0,212,255,0.3) !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 24px rgba(0,212,255,0.08) !important;
+}
+.feature-icon {
+  border-color: rgba(0,212,255,0.2) !important;
+  box-shadow: 0 0 20px rgba(0,212,255,0.1) !important;
+}
+
+/* ── Peer presence bar ── */
+#peer-presence-bar {
+  background: rgba(0,212,255,0.03) !important;
+  border-color: rgba(0,212,255,0.1) !important;
+}
+
+/* ── Daily tip bar ── */
+#daily-tip-bar {
+  background: rgba(0,212,255,0.05) !important;
+  border-color: rgba(0,212,255,0.18) !important;
+}
+
+/* ── Form elements ── */
+.form-input, .form-select {
+  background: rgba(0,212,255,0.04) !important;
+  border-color: rgba(0,212,255,0.15) !important;
+}
+
+/* ── Auth box ── */
+.auth-box {
+  border-color: rgba(0,212,255,0.2) !important;
+  background: rgba(3,5,13,0.95) !important;
+}
+
+/* ── Mobile nav ── */
+#mobile-nav {
+  background: rgba(3,5,13,0.97) !important;
+  border-top: 1px solid rgba(0,212,255,0.15) !important;
+}
+.mobile-nav-item.active { color: #00D4FF !important; }
+.mobile-nav-item.active i { color: #00D4FF !important; }
 </style>
 </head>
 <body>
@@ -3084,7 +3479,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
   <!-- Features -->
   <section class="features-section" id="features">
     <div class="section-label" style="display:block;text-align:center;margin-bottom:1rem">What's inside</div>
-    <h2>Everything you need to<br><span style="background:linear-gradient(135deg,#C9A84C 0%,#F0D080 50%,#C9A84C 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 5s linear infinite">ace A-Level Maths</span></h2>
+    <h2>Everything you need to<br><span style="background:linear-gradient(135deg,var(--gold) 0%,#F0D080 50%,var(--gold) 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 5s linear infinite">ace A-Level Maths</span></h2>
     <p class="sub">From Pure 1 to Mechanics — Synaptiq covers every topic, every exam board, every mark scheme.</p>
     <div class="features-grid">
       <div class="feature-card" onclick="nav('auth');showSignup()">
@@ -3188,10 +3583,11 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
   <div style="text-align:center;padding:2rem;border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.01)">
     <p style="color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1.1rem">Fully aligned to UK A-Level exam boards</p>
     <div style="display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap;align-items:center">
-      <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:.5rem 1.4rem;font-weight:700;font-size:1rem;letter-spacing:.05em">AQA</span>
-      <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:.5rem 1.4rem;font-weight:700;font-size:1rem;letter-spacing:.05em">Edexcel</span>
-      <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:.5rem 1.4rem;font-weight:700;font-size:1rem;letter-spacing:.05em">OCR</span>
-      <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:.5rem 1.4rem;font-weight:700;font-size:1rem;letter-spacing:.05em">WJEC</span>
+      <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.03em">AQA</span>
+      <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.03em">Edexcel</span>
+      <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.03em">OCR</span>
+      <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.03em">WJEC</span>
+      <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.5rem 1.4rem;font-weight:800;font-size:.95rem;letter-spacing:.03em">OCR MEI</span>
     </div>
   </div>
 
@@ -3369,10 +3765,10 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
         <div style="font-size:.78rem;color:rgba(136,146,164,0.7);line-height:1.65">Static content · No personalisation · Can't answer questions</div>
       </div>
       <div style="padding:1.75rem;background:rgba(201,168,76,0.07);border:1.5px solid rgba(201,168,76,0.3);border-radius:18px;position:relative;box-shadow:0 0 40px rgba(201,168,76,0.1),inset 0 1px 0 rgba(255,255,255,0.05)">
-        <div style="position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#D4A820,#C9A84C);color:var(--black);font-size:.65rem;font-weight:800;letter-spacing:.12em;padding:.3rem 1rem;border-radius:20px;white-space:nowrap;box-shadow:0 4px 12px rgba(201,168,76,0.4)">BEST VALUE</div>
+        <div style="position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#D4A820,var(--gold));color:var(--black);font-size:.65rem;font-weight:800;letter-spacing:.12em;padding:.3rem 1rem;border-radius:20px;white-space:nowrap;box-shadow:0 4px 12px rgba(201,168,76,0.4)">BEST VALUE</div>
         <div style="font-size:2.2rem;margin-bottom:.75rem">🤖</div>
         <div style="font-size:1rem;font-weight:700;margin-bottom:.5rem">Synaptiq</div>
-        <div style="font-size:2.2rem;font-weight:900;font-family:var(--font-head);background:linear-gradient(135deg,#C9A84C,#F0D080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">£35</div>
+        <div style="font-size:2.2rem;font-weight:900;font-family:var(--font-head);background:linear-gradient(135deg,var(--gold),#F0D080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">£35</div>
         <div style="color:var(--muted);font-size:.82rem;margin-bottom:.25rem">per month · just £1.17/day</div>
         <div style="font-size:.72rem;color:rgba(74,222,128,0.8);font-weight:600;margin-bottom:.65rem">= the cost of 1 private tutor hour</div>
         <div style="font-size:.78rem;color:rgba(136,146,164,0.7);line-height:1.65">Unlimited sessions · 24/7 · Personalised to your board</div>
@@ -3555,7 +3951,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
   <!-- CTA -->
   <section class="cta-section">
     <div style="display:inline-block;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:20px;padding:.3rem .9rem;font-size:.75rem;font-weight:700;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.25rem">🎓 Free trial — no charge for 7 days</div>
-    <h2>Stop losing marks.<br><em style="font-style:normal;background:linear-gradient(135deg,#C9A84C 0%,#F0D080 50%,#C9A84C 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 5s linear infinite">Start understanding the method.</em></h2>
+    <h2>Stop losing marks.<br><em style="font-style:normal;background:linear-gradient(135deg,var(--gold) 0%,#F0D080 50%,var(--gold) 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 5s linear infinite">Start understanding the method.</em></h2>
     <p>2,400+ students have already improved by an average of +2 grades. The free trial takes 30 seconds to start.</p>
     <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:1rem">
       <button class="btn-hero-primary" onclick="nav('auth');trackEvent('cta_clicked',{location:'footer_cta'})">Start Your Free Trial →</button>
@@ -3816,9 +4212,12 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
       </div>
     </div>
     <div class="sidebar-xp">
-      <div class="xp-header">
-        <span class="xp-level" id="xp-level-text">Level 1</span>
-        <span style="color:var(--muted);font-size:.75rem" id="xp-progress-text">0 / 200 XP</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span class="xp-level" id="xp-level-text">Level 1</span>
+          <span class="rank-badge rank-novice" id="sb-rank-badge">Novice</span>
+        </div>
+        <span style="color:var(--muted);font-size:.75rem" id="xp-progress-text">0 / 500 XP</span>
       </div>
       <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
     </div>
@@ -3894,13 +4293,38 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
         <input id="dash-search" type="text" placeholder="🔍 Search topics, chapters, formulas..." style="width:100%;background:rgba(255,255,255,0.04);border:1.5px solid rgba(201,168,76,0.15);border-radius:14px;padding:.85rem 1.1rem;color:var(--white);font-size:.9rem;box-sizing:border-box;backdrop-filter:blur(8px);transition:all .2s;outline:none" oninput="searchDash(this.value)">
         <div id="search-results" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:rgba(10,12,18,0.97);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(201,168,76,0.2);border-radius:14px;z-index:500;max-height:280px;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.6),0 0 0 1px rgba(201,168,76,0.05)"></div>
       </div>
-      <p class="page-subtitle" style="margin-top:0">Here's your learning overview</p>
+      <!-- Player HUD -->
+      <div class="player-hud" id="player-hud">
+        <div class="hud-stat">
+          <span class="hud-stat-icon">⚡</span>
+          <span class="hud-stat-val" id="hud-level">1</span>
+          <span class="hud-stat-lbl">Level</span>
+        </div>
+        <span class="rank-badge rank-novice" id="hud-rank-badge" style="font-size:.78rem;padding:.28rem .8rem">Novice</span>
+        <div class="hud-stat" style="flex:1;min-width:120px">
+          <span class="hud-stat-icon">✨</span>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;margin-bottom:.3rem">
+              <span class="hud-stat-val" id="hud-xp-text">0 XP</span>
+              <span style="font-size:.68rem;color:var(--muted)" id="hud-xp-next">/ 500</span>
+            </div>
+            <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden">
+              <div id="hud-xp-bar" style="height:100%;background:linear-gradient(90deg,var(--gold),#F0D080);border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1);width:0%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="hud-stat">
+          <span class="hud-stat-icon">🔥</span>
+          <span class="hud-stat-val" id="hud-streak">1</span>
+          <span class="hud-stat-lbl">day streak</span>
+        </div>
+      </div>
       <!-- Quick Actions row -->
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1.5rem" id="home-quick-actions">
-        <button onclick="showDash('tutor')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">🤖</span>AI Tutor</button>
-        <button onclick="showDash('questions')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">📝</span>Questions</button>
-        <button onclick="showDash('flashcards')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">🃏</span>Flashcards</button>
-        <button onclick="showDash('blitz')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">⚡</span>Blitz</button>
+        <button onclick="showDash('tutor')" class="qa-btn qa-tutor"><span class="qa-icon">🤖</span>AI Tutor</button>
+        <button onclick="showDash('questions')" class="qa-btn qa-questions"><span class="qa-icon">📝</span>Questions</button>
+        <button onclick="showDash('flashcards')" class="qa-btn qa-flash"><span class="qa-icon">🃏</span>Flashcards</button>
+        <button onclick="showDash('blitz')" class="qa-btn qa-blitz"><span class="qa-icon">⚡</span>Blitz</button>
       </div>
       <!-- Peer Study Presence -->
       <div id="peer-presence-bar" style="background:rgba(12,14,20,0.7);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:.6rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;font-size:.8rem">
@@ -3918,7 +4342,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
         <button id="continue-btn" class="btn btn-gold" style="font-size:.8rem;padding:.45rem 1rem;white-space:nowrap" onclick="continueLastSession()">Resume →</button>
       </div>
       <!-- Predicted Grade Card -->
-      <div id="predicted-grade-card" style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(139,92,246,0.04));border:1px solid rgba(139,92,246,0.28);border-radius:18px;padding:1rem 1.5rem;margin-bottom:1.25rem;backdrop-filter:blur(20px);display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap">
+      <div id="predicted-grade-card" style="background:linear-gradient(135deg,rgba(139,92,246,0.12),rgba(139,92,246,0.04));border:1px solid rgba(139,92,246,0.28);border-radius:16px;padding:1rem 1.5rem;margin-bottom:1.25rem;backdrop-filter:blur(20px);display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap">
         <div style="font-size:2rem">🎯</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:.7rem;font-weight:700;color:#a78bfa;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.15rem">Your Predicted Grade</div>
@@ -3930,12 +4354,15 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
         <button class="btn" style="font-size:.8rem;padding:.45rem 1rem;border-color:rgba(139,92,246,0.4);color:#a78bfa;background:rgba(139,92,246,0.08);white-space:nowrap" onclick="showDash('predict')">Full Prediction →</button>
       </div>
       <!-- Daily Challenge Card -->
-      <div id="daily-challenge-card" class="daily-challenge-glow" style="background:linear-gradient(135deg,rgba(96,165,250,0.12),rgba(96,165,250,0.04));border:1px solid rgba(96,165,250,0.28);border-radius:18px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 32px rgba(0,0,0,0.3)">
+      <div id="daily-challenge-card" class="daily-challenge-glow" style="background:linear-gradient(135deg,rgba(96,165,250,0.12),rgba(96,165,250,0.04));border:1px solid rgba(96,165,250,0.28);border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 32px rgba(0,0,0,0.3)">
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
           <div style="display:flex;align-items:center;gap:1rem">
             <div style="font-size:2rem">⚡</div>
             <div>
-              <div style="font-weight:700;font-size:1rem;color:var(--white)">Daily Challenge</div>
+              <div style="display:flex;align-items:center;gap:.6rem">
+                <span style="font-weight:700;font-size:1rem;color:var(--white)">Daily Challenge</span>
+                <span style="font-size:.68rem;font-weight:800;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);border-radius:12px;padding:.15rem .5rem;color:var(--gold)">+50 XP</span>
+              </div>
               <div style="font-size:.85rem;color:var(--muted)" id="dc-subtitle">5 quick questions · Under 5 minutes</div>
             </div>
           </div>
@@ -3961,7 +4388,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
         </div>
       </div>
       <!-- Daily Quests Card -->
-      <div id="daily-quests-card" style="background:linear-gradient(135deg,rgba(167,139,250,0.1),rgba(167,139,250,0.04));border:1px solid rgba(167,139,250,0.28);border-radius:18px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)">
+      <div id="daily-quests-card" style="background:linear-gradient(135deg,rgba(96,165,250,0.08),rgba(96,165,250,0.03));border:1px solid rgba(96,165,250,0.22);border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)">
         <div style="color:var(--muted);font-size:.875rem;text-align:center;padding:.5rem 0">⚔️ Loading quests...</div>
       </div>
       <!-- Daily tip banner -->
@@ -3974,13 +4401,41 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
         <button onclick="this.closest('#daily-tip-bar').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;margin-left:auto;flex-shrink:0;padding:0;line-height:1">×</button>
       </div>
       <div class="stats-row">
-        <div class="stat-card"><div class="stat-card-label">Questions Answered</div><div class="stat-card-value" id="stat-q">0</div><div class="stat-card-change">↑ Start today!</div></div>
-        <div class="stat-card"><div class="stat-card-label">Accuracy Rate</div><div class="stat-card-value" id="stat-acc">—</div><div class="stat-card-change">Answer questions to track</div></div>
-        <div class="stat-card"><div class="stat-card-label">Study Streak</div><div class="stat-card-value" id="stat-streak">1 🔥</div><div class="stat-card-change">Keep it going!</div></div>
-        <div class="stat-card"><div class="stat-card-label">Topics Explored</div><div class="stat-card-value" id="stat-topics">0</div><div class="stat-card-change">of 180 A-Level topics</div></div>
+        <div class="stat-card" style="border-top:2px solid rgba(96,165,250,0.5)">
+          <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem">
+            <span style="font-size:1.2rem">📝</span>
+            <div class="stat-card-label" style="margin-bottom:0">Questions Answered</div>
+          </div>
+          <div class="stat-card-value" id="stat-q">0</div>
+          <div class="stat-card-change">↑ Keep practising!</div>
+        </div>
+        <div class="stat-card" style="border-top:2px solid rgba(74,222,128,0.5)">
+          <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem">
+            <span style="font-size:1.2rem">🎯</span>
+            <div class="stat-card-label" style="margin-bottom:0">Accuracy Rate</div>
+          </div>
+          <div class="stat-card-value" id="stat-acc">—</div>
+          <div class="stat-card-change">Answer questions to track</div>
+        </div>
+        <div class="stat-card" style="border-top:2px solid rgba(251,191,36,0.5)">
+          <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem">
+            <span style="font-size:1.2rem">🔥</span>
+            <div class="stat-card-label" style="margin-bottom:0">Study Streak</div>
+          </div>
+          <div class="stat-card-value" id="stat-streak">1 🔥</div>
+          <div class="stat-card-change">Keep it going!</div>
+        </div>
+        <div class="stat-card" style="border-top:2px solid rgba(201,168,76,0.5)">
+          <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem">
+            <span style="font-size:1.2rem">🗺️</span>
+            <div class="stat-card-label" style="margin-bottom:0">Topics Explored</div>
+          </div>
+          <div class="stat-card-value" id="stat-topics">0</div>
+          <div class="stat-card-change">of 180 A-Level topics</div>
+        </div>
       </div>
       <!-- Exam Countdown -->
-      <div id="exam-countdown-card" style="background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.03));border:1px solid rgba(201,168,76,0.28);border-radius:18px;padding:1.35rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 32px rgba(0,0,0,0.25),0 0 0 1px rgba(201,168,76,0.05)">
+      <div id="exam-countdown-card" style="background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.03));border:1px solid rgba(201,168,76,0.28);border-radius:16px;padding:1.35rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 32px rgba(0,0,0,0.25),0 0 0 1px rgba(201,168,76,0.05)">
         <div style="display:flex;align-items:center;gap:1rem">
           <div style="font-size:2rem">🎯</div>
           <div>
@@ -4894,7 +5349,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
           <line x1="38" y1="32" x2="76" y2="32" stroke="#8B899C" stroke-width="1.4" stroke-linecap="round"/>
           <line x1="38" y1="40" x2="68" y2="40" stroke="#8B899C" stroke-width="1.4" stroke-linecap="round"/>
           <!-- Pencil -->
-          <rect x="84" y="28" width="8" height="32" rx="2" fill="#C9A84C" transform="rotate(-30 88 44)"/>
+          <rect x="84" y="28" width="8" height="32" rx="2" fill="var(--gold)" transform="rotate(-30 88 44)"/>
           <polygon points="84,54 88,62 92,54" fill="#F0EEF8" transform="rotate(-30 88 44)"/>
         </svg>
       </div>
@@ -5461,7 +5916,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
           <div class="grade-dial">
             <svg width="180" height="90" viewBox="0 0 180 90">
               <path d="M 20 90 A 70 70 0 0 1 160 90" class="grade-arc-bg"/>
-              <path id="grade-arc" d="M 20 90 A 70 70 0 0 1 160 90" class="grade-arc-fill" stroke="#C9A84C" stroke-dasharray="0 220"/>
+              <path id="grade-arc" d="M 20 90 A 70 70 0 0 1 160 90" class="grade-arc-fill" stroke="var(--gold)" stroke-dasharray="0 220"/>
             </svg>
           </div>
           <div class="predicted-grade-text" id="predicted-grade">—</div>
@@ -5608,7 +6063,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
               stroke-dasharray="597" stroke-dashoffset="0" stroke-linecap="round" style="transition:stroke-dashoffset 1s linear,stroke .3s"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-            <div style="font-family:var(--font-head);font-size:3rem;font-weight:900;background:linear-gradient(135deg,#F5F2EC,#C9A84C);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;letter-spacing:-.03em;text-shadow:none" id="pom-display">25:00</div>
+            <div style="font-family:var(--font-head);font-size:3rem;font-weight:900;background:linear-gradient(135deg,#F5F2EC,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;letter-spacing:-.03em;text-shadow:none" id="pom-display">25:00</div>
             <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem;text-transform:uppercase;letter-spacing:.07em;font-weight:600" id="pom-label">Ready to focus</div>
           </div>
         </div>
@@ -5891,7 +6346,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
               <span id="checklist-pct">0%</span>
             </div>
             <div style="background:rgba(255,255,255,0.05);border-radius:99px;height:10px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.3)">
-              <div id="checklist-bar" style="height:100%;background:linear-gradient(90deg,#D4A820,#C9A84C,#F0D080);border-radius:99px;width:0%;transition:width .6s cubic-bezier(.4,0,.2,1);box-shadow:0 0 12px rgba(201,168,76,0.4)"></div>
+              <div id="checklist-bar" style="height:100%;background:linear-gradient(90deg,#D4A820,var(--gold),#F0D080);border-radius:99px;width:0%;transition:width .6s cubic-bezier(.4,0,.2,1);box-shadow:0 0 12px rgba(201,168,76,0.4)"></div>
             </div>
           </div>
           <button class="btn btn-outline" style="font-size:.8rem;padding:.4rem .9rem" onclick="resetChecklist()">↺ Reset</button>
@@ -5955,7 +6410,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
         </div>
 
         <div id="blitz-results" style="display:none;text-align:center;padding:2rem">
-          <div id="blitz-result-score" style="font-size:3.5rem;font-weight:900;background:linear-gradient(135deg,#F5D660,#C9A84C,#E8A820);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem;font-family:var(--font-head)"></div>
+          <div id="blitz-result-score" style="font-size:3.5rem;font-weight:900;background:linear-gradient(135deg,#F5D660,var(--gold),#E8A820);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem;font-family:var(--font-head)"></div>
           <div id="blitz-result-msg" style="font-size:1rem;color:var(--muted);margin-bottom:1.5rem"></div>
           <div id="blitz-result-breakdown" style="text-align:left;margin-bottom:1.5rem"></div>
           <div id="blitz-study-links" style="display:none;background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;margin-bottom:1.25rem;text-align:left">
@@ -8412,9 +8867,11 @@ function updateDashboardStats() {
     if (qEl)  { const _pv = parseInt(qEl.dataset.prev || qEl.textContent) || 0; const _nv = s.questionsAnswered || 0; qEl.dataset.prev = _nv; _animateCounter(qEl, _pv, _nv, 700); }
     if (topEl){ const _pv = parseInt(topEl.dataset.prev || topEl.textContent) || 0; const _nv = (s.topicsExplored || []).length; topEl.dataset.prev = _nv; _animateCounter(topEl, _pv, _nv, 700); }
     if (streakEl) streakEl.textContent = (s.streak || 1) + ' 🔥';
-    // Update sidebar streak
+    // Update sidebar + HUD streak
     const sbStreak = document.getElementById('sb-streak-val');
     if (sbStreak) sbStreak.textContent = (s.streak || 1) + ' 🔥';
+    const hudStreak = document.getElementById('hud-streak');
+    if (hudStreak) hudStreak.textContent = s.streak || 1;
     // Progress page stats
     const ppQ      = document.getElementById('pp-stat-q');
     const ppTop    = document.getElementById('pp-stat-topics');
@@ -10596,6 +11053,13 @@ function addXP(amount, msg) {
     clearTimeout(popup._t);
     popup._t = setTimeout(() => popup.classList.remove('show'), 2200);
   }
+  // Sound + floating XP (uses _sfx and _floatXP defined in GAME FEEL block below)
+  if (amount > 0 && typeof _sfx !== 'undefined') _sfx.xp();
+  if (amount > 0 && typeof _floatXP !== 'undefined') {
+    // Float from XP badge position in nav
+    const badge = document.getElementById('xp-display');
+    if (badge) { const r = badge.getBoundingClientRect(); _floatXP(amount, r.left, r.top + 10); }
+  }
   _checkXPMilestones(state.xp);
 }
 
@@ -10611,13 +11075,14 @@ function _showLevelUp(level) {
                 padding:2.5rem 3rem;text-align:center;
                 box-shadow:0 0 80px rgba(201,168,76,0.3),0 32px 80px rgba(0,0,0,0.7);
                 animation:authBoxIn .5s cubic-bezier(0.34,1.4,0.64,1) both">
-      <div style="font-size:3rem;line-height:1;margin-bottom:.75rem">🎉</div>
-      <div style="font-family:var(--font-head);font-size:1.8rem;font-weight:900;
-                  background:linear-gradient(135deg,#C9A84C,#F0D080,#C9A84C);
+      <div style="font-size:3.5rem;line-height:1;margin-bottom:.75rem">🏆</div>
+      <div style="font-family:var(--font-head);font-size:2rem;font-weight:900;
+                  background:linear-gradient(135deg,var(--gold),#F0D080,var(--gold));
                   background-size:200% auto;-webkit-background-clip:text;
                   -webkit-text-fill-color:transparent;background-clip:text;
                   animation:shimmer 2s linear infinite">Level ${level}!</div>
-      <div style="color:rgba(136,146,164,0.8);font-size:.9rem;margin-top:.4rem">
+      ${(function(){const r=typeof _getRank==='function'?_getRank(level):{name:'',cls:''};return r.name?`<span class="rank-badge ${r.cls}" style="margin:.5rem auto;display:inline-flex">${r.name}</span>`:'';})()}
+      <div style="color:rgba(136,146,164,0.8);font-size:.9rem;margin-top:.5rem">
         You've levelled up — keep going! 🚀
       </div>
     </div>
@@ -10629,15 +11094,45 @@ function _showLevelUp(level) {
     setTimeout(() => el.remove(), 400);
   }, 2500);
   _launchConfetti();
+  if (typeof _sfx !== 'undefined') _sfx.levelUp();
   showToast(`🎉 Level Up! You're now Level ${level}!`);
 }
 
+const RANK_TIERS = [
+  { min:1,  max:4,  name:'Novice',     cls:'rank-novice'     },
+  { min:5,  max:9,  name:'Apprentice', cls:'rank-apprentice' },
+  { min:10, max:19, name:'Scholar',    cls:'rank-scholar'    },
+  { min:20, max:34, name:'Elite',      cls:'rank-elite'      },
+  { min:35, max:49, name:'Master',     cls:'rank-master'     },
+  { min:50, max:Infinity, name:'Legend', cls:'rank-legend'   },
+];
+function _getRank(level) {
+  return RANK_TIERS.find(r => level >= r.min && level <= r.max) || RANK_TIERS[0];
+}
 function updateXPDisplay() {
   const xpInLevel = state.xp % 500;
+  const pct = (xpInLevel / 500 * 100).toFixed(1);
+  const rank = _getRank(state.level);
   document.getElementById('xp-display').textContent = `Lv.${state.level} · ${state.xp} XP`;
   document.getElementById('xp-level-text').textContent = 'Level ' + state.level;
   document.getElementById('xp-progress-text').textContent = xpInLevel + ' / 500 XP';
-  document.getElementById('xp-fill').style.width = (xpInLevel / 500 * 100) + '%';
+  document.getElementById('xp-fill').style.width = pct + '%';
+  // Update rank badges
+  ['sb-rank-badge','hud-rank-badge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = rank.name;
+    el.className = 'rank-badge ' + rank.cls;
+  });
+  // Update HUD
+  const hudLevel = document.getElementById('hud-level');
+  const hudXpText = document.getElementById('hud-xp-text');
+  const hudXpNext = document.getElementById('hud-xp-next');
+  const hudXpBar = document.getElementById('hud-xp-bar');
+  if (hudLevel) hudLevel.textContent = state.level;
+  if (hudXpText) hudXpText.textContent = xpInLevel + ' XP';
+  if (hudXpNext) hudXpNext.textContent = '/ 500';
+  if (hudXpBar) hudXpBar.style.width = pct + '%';
 }
 
 // ═══════════════════════════════════════
@@ -10852,7 +11347,7 @@ function resetStatsForNewUser() {
   <div class="pom-ring">
     <svg width="88" height="88" viewBox="0 0 88 88">
       <circle cx="44" cy="44" r="40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="4"/>
-      <circle id="pom-widget-ring-circle" cx="44" cy="44" r="40" fill="none" stroke="#C9A84C" stroke-width="4"
+      <circle id="pom-widget-ring-circle" cx="44" cy="44" r="40" fill="none" stroke="var(--gold)" stroke-width="4"
         stroke-dasharray="251.2" stroke-dashoffset="0" stroke-linecap="round"/>
     </svg>
     <div class="pom-time" id="pom-widget-display">25:00</div>
@@ -13831,7 +14326,7 @@ function exportQuestionsPDF() {
 .calc-expr { font-size: .8rem; color: var(--muted); min-height: 1.2em; }
 .calc-val {
   font-size: 2.2rem; font-weight: 700; word-break: break-all;
-  background: linear-gradient(135deg, #F5F2EC, #C9A84C);
+  background: linear-gradient(135deg, #F5F2EC, var(--gold));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 .calc-grid {
@@ -13847,7 +14342,7 @@ function exportQuestionsPDF() {
 .calc-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(201,168,76,0.4); transform: scale(1.04); }
 .calc-btn.op { color: var(--gold); background: rgba(201,168,76,0.08); }
 .calc-btn.eq {
-  background: linear-gradient(135deg,#D4A820,#C9A84C);
+  background: linear-gradient(135deg,#D4A820,var(--gold));
   color: var(--black); border-color: var(--gold);
   grid-column: span 2; font-size: 1.2rem;
   box-shadow: 0 4px 16px rgba(201,168,76,0.3);
@@ -15419,7 +15914,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const overlay = document.createElement('div');
       overlay.id = 'auth-loading-overlay';
       overlay.style.cssText = 'position:fixed;inset:0;background:var(--black,#0A0C12);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem';
-      overlay.innerHTML = '<div style="font-size:2rem">✦</div><div style="color:#C9A84C;font-weight:700;letter-spacing:.1em">SYNAPTIQ</div><div style="color:#666;font-size:.875rem">Loading your dashboard...</div>';
+      overlay.innerHTML = '<div style="font-size:2rem">✦</div><div style="color:var(--gold);font-weight:700;letter-spacing:.1em">SYNAPTIQ</div><div style="color:#666;font-size:.875rem">Loading your dashboard...</div>';
       document.body.appendChild(overlay);
       // Remove overlay after dashboard loads or on timeout
       setTimeout(() => { overlay.remove(); }, 4000);
@@ -15947,7 +16442,7 @@ function _renderGoalStreak(streak, goalMet) {
     el.innerHTML = `<div style="display:flex;align-items:center;gap:.75rem">
       <div style="font-size:2rem">${emojis}</div>
       <div>
-        <div style="font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#F5F2EC,#C9A84C);-webkit-background-clip:text;-webkit-text-fill-color:transparent">${streak} day${streak !== 1 ? 's' : ''}</div>
+        <div style="font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#F5F2EC,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent">${streak} day${streak !== 1 ? 's' : ''}</div>
         <div style="font-size:.8rem;color:var(--muted)">${goalMet ? 'Goal met today ✓' : 'Goal not yet complete today'}</div>
       </div>
     </div>`;
@@ -16334,7 +16829,7 @@ function _celebrateAchievement(a) {
   el.innerHTML = `<div style="background:rgba(10,12,18,0.97);backdrop-filter:blur(32px);border:2px solid rgba(201,168,76,0.65);border-radius:28px;padding:2.5rem 3rem;text-align:center;max-width:340px;box-shadow:0 0 100px rgba(201,168,76,0.35),0 32px 80px rgba(0,0,0,0.8);animation:achUnlock .6s cubic-bezier(0.34,1.4,0.64,1) both,achGoldPulse 1.5s ease-in-out 1.2s infinite">
     <div style="font-size:.7rem;font-weight:800;color:rgba(201,168,76,0.8);text-transform:uppercase;letter-spacing:.15em;margin-bottom:.75rem">🏆 Achievement Unlocked</div>
     <div style="font-size:3.5rem;line-height:1;margin-bottom:.6rem;animation:float 2s ease-in-out infinite">${a.icon}</div>
-    <div style="font-family:var(--font-head);font-size:1.5rem;font-weight:900;background:linear-gradient(135deg,#C9A84C,#F0D080,#C9A84C);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 2s linear infinite">${a.name}</div>
+    <div style="font-family:var(--font-head);font-size:1.5rem;font-weight:900;background:linear-gradient(135deg,var(--gold),#F0D080,var(--gold));background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 2s linear infinite">${a.name}</div>
     <div style="color:rgba(136,146,164,0.85);font-size:.875rem;margin-top:.4rem">${a.desc}</div>
   </div>`;
   document.body.appendChild(el);
@@ -16384,7 +16879,7 @@ function _checkXPMilestones(xp) {
       el.style.cssText = 'position:fixed;inset:0;z-index:100000;pointer-events:none;display:flex;align-items:center;justify-content:center;';
       el.innerHTML = `<div style="background:rgba(10,12,18,0.97);backdrop-filter:blur(32px);border:2px solid rgba(201,168,76,0.65);border-radius:28px;padding:2.5rem 3rem;text-align:center;max-width:360px;box-shadow:0 0 100px rgba(201,168,76,0.3),0 32px 80px rgba(0,0,0,0.8);animation:authBoxIn .5s cubic-bezier(0.34,1.4,0.64,1) both">
         <div style="font-size:.7rem;font-weight:800;color:rgba(201,168,76,0.8);text-transform:uppercase;letter-spacing:.15em;margin-bottom:.75rem">⭐ XP Milestone</div>
-        <div style="font-family:var(--font-head);font-size:2.5rem;font-weight:900;background:linear-gradient(135deg,#C9A84C,#F0D080,#C9A84C);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 2s linear infinite">${highest.toLocaleString()} XP</div>
+        <div style="font-family:var(--font-head);font-size:2.5rem;font-weight:900;background:linear-gradient(135deg,var(--gold),#F0D080,var(--gold));background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 2s linear infinite">${highest.toLocaleString()} XP</div>
         <div style="color:rgba(136,146,164,0.85);font-size:.875rem;margin-top:.4rem">Incredible progress — ${highest.toLocaleString()} total XP earned!</div>
       </div>`;
       document.body.appendChild(el);
@@ -16452,14 +16947,14 @@ function _renderDailyQuests(quests) {
       ${done===3 ? '<div style="background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.3);border-radius:20px;padding:.3rem .9rem;font-size:.8rem;font-weight:700;color:var(--green)">✓ All done!</div>' : ''}
     </div>
     ${quests.map(q => `
-      <div style="margin-bottom:.65rem;padding:.8rem 1rem;background:${q.done?'rgba(74,222,128,0.06)':'rgba(255,255,255,0.03)'};border:1px solid ${q.done?'rgba(74,222,128,0.25)':'rgba(167,139,250,0.18)'};border-radius:12px;transition:all .3s ease">
+      <div style="margin-bottom:.65rem;padding:.8rem 1rem;background:${q.done?'rgba(74,222,128,0.06)':'rgba(255,255,255,0.03)'};border:1px solid ${q.done?'rgba(74,222,128,0.25)':'rgba(96,165,250,0.18)'};border-radius:12px;transition:all .3s ease">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.45rem">
           <div style="font-size:.855rem;font-weight:600;color:${q.done?'var(--green)':'var(--white)'};${q.done?'text-decoration:line-through;opacity:.7':''}">${q.done?'✅ ':''}${q.text}</div>
           <div style="font-size:.75rem;font-weight:700;color:var(--gold);white-space:nowrap;margin-left:.5rem">+${q.xp} XP</div>
         </div>
         <div style="display:flex;align-items:center;gap:.65rem">
           <div style="flex:1;height:4px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden">
-            <div style="height:100%;width:${Math.min(100,Math.round(q.progress/q.target*100))}%;background:${q.done?'var(--green)':'linear-gradient(90deg,#a78bfa,#C9A84C)'};border-radius:99px;transition:width .5s ease"></div>
+            <div style="height:100%;width:${Math.min(100,Math.round(q.progress/q.target*100))}%;background:${q.done?'var(--green)':'linear-gradient(90deg,#a78bfa,var(--gold))'};border-radius:99px;transition:width .5s ease"></div>
           </div>
           <div style="font-size:.68rem;color:var(--muted);white-space:nowrap">${q.progress}/${q.target}</div>
         </div>
@@ -16486,6 +16981,184 @@ function _updateQuestProgress(trackType, amount) {
 }
 
 window.addEventListener('online', () => showToast('Back online!'));
+
+// ═══════════════════════════════════════
+// GAME FEEL — Combos, Sounds, Floating XP, Login Reward
+// ═══════════════════════════════════════
+
+// ── Web Audio Sound Engine ──────────────────────────────
+const _sfx = (() => {
+  let ctx = null;
+  function _ctx() {
+    if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} }
+    return ctx;
+  }
+  function _tone(freq, type, duration, gain, delayStart) {
+    const c = _ctx(); if (!c) return;
+    setTimeout(() => {
+      try {
+        const o = c.createOscillator(), g = c.createGain();
+        o.connect(g); g.connect(c.destination);
+        o.type = type; o.frequency.setValueAtTime(freq, c.currentTime);
+        g.gain.setValueAtTime(gain, c.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + duration);
+        o.start(c.currentTime); o.stop(c.currentTime + duration);
+      } catch(e) {}
+    }, delayStart || 0);
+  }
+  return {
+    correct() {
+      _tone(523, 'sine', 0.12, 0.18);
+      _tone(659, 'sine', 0.12, 0.18, 80);
+      _tone(784, 'sine', 0.18, 0.14, 160);
+    },
+    wrong() {
+      _tone(220, 'sawtooth', 0.18, 0.12);
+      _tone(180, 'sawtooth', 0.25, 0.1, 120);
+    },
+    xp() {
+      _tone(880, 'sine', 0.1, 0.1);
+      _tone(1100, 'sine', 0.12, 0.09, 60);
+    },
+    levelUp() {
+      [523,659,784,1047].forEach((f,i) => _tone(f, 'sine', 0.2, 0.15, i*100));
+      setTimeout(() => [1047,1319,1568].forEach((f,i) => _tone(f, 'triangle', 0.3, 0.12, i*80)), 500);
+    },
+    combo(n) {
+      const freqs = [523,587,659,740,784,880,988,1047];
+      const f = freqs[Math.min(n-2, freqs.length-1)];
+      _tone(f, 'triangle', 0.15, 0.12);
+      _tone(f*1.5, 'sine', 0.1, 0.08, 100);
+    },
+    streak() {
+      [784,988,1175].forEach((f,i) => _tone(f, 'sine', 0.15, 0.12, i*70));
+    }
+  };
+})();
+
+// ── Floating +XP Numbers ───────────────────────────────
+function _floatXP(amount, x, y, color) {
+  const el = document.createElement('div');
+  el.textContent = '+' + amount + ' XP';
+  el.style.cssText = `
+    position:fixed; left:${x}px; top:${y}px;
+    font-family:var(--font-head); font-size:1.05rem; font-weight:900;
+    color:${color||'var(--gold)'}; pointer-events:none; z-index:99998;
+    text-shadow: 0 0 12px currentColor;
+    animation: floatXpUp 1.2s cubic-bezier(.4,0,.2,1) forwards;
+  `;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
+// Add the keyframe if not already present
+if (!document.getElementById('_floatXpStyle')) {
+  const s = document.createElement('style');
+  s.id = '_floatXpStyle';
+  s.textContent = `@keyframes floatXpUp {
+    0%   { opacity:1; transform:translateY(0) scale(1); }
+    60%  { opacity:1; transform:translateY(-48px) scale(1.15); }
+    100% { opacity:0; transform:translateY(-80px) scale(0.9); }
+  }
+  @keyframes comboPop {
+    0%   { opacity:0; transform:scale(0.4) rotate(-8deg); }
+    50%  { opacity:1; transform:scale(1.2) rotate(3deg); }
+    75%  { transform:scale(0.95) rotate(-1deg); }
+    100% { opacity:1; transform:scale(1) rotate(0deg); }
+  }
+  @keyframes comboOut {
+    0%   { opacity:1; transform:scale(1); }
+    100% { opacity:0; transform:scale(0.7) translateY(20px); }
+  }`;
+  document.head.appendChild(s);
+}
+
+// ── Combo System ───────────────────────────────────────
+const _combo = {
+  count: 0,
+  el: null,
+  _timer: null,
+  reset() {
+    this.count = 0;
+    if (this.el) { this.el.style.animation = 'comboOut .35s ease forwards'; setTimeout(() => { if (this.el) { this.el.remove(); this.el = null; } }, 350); }
+    clearTimeout(this._timer);
+  },
+  hit(containerEl) {
+    this.count++;
+    clearTimeout(this._timer);
+    _sfx.combo(this.count);
+    if (this.count >= 2) this._show(containerEl);
+    // Auto-reset after 6s of no answers
+    this._timer = setTimeout(() => this.reset(), 6000);
+    return this.count;
+  },
+  _show(containerEl) {
+    if (!this.el) {
+      this.el = document.createElement('div');
+      this.el.style.cssText = `
+        position:fixed; top:140px; right:1.5rem; z-index:9997;
+        font-family:var(--font-head); font-weight:900; text-align:right;
+        pointer-events:none;
+      `;
+      document.body.appendChild(this.el);
+    }
+    const labels = ['','','DOUBLE!','TRIPLE!','QUAD!','PENTA!','MEGA COMBO!'];
+    const colors = ['','','#60A5FA','#34D399','#FBBF24','#F97316','#F0D080'];
+    const label = labels[Math.min(this.count, labels.length-1)] || 'MEGA COMBO!';
+    const color = colors[Math.min(this.count, colors.length-1)] || '#F0D080';
+    this.el.innerHTML = `
+      <div style="font-size:.7rem;color:rgba(255,255,255,.5);letter-spacing:.15em;margin-bottom:.1rem">🔥 COMBO</div>
+      <div style="font-size:2rem;line-height:1;color:${color};text-shadow:0 0 20px ${color}88;animation:comboPop .4s cubic-bezier(.34,1.6,.64,1) both">×${this.count}</div>
+      <div style="font-size:.72rem;font-weight:700;color:${color};letter-spacing:.05em">${label}</div>
+    `;
+  },
+  xpMultiplied(base) {
+    if (this.count <= 1) return base;
+    return Math.round(base * (1 + (this.count - 1) * 0.25));
+  }
+};
+
+// ── Daily Login Reward ─────────────────────────────────
+function _checkDailyLoginReward() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const last = localStorage.getItem('synaptiq_login_reward_date');
+    if (last === today) return;
+    safeSetItem('synaptiq_login_reward_date', today);
+    const streak = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_stats')||'{}').streak||1; } catch(e) { return 1; } })();
+    const xp = streak >= 7 ? 50 : streak >= 3 ? 30 : 15;
+    setTimeout(() => {
+      addXP(xp, `🌅 Daily login reward +${xp} XP`);
+      _sfx.streak();
+      // Show reward popup
+      const el = document.createElement('div');
+      el.style.cssText = 'position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);z-index:9997;pointer-events:none;text-align:center;animation:authBoxIn .5s cubic-bezier(.34,1.4,.64,1) both';
+      el.innerHTML = `<div style="background:rgba(10,12,18,0.97);backdrop-filter:blur(24px);border:1px solid rgba(201,168,76,0.4);border-radius:20px;padding:1.1rem 2rem;box-shadow:0 16px 48px rgba(0,0,0,.6),0 0 32px rgba(201,168,76,0.15)">
+        <div style="font-size:1.6rem;margin-bottom:.3rem">${streak>=7?'🔥':'🌅'}</div>
+        <div style="font-family:var(--font-head);font-size:1.1rem;font-weight:900;color:var(--gold)">Daily Login Reward!</div>
+        <div style="font-size:.85rem;color:rgba(255,255,255,.7);margin-top:.2rem">+${xp} XP · ${streak} day streak</div>
+      </div>`;
+      document.body.appendChild(el);
+      setTimeout(() => { el.style.transition='opacity .4s'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, 3000);
+    }, 2000);
+  } catch(e) {}
+}
+
+// Hook login reward into dashboard load
+const _origShowDash = typeof showDash !== 'undefined' ? showDash : null;
+document.addEventListener('DOMContentLoaded', () => {
+  // Called when user reaches dashboard
+  const _loginRewarded = { done: false };
+  const _dashObs = new MutationObserver(() => {
+    const home = document.getElementById('sp-home');
+    if (home && home.classList.contains('active') && !_loginRewarded.done) {
+      _loginRewarded.done = true;
+      _checkDailyLoginReward();
+    }
+  });
+  const dash = document.getElementById('page-dash');
+  if (dash) _dashObs.observe(dash, { attributes: true, attributeFilter: ['style', 'class'], subtree: true });
+});
+
 window.addEventListener('offline', () => showToast('You are offline — some features unavailable'));
 window.addEventListener('unhandledrejection', (e) => {
   if (e.reason?.message) showToast('⚠️ ' + e.reason.message.slice(0, 80));
@@ -17567,7 +18240,7 @@ function buildFormulaCardPDF() {
     <style>
       *{box-sizing:border-box;margin:0;padding:0}
       body{font-family:Georgia,serif;padding:1.5cm;max-width:21cm;margin:0 auto;color:#111;font-size:10pt}
-      h1{font-size:14pt;margin-bottom:.3cm;border-bottom:2px solid #C9A84C;padding-bottom:.2cm;color:#5a3a00}
+      h1{font-size:14pt;margin-bottom:.3cm;border-bottom:2px solid var(--gold);padding-bottom:.2cm;color:#5a3a00}
       .subtitle{font-size:8pt;color:#888;margin-bottom:.6cm}
       .grid{display:grid;grid-template-columns:1fr 1fr;gap:.4cm}
       .formula-item{border:1px solid #ddd;border-radius:4px;padding:.35cm .5cm;font-size:10pt;line-height:1.6;background:#fffef8}
@@ -17822,7 +18495,7 @@ function printParentReport() {
     <style>
       *{box-sizing:border-box;margin:0;padding:0}
       body{font-family:Georgia,serif;padding:2cm;color:#1a1a1a;max-width:21cm;margin:0 auto;font-size:11pt}
-      h1{font-size:18pt;color:#5a3a00;border-bottom:3px solid #C9A84C;padding-bottom:.3cm;margin-bottom:.5cm}
+      h1{font-size:18pt;color:#5a3a00;border-bottom:3px solid var(--gold);padding-bottom:.3cm;margin-bottom:.5cm}
       .meta{font-size:9pt;color:#888;margin-bottom:1cm}
       .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5cm;margin-bottom:1cm}
       .stat-box{border:1px solid #ddd;border-radius:6px;padding:.5cm;text-align:center}
@@ -17831,7 +18504,7 @@ function printParentReport() {
       .section-title{font-weight:bold;font-size:11pt;margin:.6cm 0 .3cm;color:#333;border-bottom:1px solid #eee;padding-bottom:.2cm}
       .bar-chart{display:flex;align-items:flex-end;gap:8px;height:80px;margin:.4cm 0}
       .bar{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
-      .bar-fill{background:#C9A84C;border-radius:3px 3px 0 0;min-height:2px}
+      .bar-fill{background:var(--gold);border-radius:3px 3px 0 0;min-height:2px}
       .bar-lbl{font-size:7pt;color:#888}
       .topics{display:flex;flex-wrap:wrap;gap:.3cm}
       .topic-pill{border:1px solid #ddd;border-radius:4px;padding:.15cm .35cm;font-size:8pt;color:#555}
@@ -17903,7 +18576,7 @@ function setLessonCache(chapter, html) {
 
   .voice-orb {
     width:160px;height:160px;border-radius:50%;
-    background:radial-gradient(circle at 38% 36%, #C9A84C 0%, #8B6914 55%, #3a2c08 100%);
+    background:radial-gradient(circle at 38% 36%, var(--gold) 0%, #8B6914 55%, #3a2c08 100%);
     box-shadow:0 0 0 0 rgba(201,168,76,0.5);
     display:flex;align-items:center;justify-content:center;
     cursor:pointer;transition:transform .2s;
@@ -18852,11 +19525,18 @@ function dcAnswer(isCorrect, btn, correctText) {
     btn.style.borderColor = 'var(--green)';
     btn.style.color = 'var(--green)';
     dcState.correct++;
-    addXP(20);
+    _sfx.correct();
+    const comboCount = _combo.hit(btn);
+    const xpEarned = _combo.xpMultiplied(20);
+    const r = btn.getBoundingClientRect();
+    _floatXP(xpEarned, r.left + r.width/2 - 24, r.top - 10, comboCount>=3?'#FBBF24':'var(--gold)');
+    _origAddXP(xpEarned, comboCount>=2 ? `🔥 COMBO ×${comboCount} +${xpEarned} XP!` : `✓ Correct! +${xpEarned} XP`);
   } else {
     btn.style.background = 'rgba(239,68,68,0.12)';
     btn.style.borderColor = '#EF4444';
     btn.style.color = '#EF4444';
+    _sfx.wrong();
+    _combo.reset();
     // Highlight correct button
     Array.from(allBtns).forEach(b => { if (b.textContent === correctText) { b.style.background = 'rgba(74,222,128,0.1)'; b.style.borderColor = 'var(--green)'; b.style.color = 'var(--green)'; } });
   }
@@ -18921,7 +19601,7 @@ function dcFinish() {
         _launchConfetti();
         const _pb = document.createElement('div');
         _pb.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-60%);z-index:100000;pointer-events:none;text-align:center;animation:fadeInUp .4s ease both';
-        _pb.innerHTML = '<div style="font-size:3rem;line-height:1;filter:drop-shadow(0 0 20px rgba(201,168,76,0.8))">🏆</div><div style="font-family:var(--font-head);font-size:2rem;font-weight:900;background:linear-gradient(135deg,#C9A84C,#F0D080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;margin-top:.25rem">PERFECT!</div>';
+        _pb.innerHTML = '<div style="font-size:3rem;line-height:1;filter:drop-shadow(0 0 20px rgba(201,168,76,0.8))">🏆</div><div style="font-family:var(--font-head);font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--gold),#F0D080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;margin-top:.25rem">PERFECT!</div>';
         document.body.appendChild(_pb);
         setTimeout(() => { _pb.style.transition='opacity .4s'; _pb.style.opacity='0'; setTimeout(()=>_pb.remove(),400); }, 2200);
       }, 300);
@@ -19742,6 +20422,8 @@ Return ONLY valid JSON: {"correct":true/false,"partial":true/false,"feedback":"o
     const pts = result.correct ? 2 : result.partial ? 1 : 0;
     blitzState.score += pts;
     blitzState.results.push({ q: q.q, answer, correct: result.correct, partial: result.partial, modelAnswer: result.modelAnswer, pts });
+    if (result.correct) { _sfx.correct(); _combo.hit(fbDiv); }
+    else if (!result.partial) { _sfx.wrong(); _combo.reset(); }
     const icon = result.correct ? '✅' : result.partial ? '⚠️' : '❌';
     fbDiv.innerHTML = `<div style="margin-bottom:.5rem">${icon} <strong>${result.correct ? 'Correct!' : result.partial ? 'Partially correct' : 'Not quite'}</strong> ${result.feedback ? '— ' + sanitizeAIHTML(result.feedback) : ''}</div><div style="font-size:.8rem;color:var(--muted)">Model answer: ${sanitizeAIHTML(result.modelAnswer || q.a)}</div><div style="margin-top:.75rem"><button class="btn btn-gold" style="font-size:.82rem;padding:.4rem 1rem" onclick="nextBlitzQuestion()">Next Question →</button></div>`;
     document.getElementById('blitz-score').textContent = blitzState.score;
@@ -20234,7 +20916,7 @@ function renderStreakCalendar() {
     if (hasActivity) studiedDays++;
     const dayName = isToday ? 'Today' : days[d.getDay()];
     const bg = hasActivity
-      ? 'linear-gradient(135deg,#D4A820,#C9A84C)'
+      ? 'linear-gradient(135deg,#D4A820,var(--gold))'
       : isToday
         ? 'rgba(201,168,76,0.12)'
         : 'rgba(255,255,255,0.04)';
