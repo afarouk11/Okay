@@ -10703,6 +10703,13 @@ function addXP(amount, msg) {
     clearTimeout(popup._t);
     popup._t = setTimeout(() => popup.classList.remove('show'), 2200);
   }
+  // Sound + floating XP (uses _sfx and _floatXP defined in GAME FEEL block below)
+  if (amount > 0 && typeof _sfx !== 'undefined') _sfx.xp();
+  if (amount > 0 && typeof _floatXP !== 'undefined') {
+    // Float from XP badge position in nav
+    const badge = document.getElementById('xp-display');
+    if (badge) { const r = badge.getBoundingClientRect(); _floatXP(amount, r.left, r.top + 10); }
+  }
   _checkXPMilestones(state.xp);
 }
 
@@ -10737,6 +10744,7 @@ function _showLevelUp(level) {
     setTimeout(() => el.remove(), 400);
   }, 2500);
   _launchConfetti();
+  if (typeof _sfx !== 'undefined') _sfx.levelUp();
   showToast(`🎉 Level Up! You're now Level ${level}!`);
 }
 
@@ -16623,6 +16631,184 @@ function _updateQuestProgress(trackType, amount) {
 }
 
 window.addEventListener('online', () => showToast('Back online!'));
+
+// ═══════════════════════════════════════
+// GAME FEEL — Combos, Sounds, Floating XP, Login Reward
+// ═══════════════════════════════════════
+
+// ── Web Audio Sound Engine ──────────────────────────────
+const _sfx = (() => {
+  let ctx = null;
+  function _ctx() {
+    if (!ctx) { try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {} }
+    return ctx;
+  }
+  function _tone(freq, type, duration, gain, delayStart) {
+    const c = _ctx(); if (!c) return;
+    setTimeout(() => {
+      try {
+        const o = c.createOscillator(), g = c.createGain();
+        o.connect(g); g.connect(c.destination);
+        o.type = type; o.frequency.setValueAtTime(freq, c.currentTime);
+        g.gain.setValueAtTime(gain, c.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + duration);
+        o.start(c.currentTime); o.stop(c.currentTime + duration);
+      } catch(e) {}
+    }, delayStart || 0);
+  }
+  return {
+    correct() {
+      _tone(523, 'sine', 0.12, 0.18);
+      _tone(659, 'sine', 0.12, 0.18, 80);
+      _tone(784, 'sine', 0.18, 0.14, 160);
+    },
+    wrong() {
+      _tone(220, 'sawtooth', 0.18, 0.12);
+      _tone(180, 'sawtooth', 0.25, 0.1, 120);
+    },
+    xp() {
+      _tone(880, 'sine', 0.1, 0.1);
+      _tone(1100, 'sine', 0.12, 0.09, 60);
+    },
+    levelUp() {
+      [523,659,784,1047].forEach((f,i) => _tone(f, 'sine', 0.2, 0.15, i*100));
+      setTimeout(() => [1047,1319,1568].forEach((f,i) => _tone(f, 'triangle', 0.3, 0.12, i*80)), 500);
+    },
+    combo(n) {
+      const freqs = [523,587,659,740,784,880,988,1047];
+      const f = freqs[Math.min(n-2, freqs.length-1)];
+      _tone(f, 'triangle', 0.15, 0.12);
+      _tone(f*1.5, 'sine', 0.1, 0.08, 100);
+    },
+    streak() {
+      [784,988,1175].forEach((f,i) => _tone(f, 'sine', 0.15, 0.12, i*70));
+    }
+  };
+})();
+
+// ── Floating +XP Numbers ───────────────────────────────
+function _floatXP(amount, x, y, color) {
+  const el = document.createElement('div');
+  el.textContent = '+' + amount + ' XP';
+  el.style.cssText = `
+    position:fixed; left:${x}px; top:${y}px;
+    font-family:var(--font-head); font-size:1.05rem; font-weight:900;
+    color:${color||'var(--gold)'}; pointer-events:none; z-index:99998;
+    text-shadow: 0 0 12px currentColor;
+    animation: floatXpUp 1.2s cubic-bezier(.4,0,.2,1) forwards;
+  `;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
+// Add the keyframe if not already present
+if (!document.getElementById('_floatXpStyle')) {
+  const s = document.createElement('style');
+  s.id = '_floatXpStyle';
+  s.textContent = `@keyframes floatXpUp {
+    0%   { opacity:1; transform:translateY(0) scale(1); }
+    60%  { opacity:1; transform:translateY(-48px) scale(1.15); }
+    100% { opacity:0; transform:translateY(-80px) scale(0.9); }
+  }
+  @keyframes comboPop {
+    0%   { opacity:0; transform:scale(0.4) rotate(-8deg); }
+    50%  { opacity:1; transform:scale(1.2) rotate(3deg); }
+    75%  { transform:scale(0.95) rotate(-1deg); }
+    100% { opacity:1; transform:scale(1) rotate(0deg); }
+  }
+  @keyframes comboOut {
+    0%   { opacity:1; transform:scale(1); }
+    100% { opacity:0; transform:scale(0.7) translateY(20px); }
+  }`;
+  document.head.appendChild(s);
+}
+
+// ── Combo System ───────────────────────────────────────
+const _combo = {
+  count: 0,
+  el: null,
+  _timer: null,
+  reset() {
+    this.count = 0;
+    if (this.el) { this.el.style.animation = 'comboOut .35s ease forwards'; setTimeout(() => { if (this.el) { this.el.remove(); this.el = null; } }, 350); }
+    clearTimeout(this._timer);
+  },
+  hit(containerEl) {
+    this.count++;
+    clearTimeout(this._timer);
+    _sfx.combo(this.count);
+    if (this.count >= 2) this._show(containerEl);
+    // Auto-reset after 6s of no answers
+    this._timer = setTimeout(() => this.reset(), 6000);
+    return this.count;
+  },
+  _show(containerEl) {
+    if (!this.el) {
+      this.el = document.createElement('div');
+      this.el.style.cssText = `
+        position:fixed; top:140px; right:1.5rem; z-index:9997;
+        font-family:var(--font-head); font-weight:900; text-align:right;
+        pointer-events:none;
+      `;
+      document.body.appendChild(this.el);
+    }
+    const labels = ['','','DOUBLE!','TRIPLE!','QUAD!','PENTA!','MEGA COMBO!'];
+    const colors = ['','','#60A5FA','#34D399','#FBBF24','#F97316','#F0D080'];
+    const label = labels[Math.min(this.count, labels.length-1)] || 'MEGA COMBO!';
+    const color = colors[Math.min(this.count, colors.length-1)] || '#F0D080';
+    this.el.innerHTML = `
+      <div style="font-size:.7rem;color:rgba(255,255,255,.5);letter-spacing:.15em;margin-bottom:.1rem">🔥 COMBO</div>
+      <div style="font-size:2rem;line-height:1;color:${color};text-shadow:0 0 20px ${color}88;animation:comboPop .4s cubic-bezier(.34,1.6,.64,1) both">×${this.count}</div>
+      <div style="font-size:.72rem;font-weight:700;color:${color};letter-spacing:.05em">${label}</div>
+    `;
+  },
+  xpMultiplied(base) {
+    if (this.count <= 1) return base;
+    return Math.round(base * (1 + (this.count - 1) * 0.25));
+  }
+};
+
+// ── Daily Login Reward ─────────────────────────────────
+function _checkDailyLoginReward() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const last = localStorage.getItem('synaptiq_login_reward_date');
+    if (last === today) return;
+    safeSetItem('synaptiq_login_reward_date', today);
+    const streak = (() => { try { return JSON.parse(localStorage.getItem('synaptiq_stats')||'{}').streak||1; } catch(e) { return 1; } })();
+    const xp = streak >= 7 ? 50 : streak >= 3 ? 30 : 15;
+    setTimeout(() => {
+      addXP(xp, `🌅 Daily login reward +${xp} XP`);
+      _sfx.streak();
+      // Show reward popup
+      const el = document.createElement('div');
+      el.style.cssText = 'position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);z-index:9997;pointer-events:none;text-align:center;animation:authBoxIn .5s cubic-bezier(.34,1.4,.64,1) both';
+      el.innerHTML = `<div style="background:rgba(10,12,18,0.97);backdrop-filter:blur(24px);border:1px solid rgba(201,168,76,0.4);border-radius:20px;padding:1.1rem 2rem;box-shadow:0 16px 48px rgba(0,0,0,.6),0 0 32px rgba(201,168,76,0.15)">
+        <div style="font-size:1.6rem;margin-bottom:.3rem">${streak>=7?'🔥':'🌅'}</div>
+        <div style="font-family:var(--font-head);font-size:1.1rem;font-weight:900;color:var(--gold)">Daily Login Reward!</div>
+        <div style="font-size:.85rem;color:rgba(255,255,255,.7);margin-top:.2rem">+${xp} XP · ${streak} day streak</div>
+      </div>`;
+      document.body.appendChild(el);
+      setTimeout(() => { el.style.transition='opacity .4s'; el.style.opacity='0'; setTimeout(()=>el.remove(),400); }, 3000);
+    }, 2000);
+  } catch(e) {}
+}
+
+// Hook login reward into dashboard load
+const _origShowDash = typeof showDash !== 'undefined' ? showDash : null;
+document.addEventListener('DOMContentLoaded', () => {
+  // Called when user reaches dashboard
+  const _loginRewarded = { done: false };
+  const _dashObs = new MutationObserver(() => {
+    const home = document.getElementById('sp-home');
+    if (home && home.classList.contains('active') && !_loginRewarded.done) {
+      _loginRewarded.done = true;
+      _checkDailyLoginReward();
+    }
+  });
+  const dash = document.getElementById('page-dash');
+  if (dash) _dashObs.observe(dash, { attributes: true, attributeFilter: ['style', 'class'], subtree: true });
+});
+
 window.addEventListener('offline', () => showToast('You are offline — some features unavailable'));
 window.addEventListener('unhandledrejection', (e) => {
   if (e.reason?.message) showToast('⚠️ ' + e.reason.message.slice(0, 80));
@@ -18989,11 +19175,18 @@ function dcAnswer(isCorrect, btn, correctText) {
     btn.style.borderColor = 'var(--green)';
     btn.style.color = 'var(--green)';
     dcState.correct++;
-    addXP(20);
+    _sfx.correct();
+    const comboCount = _combo.hit(btn);
+    const xpEarned = _combo.xpMultiplied(20);
+    const r = btn.getBoundingClientRect();
+    _floatXP(xpEarned, r.left + r.width/2 - 24, r.top - 10, comboCount>=3?'#FBBF24':'var(--gold)');
+    _origAddXP(xpEarned, comboCount>=2 ? `🔥 COMBO ×${comboCount} +${xpEarned} XP!` : `✓ Correct! +${xpEarned} XP`);
   } else {
     btn.style.background = 'rgba(239,68,68,0.12)';
     btn.style.borderColor = '#EF4444';
     btn.style.color = '#EF4444';
+    _sfx.wrong();
+    _combo.reset();
     // Highlight correct button
     Array.from(allBtns).forEach(b => { if (b.textContent === correctText) { b.style.background = 'rgba(74,222,128,0.1)'; b.style.borderColor = 'var(--green)'; b.style.color = 'var(--green)'; } });
   }
@@ -19879,6 +20072,8 @@ Return ONLY valid JSON: {"correct":true/false,"partial":true/false,"feedback":"o
     const pts = result.correct ? 2 : result.partial ? 1 : 0;
     blitzState.score += pts;
     blitzState.results.push({ q: q.q, answer, correct: result.correct, partial: result.partial, modelAnswer: result.modelAnswer, pts });
+    if (result.correct) { _sfx.correct(); _combo.hit(fbDiv); }
+    else if (!result.partial) { _sfx.wrong(); _combo.reset(); }
     const icon = result.correct ? '✅' : result.partial ? '⚠️' : '❌';
     fbDiv.innerHTML = `<div style="margin-bottom:.5rem">${icon} <strong>${result.correct ? 'Correct!' : result.partial ? 'Partially correct' : 'Not quite'}</strong> ${result.feedback ? '— ' + sanitizeAIHTML(result.feedback) : ''}</div><div style="font-size:.8rem;color:var(--muted)">Model answer: ${sanitizeAIHTML(result.modelAnswer || q.a)}</div><div style="margin-top:.75rem"><button class="btn btn-gold" style="font-size:.82rem;padding:.4rem 1rem" onclick="nextBlitzQuestion()">Next Question →</button></div>`;
     document.getElementById('blitz-score').textContent = blitzState.score;
