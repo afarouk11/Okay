@@ -2891,6 +2891,64 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
 /* ═══════════════════════════════════════
    GAME MODE CSS
    ═══════════════════════════════════════ */
+
+/* ── Rank System ── */
+.rank-badge {
+  display: inline-flex; align-items: center; gap: .35rem;
+  font-size: .72rem; font-weight: 800; letter-spacing: .04em;
+  padding: .22rem .65rem; border-radius: 20px;
+  text-transform: uppercase;
+}
+.rank-novice     { background: rgba(148,163,184,0.15); border: 1px solid rgba(148,163,184,0.35); color: #94A3B8; }
+.rank-apprentice { background: rgba(96,165,250,0.15);  border: 1px solid rgba(96,165,250,0.35);  color: #60A5FA; }
+.rank-scholar    { background: rgba(52,211,153,0.15);  border: 1px solid rgba(52,211,153,0.35);  color: #34D399; }
+.rank-elite      { background: rgba(251,191,36,0.15);  border: 1px solid rgba(251,191,36,0.35);  color: #FBBF24; }
+.rank-master     { background: rgba(201,168,76,0.2);   border: 1px solid rgba(201,168,76,0.5);   color: var(--gold); }
+.rank-legend     { background: linear-gradient(135deg,rgba(201,168,76,0.2),rgba(240,208,128,0.15)); border: 1px solid rgba(201,168,76,0.6); color: #F0D080;
+                   box-shadow: 0 0 12px rgba(201,168,76,0.2); }
+
+/* ── Quick Action buttons (game style) ── */
+.qa-btn {
+  display: flex; flex-direction: column; align-items: center; gap: .4rem;
+  padding: .9rem .5rem; border-radius: 14px; cursor: pointer;
+  font-size: .72rem; font-weight: 800; letter-spacing: .02em;
+  transition: all .18s cubic-bezier(.4,0,.2,1); border: 1px solid transparent;
+  position: relative; overflow: hidden;
+}
+.qa-btn::after {
+  content: ''; position: absolute; inset: 0;
+  background: rgba(255,255,255,0); transition: background .18s;
+}
+.qa-btn:hover::after { background: rgba(255,255,255,0.04); }
+.qa-btn:hover { transform: translateY(-2px); }
+.qa-btn:active { transform: translateY(0) scale(.97); }
+.qa-icon { font-size: 1.5rem; line-height: 1; }
+
+.qa-tutor    { background: rgba(201,168,76,0.08);  border-color: rgba(201,168,76,0.22);  color: var(--gold); }
+.qa-tutor:hover    { background: rgba(201,168,76,0.14); border-color: rgba(201,168,76,0.4); box-shadow: 0 4px 20px rgba(201,168,76,0.15); }
+.qa-questions{ background: rgba(96,165,250,0.08);  border-color: rgba(96,165,250,0.22);  color: #60A5FA; }
+.qa-questions:hover{ background: rgba(96,165,250,0.14); border-color: rgba(96,165,250,0.4); box-shadow: 0 4px 20px rgba(96,165,250,0.15); }
+.qa-flash    { background: rgba(167,139,250,0.08); border-color: rgba(167,139,250,0.22); color: #A78BFA; }
+.qa-flash:hover    { background: rgba(167,139,250,0.14); border-color: rgba(167,139,250,0.4); box-shadow: 0 4px 20px rgba(167,139,250,0.15); }
+.qa-blitz    { background: rgba(251,113,133,0.08); border-color: rgba(251,113,133,0.22); color: #FB7185; }
+.qa-blitz:hover    { background: rgba(251,113,133,0.14); border-color: rgba(251,113,133,0.4); box-shadow: 0 4px 20px rgba(251,113,133,0.15); }
+
+/* ── Player HUD ── */
+.player-hud {
+  display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  background: rgba(12,14,20,0.7); backdrop-filter: blur(20px);
+  border: 1px solid rgba(201,168,76,0.15); border-radius: 16px;
+  padding: .85rem 1.25rem; margin-bottom: 1.5rem;
+}
+.hud-stat {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .35rem .75rem; border-radius: 10px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+  font-size: .82rem;
+}
+.hud-stat-icon { font-size: 1rem; line-height: 1; }
+.hud-stat-val  { font-weight: 800; color: var(--white); }
+.hud-stat-lbl  { font-size: .68rem; color: var(--muted); margin-left: .2rem; }
 @keyframes achUnlock {
   0%   { transform: scale(0.6) rotate(-8deg); opacity: 0; }
   60%  { transform: scale(1.12) rotate(3deg); opacity: 1; }
@@ -3804,9 +3862,12 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
       </div>
     </div>
     <div class="sidebar-xp">
-      <div class="xp-header">
-        <span class="xp-level" id="xp-level-text">Level 1</span>
-        <span style="color:var(--muted);font-size:.75rem" id="xp-progress-text">0 / 200 XP</span>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem">
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span class="xp-level" id="xp-level-text">Level 1</span>
+          <span class="rank-badge rank-novice" id="sb-rank-badge">Novice</span>
+        </div>
+        <span style="color:var(--muted);font-size:.75rem" id="xp-progress-text">0 / 500 XP</span>
       </div>
       <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width:0%"></div></div>
     </div>
@@ -3882,13 +3943,38 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
         <input id="dash-search" type="text" placeholder="🔍 Search topics, chapters, formulas..." style="width:100%;background:rgba(255,255,255,0.04);border:1.5px solid rgba(201,168,76,0.15);border-radius:14px;padding:.85rem 1.1rem;color:var(--white);font-size:.9rem;box-sizing:border-box;backdrop-filter:blur(8px);transition:all .2s;outline:none" oninput="searchDash(this.value)">
         <div id="search-results" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:rgba(10,12,18,0.97);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(201,168,76,0.2);border-radius:14px;z-index:500;max-height:280px;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.6),0 0 0 1px rgba(201,168,76,0.05)"></div>
       </div>
-      <p class="page-subtitle" style="margin-top:0">Here's your learning overview</p>
+      <!-- Player HUD -->
+      <div class="player-hud" id="player-hud">
+        <div class="hud-stat">
+          <span class="hud-stat-icon">⚡</span>
+          <span class="hud-stat-val" id="hud-level">1</span>
+          <span class="hud-stat-lbl">Level</span>
+        </div>
+        <span class="rank-badge rank-novice" id="hud-rank-badge" style="font-size:.78rem;padding:.28rem .8rem">Novice</span>
+        <div class="hud-stat" style="flex:1;min-width:120px">
+          <span class="hud-stat-icon">✨</span>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;margin-bottom:.3rem">
+              <span class="hud-stat-val" id="hud-xp-text">0 XP</span>
+              <span style="font-size:.68rem;color:var(--muted)" id="hud-xp-next">/ 500</span>
+            </div>
+            <div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden">
+              <div id="hud-xp-bar" style="height:100%;background:linear-gradient(90deg,var(--gold),#F0D080);border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1);width:0%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="hud-stat">
+          <span class="hud-stat-icon">🔥</span>
+          <span class="hud-stat-val" id="hud-streak">1</span>
+          <span class="hud-stat-lbl">day streak</span>
+        </div>
+      </div>
       <!-- Quick Actions row -->
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1.5rem" id="home-quick-actions">
-        <button onclick="showDash('tutor')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">🤖</span>AI Tutor</button>
-        <button onclick="showDash('questions')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">📝</span>Questions</button>
-        <button onclick="showDash('flashcards')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">🃏</span>Flashcards</button>
-        <button onclick="showDash('blitz')" style="display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:.85rem .5rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;color:var(--muted);cursor:pointer;transition:all .2s;font-size:.72rem;font-weight:700" onmouseover="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.3)';this.style.color='var(--gold)'" onmouseout="this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'"><span style="font-size:1.4rem">⚡</span>Blitz</button>
+        <button onclick="showDash('tutor')" class="qa-btn qa-tutor"><span class="qa-icon">🤖</span>AI Tutor</button>
+        <button onclick="showDash('questions')" class="qa-btn qa-questions"><span class="qa-icon">📝</span>Questions</button>
+        <button onclick="showDash('flashcards')" class="qa-btn qa-flash"><span class="qa-icon">🃏</span>Flashcards</button>
+        <button onclick="showDash('blitz')" class="qa-btn qa-blitz"><span class="qa-icon">⚡</span>Blitz</button>
       </div>
       <!-- Peer Study Presence -->
       <div id="peer-presence-bar" style="background:rgba(12,14,20,0.7);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:.6rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;font-size:.8rem">
@@ -3923,7 +4009,10 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
           <div style="display:flex;align-items:center;gap:1rem">
             <div style="font-size:2rem">⚡</div>
             <div>
-              <div style="font-weight:700;font-size:1rem;color:var(--white)">Daily Challenge</div>
+              <div style="display:flex;align-items:center;gap:.6rem">
+                <span style="font-weight:700;font-size:1rem;color:var(--white)">Daily Challenge</span>
+                <span style="font-size:.68rem;font-weight:800;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);border-radius:12px;padding:.15rem .5rem;color:var(--gold)">+50 XP</span>
+              </div>
               <div style="font-size:.85rem;color:var(--muted)" id="dc-subtitle">5 quick questions · Under 5 minutes</div>
             </div>
           </div>
@@ -3962,10 +4051,38 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
         <button onclick="this.closest('#daily-tip-bar').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;margin-left:auto;flex-shrink:0;padding:0;line-height:1">×</button>
       </div>
       <div class="stats-row">
-        <div class="stat-card"><div class="stat-card-label">Questions Answered</div><div class="stat-card-value" id="stat-q">0</div><div class="stat-card-change">↑ Start today!</div></div>
-        <div class="stat-card"><div class="stat-card-label">Accuracy Rate</div><div class="stat-card-value" id="stat-acc">—</div><div class="stat-card-change">Answer questions to track</div></div>
-        <div class="stat-card"><div class="stat-card-label">Study Streak</div><div class="stat-card-value" id="stat-streak">1 🔥</div><div class="stat-card-change">Keep it going!</div></div>
-        <div class="stat-card"><div class="stat-card-label">Topics Explored</div><div class="stat-card-value" id="stat-topics">0</div><div class="stat-card-change">of 180 A-Level topics</div></div>
+        <div class="stat-card" style="border-top:2px solid rgba(96,165,250,0.5)">
+          <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem">
+            <span style="font-size:1.2rem">📝</span>
+            <div class="stat-card-label" style="margin-bottom:0">Questions Answered</div>
+          </div>
+          <div class="stat-card-value" id="stat-q">0</div>
+          <div class="stat-card-change">↑ Keep practising!</div>
+        </div>
+        <div class="stat-card" style="border-top:2px solid rgba(74,222,128,0.5)">
+          <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem">
+            <span style="font-size:1.2rem">🎯</span>
+            <div class="stat-card-label" style="margin-bottom:0">Accuracy Rate</div>
+          </div>
+          <div class="stat-card-value" id="stat-acc">—</div>
+          <div class="stat-card-change">Answer questions to track</div>
+        </div>
+        <div class="stat-card" style="border-top:2px solid rgba(251,191,36,0.5)">
+          <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem">
+            <span style="font-size:1.2rem">🔥</span>
+            <div class="stat-card-label" style="margin-bottom:0">Study Streak</div>
+          </div>
+          <div class="stat-card-value" id="stat-streak">1 🔥</div>
+          <div class="stat-card-change">Keep it going!</div>
+        </div>
+        <div class="stat-card" style="border-top:2px solid rgba(201,168,76,0.5)">
+          <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem">
+            <span style="font-size:1.2rem">🗺️</span>
+            <div class="stat-card-label" style="margin-bottom:0">Topics Explored</div>
+          </div>
+          <div class="stat-card-value" id="stat-topics">0</div>
+          <div class="stat-card-change">of 180 A-Level topics</div>
+        </div>
       </div>
       <!-- Exam Countdown -->
       <div id="exam-countdown-card" style="background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.03));border:1px solid rgba(201,168,76,0.28);border-radius:16px;padding:1.35rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 32px rgba(0,0,0,0.25),0 0 0 1px rgba(201,168,76,0.05)">
@@ -8400,9 +8517,11 @@ function updateDashboardStats() {
     if (qEl)  { const _pv = parseInt(qEl.dataset.prev || qEl.textContent) || 0; const _nv = s.questionsAnswered || 0; qEl.dataset.prev = _nv; _animateCounter(qEl, _pv, _nv, 700); }
     if (topEl){ const _pv = parseInt(topEl.dataset.prev || topEl.textContent) || 0; const _nv = (s.topicsExplored || []).length; topEl.dataset.prev = _nv; _animateCounter(topEl, _pv, _nv, 700); }
     if (streakEl) streakEl.textContent = (s.streak || 1) + ' 🔥';
-    // Update sidebar streak
+    // Update sidebar + HUD streak
     const sbStreak = document.getElementById('sb-streak-val');
     if (sbStreak) sbStreak.textContent = (s.streak || 1) + ' 🔥';
+    const hudStreak = document.getElementById('hud-streak');
+    if (hudStreak) hudStreak.textContent = s.streak || 1;
     // Progress page stats
     const ppQ      = document.getElementById('pp-stat-q');
     const ppTop    = document.getElementById('pp-stat-topics');
@@ -10599,13 +10718,14 @@ function _showLevelUp(level) {
                 padding:2.5rem 3rem;text-align:center;
                 box-shadow:0 0 80px rgba(201,168,76,0.3),0 32px 80px rgba(0,0,0,0.7);
                 animation:authBoxIn .5s cubic-bezier(0.34,1.4,0.64,1) both">
-      <div style="font-size:3rem;line-height:1;margin-bottom:.75rem">🎉</div>
-      <div style="font-family:var(--font-head);font-size:1.8rem;font-weight:900;
+      <div style="font-size:3.5rem;line-height:1;margin-bottom:.75rem">🏆</div>
+      <div style="font-family:var(--font-head);font-size:2rem;font-weight:900;
                   background:linear-gradient(135deg,var(--gold),#F0D080,var(--gold));
                   background-size:200% auto;-webkit-background-clip:text;
                   -webkit-text-fill-color:transparent;background-clip:text;
                   animation:shimmer 2s linear infinite">Level ${level}!</div>
-      <div style="color:rgba(136,146,164,0.8);font-size:.9rem;margin-top:.4rem">
+      ${(function(){const r=typeof _getRank==='function'?_getRank(level):{name:'',cls:''};return r.name?`<span class="rank-badge ${r.cls}" style="margin:.5rem auto;display:inline-flex">${r.name}</span>`:'';})()}
+      <div style="color:rgba(136,146,164,0.8);font-size:.9rem;margin-top:.5rem">
         You've levelled up — keep going! 🚀
       </div>
     </div>
@@ -10620,12 +10740,41 @@ function _showLevelUp(level) {
   showToast(`🎉 Level Up! You're now Level ${level}!`);
 }
 
+const RANK_TIERS = [
+  { min:1,  max:4,  name:'Novice',     cls:'rank-novice'     },
+  { min:5,  max:9,  name:'Apprentice', cls:'rank-apprentice' },
+  { min:10, max:19, name:'Scholar',    cls:'rank-scholar'    },
+  { min:20, max:34, name:'Elite',      cls:'rank-elite'      },
+  { min:35, max:49, name:'Master',     cls:'rank-master'     },
+  { min:50, max:Infinity, name:'Legend', cls:'rank-legend'   },
+];
+function _getRank(level) {
+  return RANK_TIERS.find(r => level >= r.min && level <= r.max) || RANK_TIERS[0];
+}
 function updateXPDisplay() {
   const xpInLevel = state.xp % 500;
+  const pct = (xpInLevel / 500 * 100).toFixed(1);
+  const rank = _getRank(state.level);
   document.getElementById('xp-display').textContent = `Lv.${state.level} · ${state.xp} XP`;
   document.getElementById('xp-level-text').textContent = 'Level ' + state.level;
   document.getElementById('xp-progress-text').textContent = xpInLevel + ' / 500 XP';
-  document.getElementById('xp-fill').style.width = (xpInLevel / 500 * 100) + '%';
+  document.getElementById('xp-fill').style.width = pct + '%';
+  // Update rank badges
+  ['sb-rank-badge','hud-rank-badge'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = rank.name;
+    el.className = 'rank-badge ' + rank.cls;
+  });
+  // Update HUD
+  const hudLevel = document.getElementById('hud-level');
+  const hudXpText = document.getElementById('hud-xp-text');
+  const hudXpNext = document.getElementById('hud-xp-next');
+  const hudXpBar = document.getElementById('hud-xp-bar');
+  if (hudLevel) hudLevel.textContent = state.level;
+  if (hudXpText) hudXpText.textContent = xpInLevel + ' XP';
+  if (hudXpNext) hudXpNext.textContent = '/ 500';
+  if (hudXpBar) hudXpBar.style.width = pct + '%';
 }
 
 // ═══════════════════════════════════════
