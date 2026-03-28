@@ -128,7 +128,7 @@ window._loadSupabase = () => new Promise(res => {
    CSS VARIABLES & RESET
 ═══════════════════════════════════════ */
 :root {
-  --gold: #C9A84C;
+  --gold: var(--gold);
   --gold-light: #E8C97A;
   --gold-dark: #9A7A2E;
   --black: #07080C;
@@ -307,7 +307,7 @@ body {
   letter-spacing: -.02em;
 }
 .nav-logo span {
-  background: linear-gradient(135deg, #C9A84C 0%, #F0D080 50%, #C9A84C 100%);
+  background: linear-gradient(135deg, var(--gold) 0%, #F0D080 50%, var(--gold) 100%);
   background-size: 200% auto;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -385,8 +385,8 @@ body {
 .orb-3 { width: 300px; height: 300px; background: var(--blue); top: 40%; left: 40%; animation-delay: 5s; }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-30px) scale(1.05); }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
 
 .hero {
@@ -440,7 +440,7 @@ body {
 }
 .hero h1 em {
   font-style: normal;
-  background: linear-gradient(135deg, #C9A84C 0%, #F0D080 50%, #E8C97A 100%);
+  background: linear-gradient(135deg, var(--gold) 0%, #F0D080 50%, #E8C97A 100%);
   background-size: 200% auto;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -458,7 +458,7 @@ body {
 }
 .btn-hero-primary {
   padding: 1rem 2.5rem; border-radius: 12px;
-  background: linear-gradient(135deg,#D4A820 0%,#C9A84C 40%,#E8C97A 70%,#C9A84C 100%);
+  background: linear-gradient(135deg,#D4A820 0%,var(--gold) 40%,#E8C97A 70%,var(--gold) 100%);
   background-size: 250% auto;
   color: var(--black);
   font-size: 1rem; font-weight: 700; border: none;
@@ -707,20 +707,13 @@ body {
 }
 
 /* STATS */
-.stats-section {
-  position: relative; z-index: 1;
-  padding: 4rem 2rem;
-  background: rgba(10,12,18,0.5);
-  border-top: 1px solid rgba(255,255,255,0.06);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
 .stats-grid {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 2rem; max-width: 1000px; margin: 0 auto; text-align: center;
 }
 .stat-num {
   font-family: var(--font-head); font-size: 3.2rem; font-weight: 900;
-  background: linear-gradient(135deg, #C9A84C 0%, #F0D080 50%, #E8C97A 100%);
+  background: linear-gradient(135deg, var(--gold) 0%, #F0D080 50%, #E8C97A 100%);
   background-size: 200% auto;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text; line-height: 1;
@@ -827,7 +820,7 @@ body {
 .price-card.featured::before {
   content: 'MOST POPULAR';
   position: absolute; top: 1.25rem; right: -2rem;
-  background: linear-gradient(135deg, #D4A820, #C9A84C);
+  background: linear-gradient(135deg, #D4A820, var(--gold));
   color: var(--black);
   font-size: .65rem; font-weight: 800; letter-spacing: .12em;
   padding: .35rem 3rem;
@@ -1065,7 +1058,7 @@ body {
   text-align:center; margin-bottom:.4rem; letter-spacing:-.025em;
 }
 .auth-logo span {
-  background:linear-gradient(135deg,#C9A84C 0%,#F0D080 50%,#C9A84C 100%);
+  background:linear-gradient(135deg,var(--gold) 0%,#F0D080 50%,var(--gold) 100%);
   background-size:200% auto;
   -webkit-background-clip:text; -webkit-text-fill-color:transparent;
   background-clip:text;
@@ -1178,7 +1171,7 @@ body {
 .btn-full {
   width:100%; padding:1rem 1.5rem; border-radius:14px;
   font-size:.95rem; font-weight:700; cursor:pointer; border:none;
-  background:linear-gradient(135deg,#D4A820 0%,#C9A84C 40%,#E8C97A 70%,#C9A84C 100%);
+  background:linear-gradient(135deg,#D4A820 0%,var(--gold) 40%,#E8C97A 70%,var(--gold) 100%);
   background-size:250% auto;
   color:var(--black); transition:all .3s; margin-top:.5rem; letter-spacing:.01em;
   box-shadow:0 4px 20px rgba(201,168,76,0.25);
@@ -1334,7 +1327,7 @@ body {
 }
 .stat-card-value {
   font-family: var(--font-head); font-size: 2.1rem; font-weight: 800;
-  background: linear-gradient(135deg, #F5F2EC 0%, #C9A84C 100%);
+  background: linear-gradient(135deg, #F5F2EC 0%, var(--gold) 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text; line-height: 1;
 }
@@ -1385,7 +1378,7 @@ body {
   box-shadow: 0 2px 12px rgba(0,0,0,0.2);
 }
 .msg.user {
-  background: linear-gradient(135deg, #D4A820, #C9A84C);
+  background: linear-gradient(135deg, #D4A820, var(--gold));
   color: var(--black); align-self: flex-end;
   border-bottom-right-radius: 4px; font-weight: 600;
   box-shadow: 0 4px 16px rgba(201,168,76,0.3);
@@ -1409,7 +1402,7 @@ body {
 }
 .chat-send {
   padding: .75rem 1.25rem;
-  background: linear-gradient(135deg, #D4A820 0%, #C9A84C 50%, #E8C97A 100%);
+  background: linear-gradient(135deg, #D4A820 0%, var(--gold) 50%, #E8C97A 100%);
   background-size: 200% auto;
   color: var(--black);
   border: none; border-radius: 10px;
@@ -1450,16 +1443,6 @@ body {
   100% { left: 200%; }
 }
 
-/* Activity feed */
-.activity-item {
-  display: flex; align-items: center; gap: .75rem;
-  padding: .75rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-.activity-icon {
-  width: 36px; height: 36px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: .9rem; flex-shrink: 0;
-}
 .activity-text { font-size: .85rem; }
 .activity-time { font-size: .75rem; color: var(--muted); margin-left: auto; flex-shrink: 0; }
 
@@ -1711,7 +1694,7 @@ body.mode-adhd .adhd-break { display: block; }
 .heat-cell:hover { transform: scale(1.25); z-index: 2; border-color: rgba(201,168,76,0.5); }
 .heat-cell.l1 { background: rgba(201,168,76,0.18); border-color: rgba(201,168,76,0.1); }
 .heat-cell.l2 { background: rgba(201,168,76,0.42); border-color: rgba(201,168,76,0.3); }
-.heat-cell.l3 { background: linear-gradient(135deg,#D4A820,#C9A84C); border-color: rgba(201,168,76,0.6); box-shadow: 0 0 8px rgba(201,168,76,0.3); }
+.heat-cell.l3 { background: linear-gradient(135deg,#D4A820,var(--gold)); border-color: rgba(201,168,76,0.6); box-shadow: 0 0 8px rgba(201,168,76,0.3); }
 .heat-cell.l4 { background: var(--gold); }
 .heat-cell:hover::after {
   content: attr(data-tip);
@@ -1971,7 +1954,6 @@ body.mode-adhd .adhd-break { display: block; }
 body.light .skeleton {
   background: linear-gradient(90deg, rgba(0,0,0,0.03) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.03) 75%);
 }
-@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 .skeleton-msg { height: 60px; margin-bottom: .75rem; border-radius: 12px; }
 .skeleton-msg.short { width: 55%; height: 44px; }
 .skeleton-msg.right { width: 45%; align-self: flex-end; }
@@ -2022,7 +2004,6 @@ body.light .skeleton {
 @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @keyframes bounce { 0%,80%,100% { transform: scale(1); } 40% { transform: scale(1.4); } }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
-@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
 .loading {
   background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
@@ -2039,7 +2020,7 @@ body.light .skeleton {
 .subj-geo { color: #34D399; }
 .subj-comp { color: #A78BFA; }
 .subj-lang { color: #FBBF24; }
-.subj-econ { color: #C9A84C; }
+.subj-econ { color: var(--gold); }
 
 .fw700 { font-weight: 700; }
 .text-gold { color: var(--gold); }
@@ -2604,7 +2585,7 @@ body.light .skeleton {
 .note-tag-btn.selected { background: rgba(201,168,76,0.15); border-color: rgba(201,168,76,0.4); color: var(--gold); }
 .save-note-btn {
   padding: .5rem 1.1rem; border-radius: 10px;
-  background: linear-gradient(135deg,#D4A820,#C9A84C);
+  background: linear-gradient(135deg,#D4A820,var(--gold));
   border: none; color: var(--black);
   font-size: .82rem; font-weight: 700; cursor: pointer;
   transition: all .2s;
@@ -2834,6 +2815,12 @@ body.light .skeleton {
 
   /* ── Footer ── */
   footer > div > div:first-child { grid-template-columns: 1fr 1fr !important; }
+
+  /* ── Comparison table ── */
+  .comparison-table-wrap, table { overflow-x: auto; -webkit-overflow-scrolling: touch; display: block; max-width: 100%; }
+
+  /* ── How it works ── */
+  #how-it-works [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
 }
 
 @media(max-width:480px) {
@@ -2924,10 +2911,10 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
 }
 .ach-card.just-earned { animation: achGoldPulse 1.5s ease-in-out 3; border-color: rgba(201,168,76,0.7) !important; }
 .ach-new-badge { position:absolute; top:5px; right:5px; font-size:.55rem; font-weight:800; color:#000;
-  background:linear-gradient(135deg,#C9A84C,#F0D080); border-radius:20px; padding:2px 6px;
+  background:linear-gradient(135deg,var(--gold),#F0D080); border-radius:20px; padding:2px 6px;
   animation:newBadgePulse 1.2s ease-in-out infinite; letter-spacing:.03em; z-index:1; }
 .ach-progress-bar-wrap { margin-top:.45rem; height:3px; background:rgba(255,255,255,0.08); border-radius:99px; overflow:hidden; }
-.ach-progress-bar-fill { height:100%; background:linear-gradient(90deg,#C9A84C,#F0D080); border-radius:99px; transition:width .6s ease; }
+.ach-progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--gold),#F0D080); border-radius:99px; transition:width .6s ease; }
 .ach-progress-label { font-size:.58rem; color:rgba(136,146,164,0.65); margin-top:.2rem; }
 .quest-row-done { animation: questComplete .35s ease; }
 </style>
@@ -3084,7 +3071,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
   <!-- Features -->
   <section class="features-section" id="features">
     <div class="section-label" style="display:block;text-align:center;margin-bottom:1rem">What's inside</div>
-    <h2>Everything you need to<br><span style="background:linear-gradient(135deg,#C9A84C 0%,#F0D080 50%,#C9A84C 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 5s linear infinite">ace A-Level Maths</span></h2>
+    <h2>Everything you need to<br><span style="background:linear-gradient(135deg,var(--gold) 0%,#F0D080 50%,var(--gold) 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 5s linear infinite">ace A-Level Maths</span></h2>
     <p class="sub">From Pure 1 to Mechanics — Synaptiq covers every topic, every exam board, every mark scheme.</p>
     <div class="features-grid">
       <div class="feature-card" onclick="nav('auth');showSignup()">
@@ -3369,10 +3356,10 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
         <div style="font-size:.78rem;color:rgba(136,146,164,0.7);line-height:1.65">Static content · No personalisation · Can't answer questions</div>
       </div>
       <div style="padding:1.75rem;background:rgba(201,168,76,0.07);border:1.5px solid rgba(201,168,76,0.3);border-radius:18px;position:relative;box-shadow:0 0 40px rgba(201,168,76,0.1),inset 0 1px 0 rgba(255,255,255,0.05)">
-        <div style="position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#D4A820,#C9A84C);color:var(--black);font-size:.65rem;font-weight:800;letter-spacing:.12em;padding:.3rem 1rem;border-radius:20px;white-space:nowrap;box-shadow:0 4px 12px rgba(201,168,76,0.4)">BEST VALUE</div>
+        <div style="position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#D4A820,var(--gold));color:var(--black);font-size:.65rem;font-weight:800;letter-spacing:.12em;padding:.3rem 1rem;border-radius:20px;white-space:nowrap;box-shadow:0 4px 12px rgba(201,168,76,0.4)">BEST VALUE</div>
         <div style="font-size:2.2rem;margin-bottom:.75rem">🤖</div>
         <div style="font-size:1rem;font-weight:700;margin-bottom:.5rem">Synaptiq</div>
-        <div style="font-size:2.2rem;font-weight:900;font-family:var(--font-head);background:linear-gradient(135deg,#C9A84C,#F0D080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">£35</div>
+        <div style="font-size:2.2rem;font-weight:900;font-family:var(--font-head);background:linear-gradient(135deg,var(--gold),#F0D080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">£35</div>
         <div style="color:var(--muted);font-size:.82rem;margin-bottom:.25rem">per month · just £1.17/day</div>
         <div style="font-size:.72rem;color:rgba(74,222,128,0.8);font-weight:600;margin-bottom:.65rem">= the cost of 1 private tutor hour</div>
         <div style="font-size:.78rem;color:rgba(136,146,164,0.7);line-height:1.65">Unlimited sessions · 24/7 · Personalised to your board</div>
@@ -3555,7 +3542,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
   <!-- CTA -->
   <section class="cta-section">
     <div style="display:inline-block;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:20px;padding:.3rem .9rem;font-size:.75rem;font-weight:700;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:1.25rem">🎓 Free trial — no charge for 7 days</div>
-    <h2>Stop losing marks.<br><em style="font-style:normal;background:linear-gradient(135deg,#C9A84C 0%,#F0D080 50%,#C9A84C 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 5s linear infinite">Start understanding the method.</em></h2>
+    <h2>Stop losing marks.<br><em style="font-style:normal;background:linear-gradient(135deg,var(--gold) 0%,#F0D080 50%,var(--gold) 100%);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 5s linear infinite">Start understanding the method.</em></h2>
     <p>2,400+ students have already improved by an average of +2 grades. The free trial takes 30 seconds to start.</p>
     <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-bottom:1rem">
       <button class="btn-hero-primary" onclick="nav('auth');trackEvent('cta_clicked',{location:'footer_cta'})">Start Your Free Trial →</button>
@@ -3961,7 +3948,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
         </div>
       </div>
       <!-- Daily Quests Card -->
-      <div id="daily-quests-card" style="background:linear-gradient(135deg,rgba(167,139,250,0.1),rgba(167,139,250,0.04));border:1px solid rgba(167,139,250,0.28);border-radius:18px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)">
+      <div id="daily-quests-card" style="background:linear-gradient(135deg,rgba(96,165,250,0.08),rgba(96,165,250,0.03));border:1px solid rgba(96,165,250,0.22);border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)">
         <div style="color:var(--muted);font-size:.875rem;text-align:center;padding:.5rem 0">⚔️ Loading quests...</div>
       </div>
       <!-- Daily tip banner -->
@@ -4894,7 +4881,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
           <line x1="38" y1="32" x2="76" y2="32" stroke="#8B899C" stroke-width="1.4" stroke-linecap="round"/>
           <line x1="38" y1="40" x2="68" y2="40" stroke="#8B899C" stroke-width="1.4" stroke-linecap="round"/>
           <!-- Pencil -->
-          <rect x="84" y="28" width="8" height="32" rx="2" fill="#C9A84C" transform="rotate(-30 88 44)"/>
+          <rect x="84" y="28" width="8" height="32" rx="2" fill="var(--gold)" transform="rotate(-30 88 44)"/>
           <polygon points="84,54 88,62 92,54" fill="#F0EEF8" transform="rotate(-30 88 44)"/>
         </svg>
       </div>
@@ -5461,7 +5448,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
           <div class="grade-dial">
             <svg width="180" height="90" viewBox="0 0 180 90">
               <path d="M 20 90 A 70 70 0 0 1 160 90" class="grade-arc-bg"/>
-              <path id="grade-arc" d="M 20 90 A 70 70 0 0 1 160 90" class="grade-arc-fill" stroke="#C9A84C" stroke-dasharray="0 220"/>
+              <path id="grade-arc" d="M 20 90 A 70 70 0 0 1 160 90" class="grade-arc-fill" stroke="var(--gold)" stroke-dasharray="0 220"/>
             </svg>
           </div>
           <div class="predicted-grade-text" id="predicted-grade">—</div>
@@ -5608,7 +5595,7 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
               stroke-dasharray="597" stroke-dashoffset="0" stroke-linecap="round" style="transition:stroke-dashoffset 1s linear,stroke .3s"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-            <div style="font-family:var(--font-head);font-size:3rem;font-weight:900;background:linear-gradient(135deg,#F5F2EC,#C9A84C);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;letter-spacing:-.03em;text-shadow:none" id="pom-display">25:00</div>
+            <div style="font-family:var(--font-head);font-size:3rem;font-weight:900;background:linear-gradient(135deg,#F5F2EC,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;letter-spacing:-.03em;text-shadow:none" id="pom-display">25:00</div>
             <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem;text-transform:uppercase;letter-spacing:.07em;font-weight:600" id="pom-label">Ready to focus</div>
           </div>
         </div>
@@ -5891,7 +5878,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
               <span id="checklist-pct">0%</span>
             </div>
             <div style="background:rgba(255,255,255,0.05);border-radius:99px;height:10px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.3)">
-              <div id="checklist-bar" style="height:100%;background:linear-gradient(90deg,#D4A820,#C9A84C,#F0D080);border-radius:99px;width:0%;transition:width .6s cubic-bezier(.4,0,.2,1);box-shadow:0 0 12px rgba(201,168,76,0.4)"></div>
+              <div id="checklist-bar" style="height:100%;background:linear-gradient(90deg,#D4A820,var(--gold),#F0D080);border-radius:99px;width:0%;transition:width .6s cubic-bezier(.4,0,.2,1);box-shadow:0 0 12px rgba(201,168,76,0.4)"></div>
             </div>
           </div>
           <button class="btn btn-outline" style="font-size:.8rem;padding:.4rem .9rem" onclick="resetChecklist()">↺ Reset</button>
@@ -5955,7 +5942,7 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
         </div>
 
         <div id="blitz-results" style="display:none;text-align:center;padding:2rem">
-          <div id="blitz-result-score" style="font-size:3.5rem;font-weight:900;background:linear-gradient(135deg,#F5D660,#C9A84C,#E8A820);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem;font-family:var(--font-head)"></div>
+          <div id="blitz-result-score" style="font-size:3.5rem;font-weight:900;background:linear-gradient(135deg,#F5D660,var(--gold),#E8A820);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem;font-family:var(--font-head)"></div>
           <div id="blitz-result-msg" style="font-size:1rem;color:var(--muted);margin-bottom:1.5rem"></div>
           <div id="blitz-result-breakdown" style="text-align:left;margin-bottom:1.5rem"></div>
           <div id="blitz-study-links" style="display:none;background:rgba(12,14,20,0.82);border-radius:12px;padding:1rem;margin-bottom:1.25rem;text-align:left">
@@ -10613,7 +10600,7 @@ function _showLevelUp(level) {
                 animation:authBoxIn .5s cubic-bezier(0.34,1.4,0.64,1) both">
       <div style="font-size:3rem;line-height:1;margin-bottom:.75rem">🎉</div>
       <div style="font-family:var(--font-head);font-size:1.8rem;font-weight:900;
-                  background:linear-gradient(135deg,#C9A84C,#F0D080,#C9A84C);
+                  background:linear-gradient(135deg,var(--gold),#F0D080,var(--gold));
                   background-size:200% auto;-webkit-background-clip:text;
                   -webkit-text-fill-color:transparent;background-clip:text;
                   animation:shimmer 2s linear infinite">Level ${level}!</div>
@@ -10852,7 +10839,7 @@ function resetStatsForNewUser() {
   <div class="pom-ring">
     <svg width="88" height="88" viewBox="0 0 88 88">
       <circle cx="44" cy="44" r="40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="4"/>
-      <circle id="pom-widget-ring-circle" cx="44" cy="44" r="40" fill="none" stroke="#C9A84C" stroke-width="4"
+      <circle id="pom-widget-ring-circle" cx="44" cy="44" r="40" fill="none" stroke="var(--gold)" stroke-width="4"
         stroke-dasharray="251.2" stroke-dashoffset="0" stroke-linecap="round"/>
     </svg>
     <div class="pom-time" id="pom-widget-display">25:00</div>
@@ -13831,7 +13818,7 @@ function exportQuestionsPDF() {
 .calc-expr { font-size: .8rem; color: var(--muted); min-height: 1.2em; }
 .calc-val {
   font-size: 2.2rem; font-weight: 700; word-break: break-all;
-  background: linear-gradient(135deg, #F5F2EC, #C9A84C);
+  background: linear-gradient(135deg, #F5F2EC, var(--gold));
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 .calc-grid {
@@ -13847,7 +13834,7 @@ function exportQuestionsPDF() {
 .calc-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(201,168,76,0.4); transform: scale(1.04); }
 .calc-btn.op { color: var(--gold); background: rgba(201,168,76,0.08); }
 .calc-btn.eq {
-  background: linear-gradient(135deg,#D4A820,#C9A84C);
+  background: linear-gradient(135deg,#D4A820,var(--gold));
   color: var(--black); border-color: var(--gold);
   grid-column: span 2; font-size: 1.2rem;
   box-shadow: 0 4px 16px rgba(201,168,76,0.3);
@@ -15419,7 +15406,7 @@ window.addEventListener('DOMContentLoaded', () => {
       const overlay = document.createElement('div');
       overlay.id = 'auth-loading-overlay';
       overlay.style.cssText = 'position:fixed;inset:0;background:var(--black,#0A0C12);z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem';
-      overlay.innerHTML = '<div style="font-size:2rem">✦</div><div style="color:#C9A84C;font-weight:700;letter-spacing:.1em">SYNAPTIQ</div><div style="color:#666;font-size:.875rem">Loading your dashboard...</div>';
+      overlay.innerHTML = '<div style="font-size:2rem">✦</div><div style="color:var(--gold);font-weight:700;letter-spacing:.1em">SYNAPTIQ</div><div style="color:#666;font-size:.875rem">Loading your dashboard...</div>';
       document.body.appendChild(overlay);
       // Remove overlay after dashboard loads or on timeout
       setTimeout(() => { overlay.remove(); }, 4000);
@@ -15947,7 +15934,7 @@ function _renderGoalStreak(streak, goalMet) {
     el.innerHTML = `<div style="display:flex;align-items:center;gap:.75rem">
       <div style="font-size:2rem">${emojis}</div>
       <div>
-        <div style="font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#F5F2EC,#C9A84C);-webkit-background-clip:text;-webkit-text-fill-color:transparent">${streak} day${streak !== 1 ? 's' : ''}</div>
+        <div style="font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#F5F2EC,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent">${streak} day${streak !== 1 ? 's' : ''}</div>
         <div style="font-size:.8rem;color:var(--muted)">${goalMet ? 'Goal met today ✓' : 'Goal not yet complete today'}</div>
       </div>
     </div>`;
@@ -16334,7 +16321,7 @@ function _celebrateAchievement(a) {
   el.innerHTML = `<div style="background:rgba(10,12,18,0.97);backdrop-filter:blur(32px);border:2px solid rgba(201,168,76,0.65);border-radius:28px;padding:2.5rem 3rem;text-align:center;max-width:340px;box-shadow:0 0 100px rgba(201,168,76,0.35),0 32px 80px rgba(0,0,0,0.8);animation:achUnlock .6s cubic-bezier(0.34,1.4,0.64,1) both,achGoldPulse 1.5s ease-in-out 1.2s infinite">
     <div style="font-size:.7rem;font-weight:800;color:rgba(201,168,76,0.8);text-transform:uppercase;letter-spacing:.15em;margin-bottom:.75rem">🏆 Achievement Unlocked</div>
     <div style="font-size:3.5rem;line-height:1;margin-bottom:.6rem;animation:float 2s ease-in-out infinite">${a.icon}</div>
-    <div style="font-family:var(--font-head);font-size:1.5rem;font-weight:900;background:linear-gradient(135deg,#C9A84C,#F0D080,#C9A84C);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 2s linear infinite">${a.name}</div>
+    <div style="font-family:var(--font-head);font-size:1.5rem;font-weight:900;background:linear-gradient(135deg,var(--gold),#F0D080,var(--gold));background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 2s linear infinite">${a.name}</div>
     <div style="color:rgba(136,146,164,0.85);font-size:.875rem;margin-top:.4rem">${a.desc}</div>
   </div>`;
   document.body.appendChild(el);
@@ -16384,7 +16371,7 @@ function _checkXPMilestones(xp) {
       el.style.cssText = 'position:fixed;inset:0;z-index:100000;pointer-events:none;display:flex;align-items:center;justify-content:center;';
       el.innerHTML = `<div style="background:rgba(10,12,18,0.97);backdrop-filter:blur(32px);border:2px solid rgba(201,168,76,0.65);border-radius:28px;padding:2.5rem 3rem;text-align:center;max-width:360px;box-shadow:0 0 100px rgba(201,168,76,0.3),0 32px 80px rgba(0,0,0,0.8);animation:authBoxIn .5s cubic-bezier(0.34,1.4,0.64,1) both">
         <div style="font-size:.7rem;font-weight:800;color:rgba(201,168,76,0.8);text-transform:uppercase;letter-spacing:.15em;margin-bottom:.75rem">⭐ XP Milestone</div>
-        <div style="font-family:var(--font-head);font-size:2.5rem;font-weight:900;background:linear-gradient(135deg,#C9A84C,#F0D080,#C9A84C);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 2s linear infinite">${highest.toLocaleString()} XP</div>
+        <div style="font-family:var(--font-head);font-size:2.5rem;font-weight:900;background:linear-gradient(135deg,var(--gold),#F0D080,var(--gold));background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 2s linear infinite">${highest.toLocaleString()} XP</div>
         <div style="color:rgba(136,146,164,0.85);font-size:.875rem;margin-top:.4rem">Incredible progress — ${highest.toLocaleString()} total XP earned!</div>
       </div>`;
       document.body.appendChild(el);
@@ -16452,14 +16439,14 @@ function _renderDailyQuests(quests) {
       ${done===3 ? '<div style="background:rgba(74,222,128,0.15);border:1px solid rgba(74,222,128,0.3);border-radius:20px;padding:.3rem .9rem;font-size:.8rem;font-weight:700;color:var(--green)">✓ All done!</div>' : ''}
     </div>
     ${quests.map(q => `
-      <div style="margin-bottom:.65rem;padding:.8rem 1rem;background:${q.done?'rgba(74,222,128,0.06)':'rgba(255,255,255,0.03)'};border:1px solid ${q.done?'rgba(74,222,128,0.25)':'rgba(167,139,250,0.18)'};border-radius:12px;transition:all .3s ease">
+      <div style="margin-bottom:.65rem;padding:.8rem 1rem;background:${q.done?'rgba(74,222,128,0.06)':'rgba(255,255,255,0.03)'};border:1px solid ${q.done?'rgba(74,222,128,0.25)':'rgba(96,165,250,0.18)'};border-radius:12px;transition:all .3s ease">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.45rem">
           <div style="font-size:.855rem;font-weight:600;color:${q.done?'var(--green)':'var(--white)'};${q.done?'text-decoration:line-through;opacity:.7':''}">${q.done?'✅ ':''}${q.text}</div>
           <div style="font-size:.75rem;font-weight:700;color:var(--gold);white-space:nowrap;margin-left:.5rem">+${q.xp} XP</div>
         </div>
         <div style="display:flex;align-items:center;gap:.65rem">
           <div style="flex:1;height:4px;background:rgba(255,255,255,0.07);border-radius:99px;overflow:hidden">
-            <div style="height:100%;width:${Math.min(100,Math.round(q.progress/q.target*100))}%;background:${q.done?'var(--green)':'linear-gradient(90deg,#a78bfa,#C9A84C)'};border-radius:99px;transition:width .5s ease"></div>
+            <div style="height:100%;width:${Math.min(100,Math.round(q.progress/q.target*100))}%;background:${q.done?'var(--green)':'linear-gradient(90deg,#a78bfa,var(--gold))'};border-radius:99px;transition:width .5s ease"></div>
           </div>
           <div style="font-size:.68rem;color:var(--muted);white-space:nowrap">${q.progress}/${q.target}</div>
         </div>
@@ -17567,7 +17554,7 @@ function buildFormulaCardPDF() {
     <style>
       *{box-sizing:border-box;margin:0;padding:0}
       body{font-family:Georgia,serif;padding:1.5cm;max-width:21cm;margin:0 auto;color:#111;font-size:10pt}
-      h1{font-size:14pt;margin-bottom:.3cm;border-bottom:2px solid #C9A84C;padding-bottom:.2cm;color:#5a3a00}
+      h1{font-size:14pt;margin-bottom:.3cm;border-bottom:2px solid var(--gold);padding-bottom:.2cm;color:#5a3a00}
       .subtitle{font-size:8pt;color:#888;margin-bottom:.6cm}
       .grid{display:grid;grid-template-columns:1fr 1fr;gap:.4cm}
       .formula-item{border:1px solid #ddd;border-radius:4px;padding:.35cm .5cm;font-size:10pt;line-height:1.6;background:#fffef8}
@@ -17822,7 +17809,7 @@ function printParentReport() {
     <style>
       *{box-sizing:border-box;margin:0;padding:0}
       body{font-family:Georgia,serif;padding:2cm;color:#1a1a1a;max-width:21cm;margin:0 auto;font-size:11pt}
-      h1{font-size:18pt;color:#5a3a00;border-bottom:3px solid #C9A84C;padding-bottom:.3cm;margin-bottom:.5cm}
+      h1{font-size:18pt;color:#5a3a00;border-bottom:3px solid var(--gold);padding-bottom:.3cm;margin-bottom:.5cm}
       .meta{font-size:9pt;color:#888;margin-bottom:1cm}
       .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5cm;margin-bottom:1cm}
       .stat-box{border:1px solid #ddd;border-radius:6px;padding:.5cm;text-align:center}
@@ -17831,7 +17818,7 @@ function printParentReport() {
       .section-title{font-weight:bold;font-size:11pt;margin:.6cm 0 .3cm;color:#333;border-bottom:1px solid #eee;padding-bottom:.2cm}
       .bar-chart{display:flex;align-items:flex-end;gap:8px;height:80px;margin:.4cm 0}
       .bar{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
-      .bar-fill{background:#C9A84C;border-radius:3px 3px 0 0;min-height:2px}
+      .bar-fill{background:var(--gold);border-radius:3px 3px 0 0;min-height:2px}
       .bar-lbl{font-size:7pt;color:#888}
       .topics{display:flex;flex-wrap:wrap;gap:.3cm}
       .topic-pill{border:1px solid #ddd;border-radius:4px;padding:.15cm .35cm;font-size:8pt;color:#555}
@@ -17903,7 +17890,7 @@ function setLessonCache(chapter, html) {
 
   .voice-orb {
     width:160px;height:160px;border-radius:50%;
-    background:radial-gradient(circle at 38% 36%, #C9A84C 0%, #8B6914 55%, #3a2c08 100%);
+    background:radial-gradient(circle at 38% 36%, var(--gold) 0%, #8B6914 55%, #3a2c08 100%);
     box-shadow:0 0 0 0 rgba(201,168,76,0.5);
     display:flex;align-items:center;justify-content:center;
     cursor:pointer;transition:transform .2s;
@@ -18921,7 +18908,7 @@ function dcFinish() {
         _launchConfetti();
         const _pb = document.createElement('div');
         _pb.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-60%);z-index:100000;pointer-events:none;text-align:center;animation:fadeInUp .4s ease both';
-        _pb.innerHTML = '<div style="font-size:3rem;line-height:1;filter:drop-shadow(0 0 20px rgba(201,168,76,0.8))">🏆</div><div style="font-family:var(--font-head);font-size:2rem;font-weight:900;background:linear-gradient(135deg,#C9A84C,#F0D080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;margin-top:.25rem">PERFECT!</div>';
+        _pb.innerHTML = '<div style="font-size:3rem;line-height:1;filter:drop-shadow(0 0 20px rgba(201,168,76,0.8))">🏆</div><div style="font-family:var(--font-head);font-size:2rem;font-weight:900;background:linear-gradient(135deg,var(--gold),#F0D080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none;margin-top:.25rem">PERFECT!</div>';
         document.body.appendChild(_pb);
         setTimeout(() => { _pb.style.transition='opacity .4s'; _pb.style.opacity='0'; setTimeout(()=>_pb.remove(),400); }, 2200);
       }, 300);
@@ -20234,7 +20221,7 @@ function renderStreakCalendar() {
     if (hasActivity) studiedDays++;
     const dayName = isToday ? 'Today' : days[d.getDay()];
     const bg = hasActivity
-      ? 'linear-gradient(135deg,#D4A820,#C9A84C)'
+      ? 'linear-gradient(135deg,#D4A820,var(--gold))'
       : isToday
         ? 'rgba(201,168,76,0.12)'
         : 'rgba(255,255,255,0.04)';
