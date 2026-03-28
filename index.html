@@ -10698,7 +10698,7 @@ function _vidRenderChapter(i) {
   vidChapterData[i].render(layer);
   if (!_vid.muted) {
     if (_vid.cancelTTS) { _vid.cancelTTS(); _vid.cancelTTS = null; }
-    if (typeof elSpeak === 'function') _vid.cancelTTS = elSpeak(vidChapterData[i].tts);
+    if (typeof elSpeak === 'function') _vid.cancelTTS = elSpeak(vidChapterData[i].tts, null, 'jarvis');
   }
 }
 
@@ -10950,14 +10950,14 @@ function toggleTTS() {
 
 // Shared ElevenLabs TTS helper — returns a cancel function
 let _elAudio = null;
-function elSpeak(text, onEnd) {
+function elSpeak(text, onEnd, voice) {
   if (_elAudio) { _elAudio.pause(); _elAudio = null; }
   let cancelled = false;
   const cancel = () => { cancelled = true; if (_elAudio) { _elAudio.pause(); _elAudio = null; } if (onEnd) onEnd(); };
   fetch('/api/tts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, voice: voice || 'jarvis' }),
   }).then(r => {
     if (!r.ok || cancelled) { if (onEnd && !cancelled) onEnd(); return; }
     return r.blob();
@@ -10975,7 +10975,7 @@ function elSpeak(text, onEnd) {
 function speak(text) {
   const clean = text.replace(/[*_`#~>\[\]]/g, '').replace(/\n+/g, '. ').slice(0, 1000);
   if (window.speechSynthesis) window.speechSynthesis.cancel();
-  elSpeak(clean);
+  elSpeak(clean, null, 'jarvis');
 }
 
 let _voiceMode = false;
