@@ -17,6 +17,14 @@ const VOICE_IDS = {
   charlotte: 'XB0fDUnXU5powFXDhCwa', // young British female
   dorothy:   'ThT5KcBeYPX3keUQqHPh', // warm British female
   daniel:    'onwK4e9ZLuTAKqWW03F9', // calm British male
+  jarvis:    'onwK4e9ZLuTAKqWW03F9', // calm precise British male — closest to Jarvis
+};
+
+const VOICE_SETTINGS = {
+  // Jarvis: max stability = robotic consistency, low similarity = synthetic/processed,
+  // style=0 = no emotion variance, speaker_boost = crisp presence
+  jarvis:  { stability: 0.95, similarity_boost: 0.18, style: 0.0, use_speaker_boost: true },
+  default: { stability: 0.5,  similarity_boost: 0.75 },
 };
 
 export default async function handler(req, res) {
@@ -38,7 +46,8 @@ export default async function handler(req, res) {
   }
 
   const voiceId = VOICE_IDS[voice] || VOICE_IDS.alice;
-  const input = text.slice(0, 5000); // ElevenLabs free tier limit
+  const input = text.slice(0, 5000);
+  const voiceSettings = VOICE_SETTINGS[voice] || VOICE_SETTINGS.default;
 
   const upstream = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
@@ -52,7 +61,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         text: input,
         model_id: 'eleven_turbo_v2_5',
-        voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+        voice_settings: voiceSettings,
       }),
     }
   );
