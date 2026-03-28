@@ -128,26 +128,28 @@ window._loadSupabase = () => new Promise(res => {
    CSS VARIABLES & RESET
 ═══════════════════════════════════════ */
 :root {
-  --gold: var(--gold);
+  --gold: #C9A84C;
   --gold-light: #E8C97A;
   --gold-dark: #9A7A2E;
   --black: #07080C;
-  --bg1: #0A0C12;
-  --bg2: #0F1118;
-  --bg3: #151821;
-  --bg4: #1C2030;
-  --white: #F5F2EC;
-  --muted: #9BA4B7; /* Improved: ~5.2:1 contrast on --bg1 */
-  --border: rgba(201,168,76,0.15);
-  --green: #4ADE80;
-  --red: #FB7185;
-  --blue: #60A5FA;
-  --purple: #A78BFA;
-  --orange: #FB923C;
-  --pink: #F472B6;
-  --radius: 12px;
-  --shadow: 0 8px 32px rgba(0,0,0,0.4);
-  --glow: 0 0 40px rgba(201,168,76,0.15);
+  --bg1: #03050D;
+  --bg2: #080C18;
+  --bg3: #0D1220;
+  --bg4: #131828;
+  --white: #E8F0FF;
+  --muted: #5A7499;
+  --border: rgba(0,212,255,0.12);
+  --green: #00FF9D;
+  --red: #FF4060;
+  --blue: #00D4FF;
+  --purple: #B060FF;
+  --orange: #FF8C00;
+  --pink: #FF40A0;
+  --cyan: #00D4FF;
+  --neon: #00FF9D;
+  --radius: 10px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.6);
+  --glow: 0 0 40px rgba(0,212,255,0.12);
   --font-body: 'DM Sans', sans-serif;
   --font-head: 'Playfair Display', serif;
   --font-mono: 'Space Mono', monospace;
@@ -440,7 +442,7 @@ body {
 }
 .hero h1 em {
   font-style: normal;
-  background: linear-gradient(135deg, var(--gold) 0%, #F0D080 50%, #E8C97A 100%);
+  background: linear-gradient(135deg, #00D4FF 0%, #7B40FF 50%, #00FF9D 100%);
   background-size: 200% auto;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -713,7 +715,7 @@ body {
 }
 .stat-num {
   font-family: var(--font-head); font-size: 3.2rem; font-weight: 900;
-  background: linear-gradient(135deg, var(--gold) 0%, #F0D080 50%, #E8C97A 100%);
+  background: linear-gradient(135deg, #00D4FF 0%, #7B40FF 50%, #00FF9D 100%);
   background-size: 200% auto;
   -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   background-clip: text; line-height: 1;
@@ -2975,6 +2977,354 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
 .ach-progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--gold),#F0D080); border-radius:99px; transition:width .6s ease; }
 .ach-progress-label { font-size:.58rem; color:rgba(136,146,164,0.65); margin-top:.2rem; }
 .quest-row-done { animation: questComplete .35s ease; }
+
+/* ═══════════════════════════════════════
+   FUTURISTIC GAME THEME
+═══════════════════════════════════════ */
+
+/* ── Global scanline + grid overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.018) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.06) 2px,
+    rgba(0,0,0,0.06) 4px
+  );
+}
+
+/* ── Nav ── */
+#nav {
+  background: rgba(3,5,13,0.92) !important;
+  border-bottom: 1px solid rgba(0,212,255,0.2) !important;
+  box-shadow: 0 1px 0 rgba(0,212,255,0.08), 0 4px 32px rgba(0,0,0,0.8) !important;
+}
+.nav-logo {
+  background: linear-gradient(135deg, #00D4FF 0%, #7B40FF 60%, #00FF9D 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+#xp-badge {
+  background: rgba(0,212,255,0.08) !important;
+  border-color: rgba(0,212,255,0.4) !important;
+  color: #00D4FF !important;
+  box-shadow: 0 0 12px rgba(0,212,255,0.15) !important;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  background: rgba(3,5,13,0.97) !important;
+  border-right: 1px solid rgba(0,212,255,0.12) !important;
+}
+.sidebar-user {
+  border-bottom-color: rgba(0,212,255,0.1) !important;
+}
+.avatar {
+  background: linear-gradient(135deg, #00D4FF, #7B40FF) !important;
+  box-shadow: 0 0 20px rgba(0,212,255,0.3) !important;
+}
+.sidebar-xp {
+  background: rgba(0,212,255,0.04) !important;
+  border-color: rgba(0,212,255,0.2) !important;
+}
+.xp-level { color: #00D4FF !important; }
+.xp-bar { background: rgba(0,212,255,0.08) !important; }
+.xp-fill {
+  background: linear-gradient(90deg, #00D4FF, #7B40FF, #00FF9D) !important;
+  box-shadow: 0 0 10px rgba(0,212,255,0.5) !important;
+  animation: shimmer 3s linear infinite, neonPulse 2s ease-in-out infinite alternate !important;
+}
+@keyframes neonPulse {
+  0%   { box-shadow: 0 0 6px rgba(0,212,255,0.6); }
+  100% { box-shadow: 0 0 20px rgba(0,212,255,1), 0 0 40px rgba(0,212,255,0.4); }
+}
+.sidebar-item {
+  color: rgba(90,116,153,0.9) !important;
+  letter-spacing: .01em;
+}
+.sidebar-item:hover {
+  background: rgba(0,212,255,0.06) !important;
+  color: #00D4FF !important;
+  border-left: 2px solid rgba(0,212,255,0.5);
+}
+.sidebar-item.active {
+  background: rgba(0,212,255,0.08) !important;
+  color: #00D4FF !important;
+  border: 1px solid rgba(0,212,255,0.3) !important;
+  box-shadow: inset 2px 0 0 #00D4FF, 0 0 20px rgba(0,212,255,0.08) !important;
+}
+.sidebar-section-label {
+  color: rgba(0,212,255,0.35) !important;
+  letter-spacing: .15em !important;
+}
+#sb-today-stats > div {
+  border-color: rgba(0,212,255,0.12) !important;
+  background: rgba(0,212,255,0.03) !important;
+}
+#sb-streak-val { color: #00D4FF !important; }
+
+/* ── Cards ── */
+.card {
+  background: rgba(8,12,24,0.9) !important;
+  border-color: rgba(0,212,255,0.12) !important;
+}
+.card:hover {
+  border-color: rgba(0,212,255,0.35) !important;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,212,255,0.1), 0 0 30px rgba(0,212,255,0.06) !important;
+}
+.card-header { border-bottom-color: rgba(0,212,255,0.08) !important; }
+
+/* ── Stat cards ── */
+.stat-card {
+  background: rgba(5,8,20,0.9) !important;
+  border-color: rgba(0,212,255,0.1) !important;
+}
+.stat-card:hover {
+  border-color: rgba(0,212,255,0.3) !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 24px rgba(0,212,255,0.06) !important;
+}
+.stat-card::before {
+  background: linear-gradient(90deg, transparent, #00D4FF, transparent) !important;
+}
+.stat-card-value {
+  background: linear-gradient(135deg, #E8F0FF 0%, #00D4FF 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* ── Buttons ── */
+.btn-gold {
+  background: linear-gradient(135deg, #00D4FF, #7B40FF) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 4px 20px rgba(0,212,255,0.25) !important;
+}
+.btn-gold:hover {
+  background: linear-gradient(135deg, #33DEFF, #9A60FF) !important;
+  box-shadow: 0 6px 28px rgba(0,212,255,0.4), 0 0 0 1px rgba(0,212,255,0.3) !important;
+  transform: translateY(-1px) !important;
+}
+.btn-outline {
+  border-color: rgba(0,212,255,0.35) !important;
+  color: #00D4FF !important;
+}
+.btn-outline:hover {
+  border-color: #00D4FF !important;
+  color: #00D4FF !important;
+  box-shadow: 0 0 16px rgba(0,212,255,0.2) !important;
+  background: rgba(0,212,255,0.06) !important;
+}
+.btn-hero-primary {
+  background: linear-gradient(135deg, #00D4FF 0%, #7B40FF 100%) !important;
+  box-shadow: 0 8px 32px rgba(0,212,255,0.3), 0 0 0 1px rgba(0,212,255,0.2) !important;
+}
+.btn-hero-primary:hover {
+  box-shadow: 0 12px 40px rgba(0,212,255,0.45), 0 0 60px rgba(0,212,255,0.15) !important;
+}
+
+/* ── Quick Action buttons ── */
+.qa-tutor     { background: rgba(0,212,255,0.07)  !important; border-color: rgba(0,212,255,0.25)  !important; color: #00D4FF !important; }
+.qa-tutor:hover     { background: rgba(0,212,255,0.14) !important; border-color: rgba(0,212,255,0.5) !important; box-shadow: 0 4px 20px rgba(0,212,255,0.2) !important; }
+.qa-questions { background: rgba(123,64,255,0.07) !important; border-color: rgba(123,64,255,0.25) !important; color: #B060FF !important; }
+.qa-questions:hover { background: rgba(123,64,255,0.14) !important; border-color: rgba(123,64,255,0.5) !important; box-shadow: 0 4px 20px rgba(123,64,255,0.2) !important; }
+.qa-flash     { background: rgba(0,255,157,0.06)  !important; border-color: rgba(0,255,157,0.22)  !important; color: #00FF9D !important; }
+.qa-flash:hover     { background: rgba(0,255,157,0.12) !important; border-color: rgba(0,255,157,0.4) !important; box-shadow: 0 4px 20px rgba(0,255,157,0.15) !important; }
+.qa-blitz     { background: rgba(255,64,96,0.07)  !important; border-color: rgba(255,64,96,0.25)  !important; color: #FF4060 !important; }
+.qa-blitz:hover     { background: rgba(255,64,96,0.14) !important; border-color: rgba(255,64,96,0.5) !important; box-shadow: 0 4px 20px rgba(255,64,96,0.2) !important; }
+
+/* ── Player HUD ── */
+.player-hud {
+  background: rgba(3,5,13,0.8) !important;
+  border-color: rgba(0,212,255,0.18) !important;
+  box-shadow: 0 0 30px rgba(0,212,255,0.05), inset 0 1px 0 rgba(0,212,255,0.08) !important;
+}
+.hud-stat {
+  background: rgba(0,212,255,0.04) !important;
+  border-color: rgba(0,212,255,0.1) !important;
+}
+.hud-stat-val { color: #00D4FF !important; }
+#hud-xp-bar {
+  background: linear-gradient(90deg, #00D4FF, #7B40FF) !important;
+  box-shadow: 0 0 8px rgba(0,212,255,0.6) !important;
+}
+
+/* ── Rank badges ── */
+.rank-novice     { background: rgba(90,116,153,0.15) !important; border-color: rgba(90,116,153,0.4) !important; color: #7A96BA !important; }
+.rank-apprentice { background: rgba(0,212,255,0.1)   !important; border-color: rgba(0,212,255,0.4)  !important; color: #00D4FF !important; }
+.rank-scholar    { background: rgba(0,255,157,0.1)   !important; border-color: rgba(0,255,157,0.4)  !important; color: #00FF9D !important; }
+.rank-elite      { background: rgba(255,140,0,0.12)  !important; border-color: rgba(255,140,0,0.4)  !important; color: #FF8C00 !important; }
+.rank-master     { background: rgba(123,64,255,0.12) !important; border-color: rgba(123,64,255,0.5) !important; color: #B060FF !important; }
+.rank-legend     { background: linear-gradient(135deg,rgba(0,212,255,0.15),rgba(123,64,255,0.15)) !important;
+                   border-color: rgba(0,212,255,0.6) !important; color: #00D4FF !important;
+                   box-shadow: 0 0 16px rgba(0,212,255,0.25) !important; }
+
+/* ── XP popup ── */
+#xp-popup {
+  background: rgba(3,5,13,0.97) !important;
+  border-color: rgba(0,212,255,0.5) !important;
+  color: #00D4FF !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 24px rgba(0,212,255,0.2) !important;
+}
+#xp-popup::before { content: '⚡' !important; }
+
+/* ── Daily/Quests cards ── */
+#daily-challenge-card {
+  background: linear-gradient(135deg,rgba(0,212,255,0.08),rgba(0,212,255,0.02)) !important;
+  border-color: rgba(0,212,255,0.28) !important;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.4), 0 0 20px rgba(0,212,255,0.05) !important;
+}
+#daily-quests-card {
+  background: linear-gradient(135deg,rgba(123,64,255,0.08),rgba(123,64,255,0.02)) !important;
+  border-color: rgba(123,64,255,0.25) !important;
+}
+#exam-countdown-card {
+  background: linear-gradient(135deg,rgba(0,255,157,0.07),rgba(0,255,157,0.02)) !important;
+  border-color: rgba(0,255,157,0.22) !important;
+}
+#predicted-grade-card {
+  background: linear-gradient(135deg,rgba(123,64,255,0.1),rgba(123,64,255,0.03)) !important;
+  border-color: rgba(123,64,255,0.28) !important;
+}
+
+/* ── Dashboard search ── */
+#dash-search {
+  background: rgba(0,212,255,0.03) !important;
+  border-color: rgba(0,212,255,0.15) !important;
+  color: var(--white) !important;
+}
+#dash-search:focus {
+  border-color: rgba(0,212,255,0.5) !important;
+  box-shadow: 0 0 0 3px rgba(0,212,255,0.08) !important;
+}
+
+/* ── Page title gradient ── */
+.page-title {
+  background: linear-gradient(135deg, #E8F0FF 0%, #00D4FF 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* ── Glitch animation on logo hover ── */
+@keyframes glitch {
+  0%,100% { clip-path: inset(0 0 100% 0); transform: translateX(0); }
+  20% { clip-path: inset(20% 0 60% 0); transform: translateX(-3px); }
+  40% { clip-path: inset(50% 0 30% 0); transform: translateX(3px); }
+  60% { clip-path: inset(70% 0 10% 0); transform: translateX(-2px); }
+  80% { clip-path: inset(5% 0 85% 0);  transform: translateX(2px); }
+}
+@keyframes scanline {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+/* ── Neon glow on achievement cards ── */
+.ach-card.earned {
+  border-color: rgba(0,255,157,0.3) !important;
+  box-shadow: 0 0 16px rgba(0,255,157,0.08) !important;
+}
+.ach-card.just-earned {
+  border-color: rgba(0,212,255,0.7) !important;
+  box-shadow: 0 0 30px rgba(0,212,255,0.2) !important;
+  animation: achGoldPulse 1.5s ease-in-out 3 !important;
+}
+
+/* ── Stat bar top accent colors ── */
+.stat-card[style*="rgba(96,165,250"] { border-top-color: #00D4FF !important; }
+.stat-card[style*="rgba(74,222,128"] { border-top-color: #00FF9D !important; }
+.stat-card[style*="rgba(251,191,36"] { border-top-color: #FF8C00 !important; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.3) !important; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,212,255,0.5) !important; }
+
+/* ── Input focus rings ── */
+input:focus, textarea:focus, select:focus {
+  border-color: rgba(0,212,255,0.5) !important;
+  box-shadow: 0 0 0 3px rgba(0,212,255,0.08), 0 0 12px rgba(0,212,255,0.1) !important;
+  outline: none !important;
+}
+
+/* ── Toast ── */
+#toast {
+  background: rgba(3,5,13,0.97) !important;
+  border: 1px solid rgba(0,212,255,0.3) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 20px rgba(0,212,255,0.1) !important;
+}
+
+/* ── Landing page hero ── */
+.hero-badge {
+  background: rgba(0,212,255,0.08) !important;
+  border-color: rgba(0,212,255,0.3) !important;
+  color: #00D4FF !important;
+}
+.orb-1 { background: radial-gradient(circle, #7B40FF 0%, transparent 70%) !important; opacity:.18 !important; }
+.orb-2 { background: radial-gradient(circle, #00D4FF 0%, transparent 70%) !important; opacity:.14 !important; }
+.orb-3 { background: radial-gradient(circle, #00FF9D 0%, transparent 70%) !important; opacity:.10 !important; }
+
+/* ── Section labels ── */
+.section-label {
+  color: #00D4FF !important;
+  border-color: rgba(0,212,255,0.2) !important;
+}
+
+/* ── Feature cards ── */
+.feature-card {
+  border-color: rgba(0,212,255,0.1) !important;
+  background: rgba(5,8,20,0.85) !important;
+}
+.feature-card:hover {
+  border-color: rgba(0,212,255,0.3) !important;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 24px rgba(0,212,255,0.08) !important;
+}
+.feature-icon {
+  border-color: rgba(0,212,255,0.2) !important;
+  box-shadow: 0 0 20px rgba(0,212,255,0.1) !important;
+}
+
+/* ── Peer presence bar ── */
+#peer-presence-bar {
+  background: rgba(0,212,255,0.03) !important;
+  border-color: rgba(0,212,255,0.1) !important;
+}
+
+/* ── Daily tip bar ── */
+#daily-tip-bar {
+  background: rgba(0,212,255,0.05) !important;
+  border-color: rgba(0,212,255,0.18) !important;
+}
+
+/* ── Form elements ── */
+.form-input, .form-select {
+  background: rgba(0,212,255,0.04) !important;
+  border-color: rgba(0,212,255,0.15) !important;
+}
+
+/* ── Auth box ── */
+.auth-box {
+  border-color: rgba(0,212,255,0.2) !important;
+  background: rgba(3,5,13,0.95) !important;
+}
+
+/* ── Mobile nav ── */
+#mobile-nav {
+  background: rgba(3,5,13,0.97) !important;
+  border-top: 1px solid rgba(0,212,255,0.15) !important;
+}
+.mobile-nav-item.active { color: #00D4FF !important; }
+.mobile-nav-item.active i { color: #00D4FF !important; }
 </style>
 </head>
 <body>
