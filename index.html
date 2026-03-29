@@ -8168,6 +8168,15 @@ YOUR ULTIMATE GOAL: Leave ${studentName} able to do the next question entirely o
   const a11y = getA11yInstructions();
   if (a11y) sys += '\n\n' + a11y;
 
+  // When voice/TTS is active, instruct AI to write responses that sound natural spoken aloud
+  if (state.ttsEnabled || _voiceMode) {
+    sys += `\n\nVOICE MODE ACTIVE: Your response will be read aloud as Jarvis. Write as if speaking, not typing. Rules:
+- No bullet points or numbered lists — weave everything into flowing sentences
+- No LaTeX in your spoken explanation — say "x squared" not "$x^2$", "the integral of" not "$$\\int$$"
+- Short sentences. Natural pauses. Think how Jarvis actually talks in the films.
+- Still show LaTeX in the written response for the student to read — just lead with the spoken explanation`;
+  }
+
   // Mood check-in context
   try {
     const moodData = JSON.parse(localStorage.getItem('synaptiq_mood') || '{}');
@@ -10974,9 +10983,47 @@ function elSpeak(text, onEnd, voice) {
 }
 
 function speak(text) {
-  const clean = text.replace(/[*_`#~>\[\]]/g, '').replace(/\n+/g, '. ').slice(0, 1000);
   if (window.speechSynthesis) window.speechSynthesis.cancel();
-  elSpeak(clean, null, 'jarvis');
+  elSpeak(_prepTTS(text), null, 'jarvis');
+}
+
+function _prepTTS(text) {
+  let t = text;
+  // Strip display LaTeX blocks entirely — never read maths notation aloud
+  t = t.replace(/\$\$[\s\S]*?\$\$/g, '');
+  t = t.replace(/\\\[[\s\S]*?\\\]/g, '');
+  // Strip inline LaTeX — replace with "..." so speech flows naturally
+  t = t.replace(/\$[^$\n]+?\$/g, '');
+  t = t.replace(/\\\([\s\S]*?\\\)/g, '');
+  // Strip markdown headings
+  t = t.replace(/^#{1,6}\s+/gm, '');
+  // Convert **bold** and *italic* — just remove markers
+  t = t.replace(/\*\*([^*]+)\*\*/g, '$1');
+  t = t.replace(/\*([^*]+)\*/g, '$1');
+  t = t.replace(/_([^_]+)_/g, '$1');
+  // Convert bullet/numbered lists to spoken sentences
+  t = t.replace(/^\s*[-•]\s+/gm, '');
+  t = t.replace(/^\s*\d+\.\s+/gm, '');
+  // Strip code blocks
+  t = t.replace(/```[\s\S]*?```/g, '');
+  t = t.replace(/`[^`]+`/g, '');
+  // Strip HTML tags
+  t = t.replace(/<[^>]+>/g, '');
+  // Collapse multiple newlines / dots into natural pauses
+  t = t.replace(/\n{2,}/g, '. ');
+  t = t.replace(/\n/g, ' ');
+  t = t.replace(/\.{2,}/g, '.');
+  t = t.replace(/\s{2,}/g, ' ');
+  // Remove leftover symbols
+  t = t.replace(/[*_`#~>\[\]\\]/g, '');
+  t = t.trim();
+  // Take only the first ~400 chars so it sounds like a response, not an essay
+  if (t.length > 420) {
+    const cut = t.slice(0, 420);
+    const lastStop = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('? '), cut.lastIndexOf('! '));
+    t = (lastStop > 200 ? cut.slice(0, lastStop + 1) : cut) + '..';
+  }
+  return t;
 }
 
 let _voiceMode = false;
