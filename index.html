@@ -1806,8 +1806,10 @@ body.mode-adhd .adhd-break { display: block; }
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: 14px; padding: 1.1rem; text-align: center;
-  transition: all .3s cubic-bezier(.4,0,.2,1);
+  transition: all .35s cubic-bezier(.4,0,.2,1);
   position: relative; overflow: hidden;
+  transform-style: preserve-3d;
+  cursor: pointer;
 }
 .ach-card.earned {
   border-color: rgba(201,168,76,0.35);
@@ -1815,9 +1817,13 @@ body.mode-adhd .adhd-break { display: block; }
   box-shadow: 0 0 24px rgba(201,168,76,0.12), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .ach-card.earned:hover {
-  border-color: rgba(201,168,76,0.55);
-  transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 8px 28px rgba(201,168,76,0.2);
+  border-color: rgba(201,168,76,0.65);
+  transform: rotateY(8deg) rotateX(-4deg) scale(1.04);
+  box-shadow: 0 12px 40px rgba(201,168,76,0.35), 0 0 60px rgba(201,168,76,0.12);
+}
+.ach-card.locked:hover {
+  transform: rotateY(4deg) rotateX(-2deg) scale(1.02);
+  box-shadow: 0 4px 20px rgba(255,255,255,0.06);
 }
 .ach-card.locked { opacity: .35; filter: grayscale(0.6); }
 .ach-icon { font-size: 2rem; margin-bottom: .5rem; line-height: 1; }
@@ -4485,6 +4491,14 @@ input:focus, textarea:focus, select:focus {
       <!-- Daily Quests Card -->
       <div id="daily-quests-card" style="background:linear-gradient(135deg,rgba(96,165,250,0.08),rgba(96,165,250,0.03));border:1px solid rgba(96,165,250,0.22);border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)">
         <div style="color:var(--muted);font-size:.875rem;text-align:center;padding:.5rem 0">⚔️ Loading quests...</div>
+      </div>
+      <!-- Weekly Boss Challenge Card -->
+      <div id="boss-challenge-card"
+           style="background:linear-gradient(135deg,rgba(255,60,100,0.12),rgba(139,0,50,0.06));
+                  border:1px solid rgba(255,60,100,0.3);border-radius:18px;
+                  padding:1.25rem 1.5rem;margin-bottom:1.5rem;
+                  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)">
+        <div style="color:var(--muted);font-size:.875rem;text-align:center;padding:.5rem 0">⚔️ Loading Boss Challenge...</div>
       </div>
       <!-- Daily tip banner -->
       <div id="daily-tip-bar" style="display:flex;align-items:flex-start;gap:.85rem;background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.2);border-radius:14px;padding:.9rem 1.1rem;margin-bottom:1.5rem">
@@ -7195,6 +7209,7 @@ function _showDashCore(sub) {
     updateDashboardStats();
     updateExamCountdown();
     if (typeof _initDailyQuests === 'function') _initDailyQuests();
+    if (typeof _initBossChallenge === 'function') _initBossChallenge();
     if (state.dashHistory.length === 0) addDashMsg('bot', "Hello! I'm your Synaptiq A-Level Maths tutor. Ask me anything — from Pure 1 algebra to Mechanics projectiles. What shall we work on? ✦");
   }
   if (sub === 'tutor') {
@@ -17221,6 +17236,132 @@ function _updateQuestProgress(trackType, amount) {
 window.addEventListener('online', () => showToast('Back online!'));
 
 // ═══════════════════════════════════════
+// BOSS CHALLENGE — Weekly ultra-hard question
+// ═══════════════════════════════════════
+
+function _getBossWeekKey() {
+  const now = new Date();
+  const jan1 = new Date(now.getFullYear(), 0, 1);
+  const week = Math.ceil(((now - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+  return `${now.getFullYear()}-W${week}`;
+}
+
+function _renderBossChallenge(boss) {
+  const card = document.getElementById('boss-challenge-card');
+  if (!card) return;
+  const weekKey = _getBossWeekKey();
+  if (boss.attempted && boss.solved) {
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+        <span style="font-size:1.4rem">⚔️</span>
+        <div style="font-weight:700;font-size:.9rem;background:linear-gradient(90deg,#FF3C64,#FF8C00);-webkit-background-clip:text;-webkit-text-fill-color:transparent">WEEKLY BOSS</div>
+        <div style="margin-left:auto;font-size:.72rem;color:var(--muted)">${weekKey}</div>
+      </div>
+      <div style="color:rgba(255,255,255,0.6);font-size:.85rem;line-height:1.5;margin-bottom:.75rem">${boss.question}</div>
+      <div style="color:#4ade80;font-weight:700;font-size:.9rem">🏆 Boss Defeated! +200 XP claimed</div>`;
+  } else if (boss.attempted) {
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+        <span style="font-size:1.4rem">⚔️</span>
+        <div style="font-weight:700;font-size:.9rem;background:linear-gradient(90deg,#FF3C64,#FF8C00);-webkit-background-clip:text;-webkit-text-fill-color:transparent">WEEKLY BOSS</div>
+        <div style="margin-left:auto;font-size:.72rem;color:var(--muted)">${weekKey}</div>
+      </div>
+      <div style="color:rgba(255,255,255,0.6);font-size:.85rem;line-height:1.5;margin-bottom:.75rem">${boss.question}</div>
+      <div style="color:rgba(255,255,255,0.35);font-size:.85rem">💀 Boss defeated you this week. Try again next week!</div>`;
+  } else {
+    card.innerHTML = `
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+        <span style="font-size:1.4rem">⚔️</span>
+        <div style="font-weight:700;font-size:.9rem;background:linear-gradient(90deg,#FF3C64,#FF8C00);-webkit-background-clip:text;-webkit-text-fill-color:transparent">WEEKLY BOSS</div>
+        <div style="margin-left:auto;font-size:.72rem;background:rgba(255,60,100,0.15);border:1px solid rgba(255,60,100,0.3);border-radius:20px;padding:.2rem .6rem;color:#FF3C64">One attempt</div>
+      </div>
+      <div style="color:rgba(255,255,255,0.85);font-size:.88rem;line-height:1.55;margin-bottom:.85rem">${boss.question}</div>
+      <textarea id="boss-answer-input" placeholder="Your full working and answer..." rows="3"
+        style="width:100%;padding:.75rem 1rem;border-radius:12px;border:1px solid rgba(255,60,100,0.3);
+               background:rgba(255,255,255,0.04);color:#fff;font-size:.875rem;resize:vertical;
+               margin-bottom:.6rem;box-sizing:border-box;font-family:inherit"></textarea>
+      <button onclick="_submitBossAnswer()" id="boss-submit-btn"
+              style="padding:.6rem 1.4rem;border-radius:12px;border:none;
+                     background:linear-gradient(135deg,#FF3C64,#C2185B);color:#fff;
+                     font-weight:700;cursor:pointer;font-size:.88rem;width:100%">
+        ⚔️ Challenge the Boss
+      </button>`;
+  }
+}
+
+async function _initBossChallenge() {
+  const card = document.getElementById('boss-challenge-card');
+  if (!card) return;
+  const weekKey = _getBossWeekKey();
+  try {
+    const stored = JSON.parse(localStorage.getItem('synaptiq_boss') || 'null');
+    if (stored && stored.weekKey === weekKey) {
+      _renderBossChallenge(stored);
+      return;
+    }
+    // Generate new boss question via AI
+    card.innerHTML = '<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:.75rem">⚔️ Summoning this week\'s boss...</div>';
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: 'Generate ONE extremely difficult A-Level Maths question at exam-hard level. Could involve proof, integration by parts, parametric equations, or complex mechanics. Output ONLY the question text — no answer, no hints, no explanation.' }],
+        system: 'You are a senior A-Level Maths examiner. Generate one ultra-challenging exam question suitable for the top 5% of students. Output only the question, nothing else.'
+      })
+    });
+    if (!res.ok) throw new Error('Failed');
+    const data = await res.json();
+    const question = (data.content || data.reply || data.message || '').trim() || 'Prove that for all integers n ≥ 1, the sum of the first n odd numbers equals n². Then find the sum of the first 100 odd perfect squares.';
+    const boss = { weekKey, question, attempted: false, solved: false };
+    safeSetItem('synaptiq_boss', JSON.stringify(boss));
+    _renderBossChallenge(boss);
+  } catch(e) {
+    if (card) card.innerHTML = '<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:.5rem">⚔️ Boss unavailable — check back later</div>';
+  }
+}
+
+async function _submitBossAnswer() {
+  const answerEl = document.getElementById('boss-answer-input');
+  const submitBtn = document.getElementById('boss-submit-btn');
+  if (!answerEl || !submitBtn) return;
+  const answer = answerEl.value.trim();
+  if (!answer) { showToast('Write your answer first!'); return; }
+  submitBtn.textContent = 'Judging...';
+  submitBtn.disabled = true;
+  const weekKey = _getBossWeekKey();
+  try {
+    const boss = JSON.parse(localStorage.getItem('synaptiq_boss') || '{}');
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: `Question: ${boss.question}\n\nStudent answer: ${answer}\n\nIs this correct? Reply with only "CORRECT" or "INCORRECT", then a brief explanation.` }],
+        system: 'You are a strict A-Level Maths examiner. Evaluate the student\'s answer accurately. Start your reply with exactly "CORRECT" or "INCORRECT".'
+      })
+    });
+    const data = await res.json();
+    const reply = (data.content || data.reply || data.message || '').trim();
+    const isCorrect = reply.toUpperCase().startsWith('CORRECT');
+    boss.attempted = true;
+    boss.solved = isCorrect;
+    safeSetItem('synaptiq_boss', JSON.stringify(boss));
+    if (isCorrect) {
+      addXP(200, '⚔️ Boss Defeated! +200 XP');
+      _launchConfetti();
+      setTimeout(_launchConfetti, 700);
+      showToast('⚔️ BOSS DEFEATED! +200 XP', 'success');
+    } else {
+      showToast('💀 The Boss wins this week. Better luck next time!');
+    }
+    _renderBossChallenge(boss);
+  } catch(e) {
+    submitBtn.textContent = '⚔️ Challenge the Boss';
+    submitBtn.disabled = false;
+    showToast('Error checking answer — try again');
+  }
+}
+
+// ═══════════════════════════════════════
 // GAME FEEL — Combos, Sounds, Floating XP, Login Reward
 // ═══════════════════════════════════════
 
@@ -17381,6 +17522,25 @@ function _checkDailyLoginReward() {
   } catch(e) {}
 }
 
+function _maybeSendWeeklyDigest() {
+  try {
+    if (!state.user?.email) return;
+    const last = localStorage.getItem('synaptiq_last_weekly_email');
+    if (last && Date.now() - new Date(last).getTime() < 7 * 86400_000) return;
+    const s = JSON.parse(localStorage.getItem('synaptiq_stats') || '{}');
+    fetch('/api/resend', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: state.user.email,
+        name: (state.user.user_metadata?.name || state.user.user_metadata?.full_name || 'Student'),
+        type: 'weekly',
+        stats: { xp: state.xp || 0, streak: s.streak || 0, questions: s.questionsAnswered || 0 }
+      })
+    }).then(r => { if (r.ok) safeSetItem('synaptiq_last_weekly_email', new Date().toISOString()); }).catch(()=>{});
+  } catch(e) {}
+}
+
 // Hook login reward into dashboard load
 const _origShowDash = typeof showDash !== 'undefined' ? showDash : null;
 document.addEventListener('DOMContentLoaded', () => {
@@ -17391,6 +17551,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (home && home.classList.contains('active') && !_loginRewarded.done) {
       _loginRewarded.done = true;
       _checkDailyLoginReward();
+      setTimeout(_maybeSendWeeklyDigest, 8000); // delay to let page settle
     }
   });
   const dash = document.getElementById('page-dash');
