@@ -5,25 +5,23 @@ import { applyHeaders, isRateLimited, getIp } from './_lib.js';
  * Body: { text: string, voice?: string }
  * Returns: audio/mpeg stream (ElevenLabs TTS)
  *
- * Falls back with 503 if ELEVENLABS_API_KEY is not set, so the
- * frontend can gracefully degrade to the Web Speech API.
- *
- * Default voice: Alice (Xb7hH8MSUJpSbSDYk0k2) — confident British female.
- * Override by passing a voice name: 'alice' | 'charlotte' | 'dorothy' | 'daniel'
+ * Jarvis voice: George (deep authoritative British male)
+ * Settings tuned for natural AI-assistant delivery — not robotic, not script-reader.
+ * stability ~0.48 = natural prosody/inflection (Jarvis has subtle warmth)
+ * similarity_boost 0.82 = strong voice character without sounding processed
+ * style 0.18 = slight expressiveness so it doesn't sound flat
  */
 
 const VOICE_IDS = {
-  alice:     'Xb7hH8MSUJpSbSDYk0k2', // confident British female (default)
-  charlotte: 'XB0fDUnXU5powFXDhCwa', // young British female
-  dorothy:   'ThT5KcBeYPX3keUQqHPh', // warm British female
-  daniel:    'onwK4e9ZLuTAKqWW03F9', // calm British male
-  jarvis:    'onwK4e9ZLuTAKqWW03F9', // calm precise British male — closest to Jarvis
+  alice:     'Xb7hH8MSUJpSbSDYk0k2',
+  charlotte: 'XB0fDUnXU5powFXDhCwa',
+  dorothy:   'ThT5KcBeYPX3keUQqHPh',
+  daniel:    'onwK4e9ZLuTAKqWW03F9',
+  jarvis:    'JBFqnCBsd6RMkjVDRZzb', // George — deep, authoritative British male
 };
 
 const VOICE_SETTINGS = {
-  // Jarvis: max stability = robotic consistency, low similarity = synthetic/processed,
-  // style=0 = no emotion variance, speaker_boost = crisp presence
-  jarvis:  { stability: 0.95, similarity_boost: 0.18, style: 0.0, use_speaker_boost: true },
+  jarvis:  { stability: 0.48, similarity_boost: 0.82, style: 0.18, use_speaker_boost: true },
   default: { stability: 0.5,  similarity_boost: 0.75 },
 };
 
