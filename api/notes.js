@@ -24,29 +24,33 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     const { data } = await supabase.from('notes').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
-    return res.status(200).json({ notes: data || [] });
+    const notes = (data || []).map(n => ({ ...n, text: n.content, tag: n.tags?.[0] }));
+    return res.status(200).json({ notes });
   }
 
   if (req.method === 'POST') {
-    const { text, subject, tag } = req.body;
-    if (!text) return res.status(400).json({ error: 'text is required' });
+    const { text, content, subject, tag } = req.body;
+    const noteContent = content || text;
+    if (!noteContent) return res.status(400).json({ error: 'text is required' });
     if (!subject) return res.status(400).json({ error: 'subject is required' });
     const { data } = await supabase.from('notes').insert({
       user_id: user.id,
-      text,
+      title: noteContent.slice(0, 60),
+      content: noteContent,
       subject,
-      tag,
+      tags: tag ? [tag] : [],
       created_at: new Date().toISOString()
     }).select().single();
-    return res.status(200).json({ note: data });
+    // Return in legacy shape so client code works unchanged
+    return res.status(200).json({ note: data ? { ...data, text: data.content, tag: data.tags?.[0] } : null });
   }
 
   if (req.method === 'PUT') {
     const { id, text, subject, tag } = req.body;
     const updates = {};
-    if (text !== undefined) updates.text = text;
+    if (text !== undefined) { updates.content = text; updates.title = text.slice(0, 60); }
     if (subject !== undefined) updates.subject = subject;
-    if (tag !== undefined) updates.tag = tag;
+    if (tag !== undefined) updates.tags = [tag];
     const { data, error: updateErr } = await supabase.from('notes')
       .update(updates)
       .eq('id', id)
@@ -55,7 +59,7 @@ export default async function handler(req, res) {
       .single();
     if (updateErr) return res.status(400).json({ error: updateErr.message });
     if (!data) return res.status(404).json({ error: 'Note not found' });
-    return res.status(200).json({ note: data });
+    return res.status(200).json({ note: { ...data, text: data.content, tag: data.tags?.[0] } });
   }
 
   if (req.method === 'DELETE') {
