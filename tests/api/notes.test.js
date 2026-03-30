@@ -88,12 +88,14 @@ describe('unauthenticated', () => {
 
 describe('GET', () => {
   it('returns notes array for authenticated user', async () => {
-    const noteList = [{ id: VALID_NOTE_ID, text: 'Integration by parts', subject: 'Maths' }];
-    mocks.supabase.from.mockReturnValueOnce(makeBuilder({ data: noteList, error: null }));
+    // Mock returns DB schema shape (content/tags[]), API maps to legacy {text,tag}
+    const dbNote = { id: VALID_NOTE_ID, content: 'Integration by parts', subject: 'Maths', tags: [] };
+    const expectedNote = { ...dbNote, text: 'Integration by parts', tag: undefined };
+    mocks.supabase.from.mockReturnValueOnce(makeBuilder({ data: [dbNote], error: null }));
     const r = res();
     await handler(req('GET', {}, { authorization: 'Bearer valid-tok' }), r);
     expect(r.statusCode).toBe(200);
-    expect(r.body.notes).toEqual(noteList);
+    expect(r.body.notes).toEqual([expectedNote]);
   });
 
   it('returns empty array when user has no notes', async () => {
@@ -123,12 +125,14 @@ describe('POST', () => {
   });
 
   it('creates a note and returns it', async () => {
-    const newNote = { id: VALID_NOTE_ID, text: 'Pythagoras', subject: 'Maths' };
-    mocks.supabase.from.mockReturnValueOnce(makeBuilder({ data: newNote, error: null }));
+    // Mock returns DB schema shape; API maps content→text, tags[0]→tag
+    const dbNote = { id: VALID_NOTE_ID, content: 'Pythagoras', subject: 'Maths', tags: [] };
+    const expectedNote = { ...dbNote, text: 'Pythagoras', tag: undefined };
+    mocks.supabase.from.mockReturnValueOnce(makeBuilder({ data: dbNote, error: null }));
     const r = res();
     await handler(req('POST', { text: 'Pythagoras', subject: 'Maths' }, { authorization: 'Bearer valid-tok' }), r);
     expect(r.statusCode).toBe(200);
-    expect(r.body.note).toEqual(newNote);
+    expect(r.body.note).toEqual(expectedNote);
   });
 });
 

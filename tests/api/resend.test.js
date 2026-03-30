@@ -144,14 +144,14 @@ describe('template rendering', () => {
     expect(capturedBody.to).toContain('user@test.com');
   });
 
-  it('sends from hello@synaptiqai.co.uk', async () => {
+  it('sends from hello@synaptiq.co.uk', async () => {
     let capturedBody;
     global.fetch = vi.fn().mockImplementationOnce((_url, opts) => {
       capturedBody = JSON.parse(opts.body);
       return Promise.resolve({ ok: true, json: () => Promise.resolve({ id: 'x' }) });
     });
     await handler(req({ to: 'user@test.com', type: 'welcome', name: 'Alice' }), res());
-    expect(capturedBody.from).toContain('synaptiqai.co.uk');
+    expect(capturedBody.from).toContain('synaptiq.co.uk');
   });
 });
 
