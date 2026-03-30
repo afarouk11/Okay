@@ -1,4 +1,4 @@
-// Stripe Checkout Session Handler
+// Stripe Checkout Session + Customer Portal Handler
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -9,7 +9,36 @@ export default async function handler(req, res) {
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeKey) return res.status(500).json({ error: 'Missing Stripe key' });
 
-  const { plan, email, successUrl, cancelUrl, annual } = req.body;
+  const { action, plan, email, successUrl, cancelUrl, annual } = req.body;
+
+  // ── Customer Portal ─────────────────────────────────────────────────────────
+  if (action === 'portal') {
+    if (!email) return res.status(400).json({ error: 'email is required' });
+    try {
+      // Look up customer by email
+      const searchRes = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(email)}&limit=1`, {
+        headers: { 'Authorization': `Bearer ${stripeKey}` }
+      });
+      const searchData = await searchRes.json();
+      const customer = searchData.data?.[0];
+      if (!customer) return res.status(404).json({ error: 'No Stripe customer found for this email' });
+
+      const returnUrl = process.env.APP_URL || process.env.SITE_URL || 'https://synaptiq.co.uk';
+      const portalRes = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${stripeKey}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({ customer: customer.id, return_url: returnUrl }),
+      });
+      const portalData = await portalRes.json();
+      if (!portalRes.ok) return res.status(portalRes.status).json({ error: portalData.error?.message || 'Portal error' });
+      return res.status(200).json({ url: portalData.url });
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
 
   // Price IDs — set these in your Stripe dashboard and add as env vars
   // Create separate monthly and annual price IDs in Stripe for the Student plan

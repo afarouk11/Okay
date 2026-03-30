@@ -66,8 +66,8 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Synaptiq <hello@luminaai.co.uk>',
-        to: 'support@luminaai.co.uk',
+        from: 'Synaptiq <hello@synaptiq.co.uk>',
+        to: 'support@synaptiq.co.uk',
         reply_to: email,
         subject: `[${safeCategory}] Message from ${name}`,
         html,

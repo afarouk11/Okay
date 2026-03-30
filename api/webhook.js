@@ -102,7 +102,7 @@ export default async function handler(req, res) {
 async function sendEmail(to, type, { name, stats } = {}) {
   if (!process.env.RESEND_API_KEY) return;
   const payload = { type, email: to, name: name || '', stats: stats || {} };
-  await fetch(`${process.env.SITE_URL}/api/email`, {
+  await fetch(`${process.env.SITE_URL}/api/resend`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)

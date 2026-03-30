@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     const [progressRes, profileRes, mistakesRes, activityRes] = await Promise.all([
       supabase.from('progress').select('*').eq('user_id', user.id),
       supabase.from('profiles').select('*').eq('id', user.id).single(),
-      supabase.from('mistakes').select('*').eq('user_id', user.id).order('count', { ascending: false }).limit(10),
+      supabase.from('mistakes').select('*').eq('user_id', user.id).order('logged_at', { ascending: false }).limit(10),
       supabase.from('activity_log').select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(84)
     ]);
     return res.status(200).json({
