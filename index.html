@@ -4434,7 +4434,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
       <div class="sidebar-item" id="si-questions" onclick="showDash('questions')"><i class="fas fa-file-lines"></i>Practice Questions</div>
       <div class="sidebar-item" id="si-photo" onclick="showDash('photo')"><i class="fas fa-camera"></i>Photo Question</div>
       <div class="sidebar-section-label">REVISION</div>
-      <div class="sidebar-item" id="si-flashcards" onclick="showDash('flashcards')"><i class="fas fa-clone"></i>Flashcards</div>
+      <div class="sidebar-item" id="si-flashcards" onclick="showDash('flashcards')"><i class="fas fa-clone"></i>Flashcards<span id="fc-sidebar-count" style="margin-left:auto;background:var(--gold);color:#000;border-radius:10px;font-size:.65rem;font-weight:700;padding:.1rem .45rem;display:none"></span></div>
       <div class="sidebar-item" id="si-exams" onclick="showDash('exams')"><i class="fas fa-calendar"></i>Exam Countdown</div>
       <div class="sidebar-item" id="si-exam-sim" onclick="showDash('exam-sim')"><i class="fas fa-stopwatch"></i>Exam Simulator</div>
       <div class="sidebar-item" id="si-predict" onclick="showDash('predict')"><i class="fas fa-wand-magic-sparkles"></i>Exam Prediction</div>
@@ -4834,6 +4834,8 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
               <div style="display:flex;gap:.5rem;max-width:780px;width:100%;margin:0 auto;align-items:flex-end">
                 <button class="tts-btn" id="voice-input-btn" onclick="speakInput()" title="Speak your question" style="flex-shrink:0;margin-bottom:2px">🎤</button>
                 <button class="tts-btn" id="speak-btn" onclick="speakInput()" title="Speak" style="display:none;flex-shrink:0;margin-bottom:2px">🎤</button>
+                <button class="tts-btn" onclick="document.getElementById('tutor-img-input').click()" title="Upload a photo of your question" style="flex-shrink:0;margin-bottom:2px">📷</button>
+                <input type="file" id="tutor-img-input" accept="image/*" style="display:none" onchange="handleTutorImage(event)">
                 <div style="position:relative;flex:1">
                   <textarea class="tutor-input" id="tutor-input" placeholder="Message Jarvis..." onkeydown="tutorKey(event)" rows="1"></textarea>
                   <button class="tutor-send" onclick="tutorSend()" title="Send">↑</button>
@@ -4892,10 +4894,15 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
               <select id="q-bloom"><option>Mixed</option><option>Knowledge/Recall</option><option>Application</option><option>Analysis/Proof</option><option>Exam-Style</option></select>
             </div>
           </div>
-          <div class="form-group"><label>Specific Topics (optional)</label>
-            <input type="text" id="q-topics" placeholder="e.g. Integration by parts, Normal distribution, Projectiles">
+          <div class="form-row">
+            <div class="form-group"><label>Difficulty</label>
+              <select id="q-difficulty" onchange="state.difficulty=this.value"><option value="Easy">Easy</option><option value="Medium" selected>Medium</option><option value="Hard">Hard</option></select>
+            </div>
+            <div class="form-group"><label>Specific Topics (optional)</label>
+              <input type="text" id="q-topics" placeholder="e.g. Integration by parts, Normal distribution, Projectiles">
+            </div>
           </div>
-          <button class="btn btn-gold" style="width:100%;padding:1rem;font-size:1rem" onclick="generateQuestions()">✦ Generate Questions</button>
+          <button class="btn btn-gold" id="generate-q-btn" style="width:100%;padding:1rem;font-size:1rem" onclick="generateQuestions()">✦ Generate Questions</button>
           <div style="margin-top:.75rem;padding:.75rem 1rem;background:rgba(96,165,250,0.07);border:1px solid rgba(96,165,250,0.2);border-radius:10px">
             <div style="font-size:.8rem;font-weight:600;color:var(--blue);margin-bottom:.4rem">🎯 Weak Topic Drill</div>
             <div style="font-size:.8rem;color:var(--muted);margin-bottom:.6rem">Auto-generates questions targeting your personal weak spots from your Mistakes Tracker and flashcard data.</div>
@@ -6838,11 +6845,18 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
       <p class="page-subtitle">AI-generated study plan based on your exams</p>
       <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:flex-end">
         <div>
-          <label>Available hours per day</label>
-          <input class="input" type="number" id="tt-hours" value="3" min="1" max="12" style="width:120px">
+          <label class="form-label">Available hours per day</label>
+          <input class="form-input" type="number" id="tt-hours" value="3" min="1" max="12" style="width:120px">
         </div>
-        <button class="btn-gold btn-sm" onclick="generateTimetable()"><i class="fas fa-magic"></i> Generate Timetable</button>
+        <div>
+          <label class="form-label">Rest day</label>
+          <select class="form-select" id="tt-rest" style="width:140px">
+            <option>Sunday</option><option>Saturday</option><option>None</option>
+          </select>
+        </div>
+        <button class="btn-gold" id="tt-gen-btn-tt" onclick="generateTimetable('timetable')"><i class="fas fa-magic"></i> Generate Timetable</button>
       </div>
+      <div id="timetable-output-tt" style="margin-top:1.5rem;display:none"></div>
       <div id="tt-result"></div>
     </div>
 
@@ -8642,7 +8656,7 @@ function formatADHD(text) {
 async function tutorSend() {
   const input = document.getElementById('tutor-input');
   const text = input.value.trim();
-  if (!text) return;
+  if (!text) { showToast("Please type a message first!"); return; }
   input.value = '';
   // Detect emotion / intent before clearing (signal is read by getTutorSystem via _lastTutorSignal)
   _lastTutorSignal = typeof _detectTutorSignal === 'function' ? _detectTutorSignal(text) : null;
@@ -8763,16 +8777,20 @@ async function generateQuestions() {
   const num = document.getElementById('q-num').value;
   const type = document.getElementById('q-type').value;
   const grade = document.getElementById('q-grade').value;
+  const difficulty = (document.getElementById('q-difficulty')?.value) || state.difficulty || 'Medium';
+  if (document.getElementById('q-difficulty')) state.difficulty = difficulty;
   const topics = document.getElementById('q-topics').value;
   const output = document.getElementById('q-output');
   const qContainer = document.getElementById('q-questions');
+  const genBtn = document.getElementById('generate-q-btn');
+  if (genBtn) { genBtn.disabled = true; genBtn.textContent = '⏳ Generating…'; }
   output.classList.add('show');
   document.getElementById('q-output-title').textContent = `A-Level Maths — ${module}`;
-  document.getElementById('q-output-sub').textContent = `${num} questions · ${board} ${level} · Target: ${grade}`;
+  document.getElementById('q-output-sub').textContent = `${num} questions · ${board} ${level} · Target: ${grade} · ${difficulty}`;
   qContainer.innerHTML = '<div class="msg bot" style="max-width:100%">✦ Generating your questions...</div>';
   const a11y = getA11yInstructions();
   let sys = `You are an expert A-Level Mathematics exam question writer specialising in ${board} ${level}, ${module}.
-Generate exactly ${num} exam-style questions at ${grade} target grade.
+Generate exactly ${num} exam-style questions at ${grade} target grade, difficulty level: ${difficulty}.
 Question types: ${type}. ${topics ? 'Focus specifically on: ' + topics : 'Cover key examinable topics in ' + module + '.'}
 IMPORTANT: Include full mark-scheme style worked solutions for each question.
 Format STRICTLY as JSON array: [{"question":"...","marks":4,"type":"calculation","hint":"...","solution":"..."}]
@@ -8815,6 +8833,8 @@ ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility n
     showToast('✦ Questions generated!', 'success');
   } catch (e) {
     qContainer.innerHTML = `<div class="msg bot" style="max-width:100%">⚠️ Error: ${e.message}</div>`;
+  } finally {
+    if (genBtn) { genBtn.disabled = false; genBtn.textContent = '✦ Generate Questions'; }
   }
 }
 
@@ -9461,8 +9481,8 @@ function loadUploadsFromStorage() {
 // ═══════════════════════════════════════
 function initExitIntent() {
   if (sessionStorage.getItem('synaptiq_exit_shown')) return;
-  document.addEventListener('mouseleave', (e) => {
-    if (e.clientY <= 5 && !state.user) {
+  document.documentElement.addEventListener('mouseleave', (e) => {
+    if (e.clientY <= 0 && !state.user) {
       document.getElementById('exit-popup').classList.add('show');
       sessionStorage.setItem('synaptiq_exit_shown', '1');
     }
@@ -12694,6 +12714,39 @@ async function aiSummariseNote() {
   }
 }
 
+async function aiSummariseNoteById(id, btn) {
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  const origText = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳…'; }
+  const sys = 'You are helping a student create concise revision notes. Summarise the provided text into clear bullet points. Use UK English. Keep it short and memorable — ideal for revision.';
+  try {
+    const data = await callClaude([{ role: 'user', content: 'Summarise this for my revision notes:
+
+' + note.text }], sys);
+    const summary = getReply(data);
+    // Update the note text in memory and re-render
+    note.text = summary;
+    saveNotesToStorage();
+    renderNotes();
+    showToast('✦ Note summarised!');
+    // Also sync updated text to backend
+    const token = localStorage.getItem('synaptiq_token');
+    if (token && note.backendId) {
+      try {
+        await fetch('/api/notes', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ id: note.backendId, text: summary })
+        });
+      } catch(e) { /* offline — local update fine */ }
+    }
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = origText; }
+    showToast('⚠️ ' + e.message.slice(0, 60));
+  }
+}
+
 async function deleteNote(id) {
   const note = notes.find(n => n.id === id);
   notes = notes.filter(n => n.id !== id);
@@ -12742,6 +12795,7 @@ function renderNotes() {
       <div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap">
         <button onclick="flashcardsFromNote(${n.id})" style="font-size:.75rem;padding:.3rem .7rem;background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:var(--blue);border-radius:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(96,165,250,0.2)'" onmouseout="this.style.background='rgba(96,165,250,0.1)'">🗂 Create Flashcards</button>
         <button onclick="copyNote(${n.id},this)" style="font-size:.75rem;padding:.3rem .7rem;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer">📋 Copy</button>
+        <button onclick="aiSummariseNoteById(${n.id},this)" style="font-size:.75rem;padding:.3rem .7rem;background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);color:#A78BFA;border-radius:8px;cursor:pointer">✦ AI Summarise</button>
         <button onclick="deleteNote(${n.id})" style="font-size:.75rem;padding:.3rem .7rem;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer">🗑 Delete</button>
       </div>
     </div>
@@ -13517,8 +13571,9 @@ function _startNotifPoller() {
 // ─── REVISION TIMETABLE ──────────────────────────────
 async function generateTimetable(src) {
   if (!exams.length) { showToast('Add at least one exam first!'); return; }
-  const btn = document.getElementById('tt-gen-btn');
-  btn.textContent = '✦ Generating timetable...'; btn.disabled = true;
+  const btnId = src === 'timetable' ? 'tt-gen-btn-tt' : 'tt-gen-btn';
+  const btn = document.getElementById(btnId) || document.getElementById('tt-gen-btn');
+  if (btn) { btn.textContent = '✦ Generating timetable...'; btn.disabled = true; }
   const hoursId = src === 'exams' ? 'tt-hours-exams' : 'tt-hours';
   const restId  = src === 'exams' ? 'tt-rest-exams' : 'tt-rest';
   const hours = document.getElementById(hoursId)?.value || document.getElementById('tt-hours')?.value || '3';
@@ -13532,7 +13587,8 @@ Each day should have ${hours} hours of study split into 45-60 min sessions. Rest
     const raw = getReply(data).replace(/```json|```/g,'').trim();
     const days = JSON.parse(raw);
     const subjectColors = {Mathematics:'#60A5FA',Physics:'#4ADE80',Chemistry:'#A78BFA',Biology:'#F472B6',English:'#FB923C',History:'#FBBF24'};
-    const output = document.getElementById('timetable-output');
+    const outputId = src === 'timetable' ? 'timetable-output-tt' : 'timetable-output';
+    const output = document.getElementById(outputId) || document.getElementById('timetable-output');
     output.style.display = 'block';
     output.innerHTML = `<div style="font-weight:700;margin-bottom:1rem">Your Personalised Revision Timetable</div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.8rem">
@@ -13558,7 +13614,7 @@ Each day should have ${hours} hours of study split into 45-60 min sessions. Rest
     // Persist timetable
     try { localStorage.setItem('synaptiq_timetable', output.innerHTML); } catch(e) {}
   } catch(e) { showToast('⚠️ Could not generate timetable'); }
-  btn.textContent = '✦ Generate My Timetable'; btn.disabled = false;
+  if (btn) { btn.textContent = '✦ Generate My Timetable'; btn.disabled = false; }
 }
 
 function saveRevisionToNotes() {
@@ -14088,7 +14144,7 @@ vidPrev = function() {
       Tap the orb to speak · Hands-free — teacher listens again after each answer
     </div>
     <!-- Hidden type input -->
-    <div id="tv-type-row" style="display:none;max-width:480px;width:90%;display:none">
+    <div id="tv-type-row" style="display:none;max-width:480px;width:90%">
       <input id="tv-type-input" placeholder="Type your question…"
         style="width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:.65rem 1rem;color:#fff;font-size:.9rem;box-sizing:border-box"
         onkeydown="if(event.key==='Enter'){tvSubmitTyped();this.closest('div').style.display='none'}">
@@ -14279,12 +14335,21 @@ function tvTapOrb() {
   else { tvStartListening(); }
 }
 
-function tvSendText() {
+function tvSendText(text) {
+  // If called with a text argument, send it directly to the teacher AI
+  if (typeof text === 'string' && text.trim()) {
+    window.speechSynthesis?.cancel();
+    TV.recog?.stop();
+    tvHandleInput(text.trim());
+    return;
+  }
+  // Otherwise toggle the type-input row so the user can type manually
   const row = document.getElementById('tv-type-row');
   if (!row) return;
-  const shown = row.style.display !== 'none';
-  row.style.display = shown ? 'none' : 'flex';
-  if (!shown) {
+  const shown = row.style.display === 'flex';
+  if (shown) {
+    row.style.display = 'none';
+  } else {
     row.style.display = 'flex';
     document.getElementById('tv-type-input')?.focus();
   }
@@ -15751,7 +15816,7 @@ function setAnxiety(btn, level) {
   const data = _wbAnxietyMessages[level];
   const el = document.getElementById('wb-anxiety-response');
   el.style.display = 'block';
-  el.innerHTML = `<span style="color:${data.color};font-weight:700">Level ${level}/5 — </span>${data.msg}${data.action ? `<br><button class="btn btn-gold" onclick="startBreathing()" style="margin-top:.6rem;padding:.4rem 1rem;font-size:.8rem">${data.action}</button>` : ''}`;
+  el.innerHTML = `<span style="color:${data.color};font-weight:700">Level ${level}/5 — </span>${data.msg}${data.action ? `<br><button class="btn btn-gold" onclick="${level === 2 ? 'showDash(\'tutor\')' : 'startBreathing()'}" style="margin-top:.6rem;padding:.4rem 1rem;font-size:.8rem">${data.action}</button>` : ''}`;
   try {
     const wb = JSON.parse(localStorage.getItem('synaptiq_wb') || '{}');
     wb.anxietyLog = wb.anxietyLog || [];
@@ -16959,6 +17024,22 @@ function showFcCreate() {
   el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
+function updateFcSidebarBadge() {
+  const badge = document.getElementById('fc-sidebar-count');
+  if (!badge) return;
+  const total = fcCards.length;
+  const today = new Date().toISOString().split('T')[0];
+  const due = fcCards.filter(c => c.nextReview <= today).length;
+  if (total > 0) {
+    badge.textContent = due > 0 ? due + ' due' : total + ' cards';
+    badge.style.display = '';
+    badge.style.background = due > 0 ? '#EF4444' : 'var(--gold)';
+    badge.style.color = '#fff';
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
 function addFlashcard() {
   const front = document.getElementById('fc-front').value.trim();
   const back = document.getElementById('fc-back').value.trim();
@@ -16976,6 +17057,7 @@ function addFlashcard() {
   document.getElementById('fc-tag').value = '';
   document.getElementById('fc-create').style.display = 'none';
   loadFcDue();
+  updateFcSidebarBadge();
   showToast('Flashcard added!');
 }
 
@@ -16985,6 +17067,7 @@ function loadFcDue() {
   fcDue = fcCards.filter(c => c.nextReview <= today && (!subj || c.subject === subj));
   fcCurrent = 0;
   showFcCard();
+  updateFcSidebarBadge();
 }
 
 function showFcCard() {
@@ -18986,20 +19069,27 @@ async function homeDemoSend() {
 // GOOGLE SIGN-IN
 // ═══════════════════════════════════════
 async function googleSignIn() {
-  // Use Supabase OAuth if available, otherwise show manual form
-  if (window._loadSupabase) await window._loadSupabase();
-  if (window.supabase && SUPABASE_URL && SUPABASE_ANON) {
-    if (!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-    const { data, error } = await supabaseClient.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin + '/dashboard' }
-    });
-    if (error) showToast('Google sign-in error: ' + error.message);
-  } else {
-    // Fallback: pre-fill email prompt
-    showToast('Google sign-in requires Supabase configuration. Using email signup instead.');
-    showSignup();
-    setTimeout(() => document.getElementById('reg-email')?.focus(), 300);
+  const btn = document.querySelector('.auth-social-btn.google');
+  const origHTML = btn ? btn.innerHTML : null;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:.6">Connecting…</span>'; }
+  try {
+    // Use Supabase OAuth if available, otherwise show manual form
+    if (window._loadSupabase) await window._loadSupabase();
+    if (window.supabase && SUPABASE_URL && SUPABASE_ANON) {
+      if (!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+      const { data, error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + '/dashboard' }
+      });
+      if (error) showToast('Google sign-in error: ' + error.message);
+    } else {
+      // Fallback: pre-fill email prompt
+      showToast('Google sign-in requires Supabase configuration. Using email signup instead.');
+      showSignup();
+      setTimeout(() => document.getElementById('reg-email')?.focus(), 300);
+    }
+  } finally {
+    if (btn && origHTML) { btn.disabled = false; btn.innerHTML = origHTML; }
   }
 }
 
@@ -19007,18 +19097,25 @@ async function googleSignIn() {
 // APPLE SIGN-IN
 // ═══════════════════════════════════════
 async function appleSignIn() {
-  if (window._loadSupabase) await window._loadSupabase();
-  if (window.supabase && SUPABASE_URL && SUPABASE_ANON) {
-    if (!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-    const { data, error } = await supabaseClient.auth.signInWithOAuth({
-      provider: 'apple',
-      options: { redirectTo: window.location.origin + '/dashboard' }
-    });
-    if (error) showToast('Apple sign-in error: ' + error.message);
-  } else {
-    showToast('Apple sign-in requires Supabase configuration. Using email signup instead.');
-    showSignup();
-    setTimeout(() => document.getElementById('reg-email')?.focus(), 300);
+  const btn = document.querySelector('.auth-social-btn.apple');
+  const origHTML = btn ? btn.innerHTML : null;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span style="opacity:.6">Connecting…</span>'; }
+  try {
+    if (window._loadSupabase) await window._loadSupabase();
+    if (window.supabase && SUPABASE_URL && SUPABASE_ANON) {
+      if (!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+      const { data, error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'apple',
+        options: { redirectTo: window.location.origin + '/dashboard' }
+      });
+      if (error) showToast('Apple sign-in error: ' + error.message);
+    } else {
+      showToast('Apple sign-in requires Supabase configuration. Using email signup instead.');
+      showSignup();
+      setTimeout(() => document.getElementById('reg-email')?.focus(), 300);
+    }
+  } finally {
+    if (btn && origHTML) { btn.disabled = false; btn.innerHTML = origHTML; }
   }
 }
 
@@ -19121,7 +19218,7 @@ function printParentReport() {
     <style>
       *{box-sizing:border-box;margin:0;padding:0}
       body{font-family:Georgia,serif;padding:2cm;color:#1a1a1a;max-width:21cm;margin:0 auto;font-size:11pt}
-      h1{font-size:18pt;color:#5a3a00;border-bottom:3px solid var(--gold);padding-bottom:.3cm;margin-bottom:.5cm}
+      h1{font-size:18pt;color:#5a3a00;border-bottom:3px solid #C9A84C;padding-bottom:.3cm;margin-bottom:.5cm}
       .meta{font-size:9pt;color:#888;margin-bottom:1cm}
       .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.5cm;margin-bottom:1cm}
       .stat-box{border:1px solid #ddd;border-radius:6px;padding:.5cm;text-align:center}
@@ -19130,7 +19227,7 @@ function printParentReport() {
       .section-title{font-weight:bold;font-size:11pt;margin:.6cm 0 .3cm;color:#333;border-bottom:1px solid #eee;padding-bottom:.2cm}
       .bar-chart{display:flex;align-items:flex-end;gap:8px;height:80px;margin:.4cm 0}
       .bar{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
-      .bar-fill{background:var(--gold);border-radius:3px 3px 0 0;min-height:2px}
+      .bar-fill{background:#C9A84C;border-radius:3px 3px 0 0;min-height:2px}
       .bar-lbl{font-size:7pt;color:#888}
       .topics{display:flex;flex-wrap:wrap;gap:.3cm}
       .topic-pill{border:1px solid #ddd;border-radius:4px;padding:.15cm .35cm;font-size:8pt;color:#555}
@@ -19797,6 +19894,19 @@ function renderFlashcardDueWidget() {
       const peers = buildPeers(yourVal, Math.max(30, yourVal * 0.85), 7, NAMES);
       rows = peers.map(p => ({ name: p.name, emoji: p.emoji, val: p.val, badge: p.val >= 90 ? '🏆 Distinction' : p.val >= 70 ? '🔥 Merit' : p.val >= 50 ? '✅ Pass' : '📚 Practising' }));
       metricLabel = '%'; unitLabel = 'best mock score';
+    } else if (lbTab === 'subject') {
+      yourVal = userXP;
+      const peers = buildPeers(yourVal, Math.max(1000, yourVal * 0.4), 7, NAMES);
+      rows = peers.map(p => ({ name: p.name, emoji: p.emoji, val: p.val, badge: getBadge(p.val, 10) }));
+      metricLabel = 'XP'; unitLabel = 'XP (A-Level Maths)';
+    }
+
+    // Fallback: if no rows were built (unknown tab), default to alltime XP
+    if (!rows.length) {
+      yourVal = yourVal || userXP;
+      const fallbackPeers = buildPeers(yourVal, Math.max(200, yourVal * 0.6), 7, NAMES);
+      rows = fallbackPeers.map(p => ({ name: p.name, emoji: p.emoji, val: p.val, badge: getBadge(p.val, 5) }));
+      metricLabel = 'XP'; unitLabel = 'XP';
     }
 
     // Sort descending, insert user, re-sort
