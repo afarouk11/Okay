@@ -3975,9 +3975,9 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
     <!-- Billing toggle -->
     <div style="display:flex;align-items:center;justify-content:center;gap:1rem;margin-bottom:2.5rem">
       <button id="billing-monthly" onclick="setPricingBilling(false)"
-        style="padding:.5rem 1.25rem;border-radius:20px;border:1px solid var(--gold);background:var(--gold);color:var(--black);font-weight:700;font-size:.875rem;cursor:pointer;transition:.2s">Monthly</button>
+        style="padding:.5rem 1.25rem;border-radius:20px;border:1px solid transparent;background:linear-gradient(135deg,#00D4FF,#7B40FF);color:#fff;font-weight:700;font-size:.875rem;cursor:pointer;transition:.2s;box-shadow:0 0 18px rgba(0,212,255,0.3)">Monthly</button>
       <button id="billing-annual" onclick="setPricingBilling(true)"
-        style="padding:.5rem 1.25rem;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-weight:600;font-size:.875rem;cursor:pointer;transition:.2s">
+        style="padding:.5rem 1.25rem;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-weight:600;font-size:.875rem;cursor:pointer;transition:.2s;box-shadow:none">
         Annual <span style="background:rgba(74,222,128,0.15);color:var(--green);padding:.1rem .45rem;border-radius:10px;font-size:.75rem;margin-left:.3rem">Save 34%</span>
       </button>
     </div>
@@ -4356,7 +4356,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
         </div>
         <div class="gdpr-check">
           <input type="checkbox" id="gdpr-check">
-          <label for="gdpr-check">I agree to the <a onclick="nav('privacy')">Privacy Policy</a> and <a href="#">Terms of Service</a>. I understand my data helps personalise my learning experience and can be deleted at any time.</label>
+          <label for="gdpr-check">I agree to the <a onclick="nav('privacy')">Privacy Policy</a> and <a onclick="window.open('/terms','_blank')" style="cursor:pointer">Terms of Service</a>. I understand my data helps personalise my learning experience and can be deleted at any time.</label>
         </div>
         <button class="btn-full" onclick="createAccount()">🚀 Start Free Trial</button>
         <button class="btn-back" onclick="prevStep(3)">← Back</button>
@@ -5253,6 +5253,11 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
             <button class="btn btn-outline" style="padding:.35rem .7rem;font-size:.9rem" onclick="changeFontSize(5)">A+</button>
           </div>
         </div>
+      </div>
+      <div class="settings-section">
+        <h3>💳 Subscription</h3>
+        <div class="setting-row"><div class="setting-info"><h4>Manage Plan</h4><p>Update payment method, view invoices, or cancel</p></div><button class="btn btn-outline" style="font-size:.8rem;padding:.5rem 1rem" onclick="manageSubscription()">Manage →</button></div>
+        <div class="setting-row"><div class="setting-info"><h4>Upgrade to Student Plan</h4><p>Get unlimited AI tutoring, flashcards and more</p></div><button class="btn btn-gold" style="font-size:.8rem;padding:.5rem 1rem" onclick="startCheckoutFlow('student')">Upgrade</button></div>
       </div>
       <div class="settings-section">
         <h3>🔐 Privacy & Data</h3>
@@ -7622,6 +7627,7 @@ function logout() {
     localStorage.removeItem('synaptiq_stats');
     localStorage.removeItem('synaptiq_token');
     localStorage.removeItem('synaptiq_fc');
+    localStorage.removeItem('synaptiq_uploads');
   } catch(e) {}
   document.getElementById('app-nav').style.display = 'none';
   document.getElementById('public-nav').style.display = 'flex';
@@ -11632,7 +11638,7 @@ function resetStatsForNewUser() {
       <div class="mob-more-item" onclick="closeMobMore();showDash('content');setMobNav('content')"><i class="fas fa-graduation-cap"></i>Teacher</div>
       <div class="mob-more-item" onclick="closeMobMore();showDash('formulas');setMobNav('formulas')"><i class="fas fa-function"></i>Formulas</div>
       <div class="mob-more-item" onclick="closeMobMore();showDash('resources');setMobNav('resources')"><i class="fas fa-folder-open"></i>Resources</div>
-      <div class="mob-more-item" onclick="closeMobMore();showDash('planner');setMobNav('planner')"><i class="fas fa-calendar-days"></i>Planner</div>
+      <div class="mob-more-item" onclick="closeMobMore();showDash('timetable');setMobNav('timetable')"><i class="fas fa-calendar-days"></i>Planner</div>
       <div class="mob-more-item" onclick="closeMobMore();showDash('settings');setMobNav('settings')"><i class="fas fa-gear"></i>Settings</div>
     </div>
   </div>
@@ -14905,8 +14911,8 @@ function setPricingBilling(annual) {
   const btnA     = document.getElementById('billing-annual');
   if (amountEl) amountEl.innerHTML = annual ? '£199<span>/year</span>' : '£35<span>/month</span>';
   if (subEl)    subEl.textContent  = annual ? 'That\'s £16.58/mo — save £101' : '7-day free trial · Cancel any time';
-  if (btnM) { btnM.style.background = annual ? 'transparent' : 'var(--gold)'; btnM.style.color = annual ? 'var(--muted)' : 'var(--black)'; btnM.style.borderColor = annual ? 'var(--border)' : 'var(--gold)'; }
-  if (btnA) { btnA.style.background = annual ? 'var(--gold)' : 'transparent'; btnA.style.color = annual ? 'var(--black)' : 'var(--muted)'; btnA.style.borderColor = annual ? 'var(--gold)' : 'var(--border)'; }
+  if (btnM) { btnM.style.background = annual ? 'transparent' : 'linear-gradient(135deg,#00D4FF,#7B40FF)'; btnM.style.color = annual ? 'var(--muted)' : '#fff'; btnM.style.borderColor = annual ? 'var(--border)' : 'transparent'; btnM.style.boxShadow = annual ? 'none' : '0 0 18px rgba(0,212,255,0.3)'; }
+  if (btnA) { btnA.style.background = annual ? 'linear-gradient(135deg,#00D4FF,#7B40FF)' : 'transparent'; btnA.style.color = annual ? '#fff' : 'var(--muted)'; btnA.style.borderColor = annual ? 'transparent' : 'var(--border)'; btnA.style.boxShadow = annual ? '0 0 18px rgba(0,212,255,0.3)' : 'none'; }
 }
 
 // ═══════════════════════════════════════
@@ -15056,7 +15062,7 @@ function checkWeeklyEmail() {
     streak: state.user.streak || 0
   };
 
-  fetch('/api/email', {
+  fetch('/api/resend', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ type: 'weekly', email: state.user.email, name: state.user.name, stats })
@@ -15362,7 +15368,7 @@ async function realSignup(name, email, password, plan) {
   // Create profile
   await supabaseClient.from('profiles').insert({ id: data.user.id, name, email, plan: plan||'student', xp:0, level:1, streak:0, questions_answered:0, accuracy:0 });
   // Welcome email
-  await fetch('/api/email', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type:'welcome', email, name }) }).catch(()=>{});
+  await fetch('/api/resend', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type:'welcome', email, name }) }).catch(()=>{});
   showAuthSuccess('Account created! Check your email to verify your account.');
   showAuthLoading(false);
 }
@@ -18443,7 +18449,8 @@ function toggleTeacherAnswer(btn) {
 
 // Quick-action handlers launched from lesson buttons
 function teacherGenerateQuestions(chapter) {
-  nav('questions');
+  nav('dashboard');
+  showDash('questions');
   setTimeout(() => {
     const topicEl = document.getElementById('q-topics');
     if (topicEl) topicEl.value = chapter;
@@ -18478,7 +18485,8 @@ async function teacherGenerateFlashcards(chapter) {
 }
 
 function teacherGenerateMindMap(chapter) {
-  nav('mindmap');
+  nav('dashboard');
+  showDash('mindmap');
   setTimeout(() => {
     const topicEl = document.getElementById('mindmap-topic');
     if (topicEl) { topicEl.value = chapter; generateMindMap(); }
@@ -19073,7 +19081,7 @@ async function emailParentReport() {
   const raw = localStorage.getItem('synaptiq_stats');
   const s = raw ? JSON.parse(raw) : {};
   try {
-    await fetch('/api/email', {
+    await fetch('/api/resend', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
