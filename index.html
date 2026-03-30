@@ -3425,6 +3425,80 @@ input:focus, textarea:focus, select:focus {
 }
 .mobile-nav-item.active { color: #00D4FF !important; }
 .mobile-nav-item.active i { color: #00D4FF !important; }
+
+/* ── BUTTON SYSTEM COMPLETE — All types ── */
+
+/* 1. Auth form submit */
+.btn-full { background:linear-gradient(135deg,#00D4FF 0%,#7B40FF 100%) !important; color:#fff !important; box-shadow:0 4px 24px rgba(0,212,255,0.25) !important; }
+.btn-full:hover { box-shadow:0 8px 36px rgba(0,212,255,0.4),0 0 0 1px rgba(0,212,255,0.3) !important; transform:translateY(-2px) !important; }
+
+/* 2. Landing secondary CTA */
+.btn-hero-secondary { border-color:rgba(0,212,255,0.4) !important; color:#00D4FF !important; }
+.btn-hero-secondary:hover { border-color:#00D4FF !important; background:rgba(0,212,255,0.08) !important; box-shadow:0 0 24px rgba(0,212,255,0.2) !important; color:#fff !important; }
+
+/* 3. Auth back button */
+.btn-back:hover { border-color:rgba(0,212,255,0.35) !important; color:#00D4FF !important; background:rgba(0,212,255,0.04) !important; }
+
+/* 4. Tutor quick-action chips — 5 semantic neon colors */
+.quick-actions .quick-btn:nth-child(1) { background:rgba(0,212,255,0.06); border-color:rgba(0,212,255,0.22); color:#00D4FF; }
+.quick-actions .quick-btn:nth-child(1):hover { background:rgba(0,212,255,0.13); border-color:#00D4FF; box-shadow:0 0 18px rgba(0,212,255,0.25); }
+.quick-actions .quick-btn:nth-child(2) { background:rgba(123,64,255,0.06); border-color:rgba(123,64,255,0.22); color:#B060FF; }
+.quick-actions .quick-btn:nth-child(2):hover { background:rgba(123,64,255,0.13); border-color:#B060FF; box-shadow:0 0 18px rgba(123,64,255,0.25); }
+.quick-actions .quick-btn:nth-child(3) { background:rgba(201,168,76,0.06); border-color:rgba(201,168,76,0.22); color:#C9A84C; }
+.quick-actions .quick-btn:nth-child(3):hover { background:rgba(201,168,76,0.13); border-color:#C9A84C; box-shadow:0 0 18px rgba(201,168,76,0.25); }
+.quick-actions .quick-btn:nth-child(4) { background:rgba(255,140,0,0.06); border-color:rgba(255,140,0,0.22); color:#FF8C00; }
+.quick-actions .quick-btn:nth-child(4):hover { background:rgba(255,140,0,0.13); border-color:#FF8C00; box-shadow:0 0 18px rgba(255,140,0,0.25); }
+.quick-actions .quick-btn:nth-child(5) { background:rgba(0,255,157,0.06); border-color:rgba(0,255,157,0.22); color:#00FF9D; }
+.quick-actions .quick-btn:nth-child(5):hover { background:rgba(0,255,157,0.13); border-color:#00FF9D; box-shadow:0 0 18px rgba(0,255,157,0.25); }
+
+/* 5. Tag / filter chips */
+.note-tag-btn:hover { border-color:rgba(0,212,255,0.4) !important; color:#00D4FF !important; background:rgba(0,212,255,0.06) !important; }
+.note-tag-btn.selected { background:rgba(0,212,255,0.12) !important; border-color:rgba(0,212,255,0.5) !important; color:#00D4FF !important; }
+
+/* 6. Notes save button (AI/export variants keep inline styles) */
+.save-note-btn { background:linear-gradient(135deg,#00D4FF,#7B40FF) !important; color:#fff !important; border:none !important; box-shadow:0 3px 14px rgba(0,212,255,0.2) !important; }
+.save-note-btn:hover { box-shadow:0 6px 24px rgba(0,212,255,0.35) !important; transform:translateY(-2px) !important; }
+
+/* 7. Video control buttons */
+.vid-ctrl-btn:hover { border-color:rgba(0,212,255,0.4) !important; color:#00D4FF !important; background:rgba(0,212,255,0.07) !important; }
+.vid-ctrl-btn.primary { background:linear-gradient(135deg,#00D4FF,#7B40FF) !important; color:#fff !important; border-color:transparent !important; box-shadow:0 4px 18px rgba(0,212,255,0.25) !important; }
+
+/* 8. Mobile nav active */
+.mob-nav-btn.active { color:#00D4FF !important; }
+.mob-nav-btn.active i { filter:drop-shadow(0 0 6px rgba(0,212,255,0.7)) !important; }
+.mob-nav-btn.active::after { background:linear-gradient(90deg,#00D4FF,#7B40FF) !important; }
+
+/* 9. Topic sidebar active */
+.subj-btn.active { background:rgba(0,212,255,0.08) !important; color:#00D4FF !important; border-color:rgba(0,212,255,0.3) !important; box-shadow:inset 2px 0 0 #00D4FF !important; }
+.subj-btn:hover { color:#fff !important; background:rgba(255,255,255,0.05) !important; }
+
+/* 10. Regenerate chips — purple AI */
+.sp-regenerate { border-color:rgba(123,64,255,0.4) !important; color:#B060FF !important; }
+.sp-regenerate:hover { background:rgba(123,64,255,0.1) !important; box-shadow:0 0 12px rgba(123,64,255,0.2) !important; }
+
+/* 11. Mood buttons — emotion-coded via data-mood */
+.mood-btn[data-mood="great"]:hover,.mood-btn[data-mood="great"].selected { border-color:#FFD700 !important; background:rgba(255,215,0,0.1) !important; box-shadow:0 8px 24px rgba(255,215,0,0.25) !important; }
+.mood-btn[data-mood="good"]:hover,.mood-btn[data-mood="good"].selected { border-color:#00D4FF !important; background:rgba(0,212,255,0.08) !important; box-shadow:0 8px 24px rgba(0,212,255,0.2) !important; }
+.mood-btn[data-mood="okay"]:hover,.mood-btn[data-mood="okay"].selected { border-color:#B060FF !important; background:rgba(176,96,255,0.08) !important; box-shadow:0 8px 24px rgba(176,96,255,0.2) !important; }
+.mood-btn[data-mood="tired"]:hover,.mood-btn[data-mood="tired"].selected { border-color:rgba(100,160,255,0.8) !important; background:rgba(100,160,255,0.08) !important; box-shadow:0 8px 24px rgba(100,160,255,0.2) !important; }
+.mood-btn[data-mood="stressed"]:hover,.mood-btn[data-mood="stressed"].selected { border-color:#FF8C00 !important; background:rgba(255,140,0,0.08) !important; box-shadow:0 8px 24px rgba(255,140,0,0.2) !important; }
+.mood-btn[data-mood="low"]:hover,.mood-btn[data-mood="low"].selected { border-color:#FF4060 !important; background:rgba(255,64,96,0.08) !important; box-shadow:0 8px 24px rgba(255,64,96,0.2) !important; }
+
+/* 12. TTS button — fix duplicate hover */
+.tts-btn:hover { border-color:rgba(0,212,255,0.5) !important; color:#00D4FF !important; }
+.tts-btn.active { background:rgba(0,255,157,0.1) !important; border-color:var(--neon) !important; color:var(--neon) !important; }
+
+/* 13. Universal press effect */
+button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important; transition:transform 0.08s ease !important; }
+
+/* 14. Wellbeing anxiety buttons hover + selected */
+.wb-anx-btn { transition:all .2s !important; }
+.wb-anx-btn:hover { transform:translateY(-2px) !important; filter:brightness(1.2) !important; }
+.wb-anx-btn.selected { outline:2px solid currentColor !important; outline-offset:2px !important; transform:translateY(-2px) !important; filter:brightness(1.3) !important; }
+
+/* 15. Flashcard SRS buttons — stronger lift + glow */
+.fc-srs-btn:hover { transform:translateY(-3px) !important; filter:brightness(1.2) !important; box-shadow:0 6px 20px rgba(0,0,0,0.3) !important; }
+.fc-srs-btn:active { transform:translateY(0) scale(0.97) !important; filter:brightness(1.0) !important; }
 </style>
 </head>
 <body>
