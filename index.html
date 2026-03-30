@@ -3425,6 +3425,90 @@ input:focus, textarea:focus, select:focus {
 }
 .mobile-nav-item.active { color: #00D4FF !important; }
 .mobile-nav-item.active i { color: #00D4FF !important; }
+
+/* ── BUTTON SYSTEM COMPLETE — All types ── */
+
+/* 1. Auth form submit */
+.btn-full { background:linear-gradient(135deg,#00D4FF 0%,#7B40FF 100%) !important; color:#fff !important; box-shadow:0 4px 24px rgba(0,212,255,0.25) !important; }
+.btn-full:hover { box-shadow:0 8px 36px rgba(0,212,255,0.4),0 0 0 1px rgba(0,212,255,0.3) !important; transform:translateY(-2px) !important; }
+
+/* 2. Landing secondary CTA */
+.btn-hero-secondary { border-color:rgba(0,212,255,0.4) !important; color:#00D4FF !important; }
+.btn-hero-secondary:hover { border-color:#00D4FF !important; background:rgba(0,212,255,0.08) !important; box-shadow:0 0 24px rgba(0,212,255,0.2) !important; color:#fff !important; }
+
+/* 3. Auth back button */
+.btn-back:hover { border-color:rgba(0,212,255,0.35) !important; color:#00D4FF !important; background:rgba(0,212,255,0.04) !important; }
+
+/* 4. Tutor quick-action chips — 5 semantic neon colors */
+.quick-actions .quick-btn:nth-child(1) { background:rgba(0,212,255,0.06); border-color:rgba(0,212,255,0.22); color:#00D4FF; }
+.quick-actions .quick-btn:nth-child(1):hover { background:rgba(0,212,255,0.13); border-color:#00D4FF; box-shadow:0 0 18px rgba(0,212,255,0.25); }
+.quick-actions .quick-btn:nth-child(2) { background:rgba(123,64,255,0.06); border-color:rgba(123,64,255,0.22); color:#B060FF; }
+.quick-actions .quick-btn:nth-child(2):hover { background:rgba(123,64,255,0.13); border-color:#B060FF; box-shadow:0 0 18px rgba(123,64,255,0.25); }
+.quick-actions .quick-btn:nth-child(3) { background:rgba(201,168,76,0.06); border-color:rgba(201,168,76,0.22); color:#C9A84C; }
+.quick-actions .quick-btn:nth-child(3):hover { background:rgba(201,168,76,0.13); border-color:#C9A84C; box-shadow:0 0 18px rgba(201,168,76,0.25); }
+.quick-actions .quick-btn:nth-child(4) { background:rgba(255,140,0,0.06); border-color:rgba(255,140,0,0.22); color:#FF8C00; }
+.quick-actions .quick-btn:nth-child(4):hover { background:rgba(255,140,0,0.13); border-color:#FF8C00; box-shadow:0 0 18px rgba(255,140,0,0.25); }
+.quick-actions .quick-btn:nth-child(5) { background:rgba(0,255,157,0.06); border-color:rgba(0,255,157,0.22); color:#00FF9D; }
+.quick-actions .quick-btn:nth-child(5):hover { background:rgba(0,255,157,0.13); border-color:#00FF9D; box-shadow:0 0 18px rgba(0,255,157,0.25); }
+
+/* 5. Tag / filter chips */
+.note-tag-btn:hover { border-color:rgba(0,212,255,0.4) !important; color:#00D4FF !important; background:rgba(0,212,255,0.06) !important; }
+.note-tag-btn.selected { background:rgba(0,212,255,0.12) !important; border-color:rgba(0,212,255,0.5) !important; color:#00D4FF !important; }
+
+/* 6. Notes save button (AI/export variants keep inline styles) */
+.save-note-btn { background:linear-gradient(135deg,#00D4FF,#7B40FF) !important; color:#fff !important; border:none !important; box-shadow:0 3px 14px rgba(0,212,255,0.2) !important; }
+.save-note-btn:hover { box-shadow:0 6px 24px rgba(0,212,255,0.35) !important; transform:translateY(-2px) !important; }
+
+/* 7. Video control buttons */
+.vid-ctrl-btn:hover { border-color:rgba(0,212,255,0.4) !important; color:#00D4FF !important; background:rgba(0,212,255,0.07) !important; }
+.vid-ctrl-btn.primary { background:linear-gradient(135deg,#00D4FF,#7B40FF) !important; color:#fff !important; border-color:transparent !important; box-shadow:0 4px 18px rgba(0,212,255,0.25) !important; }
+
+/* 8. Mobile nav active */
+.mob-nav-btn.active { color:#00D4FF !important; }
+.mob-nav-btn.active i { filter:drop-shadow(0 0 6px rgba(0,212,255,0.7)) !important; }
+.mob-nav-btn.active::after { background:linear-gradient(90deg,#00D4FF,#7B40FF) !important; }
+
+/* 9. Topic sidebar active */
+.subj-btn.active { background:rgba(0,212,255,0.08) !important; color:#00D4FF !important; border-color:rgba(0,212,255,0.3) !important; box-shadow:inset 2px 0 0 #00D4FF !important; }
+.subj-btn:hover { color:#fff !important; background:rgba(255,255,255,0.05) !important; }
+
+/* 10. Regenerate chips — purple AI */
+.sp-regenerate { border-color:rgba(123,64,255,0.4) !important; color:#B060FF !important; }
+.sp-regenerate:hover { background:rgba(123,64,255,0.1) !important; box-shadow:0 0 12px rgba(123,64,255,0.2) !important; }
+
+/* 11. Mood buttons — emotion-coded via data-mood */
+.mood-btn[data-mood="great"]:hover,.mood-btn[data-mood="great"].selected { border-color:#FFD700 !important; background:rgba(255,215,0,0.1) !important; box-shadow:0 8px 24px rgba(255,215,0,0.25) !important; }
+.mood-btn[data-mood="good"]:hover,.mood-btn[data-mood="good"].selected { border-color:#00D4FF !important; background:rgba(0,212,255,0.08) !important; box-shadow:0 8px 24px rgba(0,212,255,0.2) !important; }
+.mood-btn[data-mood="okay"]:hover,.mood-btn[data-mood="okay"].selected { border-color:#B060FF !important; background:rgba(176,96,255,0.08) !important; box-shadow:0 8px 24px rgba(176,96,255,0.2) !important; }
+.mood-btn[data-mood="tired"]:hover,.mood-btn[data-mood="tired"].selected { border-color:rgba(100,160,255,0.8) !important; background:rgba(100,160,255,0.08) !important; box-shadow:0 8px 24px rgba(100,160,255,0.2) !important; }
+.mood-btn[data-mood="stressed"]:hover,.mood-btn[data-mood="stressed"].selected { border-color:#FF8C00 !important; background:rgba(255,140,0,0.08) !important; box-shadow:0 8px 24px rgba(255,140,0,0.2) !important; }
+.mood-btn[data-mood="low"]:hover,.mood-btn[data-mood="low"].selected { border-color:#FF4060 !important; background:rgba(255,64,96,0.08) !important; box-shadow:0 8px 24px rgba(255,64,96,0.2) !important; }
+
+/* 12. TTS button — fix duplicate hover */
+.tts-btn:hover { border-color:rgba(0,212,255,0.5) !important; color:#00D4FF !important; }
+.tts-btn.active { background:rgba(0,255,157,0.1) !important; border-color:var(--neon) !important; color:var(--neon) !important; }
+
+/* 13. Universal press effect */
+button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important; transition:transform 0.08s ease !important; }
+
+/* 14. Wellbeing anxiety buttons hover + selected */
+.wb-anx-btn { transition:all .2s !important; }
+.wb-anx-btn:hover { transform:translateY(-2px) !important; filter:brightness(1.2) !important; }
+.wb-anx-btn.selected { outline:2px solid currentColor !important; outline-offset:2px !important; transform:translateY(-2px) !important; filter:brightness(1.3) !important; }
+
+/* 15. Flashcard SRS buttons — stronger lift + glow */
+.fc-srs-btn:hover { transform:translateY(-3px) !important; filter:brightness(1.2) !important; box-shadow:0 6px 20px rgba(0,0,0,0.3) !important; }
+.fc-srs-btn:active { transform:translateY(0) scale(0.97) !important; filter:brightness(1.0) !important; }
+/* ── LANDING PAGE CONVERSION — Pricing badge + Counter ── */
+@keyframes popularPulse {
+  0%,100% { box-shadow:0 0 18px rgba(0,212,255,0.5); }
+  50%     { box-shadow:0 0 32px rgba(0,212,255,0.85), 0 0 60px rgba(123,64,255,0.4); }
+}
+#student-count-bar {
+  text-align:center;margin-top:1.25rem;font-size:.88rem;color:rgba(255,255,255,0.7);
+  animation:fadeUp .5s ease .4s both;
+}
+#student-count-bar strong { color:#00D4FF;font-weight:800; }
 </style>
 </head>
 <body>
@@ -3437,6 +3521,12 @@ input:focus, textarea:focus, select:focus {
 </div>
 
 <!-- ═══════════════════════ NAVIGATION ═══════════════════════ -->
+<!-- Exam Season Urgency Banner -->
+<div id="urgency-banner" style="display:none;background:linear-gradient(90deg,rgba(0,212,255,0.12),rgba(123,64,255,0.12),rgba(0,212,255,0.12));border-bottom:1px solid rgba(0,212,255,0.2);padding:.5rem 1.5rem;text-align:center;font-size:.82rem;color:var(--white);position:relative;z-index:200">
+  <span>🎓 A-Level exam season is here — secure your place now.</span>
+  <button onclick="nav('auth');trackEvent('cta_clicked',{location:'urgency_banner'})" style="margin-left:.75rem;background:linear-gradient(135deg,#00D4FF,#7B40FF);border:none;color:#fff;padding:.25rem .85rem;border-radius:20px;font-size:.78rem;font-weight:700;cursor:pointer">Start Free Trial →</button>
+  <button onclick="document.getElementById('urgency-banner').style.display='none';localStorage.setItem('urgency_dismissed','1')" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1">×</button>
+</div>
 <nav id="nav">
   <div class="nav-logo" onclick="nav('home')">Synapti<span>q</span></div>
   <div class="nav-links" id="public-nav">
@@ -3502,6 +3592,7 @@ input:focus, textarea:focus, select:focus {
       <div class="trust-item"><i class="fas fa-universal-access"></i> ADHD · Dyslexia · Dyscalculia modes</div>
       <div class="trust-item"><i class="fas fa-star"></i> 4.9★ from 2,400+ students</div>
     </div>
+    <div id="student-count-bar">🎓 Join <strong id="student-counter">2,390</strong>+ students already improving their grades</div>
   </section>
 
   <!-- Video Section -->
@@ -3892,7 +3983,8 @@ input:focus, textarea:focus, select:focus {
     </div>
 
     <div class="pricing-grid">
-      <div class="price-card">
+      <div class="price-card" style="position:relative">
+        <div style="position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#00D4FF,#7B40FF);color:#fff;font-size:.72rem;font-weight:800;padding:.3rem .9rem;border-radius:20px;white-space:nowrap;letter-spacing:.04em;box-shadow:0 0 18px rgba(0,212,255,0.5);animation:popularPulse 2s ease-in-out infinite">⭐ MOST POPULAR</div>
         <div class="price-name">Student Plan</div>
         <div class="price-amount" id="price-student-amount">£35<span>/month</span></div>
         <div class="price-desc" id="price-student-sub">7-day free trial · Cancel any time</div>
@@ -7176,6 +7268,21 @@ function nav(page) {
     document.getElementById('user-menu').style.display = 'none';
     document.getElementById('a11y-bar').style.display = 'none';
     document.getElementById('xp-badge').style.display = 'none';
+    // Show urgency banner if not dismissed
+    const banner = document.getElementById('urgency-banner');
+    if (banner && !localStorage.getItem('urgency_dismissed')) banner.style.display = 'block';
+    // Animate student counter on first view
+    const counterEl = document.getElementById('student-counter');
+    if (counterEl && !counterEl.dataset.animated) {
+      counterEl.dataset.animated = '1';
+      let val = 2390; const target = 2400;
+      const tick = () => { if (val < target) { val++; counterEl.textContent = val.toLocaleString(); requestAnimationFrame(tick); } };
+      setTimeout(tick, 600);
+    }
+  }
+  if (page !== 'home') {
+    const banner = document.getElementById('urgency-banner');
+    if (banner) banner.style.display = 'none';
   }
 }
 
