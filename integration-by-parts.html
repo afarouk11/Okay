@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Integration by Parts A-Level — Step-by-Step Guide | Synaptiq</title>
+<meta name="description" content="Master integration by parts for A-Level Maths. Full step-by-step worked examples, the ILATE rule, exam tips for AQA, Edexcel, OCR and WJEC.">
+<link rel="canonical" href="https://synaptiqai.co.uk/integration-by-parts">
+<meta property="og:title" content="Integration by Parts A-Level — Step-by-Step Guide">
+<meta property="og:description" content="Master integration by parts with full worked examples aligned to AQA, Edexcel, OCR and WJEC mark schemes.">
+<meta property="og:url" content="https://synaptiqai.co.uk/integration-by-parts">
+<meta property="og:image" content="https://synaptiqai.co.uk/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold: #C9A84C; --bg: #03050D; --surface: #0D0F18;
+    --border: rgba(255,255,255,0.08); --text: #E2E0F0; --muted: #6B7394;
+    --font-head: 'Playfair Display', serif;
+  }
+  body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+  a { color: var(--gold); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* NAV */
+  nav { background: rgba(7,8,12,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: .9rem 1.5rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .nav-logo { font-family: var(--font-head); font-size: 1.25rem; color: var(--gold); font-weight: 800; }
+  .nav-links { display: flex; gap: 1.5rem; font-size: .88rem; }
+  .nav-links a { color: var(--muted); transition: color .2s; }
+  .nav-links a:hover { color: var(--text); text-decoration: none; }
+
+  /* HERO */
+  .hero { max-width: 820px; margin: 3rem auto 0; padding: 0 1.5rem; }
+  .tag { display: inline-block; background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.3); color: var(--gold); font-size: .75rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: .25rem .75rem; border-radius: 999px; margin-bottom: 1rem; }
+  h1 { font-family: var(--font-head); font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 800; line-height: 1.2; margin-bottom: 1rem; }
+  .meta { font-size: .82rem; color: var(--muted); margin-bottom: 2rem; }
+
+  /* CONTENT */
+  .content { max-width: 820px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+  h2 { font-family: var(--font-head); font-size: 1.4rem; font-weight: 700; margin: 2.5rem 0 .75rem; color: #fff; }
+  h3 { font-size: 1.05rem; font-weight: 700; margin: 1.5rem 0 .5rem; color: var(--gold); }
+  p { margin-bottom: 1rem; color: #C8C6D8; }
+  ul, ol { padding-left: 1.4rem; margin-bottom: 1rem; color: #C8C6D8; }
+  li { margin-bottom: .4rem; }
+
+  .formula-box {
+    background: rgba(201,168,76,0.07); border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 12px; padding: 1.25rem 1.5rem; margin: 1.5rem 0;
+    text-align: center; font-size: 1.1rem; font-weight: 600; font-family: 'Space Mono', monospace;
+    color: var(--gold);
+  }
+  .worked-example {
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--gold); border-radius: 0 12px 12px 0;
+    padding: 1.25rem 1.5rem; margin: 1.5rem 0;
+  }
+  .worked-example .step { display: flex; gap: .75rem; margin-bottom: .6rem; }
+  .step-num { background: var(--gold); color: #08090E; font-weight: 800; font-size: .72rem; min-width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: .1rem; }
+  .mark { font-size: .7rem; color: #6B9FFF; font-weight: 700; margin-left: .4rem; }
+  .tip-box { background: rgba(100,160,255,0.06); border: 1px solid rgba(100,160,255,0.25); border-radius: 12px; padding: 1rem 1.25rem; margin: 1.5rem 0; }
+  .tip-box strong { color: #64A0FF; }
+  .warn-box { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.25); border-radius: 12px; padding: 1rem 1.25rem; margin: 1.5rem 0; }
+  .warn-box strong { color: #f87171; }
+
+  /* CTA */
+  .cta-section {
+    background: linear-gradient(135deg,rgba(201,168,76,0.1),rgba(123,64,255,0.08));
+    border: 1px solid rgba(201,168,76,0.25); border-radius: 20px;
+    padding: 2.5rem 2rem; margin: 3rem 0 1rem; text-align: center;
+  }
+  .cta-section h2 { margin-top: 0; }
+  .cta-section p { color: var(--muted); max-width: 480px; margin: .5rem auto 1.5rem; }
+  .cta-btn {
+    display: inline-block; background: linear-gradient(135deg,#C9A84C,#A07830);
+    color: #08090E; font-weight: 800; font-size: 1rem; padding: .85rem 2.25rem;
+    border-radius: 12px; text-decoration: none; transition: opacity .2s;
+  }
+  .cta-btn:hover { opacity: .9; text-decoration: none; }
+
+  /* DEMO WIDGET */
+  #demo-widget { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-top: 2rem; }
+  #demo-messages { min-height: 80px; max-height: 260px; overflow-y: auto; margin-bottom: 1rem; }
+  .demo-msg { padding: .65rem .9rem; border-radius: 10px; font-size: .88rem; margin-bottom: .5rem; line-height: 1.5; }
+  .demo-msg.user { background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.2); align-self: flex-end; margin-left: 2rem; }
+  .demo-msg.ai   { background: rgba(255,255,255,0.04); border: 1px solid var(--border); }
+  .demo-input-row { display: flex; gap: .5rem; }
+  .demo-input-row input { flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: .65rem 1rem; color: var(--text); font-size: .88rem; outline: none; }
+  .demo-input-row input:focus { border-color: var(--gold); }
+  .demo-send { background: linear-gradient(135deg,#C9A84C,#A07830); color: #08090E; border: none; border-radius: 10px; padding: .65rem 1.1rem; font-weight: 700; cursor: pointer; font-size: .88rem; }
+
+  footer { text-align: center; padding: 2rem 1rem; font-size: .78rem; color: var(--muted); border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="/">Synapti<span style="color:#fff">q</span></a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/pricing.html">Pricing</a>
+    <a href="/#faq">FAQ</a>
+    <a href="/" style="background:linear-gradient(135deg,#C9A84C,#A07830);color:#08090E;padding:.35rem .85rem;border-radius:8px;font-weight:700">Try Free</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="tag">A-Level Pure Mathematics</div>
+  <h1>Integration by Parts — Complete Step-by-Step Guide</h1>
+  <div class="meta">For AQA · Edexcel · OCR · WJEC &nbsp;|&nbsp; Year 12 &amp; 13 · Pure 2</div>
+</div>
+
+<div class="content">
+
+  <p>Integration by parts is one of the most important techniques in A-Level Maths. It appears on every exam board and is essential for Year 13 Pure. This guide walks through the formula, the ILATE selection rule, and fully worked examples — exactly as you'd present them in an exam to earn all method marks.</p>
+
+  <h2>The Integration by Parts Formula</h2>
+
+  <p>Integration by parts is derived from the product rule for differentiation. If you have an integral of the form ∫ u dv, you can rewrite it as:</p>
+
+  <div class="formula-box">∫ u dv = uv − ∫ v du</div>
+
+  <p>In Leibniz notation, this is written as:</p>
+  <div class="formula-box">∫ u (dv/dx) dx = uv − ∫ v (du/dx) dx</div>
+
+  <p>You need to choose which part of the integrand to call <strong>u</strong> and which to call <strong>dv/dx</strong>. The ILATE rule helps with this choice.</p>
+
+  <h2>The ILATE Rule — Choosing u and dv/dx</h2>
+  <p>ILATE is a priority order for choosing <strong>u</strong> (the part you differentiate). Pick the first type that appears in your integrand:</p>
+  <ol>
+    <li><strong>I</strong> — Inverse trig (arcsin, arccos, arctan)</li>
+    <li><strong>L</strong> — Logarithms (ln x, log x)</li>
+    <li><strong>A</strong> — Algebraic (x², 3x, polynomials)</li>
+    <li><strong>T</strong> — Trigonometric (sin x, cos x, tan x)</li>
+    <li><strong>E</strong> — Exponential (eˣ, aˣ)</li>
+  </ol>
+  <p>The remaining part becomes <strong>dv/dx</strong>, which you integrate to find <strong>v</strong>.</p>
+
+  <div class="tip-box"><strong>Exam tip:</strong> Logarithms almost always become <strong>u</strong>. You cannot integrate ln x directly, so it must be differentiated. Similarly, polynomials paired with exponentials: make the polynomial u so it reduces to zero after differentiating.</div>
+
+  <h2>Worked Example 1 — Polynomial × Exponential</h2>
+  <p><strong>Find ∫ x eˣ dx</strong></p>
+
+  <div class="worked-example">
+    <div class="step"><div class="step-num">1</div><div>Choose <strong>u = x</strong> (algebraic before exponential) and <strong>dv/dx = eˣ</strong> <span class="mark">M1</span></div></div>
+    <div class="step"><div class="step-num">2</div><div>Differentiate u: <strong>du/dx = 1</strong>, so <strong>du = dx</strong></div></div>
+    <div class="step"><div class="step-num">3</div><div>Integrate dv/dx: <strong>v = eˣ</strong> <span class="mark">B1</span></div></div>
+    <div class="step"><div class="step-num">4</div><div>Apply the formula: ∫ x eˣ dx = x·eˣ − ∫ eˣ·1 dx <span class="mark">M1</span></div></div>
+    <div class="step"><div class="step-num">5</div><div>Evaluate the remaining integral: = x eˣ − eˣ + C <span class="mark">A1 cao</span></div></div>
+    <div class="step"><div class="step-num">6</div><div>Factorise (preferred form): <strong>= eˣ(x − 1) + C</strong></div></div>
+  </div>
+
+  <h2>Worked Example 2 — Logarithm × Polynomial</h2>
+  <p><strong>Find ∫ x² ln x dx</strong></p>
+
+  <div class="worked-example">
+    <div class="step"><div class="step-num">1</div><div>Choose <strong>u = ln x</strong> (logarithm before algebraic) and <strong>dv/dx = x²</strong> <span class="mark">M1</span></div></div>
+    <div class="step"><div class="step-num">2</div><div>Differentiate: <strong>du/dx = 1/x</strong></div></div>
+    <div class="step"><div class="step-num">3</div><div>Integrate: <strong>v = x³/3</strong> <span class="mark">B1</span></div></div>
+    <div class="step"><div class="step-num">4</div><div>Apply formula: ∫ x² ln x dx = (x³/3)·ln x − ∫ (x³/3)·(1/x) dx <span class="mark">M1</span></div></div>
+    <div class="step"><div class="step-num">5</div><div>Simplify: = (x³ ln x)/3 − ∫ x²/3 dx</div></div>
+    <div class="step"><div class="step-num">6</div><div>Integrate: = (x³ ln x)/3 − x³/9 + C <span class="mark">A1</span></div></div>
+    <div class="step"><div class="step-num">7</div><div>Factorise: <strong>= (x³/9)(3 ln x − 1) + C</strong> <span class="mark">A1 cao</span></div></div>
+  </div>
+
+  <h2>Applying Integration by Parts Twice</h2>
+  <p>Some integrals require integration by parts applied twice — for example ∫ x² eˣ dx. After the first application you'll get ∫ x eˣ dx, which itself needs parts again.</p>
+
+  <div class="tip-box"><strong>Cyclic integrals:</strong> For ∫ eˣ sin x dx, applying parts twice brings you back to the original integral. Let I = ∫ eˣ sin x dx, apply parts twice, then solve for I algebraically. This is a classic exam question — learn it.</div>
+
+  <h2>Definite Integration by Parts</h2>
+  <p>For definite integrals, apply the limits to the <strong>uv</strong> term and the remaining integral separately:</p>
+  <div class="formula-box">[uv]ₐᵇ − ∫ₐᵇ v (du/dx) dx</div>
+  <p>Always substitute the limits into the uv term first before evaluating the integral. Show every substitution clearly — mark schemes award method marks for this.</p>
+
+  <h2>Common Exam Mistakes to Avoid</h2>
+  <div class="warn-box">
+    <strong>⚠ Forgetting the constant of integration</strong> — always write + C for indefinite integrals, even in intermediate steps if you're adding them up.
+  </div>
+  <div class="warn-box">
+    <strong>⚠ Wrong choice of u</strong> — if you choose u = eˣ with dv/dx = x, you'll get a harder integral. Always follow ILATE.
+  </div>
+  <div class="warn-box">
+    <strong>⚠ Sign errors</strong> — in ∫ u dv = uv <em>minus</em> ∫ v du. The minus sign is the most common source of lost marks.
+  </div>
+
+  <h2>Exam Board Differences</h2>
+  <ul>
+    <li><strong>AQA &amp; Edexcel:</strong> Integration by parts is in Year 13 Pure 2. Expect it paired with ln x, eˣ sin/cos, and definite integrals. Cyclic integrals appear at grade A/A* level.</li>
+    <li><strong>OCR A &amp; OCR MEI:</strong> May require proving the formula from the product rule — know the derivation.</li>
+    <li><strong>WJEC:</strong> Tabular integration (the "ladder" method) is allowed but you must show working clearly.</li>
+  </ul>
+
+  <h2>Practice Question</h2>
+  <p>Try this yourself before checking the answer:</p>
+  <div class="formula-box">Find ∫ 3x sin(2x) dx</div>
+  <p><em>Hint: u = 3x (algebraic), dv/dx = sin(2x) (trig). You'll need to integrate sin(2x) to get v = −cos(2x)/2.</em></p>
+
+  <!-- CTA -->
+  <div class="cta-section">
+    <h2>Get step-by-step AI explanations on Synaptiq</h2>
+    <p>Ask our AI tutor any A-Level Maths question and get full mark-scheme-style working — instantly, personalised to your exam board.</p>
+    <a href="/" class="cta-btn">Start Free Trial — 7 Days Free →</a>
+    <div style="margin-top:.75rem;font-size:.78rem;color:var(--muted)">No credit card required · AQA, Edexcel, OCR &amp; WJEC</div>
+  </div>
+
+  <!-- DEMO WIDGET -->
+  <h2>Try the AI Tutor Now</h2>
+  <p>Ask any integration question and get a worked solution:</p>
+
+  <div id="demo-widget">
+    <div id="demo-messages">
+      <div class="demo-msg ai">Hi! Ask me any A-Level Maths integration question and I'll show you full step-by-step working. 📐</div>
+    </div>
+    <div class="demo-input-row">
+      <input type="text" id="demo-input" placeholder="e.g. Find ∫ x cos x dx" onkeydown="if(event.key==='Enter')demoSend()">
+      <button class="demo-send" onclick="demoSend()">Ask →</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>© 2025 Synaptiq Ltd · <a href="/">Home</a> · <a href="/privacy-policy.html">Privacy</a> · <a href="/terms.html">Terms</a></p>
+  <p style="margin-top:.4rem">AI-powered A-Level Maths tutor · AQA · Edexcel · OCR · WJEC</p>
+</footer>
+
+<script>
+async function demoSend() {
+  const input = document.getElementById('demo-input');
+  const msgs  = document.getElementById('demo-messages');
+  const text  = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const userMsg = document.createElement('div');
+  userMsg.className = 'demo-msg user';
+  userMsg.textContent = text;
+  msgs.appendChild(userMsg);
+  msgs.scrollTop = 9999;
+
+  const typingMsg = document.createElement('div');
+  typingMsg.className = 'demo-msg ai';
+  typingMsg.textContent = '…';
+  msgs.appendChild(typingMsg);
+  msgs.scrollTop = 9999;
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 800,
+        system: 'You are an expert A-Level Maths tutor. Show full step-by-step working for any integration question, using mark-scheme notation (M1, A1, B1). Keep answers concise but complete. Use plain text notation for maths (e.g. x^2, e^x).',
+        messages: [{ role: 'user', content: text }]
+      })
+    });
+    const data = await res.json();
+    const reply = data?.content?.[0]?.text || 'Sorry, I could not answer that right now.';
+    typingMsg.textContent = reply;
+  } catch(e) {
+    typingMsg.textContent = 'Demo requires the Synaptiq backend to be running. Sign up for full access!';
+  }
+  msgs.scrollTop = 9999;
+}
+</script>
+</body>
+</html>

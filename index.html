@@ -4475,6 +4475,16 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
   <!-- Main content -->
   <div class="main-content">
 
+    <!-- TRIAL COUNTDOWN BANNER -->
+    <div id="trial-banner" style="display:none;background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.08));border:1px solid rgba(201,168,76,0.4);border-radius:12px;padding:.75rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:.75rem">
+        <span style="font-size:1.2rem">⏳</span>
+        <span id="trial-banner-text" style="font-size:.9rem;font-weight:600;color:var(--gold)">7 days left on your free trial</span>
+        <span style="font-size:.82rem;color:var(--muted)">— subscribe to keep your progress.</span>
+      </div>
+      <button onclick="startCheckout('student')" style="background:linear-gradient(135deg,#C9A84C,#A07830);color:#08090E;border:none;border-radius:8px;padding:.4rem 1rem;font-size:.82rem;font-weight:700;cursor:pointer;white-space:nowrap">Subscribe →</button>
+    </div>
+
     <!-- HOME SUBPAGE -->
     <div class="subpage active" id="sp-home">
       <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem">
@@ -7678,6 +7688,7 @@ function enterDashboard() {
 
   nav('dashboard');
   showDash('home');
+  checkTrialStatus();
   // Render dashboard widgets
   setTimeout(() => { renderTipOfDay(); renderSpecProgress(); applyBoardPreference(); updateGreeting(); _loadActivityFeed(); }, 200);
   // Show new feature UI elements
@@ -11863,6 +11874,30 @@ function resetStatsForNewUser() {
 </div>
 <style>#upgrade-modal.show { display:flex !important; }</style>
 
+<!-- Trial Expired / Cancelled Paywall (non-dismissible) -->
+<div id="paywall-overlay" style="display:none;position:fixed;inset:0;z-index:10000;align-items:center;justify-content:center;padding:1rem">
+  <div style="position:absolute;inset:0;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);background:rgba(3,5,13,0.85)"></div>
+  <div style="position:relative;z-index:1;background:rgba(10,12,18,0.97);backdrop-filter:blur(40px);border:1px solid rgba(201,168,76,0.5);border-radius:20px;padding:2.5rem 2rem;max-width:480px;width:100%;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,0.8)">
+    <div style="font-size:2.8rem;margin-bottom:1rem">🔒</div>
+    <h2 style="font-family:var(--font-head);font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:.5rem">Your free trial has ended</h2>
+    <p style="color:var(--muted);font-size:.9rem;margin-bottom:1.75rem">Subscribe to unlock full access — AI tutor, practice questions, flashcards and your progress data.</p>
+    <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:14px;padding:1.25rem;margin-bottom:1.5rem">
+      <div style="font-size:1.8rem;font-weight:900;font-family:var(--font-head);color:var(--gold)">£35<span style="font-size:1rem;font-weight:400;color:var(--muted)">/month</span></div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:.25rem">A-Level Student Plan · Cancel any time</div>
+      <ul style="list-style:none;padding:0;margin:.75rem 0 0;text-align:left;font-size:.82rem;color:var(--text);display:flex;flex-direction:column;gap:.4rem">
+        <li>✓ Unlimited AI tutor conversations</li>
+        <li>✓ Exam board-specific mark schemes (AQA, Edexcel, OCR, WJEC)</li>
+        <li>✓ Photo question solver</li>
+        <li>✓ All progress, XP and streak data preserved</li>
+      </ul>
+    </div>
+    <button onclick="startCheckout('student')" style="width:100%;background:linear-gradient(135deg,#C9A84C,#A07830);color:#08090E;border:none;border-radius:12px;padding:.9rem 2rem;font-size:1rem;font-weight:800;cursor:pointer;margin-bottom:.75rem">Subscribe Now — £35/mo</button>
+    <button onclick="startCheckout('student_annual')" style="width:100%;background:transparent;color:var(--gold);border:1px solid rgba(201,168,76,0.4);border-radius:12px;padding:.65rem 2rem;font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:.75rem">Annual plan — £199/year (save £221)</button>
+    <div style="font-size:.72rem;color:var(--muted)">Already subscribed? <a onclick="manageSubscription()" style="color:var(--gold);cursor:pointer;text-decoration:underline">Restore access</a></div>
+  </div>
+</div>
+<style>#paywall-overlay.show { display:flex !important; }</style>
+
 <!-- Feedback -->
 <div id="feedback-btn" onclick="showToast('Thank you for your feedback! 💛')">💬 Feedback</div>
 
@@ -14957,6 +14992,43 @@ function showUpgradeModal(reason) {
 function closeUpgradeModal() {
   const modal = document.getElementById('upgrade-modal');
   if (modal) modal.classList.remove('show');
+}
+
+function checkTrialStatus() {
+  const status = getSubscriptionStatus();
+  const banner = document.getElementById('trial-banner');
+  const paywall = document.getElementById('paywall-overlay');
+  if (!banner || !paywall) return;
+
+  if (status === 'trial_expired' || status === 'past_due' ||
+      (state.user?.subscription_status === 'cancelled')) {
+    paywall.classList.add('show');
+    banner.style.display = 'none';
+    return;
+  }
+
+  if (status === 'trial') {
+    const trialStart = state.user?.trial_started_at || state.user?.trial_ends_at
+      ? null
+      : localStorage.getItem('synaptiq_trial_start');
+    let daysLeft = FREE_TRIAL_DAYS;
+    if (state.user?.trial_ends_at) {
+      daysLeft = Math.ceil((new Date(state.user.trial_ends_at) - Date.now()) / (1000 * 60 * 60 * 24));
+    } else if (trialStart) {
+      const elapsed = (Date.now() - new Date(trialStart).getTime()) / (1000 * 60 * 60 * 24);
+      daysLeft = Math.ceil(FREE_TRIAL_DAYS - elapsed);
+    }
+    daysLeft = Math.max(0, daysLeft);
+    const text = document.getElementById('trial-banner-text');
+    if (text) text.textContent = `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left on your free trial`;
+    banner.style.display = 'flex';
+    paywall.classList.remove('show');
+    return;
+  }
+
+  // Active or free — hide both
+  banner.style.display = 'none';
+  paywall.classList.remove('show');
 }
 
 function startCheckoutFlow(plan) {
