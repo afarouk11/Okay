@@ -2391,9 +2391,11 @@ body.light .skeleton {
 .teacher-tabs{display:flex;gap:.25rem;padding:0 .75rem .75rem;flex-wrap:wrap}
 .teacher-tab{background:rgba(255,255,255,0.05);border:none;color:var(--muted);padding:.35rem .7rem;border-radius:6px;cursor:pointer;font-size:.75rem;transition:.15s}
 .teacher-tab.active{background:var(--gold);color:#000;font-weight:600}
-.teacher-chapter-btn{display:block;width:100%;text-align:left;background:none;border:none;color:var(--muted);padding:.6rem 1rem;cursor:pointer;font-size:.85rem;border-left:3px solid transparent;transition:all .15s;line-height:1.4}
+.teacher-chapter-btn{display:block;width:100%;text-align:left;background:none;border:none;color:var(--muted);padding:.6rem 1rem;cursor:pointer;font-size:.82rem;border-left:3px solid transparent;transition:all .15s;line-height:1.4}
 .teacher-chapter-btn:hover{color:var(--white);background:rgba(255,255,255,0.05)}
 .teacher-chapter-btn.active{color:var(--gold);border-left-color:var(--gold);background:rgba(201,168,76,0.08)}
+.teacher-chapter-btn.taught{color:rgba(74,222,128,.7)}
+.teacher-chapter-btn.taught.active{color:#4ade80;border-left-color:#4ade80;background:rgba(74,222,128,0.06)}
 .teacher-content{overflow-y:auto;padding:2rem}
 .teacher-placeholder{text-align:center;padding:4rem 2rem;color:var(--muted)}
 .teacher-placeholder i{font-size:3rem;margin-bottom:1rem;display:block;color:var(--gold)}
@@ -4800,7 +4802,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
             </div>
             <div style="display:flex;gap:.5rem">
               <button class="tts-btn" id="tts-toggle" onclick="toggleTTS()" title="Read aloud">🔊</button>
-              <button class="tts-btn" id="voice-mode-btn" onclick="toggleVoiceMode()" title="Voice chat" style="display:flex;align-items:center;gap:.3rem;padding:.35rem .7rem;font-size:.78rem">🎙️ <span style="font-size:.72rem">Voice</span></button>
+              <button id="voice-mode-btn" onclick="voOpen('tutor')" title="Voice conversation with Jarvis" style="display:flex;align-items:center;gap:.4rem;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--gold);border-radius:20px;padding:.35rem .85rem;font-size:.78rem;font-weight:600;cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(201,168,76,0.22)'" onmouseout="this.style.background='rgba(201,168,76,0.12)'">🎙 Voice Chat</button>
               <button class="btn btn-outline" style="font-size:.75rem" onclick="clearTutor()">Clear Chat</button>
             </div>
           </div>
@@ -4842,8 +4844,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
           <div class="tutor-input-area">
             <div class="tutor-input-row">
               <div style="display:flex;gap:.5rem;max-width:780px;width:100%;margin:0 auto;align-items:flex-end">
-                <button class="tts-btn" id="voice-input-btn" onclick="speakInput()" title="Speak your question" style="flex-shrink:0;margin-bottom:2px">🎤</button>
-                <button class="tts-btn" id="speak-btn" onclick="speakInput()" title="Speak" style="display:none;flex-shrink:0;margin-bottom:2px">🎤</button>
+                <button class="tts-btn" id="voice-input-btn" onclick="voOpen('tutor')" title="Voice chat with Jarvis" style="flex-shrink:0;margin-bottom:2px;font-size:.95rem" aria-label="Open voice chat">🎙</button>
                 <button class="tts-btn" onclick="document.getElementById('tutor-img-input').click()" title="Upload a photo of your question" style="flex-shrink:0;margin-bottom:2px">📷</button>
                 <input type="file" id="tutor-img-input" accept="image/*" style="display:none" onchange="handleTutorImage(event)">
                 <div style="position:relative;flex:1">
@@ -5121,11 +5122,18 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
           <div id="teacher-chapter-list"></div>
         </div>
         <!-- Right: lesson output -->
-        <div class="teacher-content" id="teacher-content">
-          <div class="teacher-placeholder">
-            <i class="fas fa-chalkboard-teacher"></i>
-            <h3 style="color:var(--white);margin-bottom:.5rem">Select a chapter to begin your lesson</h3>
-            <p style="font-size:.9rem;max-width:360px;margin:0 auto">Choose a topic from the left and I'll teach it with full theory, worked examples, and practice questions — with proper maths notation.</p>
+        <div style="display:flex;flex-direction:column;overflow:hidden;height:100%">
+          <!-- Teacher top bar -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:.65rem 1.25rem;border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(7,8,12,0.7);flex-shrink:0;gap:.75rem">
+            <div style="font-size:.78rem;color:var(--muted);letter-spacing:.04em" id="teacher-bar-label">Select a chapter to start your lesson</div>
+            <button onclick="openTeacherVoice()" style="display:flex;align-items:center;gap:.4rem;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--gold);border-radius:20px;padding:.35rem .9rem;font-size:.78rem;font-weight:600;cursor:pointer;transition:background .15s;white-space:nowrap" onmouseover="this.style.background='rgba(201,168,76,0.22)'" onmouseout="this.style.background='rgba(201,168,76,0.12)'" title="Have a voice conversation with your AI teacher about this topic">🎙 Ask Teacher</button>
+          </div>
+          <div class="teacher-content" id="teacher-content" style="flex:1;overflow-y:auto">
+            <div class="teacher-placeholder">
+              <i class="fas fa-chalkboard-teacher"></i>
+              <h3 style="color:var(--white);margin-bottom:.5rem">Select a chapter to begin your lesson</h3>
+              <p style="font-size:.9rem;max-width:360px;margin:0 auto">Choose a topic from the left and I'll teach it with full theory, worked examples, and practice questions — with proper maths notation.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -7963,7 +7971,7 @@ function buildNumberLine(highlight) {
 // ═══════════════════════════════════════
 async function callClaude(messages, system, max_tokens) {
   const body = {
-    model: 'claude-opus-4-6',
+    model: 'claude-sonnet-4-6',
     max_tokens: max_tokens || 1500,
     messages
   };
@@ -8648,7 +8656,7 @@ function addTutorMsg(role, text) {
   }
   container.scrollTop = 99999;
   // Don't call speak() when the voice overlay is active — vcSpeak handles it
-  const voiceOverlayOpen = document.getElementById('voice-overlay')?.classList.contains('open');
+  const voiceOverlayOpen = document.getElementById('vo-overlay')?.classList.contains('open');
   if (role === 'bot' && state.ttsEnabled && !voiceOverlayOpen) speak(text);
 }
 
@@ -14401,29 +14409,10 @@ function tvSubmitTyped() {
 }
 
 function openTeacherVoice() {
-  if (window.speechSynthesis) window.speechSynthesis.getVoices(); // preload
-  // Pause lesson narration
-  window.speechSynthesis?.cancel();
-  stopVidPlay();
-
-  const overlay = document.getElementById('teacher-overlay');
-  if (!overlay) return;
-  overlay.classList.add('open');
-
-  // Label the lesson
-  const topic   = document.getElementById('vid-topic')?.value || '';
-  const label   = document.getElementById('teacher-lesson-label');
-  if (label && topic) label.textContent = `Lesson: ${topic} · Scene ${vidIdx + 1} of ${vidScenes.length}`;
-
-  TV.history = []; // fresh conversation per session
-  tvSetState('idle');
-
-  // Teacher greets the student and immediately listens
-  const greeting = `Hi! I'm your ${document.getElementById('vid-subject')?.value || 'Maths'} teacher. We're on ${vidScenes[vidIdx]?.title || 'your lesson'}. What would you like to know?`;
-  const rbox = document.getElementById('teacher-reply-box');
-  if (rbox) rbox.textContent = greeting;
-  TV.history.push({ role: 'assistant', content: greeting });
-  tvSpeak(greeting);
+  // Delegate to unified voice overlay in teacher mode
+  const activeBtn = document.querySelector('.teacher-chapter-btn.active');
+  const chapter = activeBtn ? activeBtn.textContent.trim() : '';
+  voOpen('teacher', chapter);
 }
 
 function closeTeacherVoice() {
@@ -18203,27 +18192,81 @@ console.log('✦ Synaptiq v12 — Spaced Repetition + Curriculum active');
 const TEACHER_CONTENT = {
   pure1: {
     label: 'Pure Mathematics 1', year: 'Year 12',
-    chapters: ['Algebraic Expressions','Quadratics','Equations & Inequalities','Graphs & Transformations','Straight Line Graphs','Circles','Algebraic Methods','The Binomial Expansion','Trigonometric Ratios','Trigonometric Identities & Equations','Vectors','Differentiation','Integration','Exponentials & Logarithms']
+    chapters: [
+      { name: 'Algebraic Expressions',              subtopics: ['Index laws','Expanding brackets','Factorising','Negative & fractional indices','Surds & rationalising'] },
+      { name: 'Quadratics',                         subtopics: ['Solving by factorising','Completing the square','Quadratic formula','Discriminant','Disguised quadratics'] },
+      { name: 'Equations & Inequalities',           subtopics: ['Linear & quadratic inequalities','Simultaneous equations','Inequalities on graphs','Set notation'] },
+      { name: 'Graphs & Transformations',           subtopics: ['Sketching cubics & quartics','Reciprocal graphs','Points of intersection','Translations','Stretches & reflections'] },
+      { name: 'Straight Line Graphs',               subtopics: ['Gradient & intercept','y = mx + c','Equation of a line','Parallel & perpendicular lines','Length & midpoint'] },
+      { name: 'Circles',                            subtopics: ['Equation of a circle','Completing the square for circles','Tangent to a circle','Chord & perpendicular bisector','Circles & straight lines'] },
+      { name: 'Algebraic Methods',                  subtopics: ['Algebraic fractions','Polynomial division','Factor theorem','Remainder theorem','Proof by deduction & exhaustion'] },
+      { name: 'The Binomial Expansion',             subtopics: ["Pascal's triangle",'nCr notation','Binomial expansion (n positive integer)','Finding specific terms','Approximations'] },
+      { name: 'Trigonometric Ratios',               subtopics: ['SOH-CAH-TOA','Exact values (30°,45°,60°)','Sine & cosine rule','Area of triangle','Bearings problems'] },
+      { name: 'Trigonometric Identities & Equations', subtopics: ['sin²θ+cos²θ=1','tanθ=sinθ/cosθ','Solving trig equations','Equations in a given interval','Transforming trig graphs'] },
+      { name: 'Vectors',                            subtopics: ['Vector notation','Adding & subtracting','Scalar multiplication','Magnitude & unit vectors','Position vectors','Geometric proofs'] },
+      { name: 'Differentiation',                    subtopics: ['From first principles','Differentiating xⁿ','Gradient at a point','Stationary points & nature','Increasing & decreasing','Second derivative'] },
+      { name: 'Integration',                        subtopics: ['Reverse of differentiation','Integrating xⁿ','Indefinite integrals (+ C)','Definite integrals','Area under a curve','Area between curves'] },
+      { name: 'Exponentials & Logarithms',          subtopics: ['y = aˣ graphs','e and ln','Laws of logarithms','Solving exponential equations','Natural logarithm','Exponential modelling'] }
+    ]
   },
   pure2: {
     label: 'Pure Mathematics 2', year: 'Year 13',
-    chapters: ['Algebraic Methods','Functions & Graphs','Sequences & Series','Binomial Expansion','Radians','Trigonometric Functions','Trigonometry & Modelling','Parametric Equations','Differentiation','Numerical Methods','Integration','Vectors']
+    chapters: [
+      { name: 'Proof',                              subtopics: ['Proof by contradiction','Disproof by counterexample','Proof by deduction (advanced)'] },
+      { name: 'Algebraic & Partial Fractions',      subtopics: ['Partial fractions (two linear factors)','Repeated linear factors','Improper fractions','Using partial fractions in integration'] },
+      { name: 'Functions & Graphs',                 subtopics: ['Mappings & functions','Domain & range','Composite functions','Inverse functions','Modulus function','Modulus equations & inequalities','Transformations'] },
+      { name: 'Sequences & Series',                 subtopics: ['Arithmetic sequences & series','Geometric sequences & series','Sum to infinity','Sigma notation','Recurrence relations','Modelling with sequences'] },
+      { name: 'Binomial Expansion (Advanced)',      subtopics: ['Expansion for any rational n','Validity conditions','Approximations using binomial','Partial fractions + binomial'] },
+      { name: 'Radians',                            subtopics: ['Converting degrees & radians','Arc length','Area of sector','Area of segment','Small angle approximations'] },
+      { name: 'Trigonometric Functions',            subtopics: ['Secant, cosecant, cotangent','Pythagorean identities (sec,cosec,cot)','Inverse trig functions','Graphs of reciprocal trig'] },
+      { name: 'Trigonometry & Modelling',           subtopics: ['Addition formulae','Double angle formulae','R sin(θ+α) form','Proving trig identities','Solving harder equations'] },
+      { name: 'Parametric Equations',               subtopics: ['Parametric curves','Converting parametric to Cartesian','Parametric differentiation','Parametric integration'] },
+      { name: 'Differentiation (Advanced)',         subtopics: ['Chain rule','Product rule','Quotient rule','Differentiating sin/cos/exp/ln','Implicit differentiation','Rates of change'] },
+      { name: 'Numerical Methods',                  subtopics: ['Location of roots (sign change)','Newton-Raphson method','Iteration','Staircase & cobweb diagrams','Convergence'] },
+      { name: 'Integration (Advanced)',             subtopics: ['Integration by substitution','Integration by parts','Partial fractions integration','Integrating trig functions','Trapezium rule','Differential equations (separable)'] },
+      { name: 'Vectors (3D)',                       subtopics: ['3D coordinates','3D vectors','Magnitude in 3D','Scalar (dot) product','Angle between vectors','Vector equation of a line','Point of intersection'] }
+    ]
   },
   statsY1: {
     label: 'Statistics', year: 'Year 12',
-    chapters: ['Statistical Sampling','Data Presentation & Interpretation','Probability','Statistical Distributions','Statistical Hypothesis Testing']
+    chapters: [
+      { name: 'Statistical Sampling',              subtopics: ['Population & sample','Simple random sampling','Systematic sampling','Stratified sampling','Opportunity sampling','Bias'] },
+      { name: 'Measures of Location & Spread',     subtopics: ['Mean, median, mode','Quartiles & percentiles','Interquartile range','Variance & standard deviation','Coding data'] },
+      { name: 'Data Presentation & Interpretation',subtopics: ['Frequency tables','Histograms','Box plots','Cumulative frequency','Comparing distributions','Outliers'] },
+      { name: 'Correlation & Regression',          subtopics: ['Scatter diagrams','Product moment correlation coefficient (PMCC)','Regression line y on x','Interpolation & extrapolation','Causation vs correlation'] },
+      { name: 'Probability',                       subtopics: ['Sample space diagrams','Venn diagrams','Mutually exclusive events','Independent events','Conditional probability','Tree diagrams'] },
+      { name: 'Statistical Distributions',         subtopics: ['Discrete random variables','Binomial distribution B(n,p)','Using binomial tables','Mean & variance of binomial','Choosing an appropriate model'] },
+      { name: 'Statistical Hypothesis Testing',    subtopics: ['Null & alternative hypothesis','One-tailed & two-tailed tests','Critical region','p-value approach','Type I & Type II errors','Binomial hypothesis test'] }
+    ]
   },
   statsY2: {
     label: 'Statistics', year: 'Year 13',
-    chapters: ['Regression, Correlation & Hypothesis Testing','Conditional Probability','The Normal Distribution']
+    chapters: [
+      { name: 'Regression, Correlation & Hypothesis Testing', subtopics: ['Coding and regression lines','Exponential models (log transformation)','Hypothesis test for zero correlation','Critical values for PMCC'] },
+      { name: 'Conditional Probability',           subtopics: ['Conditional probability formula','Venn diagrams (conditional)','Tree diagrams (conditional)','Independent events revisited'] },
+      { name: 'The Normal Distribution',           subtopics: ['Properties of normal distribution','Standard normal Z ~ N(0,1)','Finding probabilities (z-tables/calculator)','Inverse normal','Normal approximation to binomial'] },
+      { name: 'Further Hypothesis Testing',        subtopics: ['Hypothesis test for the mean (normal)','Two-tailed tests (normal)','Selecting a test','Interpreting test results in context'] }
+    ]
   },
   mechY1: {
     label: 'Mechanics', year: 'Year 12',
-    chapters: ['Quantities & Units in Mechanics','Kinematics 1 — Constant Acceleration','Forces & Newton\'s Laws','Variable Acceleration']
+    chapters: [
+      { name: 'Quantities & Units in Mechanics',   subtopics: ['SI units','Scalars & vectors','Speed, velocity, acceleration','Force, weight, mass','Displacement'] },
+      { name: 'Kinematics — Constant Acceleration',subtopics: ['SUVAT equations','Velocity-time graphs','Displacement-time graphs','Vertical motion under gravity','Multi-stage motion'] },
+      { name: 'Forces & Newton\'s Laws',           subtopics: ["Newton's 1st, 2nd, 3rd laws",'F = ma','Weight W = mg','Normal reaction','Connected particles','Pulleys','Friction (basic)'] },
+      { name: 'Variable Acceleration',             subtopics: ['Differentiation: v = ds/dt, a = dv/dt','Integration: s from v','Displacement from velocity','Velocity from acceleration','Finding constants of integration'] },
+      { name: 'Vectors in Mechanics',              subtopics: ['Position & displacement vectors','Velocity & acceleration vectors','Constant acceleration in 2D','Resultant force','Magnitude & direction of velocity'] }
+    ]
   },
   mechY2: {
     label: 'Mechanics', year: 'Year 13',
-    chapters: ['Moments','Forces & Friction','Projectiles','Applications of Forces','Further Kinematics']
+    chapters: [
+      { name: 'Moments',                           subtopics: ['Moment of a force','Principle of moments','Equilibrium (1D beam)','Tilting problems','Ladder problems'] },
+      { name: 'Forces & Friction',                 subtopics: ['Coefficient of friction μ','F ≤ μR (friction inequality)','Friction on inclined planes','Limiting equilibrium','Rough vs smooth surfaces'] },
+      { name: 'Projectiles',                       subtopics: ['Horizontal & vertical components','Equations of projectile motion','Maximum height & range','Angle of projection','Hitting a target'] },
+      { name: 'Applications of Forces',            subtopics: ['Statics — particles in equilibrium','Resolving forces','Lami\'s theorem','Inclined plane equilibrium','Multi-force systems'] },
+      { name: 'Further Kinematics',                subtopics: ['Variable force problems','Differential equations of motion','Impulse & momentum','Conservation of momentum','Coefficient of restitution (e)'] }
+    ]
   }
 };
 
@@ -18249,17 +18292,34 @@ function renderTeacherChapters() {
     if (!list) return;
     const tab = _teacherTab || 'pure1';
     const mods = TEACHER_TABS[tab] || TEACHER_TABS['pure1'];
+    const taught = _getTaughtChapters();
     let html = '';
     for (const mk of mods) {
       const m = TEACHER_CONTENT[mk];
       if (!m) continue;
-      html += `<div style="padding:.4rem 1rem .2rem;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">${m.label} — ${m.year}</div>`;
+      const count = m.chapters.length;
+      html += `<div style="padding:.5rem 1rem .15rem;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;justify-content:space-between"><span>${m.label} — ${m.year}</span><span style="background:rgba(201,168,76,0.12);color:var(--gold);border-radius:10px;padding:.05rem .45rem;font-size:.62rem;font-weight:700">${count}</span></div>`;
       m.chapters.forEach((ch, i) => {
-        html += `<button class="teacher-chapter-btn" onclick="teachChapter('${mk}',${i},this)">${ch}</button>`;
+        const name = typeof ch === 'string' ? ch : ch.name;
+        const key = `${mk}:${i}`;
+        const done = taught.has(key);
+        html += `<button class="teacher-chapter-btn${done ? ' taught' : ''}" onclick="teachChapter('${mk}',${i},this)" title="${name}">${done ? '✓ ' : ''}${name}</button>`;
       });
     }
     list.innerHTML = html;
   } catch(e) { console.error('renderTeacherChapters:', e); }
+}
+
+function _getTaughtChapters() {
+  try { return new Set(JSON.parse(localStorage.getItem('synaptiq_taught_chapters') || '[]')); }
+  catch(e) { return new Set(); }
+}
+function _markChapterTaught(mk, idx) {
+  try {
+    const s = _getTaughtChapters();
+    s.add(`${mk}:${idx}`);
+    localStorage.setItem('synaptiq_taught_chapters', JSON.stringify([...s]));
+  } catch(e) {}
 }
 
 // Fix unescaped LaTeX backslashes in Claude's JSON output (e.g. \frac → \\frac)
@@ -18478,10 +18538,15 @@ function getChapterDiagram(chapter) {
 async function teachChapter(mk, idx, btn) {
   document.querySelectorAll('.teacher-chapter-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
+  _markChapterTaught(mk, idx);
   const mod = TEACHER_CONTENT[mk];
-  const chapter = mod.chapters[idx];
+  const chObj = mod.chapters[idx];
+  const chapter = typeof chObj === 'string' ? chObj : chObj.name;
+  const subtopics = typeof chObj === 'object' && chObj.subtopics ? chObj.subtopics : [];
   const board = (typeof state !== 'undefined' && state.user?.board) || 'AQA';
   const box = document.getElementById('teacher-content');
+  const barLabel = document.getElementById('teacher-bar-label');
+  if (barLabel) barLabel.textContent = `${mod.label} — ${chapter}`;
   box.innerHTML = `<div class="lesson-loading"><div class="lesson-spin"></div><p>Teaching <strong>${chapter}</strong>…</p></div>`;
 
   let resourceCtx = '';
@@ -18498,6 +18563,10 @@ async function teachChapter(mk, idx, btn) {
     ? `\n\nADAPTIVE CONTEXT: This student's performance data shows they struggle with: ${studentWeakTopics.join(', ')}. ${overallAcc !== null ? `Their overall accuracy is ${overallAcc}%.` : ''} If any of these relate to ${chapter}, give them extra attention — add a dedicated "Common Mistakes" callout, use more step-by-step worked examples for those sub-topics, and make sure the practice questions test them specifically.`
     : '';
 
+  const subtopicsCtx = subtopics.length
+    ? `\n\nThis chapter covers these specific subtopics — ensure your lesson addresses ALL of them: ${subtopics.join(', ')}.`
+    : '';
+
   const sys = `You are an expert A-Level Mathematics teacher for UK students (${board} exam board).
 Deliver a complete, thorough lesson. Use LaTeX math notation: inline with $...$ and display equations with $$...$$. For example: $x^2 + 3x - 4 = 0$, $$\\frac{d}{dx}(x^n) = nx^{n-1}$$. Never write x^2 in plain text — always use proper LaTeX so notation renders correctly.
 Return ONLY valid JSON (no markdown code fences, no extra text):
@@ -18509,13 +18578,18 @@ Return ONLY valid JSON (no markdown code fences, no extra text):
   "keyFormulas": ["formula 1", "formula 2", "..."]
 }
 Set "requiresGraph": true for any practice question where the student needs to sketch a graph, plot points, draw a diagram, or work with coordinate axes.
-Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice questions, 3 key formulas.${resourceCtx}${adaptiveCtx}`;
+Include at least 3 objectives, 2 worked examples (≥3 steps each), 3 practice questions, 3 key formulas.${subtopicsCtx}${resourceCtx}${adaptiveCtx}`;
 
   try {
     const data = await callClaude([{ role: 'user', content: `Teach me: ${chapter} (${mod.label}, ${mod.year})` }], sys, 8000);
     let raw = getReply(data).replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
     const lesson = JSON.parse(fixJsonLatex(raw));
     renderTeacherLesson(chapter, mod.year, lesson, box);
+    // Re-render sidebar to update ✓ tick
+    renderTeacherChapters();
+    // Re-mark active button after sidebar re-render
+    const allBtns = document.querySelectorAll('.teacher-chapter-btn');
+    if (allBtns[idx]) allBtns[idx].classList.add('active');
   } catch (e) {
     box.innerHTML = `<div style="padding:2rem;color:var(--red)">⚠️ Could not generate lesson: ${e.message}</div>`;
   }
@@ -19363,268 +19437,486 @@ function setLessonCache(chapter, html) {
 }
 
 // ═══════════════════════════════════════
-// VOICE CHAT — full conversational AI voice mode
+// UNIFIED JARVIS VOICE — Claude-style waveform interface
+// Replaces old VC + TV overlays with a single shared system
 // ═══════════════════════════════════════
 
-/* ── Styles ── */
-(function injectVoiceStyles() {
-  const s = document.createElement('style');
-  s.textContent = `
-  #voice-overlay {
-    position:fixed;inset:0;z-index:9999;
-    background:rgba(8,10,18,0.97);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:2rem;opacity:0;pointer-events:none;transition:opacity .3s;
+(function buildJarvisVoice() {
+  // ── Inject styles ──────────────────────────────────────────────────────────
+  const st = document.createElement('style');
+  st.textContent = `
+  #vo-overlay {
+    position:fixed;inset:0;z-index:10500;
+    background:rgba(3,5,13,0.96);
+    display:none;flex-direction:column;align-items:center;justify-content:center;
+    gap:1.5rem;font-family:inherit;padding:2rem 1rem;
+    opacity:0;transition:opacity .25s;
+  }
+  #vo-overlay.open { display:flex; }
+  #vo-overlay.visible { opacity:1; }
+
+  #vo-title {
+    font-size:1rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+    color:rgba(201,168,76,.7);
+  }
+  #vo-mode-label {
+    font-size:.75rem;color:rgba(255,255,255,.3);letter-spacing:.06em;
+    text-transform:uppercase;margin-top:-.8rem;
+  }
+
+  /* Waveform canvas */
+  #vo-canvas {
+    display:block;border-radius:12px;
+    image-rendering:pixelated;
+  }
+
+  /* Outer ring that glows when speaking */
+  #vo-ring {
+    position:absolute;width:380px;height:120px;border-radius:12px;
+    pointer-events:none;transition:box-shadow .3s;
+  }
+  #vo-ring.speaking { box-shadow:0 0 40px 6px rgba(201,168,76,.18); }
+  #vo-ring.listening { box-shadow:0 0 30px 4px rgba(99,179,237,.15); }
+  #vo-ring.thinking { box-shadow:0 0 20px 3px rgba(167,139,250,.12); }
+
+  #vo-status {
+    font-size:.9rem;font-weight:600;letter-spacing:.05em;
+    color:rgba(255,255,255,.55);min-height:1.3rem;text-align:center;
+    transition:color .3s;
+  }
+  #vo-status.listening { color:rgba(99,179,237,.9); }
+  #vo-status.speaking  { color:rgba(201,168,76,.9); }
+  #vo-status.thinking  { color:rgba(167,139,250,.8); }
+
+  #vo-transcript {
+    max-width:520px;width:90%;text-align:center;
+    font-size:1.05rem;color:rgba(255,255,255,.85);line-height:1.65;
+    min-height:1.5rem;
+  }
+  #vo-reply {
+    max-width:520px;width:90%;text-align:center;
+    font-size:.88rem;color:rgba(201,168,76,.85);line-height:1.75;
+    min-height:1.5rem;max-height:140px;overflow-y:auto;
+  }
+
+  .vo-controls { display:flex;gap:1rem;margin-top:.25rem;align-items:center; }
+  .vo-btn {
+    background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
+    color:rgba(255,255,255,.8);border-radius:999px;
+    padding:.55rem 1.5rem;font-size:.85rem;cursor:pointer;
+    transition:background .15s,border-color .15s;letter-spacing:.02em;
     font-family:inherit;
   }
-  #voice-overlay.open { opacity:1;pointer-events:all; }
+  .vo-btn:hover { background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.25); }
+  .vo-btn.primary {
+    background:rgba(201,168,76,.15);border-color:rgba(201,168,76,.4);
+    color:var(--gold);
+  }
+  .vo-btn.primary:hover { background:rgba(201,168,76,.25); }
+  .vo-btn.danger { border-color:rgba(251,113,133,.4);color:#fb7185; }
+  .vo-btn.danger:hover { background:rgba(251,113,133,.1); }
+  .vo-btn:disabled { opacity:.35;pointer-events:none; }
 
-  .voice-orb {
-    width:160px;height:160px;border-radius:50%;
-    background:radial-gradient(circle at 38% 36%, var(--gold) 0%, #8B6914 55%, #3a2c08 100%);
-    box-shadow:0 0 0 0 rgba(201,168,76,0.5);
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;transition:transform .2s;
-    position:relative;
-  }
-  .voice-orb svg { width:56px;height:56px;fill:#fff;opacity:.9; }
-  .voice-orb.listening {
-    animation:orbPulse 1.2s ease-in-out infinite;
-  }
-  .voice-orb.speaking {
-    animation:orbSpeak 0.7s ease-in-out infinite alternate;
-  }
-  @keyframes orbPulse {
-    0%   { box-shadow:0 0 0 0 rgba(201,168,76,.6); transform:scale(1); }
-    50%  { box-shadow:0 0 0 40px rgba(201,168,76,.0); transform:scale(1.06); }
-    100% { box-shadow:0 0 0 0 rgba(201,168,76,.0); transform:scale(1); }
-  }
-  @keyframes orbSpeak {
-    from { transform:scale(1);    box-shadow:0 0 30px 8px rgba(201,168,76,.25); }
-    to   { transform:scale(1.07); box-shadow:0 0 50px 20px rgba(201,168,76,.45); }
-  }
-
-  #voice-status {
-    font-size:1rem;font-weight:600;letter-spacing:.04em;
-    color:rgba(255,255,255,.7);min-height:1.4rem;text-align:center;
-  }
-  #voice-transcript {
-    max-width:560px;width:90%;text-align:center;
-    font-size:1.15rem;color:#fff;line-height:1.6;min-height:3rem;
-    transition:opacity .3s;
-  }
-  #voice-reply {
-    max-width:560px;width:90%;text-align:center;
-    font-size:.95rem;color:rgba(201,168,76,.9);line-height:1.7;
-    min-height:2rem;max-height:160px;overflow-y:auto;transition:opacity .3s;
-  }
-  .voice-controls { display:flex;gap:1.25rem;margin-top:.5rem; }
-  .voice-ctrl-btn {
-    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
-    color:#fff;border-radius:999px;padding:.55rem 1.4rem;
-    font-size:.85rem;cursor:pointer;transition:.2s;
-  }
-  .voice-ctrl-btn:hover { background:rgba(255,255,255,.16); }
-  .voice-ctrl-btn.danger { border-color:rgba(251,113,133,.5);color:#FB7185; }
+  #vo-footer { font-size:.68rem;color:rgba(255,255,255,.2);letter-spacing:.04em;margin-top:-.5rem; }
   `;
-  document.head.appendChild(s);
-})();
+  document.head.appendChild(st);
 
-/* ── Overlay HTML ── */
-(function injectVoiceOverlay() {
+  // ── Inject overlay HTML ────────────────────────────────────────────────────
   const div = document.createElement('div');
-  div.id = 'voice-overlay';
+  div.id = 'vo-overlay';
+  div.setAttribute('role','dialog');
+  div.setAttribute('aria-modal','true');
   div.innerHTML = `
-    <div style="font-size:1.5rem;font-weight:800;color:var(--gold);letter-spacing:.02em">✦ Voice Chat</div>
-    <div class="voice-orb" id="voice-orb" onclick="voiceTapOrb()">
-      <!-- Mic icon -->
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" id="voice-orb-icon">
-        <path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6 10a6 6 0 0 0 11.95.75l.05-.75H16a4 4 0 0 1-8 0H6zm5 8.93V22h2v-2.07A8 8 0 0 0 20 12h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/>
-      </svg>
+    <div id="vo-title">✦ JARVIS</div>
+    <div id="vo-mode-label">AI Tutor</div>
+    <div style="position:relative;display:flex;align-items:center;justify-content:center">
+      <div id="vo-ring"></div>
+      <canvas id="vo-canvas" width="480" height="110" aria-hidden="true"></canvas>
     </div>
-    <div id="voice-status">Tap the orb to start speaking</div>
-    <div id="voice-transcript"></div>
-    <div id="voice-reply"></div>
-    <div class="voice-controls">
-      <button class="voice-ctrl-btn" onclick="voiceTapOrb()" id="voice-listen-btn">🎤 Speak</button>
-      <button class="voice-ctrl-btn" onclick="voiceStopSpeaking()" id="voice-stop-btn" style="display:none">⏹ Stop</button>
-      <button class="voice-ctrl-btn danger" onclick="closeVoiceMode()">✕ End</button>
+    <div id="vo-status">Tap Speak to begin</div>
+    <div id="vo-transcript"></div>
+    <div id="vo-reply"></div>
+    <div class="vo-controls">
+      <button class="vo-btn primary" id="vo-mic-btn" onclick="voTapMic()">🎙 Speak</button>
+      <button class="vo-btn" id="vo-stop-btn" onclick="voStopSpeaking()" style="display:none">⏹ Stop</button>
+      <button class="vo-btn danger" onclick="voClose()">✕ End</button>
     </div>
-    <div style="font-size:.75rem;color:rgba(255,255,255,.3);margin-top:.5rem">
-      Powered by Synaptiq · Speak naturally · Ask anything
-    </div>`;
+    <div id="vo-footer">SPEAK NATURALLY · HANDS-FREE LOOP · POWERED BY SYNAPTIQ</div>`;
   document.body.appendChild(div);
+  // Trigger CSS transition after paint
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (div.classList.contains('open')) div.classList.add('visible');
+  }));
 })();
 
-/* ── Voice engine ── */
-const VC = {
-  state: 'idle',   // idle | listening | thinking | speaking
-  recog: null,
-  preferredVoice: null,
-  handsfree: false,
+// ── VIZ: Web Audio AnalyserNode visualiser ─────────────────────────────────
+const VIZ = {
+  audioCtx: null,
+  analyser: null,
+  micSource: null,
+  elSource: null,
+  stream: null,
+  raf: null,
+  phase: 0,  // for idle breathing animation
 };
 
-function vcSetState(s) {
-  VC.state = s;
-  const orb    = document.getElementById('voice-orb');
-  const status = document.getElementById('voice-status');
-  const lisBtn = document.getElementById('voice-listen-btn');
-  const stopBtn= document.getElementById('voice-stop-btn');
-  if (!orb) return;
-  orb.classList.toggle('listening', s === 'listening');
-  orb.classList.toggle('speaking',  s === 'speaking');
-  const icons = {
-    idle:      '<path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6 10a6 6 0 0 0 11.95.75l.05-.75H16a4 4 0 0 1-8 0H6zm5 8.93V22h2v-2.07A8 8 0 0 0 20 12h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/>',
-    listening: '<path d="M12 1a4 4 0 0 1 4 4v7a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-6 10a6 6 0 0 0 11.95.75l.05-.75H16a4 4 0 0 1-8 0H6zm5 8.93V22h2v-2.07A8 8 0 0 0 20 12h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/>',
-    thinking:  '<path d="M12 2a10 10 0 1 1 0 20A10 10 0 0 1 12 2zm0 2a8 8 0 1 0 0 16A8 8 0 0 0 12 4zm0 3a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm-1 5h2v6h-2z"/>',
-    speaking:  '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1-3.29-2.5-4.03v8.05c1.5-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>',
+function vizGetCtx() {
+  if (!VIZ.audioCtx || VIZ.audioCtx.state === 'closed') {
+    try {
+      VIZ.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      VIZ.analyser = VIZ.audioCtx.createAnalyser();
+      VIZ.analyser.fftSize = 256;
+      VIZ.analyser.smoothingTimeConstant = 0.82;
+    } catch(e) {}
+  }
+  return VIZ.audioCtx;
+}
+
+function vizConnectMic(stream) {
+  vizGetCtx();
+  if (!VIZ.audioCtx || !VIZ.analyser) return;
+  try {
+    if (VIZ.micSource) { try { VIZ.micSource.disconnect(); } catch(_) {} }
+    VIZ.stream = stream;
+    VIZ.micSource = VIZ.audioCtx.createMediaStreamSource(stream);
+    VIZ.micSource.connect(VIZ.analyser);
+    // Don't connect analyser to destination — we don't want to hear ourselves
+  } catch(e) {}
+}
+
+function vizConnectAudio(audioEl) {
+  vizGetCtx();
+  if (!VIZ.audioCtx || !VIZ.analyser) return;
+  try {
+    if (VIZ.elSource) { try { VIZ.elSource.disconnect(); } catch(_) {} }
+    VIZ.elSource = VIZ.audioCtx.createMediaElementSource(audioEl);
+    VIZ.elSource.connect(VIZ.analyser);
+    VIZ.analyser.connect(VIZ.audioCtx.destination);
+  } catch(e) {}
+}
+
+function vizDisconnectMic() {
+  try {
+    if (VIZ.micSource) { VIZ.micSource.disconnect(); VIZ.micSource = null; }
+    if (VIZ.stream) { VIZ.stream.getTracks().forEach(t => t.stop()); VIZ.stream = null; }
+  } catch(_) {}
+}
+
+function vizStop() {
+  if (VIZ.raf) { cancelAnimationFrame(VIZ.raf); VIZ.raf = null; }
+  vizDisconnectMic();
+  const canvas = document.getElementById('vo-canvas');
+  if (canvas) {
+    const c = canvas.getContext('2d');
+    c.clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+function vizDraw(mode) {
+  // mode: 'idle' | 'listen' | 'think' | 'speak'
+  const canvas = document.getElementById('vo-canvas');
+  if (!canvas) return;
+  const W = canvas.width, H = canvas.height;
+  const c = canvas.getContext('2d');
+
+  const BARS = 48;
+  const BAR_GAP = 3;
+  const BAR_W = Math.floor((W - BAR_GAP * (BARS - 1)) / BARS);
+  const CENTER_Y = H / 2;
+
+  function drawFrame() {
+    c.clearRect(0, 0, W, H);
+    VIZ.phase += 0.04;
+
+    let values = new Array(BARS).fill(0);
+
+    if ((mode === 'speak' || mode === 'listen') && VIZ.analyser) {
+      const data = new Uint8Array(VIZ.analyser.frequencyBinCount);
+      VIZ.analyser.getByteFrequencyData(data);
+      // Sample analyser data into our bar count
+      const ratio = data.length / BARS;
+      for (let i = 0; i < BARS; i++) {
+        let sum = 0, count = 0;
+        const from = Math.floor(i * ratio), to = Math.floor((i + 1) * ratio);
+        for (let j = from; j < to; j++) { sum += data[j]; count++; }
+        values[i] = count ? sum / count / 255 : 0;
+      }
+    } else {
+      // Idle / thinking: gentle breathing sine wave
+      const speed = mode === 'think' ? 0.07 : 0.025;
+      VIZ.phase += speed - 0.04; // compensate for fixed increment above
+      for (let i = 0; i < BARS; i++) {
+        const envelope = Math.sin(Math.PI * i / (BARS - 1));
+        values[i] = envelope * (0.08 + 0.07 * Math.sin(VIZ.phase + i * 0.25));
+      }
+    }
+
+    // Colour per mode
+    const colors = {
+      idle:   ['rgba(201,168,76,0.25)', 'rgba(201,168,76,0.08)'],
+      listen: ['rgba(99,179,237,0.9)',  'rgba(99,179,237,0.2)'],
+      think:  ['rgba(167,139,250,0.7)', 'rgba(167,139,250,0.15)'],
+      speak:  ['rgba(201,168,76,1.0)',  'rgba(201,168,76,0.3)'],
+    };
+    const [topColor, botColor] = colors[mode] || colors.idle;
+
+    for (let i = 0; i < BARS; i++) {
+      const x = i * (BAR_W + BAR_GAP);
+      const barH = Math.max(3, values[i] * (H * 0.88));
+      const y = CENTER_Y - barH / 2;
+      const radius = Math.min(BAR_W / 2, barH / 2, 4);
+
+      const grad = c.createLinearGradient(x, y, x, y + barH);
+      grad.addColorStop(0, topColor);
+      grad.addColorStop(1, botColor);
+      c.fillStyle = grad;
+      c.beginPath();
+      c.roundRect ? c.roundRect(x, y, BAR_W, barH, radius) : c.rect(x, y, BAR_W, barH);
+      c.fill();
+    }
+
+    VIZ.raf = requestAnimationFrame(drawFrame);
+  }
+
+  if (VIZ.raf) cancelAnimationFrame(VIZ.raf);
+  drawFrame();
+}
+
+// ── VO: unified voice state machine ─────────────────────────────────────────
+const VO = {
+  state: 'idle',    // idle | listening | thinking | speaking
+  mode: 'tutor',    // 'tutor' | 'teacher'
+  context: '',      // current chapter/topic
+  history: [],
+  recog: null,
+  cancelTTS: null,
+};
+
+function voSetState(s) {
+  VO.state = s;
+  const ring     = document.getElementById('vo-ring');
+  const status   = document.getElementById('vo-status');
+  const micBtn   = document.getElementById('vo-mic-btn');
+  const stopBtn  = document.getElementById('vo-stop-btn');
+  if (ring)   { ring.className = s; }
+  if (status) { status.className = s; }
+
+  const labels = {
+    idle:      'Tap Speak to begin',
+    listening: 'Listening…',
+    thinking:  'Thinking…',
+    speaking:  'Speaking…',
   };
-  document.getElementById('voice-orb-icon').innerHTML = icons[s] || icons.idle;
-  const labels = { idle:'Tap to speak', listening:'Listening…', thinking:'Thinking…', speaking:'Speaking…' };
   if (status) status.textContent = labels[s] || '';
-  if (lisBtn)  lisBtn.style.display = (s === 'listening' || s === 'thinking') ? 'none' : '';
+  if (micBtn)  micBtn.disabled = (s === 'listening' || s === 'thinking');
+  if (micBtn)  micBtn.textContent = s === 'listening' ? '⏹ Stop' : '🎙 Speak';
   if (stopBtn) stopBtn.style.display = s === 'speaking' ? '' : 'none';
+
+  // Drive waveform mode
+  const modeMap = { idle:'idle', listening:'listen', thinking:'think', speaking:'speak' };
+  vizDraw(modeMap[s] || 'idle');
 }
 
-function vcPickVoice() { return wsBestVoice(); }
+function voOpen(mode, context) {
+  VO.mode    = mode    || 'tutor';
+  VO.context = context || state?.topic || 'A-Level Maths';
+  VO.history = [];
 
-let _vcCancelTTS = null;
-function vcSpeak(text, onEnd) {
-  vcSetState('speaking');
-  document.getElementById('voice-reply').textContent = text.replace(/[*_`#~>\[\]]/g, '');
-  if (_vcCancelTTS) _vcCancelTTS();
-  _vcCancelTTS = ttsSpeak(text, () => {
-    _vcCancelTTS = null;
-    if (onEnd) onEnd();
-  });
+  const overlay = document.getElementById('vo-overlay');
+  const modeLabel = document.getElementById('vo-mode-label');
+  const title     = document.getElementById('vo-title');
+  if (!overlay) return;
+
+  if (modeLabel) modeLabel.textContent = mode === 'teacher' ? 'AI Teacher' : 'AI Tutor';
+  if (title)     title.textContent     = mode === 'teacher' ? '🎓 TEACHER' : '✦ JARVIS';
+
+  overlay.classList.add('open');
+  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('visible')));
+
+  voSetState('idle');
+  document.getElementById('vo-transcript').textContent = '';
+  document.getElementById('vo-reply').textContent = '';
+
+  // Greet and start listening
+  const name = state?.user?.name?.split(' ')[0] || 'there';
+  const greeting = mode === 'teacher' && context
+    ? `Right. We're covering ${context}. Ask me anything about it, or I can run through the key ideas first — your call.`
+    : `Good to have you back${name !== 'there' ? ', ' + name : ''}. What would you like help with?`;
+
+  setTimeout(() => voSpeak(greeting, () => {
+    voSetState('idle');
+    setTimeout(voStartListening, 400);
+  }), 300);
 }
 
-function voiceStopSpeaking() {
-  if (_vcCancelTTS) { _vcCancelTTS(); _vcCancelTTS = null; }
-  vcSetState('idle');
-  document.getElementById('voice-reply').textContent = '';
-  if (VC.handsfree) setTimeout(voiceStartListening, 300);
-}
+function voClose() {
+  VO.recog?.stop();
+  if (VO.cancelTTS) { VO.cancelTTS(); VO.cancelTTS = null; }
+  vizStop();
+  vizDisconnectMic();
+  VO.state = 'idle'; VO.recog = null;
 
-function voiceStartListening() {
-  if (VC.state === 'listening') return;
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { showToast('Speech recognition needs Chrome or Edge'); return; }
+  const overlay = document.getElementById('vo-overlay');
+  if (overlay) {
+    overlay.classList.remove('visible');
+    setTimeout(() => overlay.classList.remove('open'), 260);
+  }
   window.speechSynthesis?.cancel();
-  vcSetState('listening');
-  document.getElementById('voice-transcript').textContent = '';
-  document.getElementById('voice-reply').textContent = '';
+}
+
+function voStartListening() {
+  if (VO.state === 'listening') return;
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { showToast('Voice needs Chrome or Edge — text input works fine too'); return; }
+
+  window.speechSynthesis?.cancel();
+  voSetState('listening');
+  document.getElementById('vo-transcript').textContent = '';
+  document.getElementById('vo-reply').textContent = '';
+
+  // Request mic for visualiser
+  navigator.mediaDevices?.getUserMedia({ audio: true, video: false })
+    .then(stream => vizConnectMic(stream))
+    .catch(() => {});  // mic visualiser is nice-to-have, not required
 
   const r = new SR();
   r.lang = 'en-GB';
   r.interimResults = true;
   r.maxAlternatives = 1;
-  VC.recog = r;
+  VO.recog = r;
 
   r.onresult = e => {
-    const interim = Array.from(e.results).map(res => res[0].transcript).join('');
-    document.getElementById('voice-transcript').textContent = interim;
+    const partial = Array.from(e.results).map(res => res[0].transcript).join('');
+    document.getElementById('vo-transcript').textContent = partial;
     if (e.results[e.results.length - 1].isFinal) {
-      VC.recog = null;
-      vcHandleInput(interim.trim());
+      VO.recog = null;
+      vizDisconnectMic();
+      voHandleInput(partial.trim());
     }
   };
   r.onerror = e => {
-    VC.recog = null;
-    if (e.error === 'no-speech') { vcSetState('idle'); return; }
-    vcSetState('idle');
-    showToast('⚠️ Voice error: ' + e.error);
+    VO.recog = null;
+    vizDisconnectMic();
+    if (e.error === 'no-speech') { voSetState('idle'); return; }
+    voSetState('idle');
+    if (e.error !== 'aborted') showToast('Voice error: ' + e.error);
   };
-  r.onend = () => { if (VC.state === 'listening') vcSetState('idle'); };
+  r.onend = () => { if (VO.state === 'listening') { vizDisconnectMic(); voSetState('idle'); } };
   r.start();
 }
 
-async function vcHandleInput(text) {
-  if (!text) { vcSetState('idle'); return; }
-  vcSetState('thinking');
-  document.getElementById('voice-transcript').textContent = text;
-  document.getElementById('voice-reply').textContent = '';
+function voTapMic() {
+  if (VO.state === 'listening') {
+    VO.recog?.stop();
+    vizDisconnectMic();
+    voSetState('idle');
+  } else if (VO.state !== 'thinking') {
+    voStartListening();
+  }
+}
 
-  // Also push to tutor history so it appears in chat
-  state.tutorHistory.push({ role: 'user', content: text });
-  addTutorMsg('user', text);
+function voStopSpeaking() {
+  if (VO.cancelTTS) { VO.cancelTTS(); VO.cancelTTS = null; }
+  voSetState('idle');
+  setTimeout(voStartListening, 300);
+}
+
+function voSpeak(text, onEnd) {
+  voSetState('speaking');
+  const clean = text.replace(/\$\$?[^$]+\$\$?/g, '').replace(/[*_`#~>\[\]]/g, '').replace(/\s+/g,' ').trim();
+  document.getElementById('vo-reply').textContent = clean;
+
+  if (VO.cancelTTS) VO.cancelTTS();
+
+  // Hook into elSpeak so we can attach the audio to our analyser
+  VO.cancelTTS = elSpeak(clean, () => {
+    VO.cancelTTS = null;
+    if (onEnd) onEnd();
+  }, 'jarvis', audioEl => vizConnectAudio(audioEl));
+}
+
+async function voHandleInput(text) {
+  if (!text) { voSetState('idle'); return; }
+  voSetState('thinking');
+  document.getElementById('vo-transcript').textContent = text;
+  document.getElementById('vo-reply').textContent = '';
+
+  // Mirror to main tutor chat panel
+  if (VO.mode === 'tutor') {
+    state.tutorHistory.push({ role: 'user', content: text });
+    addTutorMsg('user', text);
+  } else {
+    TV.history.push({ role: 'user', content: text });
+  }
 
   try {
-    const sys = buildTutorSystem ? buildTutorSystem() : 'You are a helpful A-Level Maths tutor. Give concise spoken answers — avoid LaTeX notation and markdown. Speak naturally as if talking aloud. Keep answers under 120 words unless the student asks for more detail.';
-    // Use a spoken-friendly system prompt
-    const spokenSys = sys + '\n\nIMPORTANT: This answer will be read aloud. Use plain English only — no LaTeX, no markdown, no bullet symbols. Write as natural spoken sentences.';
-    const data = await callClaude(state.tutorHistory, spokenSys);
-    const reply = getReply(data);
-    state.tutorHistory.push({ role: 'assistant', content: reply });
-    addTutorMsg('bot', reply);
-    addXP(10, '🎙️ Voice question +10 XP');
+    const history = VO.mode === 'teacher' ? TV.history : state.tutorHistory;
+    const board   = state?.user?.board || 'AQA';
+    const year    = state?.user?.year  || 'Year 13';
+    const target  = state?.user?.target|| 'A';
+    const spokenSys = VO.mode === 'teacher'
+      ? `You are an expert A-Level Mathematics teacher (${board}). The student is currently studying ${VO.context || 'A-Level Maths'}, ${year}, targeting ${target}. THIS ANSWER WILL BE READ ALOUD — use plain spoken English only, no LaTeX, no markdown, no bullet symbols. Natural sentences, under 90 words unless the student asks for more. Be warm and encouraging.`
+      : (typeof getTutorSystem === 'function' ? getTutorSystem() + '\n\nTHIS ANSWER WILL BE READ ALOUD — plain English only, no LaTeX, no markdown. Natural sentences under 90 words unless more detail is requested.' : `You are Synaptiq, an expert A-Level Maths AI tutor. Speak naturally — no LaTeX, no markdown.`);
 
-    // Always auto-listen again after speaking — hands-free loop
-    vcSpeak(reply, () => {
-      vcSetState('idle');
-      setTimeout(voiceStartListening, 500);
+    const data  = await callClaude(history, spokenSys, 400);
+    const reply = getReply(data);
+
+    history.push({ role: 'assistant', content: reply });
+    if (history.length > 24) history.splice(0, history.length - 24);
+
+    if (VO.mode === 'tutor') addTutorMsg('bot', reply);
+    if (typeof addXP === 'function') addXP(10, '🎙️ Voice question +10 XP');
+
+    voSpeak(reply, () => {
+      voSetState('idle');
+      setTimeout(voStartListening, 500);  // hands-free loop
     });
   } catch(e) {
-    vcSetState('idle');
-    showToast('⚠️ ' + (e.message || 'API error'));
+    voSetState('idle');
+    showToast('⚠️ ' + (e.message || 'Could not reach AI'));
   }
 }
 
-function voiceTapOrb() {
-  if (VC.state === 'listening') {
-    VC.recog?.stop();
-    vcSetState('idle');
-  } else if (VC.state === 'speaking') {
-    voiceStopSpeaking();
-  } else {
-    voiceStartListening();
-  }
+// Legacy shims so old buttons/code that called toggleVoiceMode() or closeVoiceMode() still work
+function toggleVoiceMode() { voOpen('tutor'); }
+function closeVoiceMode()  { voClose(); }
+
+// ── Patch elSpeak to optionally expose the Audio element ────────────────────
+// The original elSpeak at ~line 11245 is wrapped here to support the vizConnectAudio callback
+const _elSpeakOrig = (typeof elSpeak === 'function') ? elSpeak : null;
+if (_elSpeakOrig) {
+  elSpeak = function(text, onEnd, voice, audioReadyCb) {
+    if (_elAudio) { _elAudio.pause(); _elAudio = null; }
+    let cancelled = false;
+    const cancel = () => {
+      cancelled = true;
+      if (_elAudio) { _elAudio.pause(); _elAudio = null; }
+      if (onEnd) onEnd();
+    };
+    fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text.slice(0, 5000), voice: voice || 'jarvis' }),
+    }).then(r => {
+      if (!r.ok || cancelled) { if (onEnd && !cancelled) onEnd(); return; }
+      return r.blob();
+    }).then(blob => {
+      if (!blob || cancelled) { if (onEnd && !cancelled) onEnd(); return; }
+      _elAudio = new Audio(URL.createObjectURL(blob));
+      _elAudio.onended = () => { _elAudio = null; if (onEnd) onEnd(); };
+      if (audioReadyCb) try { audioReadyCb(_elAudio); } catch(_) {}
+      if (VIZ.audioCtx?.state === 'suspended') VIZ.audioCtx.resume().catch(() => {});
+      _elAudio.play().catch(() => { if (onEnd) onEnd(); });
+    }).catch(() => { if (onEnd && !cancelled) onEnd(); });
+    return cancel;
+  };
 }
 
-function toggleVoiceMode() {
-  if (window.speechSynthesis) window.speechSynthesis.getVoices();
-
-  const overlay = document.getElementById('voice-overlay');
-  if (!overlay) return;
-  const isOpen = overlay.classList.contains('open');
-  if (isOpen) {
-    closeVoiceMode();
-  } else {
-    overlay.classList.add('open');
-    const btn = document.getElementById('voice-mode-btn');
-    if (btn) btn.classList.add('active');
-
-    VC.handsfree = true; // enable hands-free loop
-
-    setTimeout(() => {
-      vcPickVoice();
-      vcSetState('idle');
-
-      // Greet and immediately start listening
-      const subject = document.getElementById('tutor-subject-title')?.textContent || 'Maths';
-      const topic   = state.topic || 'your topic';
-      const greeting = `Hi! I'm your ${subject} tutor. We're covering ${topic}. What would you like help with?`;
-      const replyEl = document.getElementById('voice-reply');
-      if (replyEl) replyEl.textContent = greeting;
-      // Speak greeting, then auto-listen
-      vcSpeak(greeting, () => {
-        vcSetState('idle');
-        setTimeout(voiceStartListening, 400);
-      });
-    }, 250);
-  }
-}
-
-function closeVoiceMode() {
-  VC.recog?.stop();
-  if (_vcCancelTTS) { _vcCancelTTS(); _vcCancelTTS = null; }
-  VC.state = 'idle';
-  VC.recog = null;
-  const overlay = document.getElementById('voice-overlay');
-  if (overlay) overlay.classList.remove('open');
-  const btn = document.getElementById('voice-mode-btn');
-  if (btn) btn.classList.remove('active');
-}
+// vcSetState / vcSpeak / voiceTapOrb etc. removed — replaced by unified VO system above
+// Legacy aliases kept for any remaining callers
+function vcSetState(s) { voSetState(s); }
+function voiceTapOrb() { voTapMic(); }
+function voiceStopSpeaking() { voStopSpeaking(); }
 
 function changeFontSize(delta) {
   try {
