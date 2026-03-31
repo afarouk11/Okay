@@ -208,32 +208,26 @@ Fix price discrepancy: change `£20/month` to `£35/month`.
 
 ---
 
-## Phase 4 — Content Expansion (A-Level Maths Only)
+## Phase 4 — Content (A-Level Maths Only)
 
-> Do not add new subjects. Deepen existing Maths coverage.
+> A-Level Maths only. No other subjects. No GCSE.
 
 ### 4.1 Fix False Subject Claims
 - `contact.html` FAQ currently states: *"GCSE and A-Level subjects including Mathematics, English Literature, Physics, Chemistry, Biology, History, Geography, Computer Science, and Economics"*
-- **Fix:** Update to accurately say: *"A-Level Mathematics (AQA, Edexcel, OCR, WJEC)"*. GCSE to be added in 4.2.
+- **Fix:** Update to accurately say: *"A-Level Mathematics (AQA, Edexcel, OCR, WJEC)"*
 - **Files:** `contact.html`
 
-### 4.2 Add GCSE Maths Curriculum
-- Extend the `CURRICULUM` object in `lessons.html` with a GCSE level tree
-- Add GCSE Higher and GCSE Foundation topic lists for AQA, Edexcel, OCR
-- Add GCSE option to the Level dropdown in both `lessons.html` and `questions.html`
-- **Files:** `lessons.html`, `questions.html`
-
-### 4.3 AS-Level Alignment
-- Year 12 AS-Level topics are inconsistently scoped. Define a clear AS-Level topic set and align it across `sp-tutor`, `sp-content`, `sp-questions`, `lessons.html`, and `questions.html`
+### 4.2 AS-Level Alignment
+- Year 12 AS-Level topics are inconsistently scoped across tools. Define a clear AS-Level topic set and align it across `sp-tutor`, `sp-content`, `sp-questions`, `lessons.html`, and `questions.html`
 - **Files:** `index.html`, `lessons.html`, `questions.html`
 
-### 4.4 Exam Board Parity
+### 4.3 Exam Board Parity
 - MEI is in `lessons.html` but not `questions.html`
 - WJEC and Eduqas coverage is uneven across tools
 - **Fix:** Align board dropdowns and topic coverage across all generator tools
 - **Files:** `lessons.html`, `questions.html`, `index.html`
 
-### 4.5 Exam Prediction Data
+### 4.4 Exam Prediction Data
 - Currently pure AI guess with no past paper frequency data
 - **Future consideration:** Embed a JSON lookup of topic frequency per board per year (manually curated from mark scheme release patterns)
 - **Files:** `index.html` (sp-predict section)
@@ -291,7 +285,7 @@ This can be done incrementally — one panel at a time — without disrupting th
 | Upstash Redis rate limiting | Medium | Medium |
 | JWT refresh loop | Medium | Medium |
 | Real assignments backend | High | Medium |
-| GCSE curriculum data | Medium | Medium |
+| AS-Level alignment across tools | Medium | Medium |
 | /schools landing page | Medium | Medium |
 | Break up index.html | Very High | Low (long-term) |
 | Unify auth systems | High | Low (long-term) |
