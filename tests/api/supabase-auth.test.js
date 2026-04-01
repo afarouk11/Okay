@@ -278,3 +278,72 @@ describe('internal error', () => {
     expect(r.statusCode).toBe(500);
   });
 });
+
+// ─── leaderboard ─────────────────────────────────────────────────────────────
+
+describe('leaderboard', () => {
+  it('returns top 20 and null userRank when no userId is given', async () => {
+    const topUsers = [
+      { name: 'Alice', xp: 500, streak: 10, avatar_emoji: '🎯' },
+      { name: 'Bob', xp: 400, streak: 7, avatar_emoji: '🚀' },
+    ];
+    global.fetch = mockFetch(topUsers, true, 200);
+    const r = res();
+    await handler(req({ action: 'leaderboard', payload: { tab: 'xp' } }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.top).toEqual(topUsers);
+    expect(r.body.userRank).toBeNull();
+  });
+
+  it('returns top 20 and userRank when userId is given', async () => {
+    const topUsers = [
+      { name: 'Alice', xp: 500, streak: 10, avatar_emoji: '🎯' },
+    ];
+    const meRows = [{ xp: 300, name: 'TestUser' }];
+    const aboveRows = [{ id: 'u1' }, { id: 'u2' }]; // 2 users above me → rank 3
+
+    global.fetch = vi.fn()
+      // top 20 fetch
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(topUsers) })
+      // countR (above last in top)
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve([]) })
+      // meR (current user's XP)
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(meRows) })
+      // aboveR (users above me)
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(aboveRows) });
+
+    const r = res();
+    await handler(req({ action: 'leaderboard', payload: { tab: 'xp', userId: 'uid-me' } }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.top).toEqual(topUsers);
+    expect(r.body.userRank).toBe(3); // 2 users above + 1
+  });
+
+  it('returns userRank as 1 when no users are above', async () => {
+    const topUsers = [{ name: 'Alice', xp: 500, streak: 10, avatar_emoji: '🎯' }];
+    const meRows = [{ xp: 600, name: 'Leader' }];
+    const aboveRows = []; // nobody above
+
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(topUsers) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve([]) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(meRows) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(aboveRows) });
+
+    const r = res();
+    await handler(req({ action: 'leaderboard', payload: { userId: 'uid-leader' } }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.userRank).toBe(1);
+  });
+
+  it('handles non-array responses gracefully', async () => {
+    global.fetch = vi.fn()
+      // top 20 returns non-array
+      .mockResolvedValueOnce({ ok: true, status: 200, json: () => Promise.resolve(null) });
+
+    const r = res();
+    await handler(req({ action: 'leaderboard', payload: {} }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.top).toEqual([]);
+  });
+});

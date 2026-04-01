@@ -160,6 +160,36 @@ describe('DELETE', () => {
   });
 });
 
+// ─── PUT ──────────────────────────────────────────────────────────────────────
+
+describe('PUT', () => {
+  it('updates a note and returns the updated note', async () => {
+    const dbNote = { id: VALID_NOTE_ID, content: 'Updated text', subject: 'Physics', tags: ['quantum'] };
+    const expectedNote = { ...dbNote, text: 'Updated text', tag: 'quantum' };
+    mocks.supabase.from.mockReturnValueOnce(makeBuilder({ data: dbNote, error: null }));
+    const r = res();
+    await handler(req('PUT', { id: VALID_NOTE_ID, text: 'Updated text', subject: 'Physics', tag: 'quantum' }, { authorization: 'Bearer valid-tok' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.note).toEqual(expectedNote);
+  });
+
+  it('returns 404 when the note does not exist', async () => {
+    mocks.supabase.from.mockReturnValueOnce(makeBuilder({ data: null, error: null }));
+    const r = res();
+    await handler(req('PUT', { id: VALID_NOTE_ID, text: 'New text' }, { authorization: 'Bearer valid-tok' }), r);
+    expect(r.statusCode).toBe(404);
+    expect(r.body.error).toMatch(/not found/i);
+  });
+
+  it('returns 400 when the DB update returns an error', async () => {
+    mocks.supabase.from.mockReturnValueOnce(makeBuilder({ data: null, error: { message: 'update failed' } }));
+    const r = res();
+    await handler(req('PUT', { id: VALID_NOTE_ID, text: 'New text' }, { authorization: 'Bearer valid-tok' }), r);
+    expect(r.statusCode).toBe(400);
+    expect(r.body.error).toMatch(/update failed/i);
+  });
+});
+
 // ─── Unsupported method ───────────────────────────────────────────────────────
 
 describe('unsupported method', () => {

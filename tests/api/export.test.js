@@ -129,3 +129,32 @@ describe('successful export', () => {
     expect(r.statusCode).toBe(200);
   });
 });
+
+// ─── Network / unexpected error ───────────────────────────────────────────────
+
+describe('error handling', () => {
+  it('returns a friendly message for network-related errors', async () => {
+    mocks.supabase.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'u1', email: 'a@b.com' } }, error: null });
+    // Make one of the table fetches throw a network error
+    mocks.supabase.from.mockImplementationOnce(() => {
+      throw new Error('fetch failed: ECONNREFUSED');
+    });
+
+    const r = res();
+    await handler(req('GET', { authorization: 'Bearer valid-tok' }), r);
+    expect(r.statusCode).toBe(500);
+    expect(r.body.error).toMatch(/Unable to reach the database/i);
+  });
+
+  it('returns the raw error message for non-network errors', async () => {
+    mocks.supabase.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'u1', email: 'a@b.com' } }, error: null });
+    mocks.supabase.from.mockImplementationOnce(() => {
+      throw new Error('Unexpected DB crash');
+    });
+
+    const r = res();
+    await handler(req('GET', { authorization: 'Bearer valid-tok' }), r);
+    expect(r.statusCode).toBe(500);
+    expect(r.body.error).toMatch(/Unexpected DB crash/i);
+  });
+});

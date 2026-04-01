@@ -142,3 +142,120 @@ describe('Stripe API error', () => {
     expect(r.statusCode).toBe(500);
   });
 });
+
+// ─── Portal action ────────────────────────────────────────────────────────────
+
+describe('portal action', () => {
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+  });
+
+  it('returns 400 when email is missing', async () => {
+    const r = res();
+    await handler(req({ action: 'portal' }), r);
+    expect(r.statusCode).toBe(400);
+    expect(r.body.error).toMatch(/email/i);
+  });
+
+  it('returns 404 when no Stripe customer is found for the email', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: [] }),
+    });
+
+    const r = res();
+    await handler(req({ action: 'portal', email: 'nobody@test.com' }), r);
+    expect(r.statusCode).toBe(404);
+    expect(r.body.error).toMatch(/no stripe customer/i);
+  });
+
+  it('returns the portal URL when customer is found', async () => {
+    global.fetch = vi.fn()
+      // Customer search
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: [{ id: 'cus_abc123' }] }),
+      })
+      // Billing portal session creation
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ url: 'https://billing.stripe.com/session/abc' }),
+      });
+
+    const r = res();
+    await handler(req({ action: 'portal', email: 'user@test.com' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.url).toBe('https://billing.stripe.com/session/abc');
+  });
+
+  it('returns error when portal session creation fails', async () => {
+    global.fetch = vi.fn()
+      // Customer search succeeds
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: [{ id: 'cus_abc123' }] }),
+      })
+      // Portal session fails
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: () => Promise.resolve({ error: { message: 'No active subscriptions' } }),
+      });
+
+    const r = res();
+    await handler(req({ action: 'portal', email: 'user@test.com' }), r);
+    expect(r.statusCode).toBe(400);
+    expect(r.body.error).toMatch(/No active subscriptions/i);
+  });
+
+  it('returns 500 when fetch throws during portal lookup', async () => {
+    global.fetch = vi.fn().mockRejectedValueOnce(new Error('network failure'));
+
+    const r = res();
+    await handler(req({ action: 'portal', email: 'user@test.com' }), r);
+    expect(r.statusCode).toBe(500);
+  });
+});
+
+// ─── Annual plan ──────────────────────────────────────────────────────────────
+
+describe('annual plan', () => {
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+    process.env.STRIPE_PRICE_STUDENT_ANNUAL = 'price_annual_test';
+  });
+
+  afterEach(() => {
+    delete process.env.STRIPE_PRICE_STUDENT_ANNUAL;
+  });
+
+  it('uses the student_annual price when annual=true and plan=student', async () => {
+    let capturedBody;
+    global.fetch = vi.fn().mockImplementationOnce((_url, opts) => {
+      capturedBody = opts.body.toString();
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ id: 'cs_annual', url: 'https://stripe.com/annual' }),
+      });
+    });
+
+    await handler(req({ plan: 'student', annual: true, email: 'user@test.com' }), res());
+    expect(capturedBody).toContain('price_annual_test');
+  });
+
+  it('uses the regular student price when annual=false', async () => {
+    process.env.STRIPE_PRICE_STUDENT = 'price_monthly_test';
+    let capturedBody;
+    global.fetch = vi.fn().mockImplementationOnce((_url, opts) => {
+      capturedBody = opts.body.toString();
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ id: 'cs_monthly', url: 'https://stripe.com/monthly' }),
+      });
+    });
+
+    await handler(req({ plan: 'student', annual: false, email: 'user@test.com' }), res());
+    expect(capturedBody).toContain('price_monthly_test');
+    delete process.env.STRIPE_PRICE_STUDENT;
+  });
+});
