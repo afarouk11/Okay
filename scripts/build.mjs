@@ -38,10 +38,14 @@ if (ga4Id && ga4Id !== 'G-XXXXXXXX') {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 if (supabaseUrl && supabaseAnon) {
-  const keyScript = `<script>window.SUPABASE_URL='${supabaseUrl}';window.SUPABASE_ANON_KEY='${supabaseAnon}';</script>`;
-  html = html.replace('</head>', `${keyScript}\n</head>`);
-  console.log('✅ Supabase public keys injected');
-  changed = true;
+  const safeUrl  = supabaseUrl.replace(/'/g, "\\'");
+  const safeAnon = supabaseAnon.replace(/'/g, "\\'");
+  const keyScript = `<script>window.SUPABASE_URL='${safeUrl}';window.SUPABASE_ANON_KEY='${safeAnon}';</script>`;
+  if (!html.includes('window.SUPABASE_URL=')) {
+    html = html.replace('</head>', `${keyScript}\n</head>`);
+    console.log('✅ Supabase public keys injected');
+    changed = true;
+  }
 } else {
   console.warn('⚠️  SUPABASE_URL / SUPABASE_ANON_KEY not set — auth will not work');
 }
@@ -49,6 +53,21 @@ if (supabaseUrl && supabaseAnon) {
 if (changed) {
   writeFileSync(join(root, 'index.html'), html, 'utf8');
   console.log('✅ index.html updated');
+}
+
+// ── Inject Supabase keys into standalone HTML pages ───────────────────────────
+if (supabaseUrl && supabaseAnon) {
+  const safeUrl  = supabaseUrl.replace(/'/g, "\\'");
+  const safeAnon = supabaseAnon.replace(/'/g, "\\'");
+  const keyScript = `<script>window.SUPABASE_URL='${safeUrl}';window.SUPABASE_ANON_KEY='${safeAnon}';</script>`;
+  for (const page of ['questions.html', 'lessons.html', 'reset-password.html']) {
+    const pageHtml = readFileSync(join(root, page), 'utf8');
+    if (!pageHtml.includes('window.SUPABASE_URL=')) {
+      const updated = pageHtml.replace('</head>', `${keyScript}\n</head>`);
+      writeFileSync(join(root, page), updated, 'utf8');
+      console.log(`✅ Supabase keys injected into ${page}`);
+    }
+  }
 }
 
 // ── Inject JARVIS keys into jarvis.html ───────────────────────────────────────
