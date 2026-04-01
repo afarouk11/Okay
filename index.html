@@ -1539,19 +1539,25 @@ body {
   width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
   background: linear-gradient(135deg, #00D4FF, #7B40FF);
   display: flex; align-items: center; justify-content: center;
-  font-size: .85rem; margin-top: 2px;
+  font-size: .85rem; margin-top: 4px;
   box-shadow: 0 0 12px rgba(0,212,255,0.3);
+  animation: jarvis-glow 2.4s ease-in-out infinite;
+  transition: animation .2s;
 }
-/* Bot message — no bubble, just clean text */
+.msg-avatar.jarvis-speaking {
+  animation: jarvis-speaking 0.55s ease-in-out infinite !important;
+}
+/* Bot message — Jarvis panel style */
 .msg.bot {
-  background: none !important;
+  background: linear-gradient(135deg, rgba(0,212,255,0.04), rgba(123,64,255,0.02)) !important;
   border: none !important;
-  box-shadow: none !important;
+  border-left: 2px solid rgba(0,212,255,0.4) !important;
+  box-shadow: -2px 0 18px rgba(0,212,255,0.07) !important;
   backdrop-filter: none !important;
-  padding: 0 !important;
+  padding: .6rem 1rem !important;
   max-width: calc(100% - 46px);
   align-self: flex-start;
-  border-radius: 0 !important;
+  border-radius: 0 12px 12px 0 !important;
   font-size: .925rem;
   line-height: 1.75;
   color: var(--white);
@@ -2106,6 +2112,14 @@ body.light .skeleton {
 @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
 @keyframes bounce { 0%,80%,100% { transform: scale(1); } 40% { transform: scale(1.4); } }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .5; } }
+@keyframes jarvis-glow {
+  0%,100% { box-shadow: 0 0 8px rgba(0,212,255,0.35), 0 0 16px rgba(0,212,255,0.1); }
+  50%      { box-shadow: 0 0 16px rgba(0,212,255,0.7), 0 0 30px rgba(0,212,255,0.25); }
+}
+@keyframes jarvis-speaking {
+  0%,100% { box-shadow: 0 0 14px rgba(0,212,255,0.9), 0 0 32px rgba(0,212,255,0.45); transform: scale(1); }
+  50%     { box-shadow: 0 0 22px rgba(0,212,255,1),   0 0 48px rgba(0,212,255,0.65); transform: scale(1.12); }
+}
 
 .loading {
   background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
@@ -2987,7 +3001,6 @@ input:focus, textarea:focus, select:focus { border-color: rgba(201,168,76,0.5) !
 ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.25); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(201,168,76,0.45); }
 .mob-nav-btn.active::after { content: ''; display: block; width: 18px; height: 3px; background: var(--gold); border-radius: 99px; margin: 2px auto 0; }
-.msg.bot { border: 1px solid rgba(255,255,255,0.06); box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
 .msg.user { box-shadow: 0 2px 12px rgba(201,168,76,0.15); }
 #xp-popup { font-weight: 800; letter-spacing: .02em; text-shadow: 0 0 16px rgba(201,168,76,0.6); }
 .exam-badge { display: inline-flex; align-items: center; background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.25); border-radius: 20px; padding: .2rem .7rem; font-size: .72rem; font-weight: 700; color: var(--gold); letter-spacing: .04em; }
@@ -11259,10 +11272,16 @@ function toggleTTS() {
 
 // Shared ElevenLabs TTS helper — returns a cancel function
 let _elAudio = null;
+function _jarvisAvatarSpeaking(on) {
+  const avatars = document.querySelectorAll('#tutor-messages .msg-row:not(.user-row) .msg-avatar');
+  const last = avatars[avatars.length - 1];
+  if (last) last.classList.toggle('jarvis-speaking', on);
+}
 function elSpeak(text, onEnd, voice) {
   if (_elAudio) { _elAudio.pause(); _elAudio = null; }
+  _jarvisAvatarSpeaking(false);
   let cancelled = false;
-  const cancel = () => { cancelled = true; if (_elAudio) { _elAudio.pause(); _elAudio = null; } if (onEnd) onEnd(); };
+  const cancel = () => { cancelled = true; if (_elAudio) { _elAudio.pause(); _elAudio = null; } _jarvisAvatarSpeaking(false); if (onEnd) onEnd(); };
   fetch('/api/tts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -11274,10 +11293,11 @@ function elSpeak(text, onEnd, voice) {
     if (!blob || cancelled) return;
     const url = URL.createObjectURL(blob);
     _elAudio = new Audio(url);
-    _elAudio.onended = () => { URL.revokeObjectURL(url); _elAudio = null; if (!cancelled && onEnd) onEnd(); };
-    _elAudio.onerror = () => { URL.revokeObjectURL(url); _elAudio = null; if (!cancelled && onEnd) onEnd(); };
-    _elAudio.play().catch(() => { if (!cancelled && onEnd) onEnd(); });
-  }).catch(() => { if (!cancelled && onEnd) onEnd(); });
+    _jarvisAvatarSpeaking(true);
+    _elAudio.onended = () => { URL.revokeObjectURL(url); _elAudio = null; _jarvisAvatarSpeaking(false); if (!cancelled && onEnd) onEnd(); };
+    _elAudio.onerror = () => { URL.revokeObjectURL(url); _elAudio = null; _jarvisAvatarSpeaking(false); if (!cancelled && onEnd) onEnd(); };
+    _elAudio.play().catch(() => { _jarvisAvatarSpeaking(false); if (!cancelled && onEnd) onEnd(); });
+  }).catch(() => { _jarvisAvatarSpeaking(false); if (!cancelled && onEnd) onEnd(); });
   return cancel;
 }
 
