@@ -18,13 +18,16 @@ const PICOVOICE_KEY   = document.querySelector('meta[name="picovoice-key"]')?.co
 const ELEVEN_AGENT_ID = document.querySelector('meta[name="eleven-agent-id"]')?.content ?? '';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
-const hologram   = document.getElementById('hologram');
-const statusDot  = document.getElementById('status-dot');
-const statusText = document.getElementById('status-text');
-const statusTitle= document.getElementById('status-title');
-const statusHint = document.getElementById('status-hint');
-const endBtn     = document.getElementById('end-btn');
-const toast      = document.getElementById('toast');
+const hologram        = document.getElementById('hologram');
+const statusDot       = document.getElementById('status-dot');
+const statusText      = document.getElementById('status-text');
+const statusTitle     = document.getElementById('status-title');
+const statusHint      = document.getElementById('status-hint');
+const endBtn          = document.getElementById('end-btn');
+const toast           = document.getElementById('toast');
+const transcriptPanel = document.getElementById('transcript');
+const vizCanvas       = document.getElementById('viz-canvas');
+const vizCtx          = vizCanvas.getContext('2d');
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let orbState    = 'idle';  // 'idle' | 'greeting' | 'active'
@@ -35,6 +38,105 @@ let volumeRafId = null;  // requestAnimationFrame handle for volume tracking
 
 // Maximum additional scale applied at peak volume (orb grows by up to 35 %)
 const VOLUME_SCALE_FACTOR = 0.35;
+
+// ── Canvas visualizer ─────────────────────────────────────────────────────────
+const BAR_COUNT              = 80;
+const INNER_R                = 58;    // px — sits just outside the 90px-diameter orb
+const MAX_BAR_LEN            = 68;    // px — tallest possible bar
+const VIZ_CX                 = 150;
+const VIZ_CY                 = 150;
+const AMPLITUDE_SMOOTHING    = 0.18;  // lerp factor: higher = faster response
+const IDLE_WAVE_FREQ         = 6;     // sine-wave cycles across all bars (idle)
+const IDLE_ANIM_SPEED        = 0.001; // radians per millisecond (idle rotation)
+const GREETING_WAVE_FREQ     = 8;     // denser ripple during greeting/connecting
+const GREETING_ANIM_SPEED    = 0.004; // faster spin during greeting state
+let   canvasRafId            = null;
+const smoothAmps             = new Float32Array(BAR_COUNT);
+
+function _idleAmps(t) {
+  const a = new Float32Array(BAR_COUNT);
+  for (let i = 0; i < BAR_COUNT; i++) {
+    const p = (i / BAR_COUNT) * Math.PI * IDLE_WAVE_FREQ + t * IDLE_ANIM_SPEED;
+    a[i] = 0.04 + 0.06 * (0.5 + 0.5 * Math.sin(p));
+  }
+  return a;
+}
+
+function _greetingAmps(t) {
+  const a = new Float32Array(BAR_COUNT);
+  for (let i = 0; i < BAR_COUNT; i++) {
+    const p = (i / BAR_COUNT) * Math.PI * GREETING_WAVE_FREQ + t * GREETING_ANIM_SPEED;
+    a[i] = 0.1 + 0.22 * Math.abs(Math.sin(p));
+  }
+  return a;
+}
+
+function _freqAmps(fd) {
+  const a    = new Float32Array(BAR_COUNT);
+  const step = Math.max(1, Math.floor((fd.length >> 1) / BAR_COUNT));
+  for (let i = 0; i < BAR_COUNT; i++) {
+    a[i] = fd[Math.min(i * step, fd.length - 1)] / 255;
+  }
+  return a;
+}
+
+function _vizTick(t) {
+  let target, alpha;
+  if (orbState === 'idle') {
+    target = _idleAmps(t);    alpha = 0.65;
+  } else if (orbState === 'greeting') {
+    target = _greetingAmps(t); alpha = 0.85;
+  } else {
+    const fd = conversation?.getOutputByteFrequencyData?.();
+    target   = fd?.length ? _freqAmps(fd) : _greetingAmps(t);
+    alpha    = 1;
+  }
+
+  for (let i = 0; i < BAR_COUNT; i++) {
+    smoothAmps[i] += (target[i] - smoothAmps[i]) * AMPLITUDE_SMOOTHING;
+  }
+
+  vizCtx.clearRect(0, 0, 300, 300);
+  for (let i = 0; i < BAR_COUNT; i++) {
+    const ang = (i / BAR_COUNT) * Math.PI * 2 - Math.PI / 2;
+    const v   = smoothAmps[i];
+    const len = v * MAX_BAR_LEN;
+    if (len < 0.3) continue;
+    const x1 = VIZ_CX + Math.cos(ang) * INNER_R;
+    const y1 = VIZ_CY + Math.sin(ang) * INNER_R;
+    const x2 = VIZ_CX + Math.cos(ang) * (INNER_R + len);
+    const y2 = VIZ_CY + Math.sin(ang) * (INNER_R + len);
+    vizCtx.strokeStyle = `rgba(0,212,255,${((0.3 + v * 0.7) * alpha).toFixed(2)})`;
+    vizCtx.lineWidth   = 2;
+    vizCtx.lineCap     = 'round';
+    vizCtx.beginPath();
+    vizCtx.moveTo(x1, y1);
+    vizCtx.lineTo(x2, y2);
+    vizCtx.stroke();
+  }
+
+  canvasRafId = requestAnimationFrame(_vizTick);
+}
+
+function startCanvasLoop() {
+  if (canvasRafId) return;
+  canvasRafId = requestAnimationFrame(_vizTick);
+}
+
+// ── Transcript ────────────────────────────────────────────────────────────────
+let transcriptTimer = null;
+
+function showTranscript(text) {
+  clearTimeout(transcriptTimer);
+  transcriptPanel.textContent = text;
+  transcriptPanel.classList.add('visible');
+  transcriptTimer = setTimeout(() => transcriptPanel.classList.remove('visible'), 8000);
+}
+
+function clearTranscript() {
+  clearTimeout(transcriptTimer);
+  transcriptPanel.classList.remove('visible');
+}
 
 // ── Volume tracking ───────────────────────────────────────────────────────────
 
@@ -125,6 +227,7 @@ async function startConversation() {
 
     onDisconnect: async () => {
       stopVolumeTracking();
+      clearTranscript();
       conversation = null;
       setOrbState('idle');
       setStatus('SYSTEMS ONLINE', 'online');
@@ -139,6 +242,14 @@ async function startConversation() {
       } else {
         stopVolumeTracking();
       }
+    },
+
+    // Show AI's spoken text as an on-screen subtitle
+    onMessage: (msg) => {
+      const text = msg?.agent_response
+        ?? (msg?.source === 'ai' ? msg?.message : null)
+        ?? null;
+      if (typeof text === 'string' && text.trim()) showTranscript(text);
     },
 
     onError: (errMsg) => {
@@ -179,6 +290,10 @@ async function disarmWakeWord() {
  */
 async function handleWakeWord() {
   if (orbState !== 'idle') return;  // already in a session
+
+  // Brief white flash on the orb to acknowledge the wake word
+  hologram.classList.add('wake-flash');
+  setTimeout(() => hologram.classList.remove('wake-flash'), 600);
 
   setOrbState('greeting');
   setStatus('CONNECTING...', 'active');
@@ -253,3 +368,7 @@ async function init() {
 }
 
 init();
+
+// Start the ambient canvas visualizer immediately — shows idle animation
+// before keys load, then transitions to live frequency data during sessions.
+startCanvasLoop();
