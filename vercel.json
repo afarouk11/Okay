@@ -44,7 +44,9 @@
     }
   ],
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/:path*" }
+    { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/dashboard", "destination": "/" },
+    { "source": "/auth", "destination": "/" }
   ],
   "routes": [
     { "handle": "filesystem" },
