@@ -1,12 +1,14 @@
 /**
  * Synaptiq build script
- * Runs before deployment to inject environment variables into index.html.
+ * Runs before deployment to inject environment variables into HTML files.
  *
  * Usage: node scripts/build.mjs
  * Called automatically by Vercel via the "build" script in package.json.
  *
  * Set these in Vercel → Project → Settings → Environment Variables:
  *   GA4_MEASUREMENT_ID   — e.g. G-ABC123DEF4
+ *   PICOVOICE_KEY        — Picovoice Console access key (for JARVIS wake-word)
+ *   ELEVEN_AGENT_ID      — ElevenLabs Conversational AI agent ID (for JARVIS voice)
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -47,6 +49,40 @@ if (supabaseUrl && supabaseAnon) {
 if (changed) {
   writeFileSync(join(root, 'index.html'), html, 'utf8');
   console.log('✅ index.html updated');
+}
+
+// ── Inject JARVIS keys into jarvis.html ───────────────────────────────────────
+const picovoiceKey   = process.env.PICOVOICE_KEY;
+const elevenAgentId  = process.env.ELEVEN_AGENT_ID;
+
+let jarvisHtml = readFileSync(join(root, 'jarvis.html'), 'utf8');
+let jarvisChanged = false;
+
+if (picovoiceKey) {
+  jarvisHtml = jarvisHtml.replace(
+    /content="PICOVOICE_KEY_PLACEHOLDER"/,
+    `content="${picovoiceKey}"`
+  );
+  console.log('✅ Picovoice key injected into jarvis.html');
+  jarvisChanged = true;
+} else {
+  console.warn('⚠️  PICOVOICE_KEY not set — JARVIS wake-word disabled');
+}
+
+if (elevenAgentId) {
+  jarvisHtml = jarvisHtml.replace(
+    /content="ELEVEN_AGENT_ID_PLACEHOLDER"/,
+    `content="${elevenAgentId}"`
+  );
+  console.log('✅ ElevenLabs agent ID injected into jarvis.html');
+  jarvisChanged = true;
+} else {
+  console.warn('⚠️  ELEVEN_AGENT_ID not set — JARVIS voice disabled');
+}
+
+if (jarvisChanged) {
+  writeFileSync(join(root, 'jarvis.html'), jarvisHtml, 'utf8');
+  console.log('✅ jarvis.html updated');
 }
 
 console.log('✅ Build complete');
