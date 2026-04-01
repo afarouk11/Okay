@@ -31,6 +31,48 @@ let orbState    = 'idle';  // 'idle' | 'greeting' | 'active'
 let porcupine   = null;
 let conversation= null;
 let toastTimer  = null;
+let volumeRafId = null;  // requestAnimationFrame handle for volume tracking
+
+// Maximum additional scale applied at peak volume (orb grows by up to 35 %)
+const VOLUME_SCALE_FACTOR = 0.35;
+
+// ── Volume tracking ───────────────────────────────────────────────────────────
+
+/**
+ * Poll the ElevenLabs output analyser every animation frame and map
+ * the computed mean amplitude to the --orb-scale CSS variable so the orb
+ * pulses in sync with the AI's speech.
+ */
+function startVolumeTracking() {
+  stopVolumeTracking();
+
+  function tick() {
+    if (!conversation) { stopVolumeTracking(); return; }
+
+    const freqData = conversation.getOutputByteFrequencyData?.();
+    if (freqData && freqData.length > 0) {
+      // Compute mean amplitude of the lower half (voice frequencies)
+      let sum = 0;
+      const len = Math.floor(freqData.length / 2);
+      for (let i = 0; i < len; i++) sum += freqData[i];
+      const meanAmplitude = sum / (len * 255);                    // normalise 0..1
+      const scale = 1 + meanAmplitude * VOLUME_SCALE_FACTOR;      // map to 1.00 – 1.35
+      hologram.style.setProperty('--orb-scale', scale.toFixed(3));
+    }
+
+    volumeRafId = requestAnimationFrame(tick);
+  }
+
+  volumeRafId = requestAnimationFrame(tick);
+}
+
+function stopVolumeTracking() {
+  if (volumeRafId !== null) {
+    cancelAnimationFrame(volumeRafId);
+    volumeRafId = null;
+  }
+  hologram.style.setProperty('--orb-scale', '1');
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -82,15 +124,21 @@ async function startConversation() {
     },
 
     onDisconnect: async () => {
+      stopVolumeTracking();
       conversation = null;
       setOrbState('idle');
       setStatus('SYSTEMS ONLINE', 'online');
       await armWakeWord();
     },
 
-    // Visual feedback: ring in while AI is speaking
+    // Volume-reactive orb: start rAF loop when AI speaks, stop when it stops
     onModeChange: ({ mode }) => {
       hologram.classList.toggle('speaking', mode === 'speaking');
+      if (mode === 'speaking') {
+        startVolumeTracking();
+      } else {
+        stopVolumeTracking();
+      }
     },
 
     onError: (errMsg) => {
@@ -151,6 +199,7 @@ async function handleWakeWord() {
 
 endBtn.addEventListener('click', async () => {
   if (conversation) {
+    stopVolumeTracking();
     await conversation.endSession();
     // onDisconnect fires automatically → re-arms wake word
   }

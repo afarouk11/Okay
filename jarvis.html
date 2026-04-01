@@ -21,6 +21,8 @@
   --orb-glow: rgba(0,212,255,0.55);
   --ring-dim: rgba(0,212,255,0.18);
   --ring-bright: rgba(0,212,255,0.85);
+  /* Volume-reactive scale — updated in real-time by jarvis.js */
+  --orb-scale: 1;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%;overflow:hidden}
@@ -178,13 +180,11 @@ body{background:var(--black);color:var(--white);font-family:var(--font)}
   to  {transform:scale(1.12); box-shadow:0 0 50px rgba(0,212,255,1),  0 0 100px rgba(0,200,255,0.7)}
 }
 
-/* ── STATE: SPEAKING (AI talking) ─────────────────────────── */
+/* ── STATE: SPEAKING (AI talking) — scale driven by --orb-scale ── */
 .hologram-container.speaking .core-orb{
-  animation:orb-speaking .4s ease-in-out infinite alternate;
-}
-@keyframes orb-speaking{
-  from{transform:scale(1)}
-  to  {transform:scale(1.18)}
+  animation:none;
+  transform:scale(var(--orb-scale));
+  transition:transform .08s ease-out;
 }
 
 /* ── STATUS OVERLAY ───────────────────────────────────────── */
