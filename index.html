@@ -7647,7 +7647,7 @@ async function loginUser() {
       safeSetItem('synaptiq_fc', JSON.stringify(fcCards));
     }
     const rememberMe = document.getElementById('login-remember')?.checked;
-    const expiry = rememberMe ? Date.now() + 30 * 24 * 60 * 60 * 1000 : null;
+    const expiry = rememberMe ? Date.now() + 30 * 24 * 60 * 60 * 1000 : Date.now() + 24 * 60 * 60 * 1000;
     safeSetItem('synaptiq_user', JSON.stringify({ ...state.user, _expiry: expiry }));
     trackEvent('login', {});
     applyLearningProfile();
@@ -19260,7 +19260,7 @@ async function googleSignIn() {
       if (!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
       const { data, error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: window.location.origin + '/dashboard' }
+        options: { redirectTo: window.location.origin + '/' }
       });
       if (error) showToast('Google sign-in error: ' + error.message);
     } else {
@@ -19287,7 +19287,7 @@ async function appleSignIn() {
       if (!supabaseClient) supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
       const { data, error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'apple',
-        options: { redirectTo: window.location.origin + '/dashboard' }
+        options: { redirectTo: window.location.origin + '/' }
       });
       if (error) showToast('Apple sign-in error: ' + error.message);
     } else {

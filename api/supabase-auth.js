@@ -90,10 +90,11 @@ export default async function handler(req, res) {
       const { email } = payload || {};
       if (!email) return res.status(400).json({ error: 'email required' });
       if (!anonKey) return res.status(500).json({ error: 'Missing SUPABASE_ANON_KEY' });
+      const siteUrl = process.env.SITE_URL || 'https://synaptiq.co.uk';
       const r = await fetch(`${supabaseUrl}/auth/v1/recover`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': anonKey },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email, redirect_to: `${siteUrl}/reset-password` })
       });
       // Supabase always returns 200 for this endpoint (prevents email enumeration)
       return res.status(200).json({ ok: true });

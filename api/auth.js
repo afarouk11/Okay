@@ -185,7 +185,7 @@ export default async function handler(req, res) {
 
     if (action === 'reset') {
       if (!email || !EMAIL_RE.test(email)) return res.status(400).json({ error: 'A valid email is required' });
-      const siteUrl = process.env.SITE_URL || 'https://synaptiq.vercel.app';
+      const siteUrl = process.env.SITE_URL || 'https://synaptiq.co.uk';
       const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), { redirectTo: `${siteUrl}/reset-password` });
       if (error) return res.status(400).json({ error: error.message });
       // Fetch name for branded email (best-effort)
