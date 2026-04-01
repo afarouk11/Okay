@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>J.A.R.V.I.S. — Synaptiq A-Level Maths Assistant</title>
+<!-- API keys injected at build time by scripts/build.mjs -->
+<meta name="picovoice-key" content="PICOVOICE_KEY_PLACEHOLDER">
+<meta name="eleven-agent-id" content="ELEVEN_AGENT_ID_PLACEHOLDER">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black:#0A0C12; --bg2:#12141C; --bg3:#1A1D28; --bg4:#22263A;
+  --gold:#C9A84C; --white:#F0EEF8; --muted:#8B899C; --border:rgba(255,255,255,0.08);
+  --font:'DM Sans',sans-serif; --font-mono:'Space Mono',monospace;
+  /* Hologram palette */
+  --orb-core: #00d4ff;
+  --orb-deep: #090979;
+  --orb-glow: rgba(0,212,255,0.55);
+  --ring-dim: rgba(0,212,255,0.18);
+  --ring-bright: rgba(0,212,255,0.85);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{background:var(--black);color:var(--white);font-family:var(--font)}
+
+/* ── NAV ──────────────────────────────────────────────────── */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  background:rgba(10,12,18,0.90);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+  padding:0 2rem;height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.nav-brand{font-weight:700;font-size:1.05rem;text-decoration:none;color:var(--white)}
+.nav-brand span{color:var(--gold)}
+.nav-back{
+  display:inline-flex;align-items:center;gap:.45rem;
+  color:var(--muted);font-size:.85rem;text-decoration:none;
+  transition:color .2s;
+}
+.nav-back:hover{color:var(--white)}
+.nav-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* ── STAGE ────────────────────────────────────────────────── */
+.stage{
+  height:100%;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:3rem;
+  padding-top:60px;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 60%, rgba(0,80,160,0.12) 0%, transparent 70%),
+    var(--black);
+}
+
+/* ── HOLOGRAM CONTAINER ───────────────────────────────────── */
+.hologram-container{
+  position:relative;
+  width:300px;height:300px;
+  display:flex;align-items:center;justify-content:center;
+  perspective:900px;
+}
+
+/* ── RINGS ────────────────────────────────────────────────── */
+.ring{
+  position:absolute;
+  border-radius:50%;
+  border:1px solid var(--ring-dim);
+}
+
+.ring-outer{
+  width:280px;height:280px;
+  border-top:2px solid var(--orb-core);
+  border-right:1px solid var(--ring-dim);
+  animation:ring-outer-spin 5s linear infinite;
+}
+.ring-mid{
+  width:210px;height:210px;
+  border-bottom:2px solid rgba(0,180,255,0.7);
+  border-left:1px solid var(--ring-dim);
+  animation:ring-mid-spin 3.5s linear infinite reverse;
+}
+.ring-inner{
+  width:150px;height:150px;
+  border-top:1.5px solid rgba(0,140,255,0.5);
+  border-right:1px solid var(--ring-dim);
+  animation:ring-inner-spin 2.2s linear infinite;
+}
+
+@keyframes ring-outer-spin{
+  from{transform:rotateX(72deg) rotateZ(0deg)}
+  to  {transform:rotateX(72deg) rotateZ(360deg)}
+}
+@keyframes ring-mid-spin{
+  from{transform:rotateX(60deg) rotateZ(0deg)}
+  to  {transform:rotateX(60deg) rotateZ(360deg)}
+}
+@keyframes ring-inner-spin{
+  from{transform:rotateX(48deg) rotateZ(0deg)}
+  to  {transform:rotateX(48deg) rotateZ(360deg)}
+}
+
+/* ── CORE ORB ─────────────────────────────────────────────── */
+.core-orb{
+  position:relative;z-index:2;
+  width:90px;height:90px;
+  border-radius:50%;
+  background:radial-gradient(circle at 38% 36%, #55eeff 0%, var(--orb-core) 35%, var(--orb-deep) 100%);
+  box-shadow:
+    0 0 20px var(--orb-glow),
+    0 0 50px rgba(0,140,255,0.30),
+    0 0 90px rgba(0,80,200,0.15),
+    inset 0 0 20px rgba(0,30,80,0.5);
+  transition:box-shadow .3s ease, transform .15s ease;
+}
+
+/* ── SCAN LINE ────────────────────────────────────────────── */
+.scan-line{
+  position:absolute;z-index:3;
+  left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  width:90px;height:2px;
+  background:linear-gradient(90deg, transparent 0%, rgba(0,212,255,0.8) 50%, transparent 100%);
+  border-radius:2px;
+  animation:scan 2.8s ease-in-out infinite;
+  opacity:.7;
+}
+@keyframes scan{
+  0%  {transform:translate(-50%,-50%) translateY(-40px); opacity:0}
+  20% {opacity:.8}
+  80% {opacity:.8}
+  100%{transform:translate(-50%,-50%) translateY(40px);  opacity:0}
+}
+
+/* ── GRID OVERLAY (faint hexagonal feel) ─────────────────── */
+.hologram-container::before{
+  content:'';
+  position:absolute;inset:0;
+  border-radius:50%;
+  background:
+    repeating-linear-gradient(0deg,   rgba(0,212,255,0.03) 0px, rgba(0,212,255,0.03) 1px, transparent 1px, transparent 14px),
+    repeating-linear-gradient(90deg,  rgba(0,212,255,0.03) 0px, rgba(0,212,255,0.03) 1px, transparent 1px, transparent 14px);
+  pointer-events:none;
+}
+
+/* ── STATE: GREETING ──────────────────────────────────────── */
+.hologram-container.greeting .core-orb{
+  background:radial-gradient(circle at 38% 36%, #ffffff 0%, #a0f0ff 40%, #0088cc 100%);
+  box-shadow:
+    0 0 40px rgba(255,255,255,0.8),
+    0 0 80px rgba(0,212,255,0.6),
+    0 0 120px rgba(0,100,255,0.4);
+  animation:orb-greeting-pulse .6s ease-in-out infinite alternate;
+}
+.hologram-container.greeting .ring-outer{animation-duration:2s}
+.hologram-container.greeting .ring-mid  {animation-duration:1.4s}
+.hologram-container.greeting .ring-inner{animation-duration:.9s}
+@keyframes orb-greeting-pulse{
+  from{transform:scale(1)   box-shadow:0 0 40px rgba(255,255,255,0.8)}
+  to  {transform:scale(1.08)}
+}
+
+/* ── STATE: ACTIVE ────────────────────────────────────────── */
+.hologram-container.active .core-orb{
+  background:radial-gradient(circle at 38% 36%, #88ffff 0%, #00d4ff 35%, #0044aa 100%);
+  box-shadow:
+    0 0 30px rgba(0,212,255,0.9),
+    0 0 70px rgba(0,160,255,0.5),
+    0 0 120px rgba(0,80,200,0.3);
+  animation:orb-active-breathe 2.4s ease-in-out infinite alternate;
+}
+.hologram-container.active .ring-outer{animation-duration:3.5s}
+.hologram-container.active .ring-mid  {animation-duration:2.4s}
+.hologram-container.active .ring-inner{animation-duration:1.5s}
+@keyframes orb-active-breathe{
+  from{transform:scale(1);    box-shadow:0 0 30px rgba(0,212,255,0.9),0 0 70px rgba(0,160,255,0.5)}
+  to  {transform:scale(1.12); box-shadow:0 0 50px rgba(0,212,255,1),  0 0 100px rgba(0,200,255,0.7)}
+}
+
+/* ── STATE: SPEAKING (AI talking) ─────────────────────────── */
+.hologram-container.speaking .core-orb{
+  animation:orb-speaking .4s ease-in-out infinite alternate;
+}
+@keyframes orb-speaking{
+  from{transform:scale(1)}
+  to  {transform:scale(1.18)}
+}
+
+/* ── STATUS OVERLAY ───────────────────────────────────────── */
+.status-overlay{
+  display:flex;flex-direction:column;align-items:center;gap:.55rem;
+  text-align:center;
+}
+.status-badge{
+  display:flex;align-items:center;gap:.5rem;
+  padding:.25rem .75rem;
+  border:1px solid var(--border);
+  border-radius:999px;
+  font-family:var(--font-mono);font-size:.7rem;
+  color:var(--muted);
+  background:rgba(255,255,255,0.03);
+}
+.status-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--muted);
+  transition:background .4s;
+}
+.status-dot.online  {background:#4ADE80;box-shadow:0 0 6px rgba(74,222,128,.7)}
+.status-dot.active  {background:var(--orb-core);box-shadow:0 0 8px var(--orb-glow);animation:dot-pulse .8s ease-in-out infinite alternate}
+.status-dot.error   {background:#f87171}
+@keyframes dot-pulse{from{opacity:.6}to{opacity:1}}
+
+.status-title{
+  font-family:var(--font-mono);
+  font-size:clamp(1.1rem,3vw,1.5rem);
+  font-weight:700;
+  letter-spacing:.2em;
+  color:var(--white);
+  text-shadow:0 0 20px rgba(0,212,255,0.4);
+}
+.status-sub{
+  font-size:.85rem;color:var(--muted);letter-spacing:.04em;
+}
+.status-hint{
+  font-size:.8rem;color:var(--muted);opacity:.6;
+  font-style:italic;margin-top:.2rem;
+}
+.status-hint em{
+  color:var(--orb-core);font-style:normal;
+  text-shadow:0 0 10px var(--orb-glow);
+}
+
+/* ── END SESSION BUTTON ───────────────────────────────────── */
+.end-btn{
+  padding:.65rem 2rem;
+  background:transparent;
+  border:1px solid rgba(248,113,113,0.4);
+  border-radius:999px;
+  color:#f87171;
+  font-family:var(--font-mono);font-size:.75rem;letter-spacing:.1em;
+  cursor:pointer;
+  transition:all .2s;
+}
+.end-btn:hover{background:rgba(248,113,113,0.1);border-color:#f87171}
+.end-btn.hidden{visibility:hidden;pointer-events:none}
+
+/* ── ERROR TOAST ──────────────────────────────────────────── */
+.toast{
+  position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);
+  padding:.7rem 1.4rem;
+  background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.4);
+  border-radius:10px;color:#fca5a5;font-size:.8rem;
+  font-family:var(--font-mono);
+  opacity:0;transition:opacity .3s;pointer-events:none;
+  max-width:380px;text-align:center;z-index:200;
+}
+.toast.visible{opacity:1}
+
+/* ── RESPONSIVE ───────────────────────────────────────────── */
+@media(max-height:640px){
+  .stage{gap:1.5rem}
+  .hologram-container{transform:scale(.75)}
+}
+@media(prefers-reduced-motion:reduce){
+  .ring,.core-orb,.scan-line{animation:none!important}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-brand">Synap<span>tiq</span></a>
+  <a href="/lessons.html" class="nav-back">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to Lessons
+  </a>
+</nav>
+
+<main class="stage">
+
+  <!-- Hologram Orb -->
+  <div id="hologram" class="hologram-container idle">
+    <div class="ring ring-outer"></div>
+    <div class="ring ring-mid"></div>
+    <div class="ring ring-inner"></div>
+    <div id="core-orb" class="core-orb"></div>
+    <div class="scan-line"></div>
+  </div>
+
+  <!-- Status Panel -->
+  <div class="status-overlay" role="status" aria-live="polite">
+    <div class="status-badge">
+      <span id="status-dot" class="status-dot"></span>
+      <span id="status-text">INITIALISING...</span>
+    </div>
+    <h1 id="status-title" class="status-title">J.A.R.V.I.S.</h1>
+    <p class="status-sub">A-Level Mathematics Assistant</p>
+    <p id="status-hint" class="status-hint">Say <em>"Jarvis"</em> to begin</p>
+  </div>
+
+  <button id="end-btn" class="end-btn hidden" aria-label="End session">END SESSION</button>
+
+</main>
+
+<!-- Error toast -->
+<div id="toast" class="toast" role="alert"></div>
+
+<script type="module" src="/src/jarvis.js"></script>
+</body>
+</html>
