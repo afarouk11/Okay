@@ -167,6 +167,7 @@ async function submitContact() {
     const data = await res.json();
     if (!res.ok) { errEl.textContent = data.error || 'Something went wrong.'; errEl.style.display = 'block'; return; }
     okEl.style.display = 'block';
+    setTimeout(() => { okEl.style.display = 'none'; }, 6000);
     document.getElementById('contact-name').value = '';
     document.getElementById('contact-email').value = '';
     document.getElementById('contact-message').value = '';
