@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    environment: { "node": "24.x" },
+    environment: 'node',
     globals: true,
     include: ['tests/**/*.test.js'],
     coverage: {
