@@ -32,6 +32,18 @@ if (ga4Id && ga4Id !== 'G-XXXXXXXX') {
   console.log('ℹ️  GA4_MEASUREMENT_ID not set — analytics disabled');
 }
 
+// ── Inject Supabase public keys ───────────────────────────────────────────────
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+if (supabaseUrl && supabaseAnon) {
+  const keyScript = `<script>window.SUPABASE_URL='${supabaseUrl}';window.SUPABASE_ANON_KEY='${supabaseAnon}';</script>`;
+  html = html.replace('</head>', `${keyScript}\n</head>`);
+  console.log('✅ Supabase public keys injected');
+  changed = true;
+} else {
+  console.warn('⚠️  SUPABASE_URL / SUPABASE_ANON_KEY not set — auth will not work');
+}
+
 if (changed) {
   writeFileSync(join(root, 'index.html'), html, 'utf8');
   console.log('✅ index.html updated');
