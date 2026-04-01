@@ -7969,9 +7969,9 @@ function buildNumberLine(highlight) {
 // ═══════════════════════════════════════
 // CLAUDE API
 // ═══════════════════════════════════════
-async function callClaude(messages, system, max_tokens) {
+async function callClaude(messages, system, max_tokens, model) {
   const body = {
-    model: 'claude-sonnet-4-6',
+    model: model || 'claude-sonnet-4-6',
     max_tokens: max_tokens || 1500,
     messages
   };
@@ -7982,9 +7982,16 @@ async function callClaude(messages, system, max_tokens) {
   for (let attempt = 0; attempt <= delays.length; attempt++) {
     let r;
     try {
+      const hdrs = { 'Content-Type': 'application/json' };
+      try {
+        if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+          const { data } = await supabaseClient.auth.getSession();
+          if (data?.session?.access_token) hdrs['Authorization'] = 'Bearer ' + data.session.access_token;
+        }
+      } catch(_) {}
       r = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: hdrs,
         body: JSON.stringify(body)
       });
     } catch (netErr) {
@@ -8817,7 +8824,7 @@ Each question must be exam-quality, use UK spelling and ${board} notation style.
 For calculations, show all working steps in the solution field.
 ONLY return the JSON array, nothing else.${a11y ? '\n\nIMPORTANT accessibility notes: ' + a11y : ''}`;
   try {
-    const data = await callClaude([{ role: 'user', content: `Generate ${num} A-Level Maths (${module}) questions for ${board} ${level}, grade ${grade} target. ${topics ? 'Topics: ' + topics : ''}` }], sys, 8000);
+    const data = await callClaude([{ role: 'user', content: `Generate ${num} A-Level Maths (${module}) questions for ${board} ${level}, grade ${grade} target. ${topics ? 'Topics: ' + topics : ''}` }], sys, 4000);
     const reply = getReply(data);
     trackEvent('question_generated', { module, board, num });
     let questions;
@@ -10709,7 +10716,7 @@ async function getHintForAssignment(title, subject) {
   showToast('💡 Getting your hint...');
   const sys = `You are a supportive UK A-Level tutor helping a student with their homework. Give a helpful HINT that guides them WITHOUT giving the full answer away. Keep it to 2-3 clear sentences.`;
   try {
-    const data = await callClaude([{ role: 'user', content: `Give me a helpful starting hint for this ${subject} assignment: "${title}". Guide me without giving the answer.` }], sys);
+    const data = await callClaude([{ role: 'user', content: `Give me a helpful starting hint for this ${subject} assignment: "${title}". Guide me without giving the answer.` }], sys, 200, 'claude-haiku-4-5-20251001');
     const hint = getReply(data).slice(0, 200);
     showToast('💡 ' + hint);
     addTutorMsg && document.getElementById('sp-tutor').classList.contains('active') ? null : null;
@@ -12749,7 +12756,7 @@ async function aiSummariseNote() {
   showToast('✦ Synaptiq is summarising...');
   const sys = 'You are helping a student create concise revision notes. Summarise the provided text into clear bullet points. Use UK English. Keep it short and memorable — ideal for revision.';
   try {
-    const data = await callClaude([{ role: 'user', content: 'Summarise this for my revision notes:\n\n' + text }], sys);
+    const data = await callClaude([{ role: 'user', content: 'Summarise this for my revision notes:\n\n' + text }], sys, 600, 'claude-haiku-4-5-20251001');
     document.getElementById('note-text-input').value = getReply(data);
     showToast('✦ Summarised! Review and save.');
   } catch(e) {
@@ -13752,7 +13759,7 @@ async function lookupTerm() {
   showToast('✦ Looking up ' + query + '...');
   const sys = `You are a UK A-Level Mathematics expert. Define the term for A-Level Maths students. Return ONLY JSON: {"term":"${query}","definition":"clear definition","example":"concrete example","mnemonic":"memory trick if helpful","relatedTerms":["term1","term2"]}`;
   try {
-    const data = await callClaude([{role:'user',content:`Define "${query}" for ${subject} students`}], sys);
+    const data = await callClaude([{role:'user',content:`Define "${query}" for ${subject} students`}], sys, 400, 'claude-haiku-4-5-20251001');
     const raw = getReply(data).replace(/```json|```/g,'').trim();
     const result = JSON.parse(raw);
     const letter = query[0].toUpperCase();
@@ -19448,12 +19455,15 @@ function setLessonCache(chapter, html) {
   #vo-overlay {
     position:fixed;inset:0;z-index:10500;
     background:rgba(3,5,13,0.96);
-    display:none;flex-direction:column;align-items:center;justify-content:center;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:1.5rem;font-family:inherit;padding:2rem 1rem;
-    opacity:0;transition:opacity .25s;
+    opacity:0;visibility:hidden;pointer-events:none;
+    transition:opacity .25s, visibility 0s .25s;
   }
-  #vo-overlay.open { display:flex; }
-  #vo-overlay.visible { opacity:1; }
+  #vo-overlay.open {
+    opacity:1;visibility:visible;pointer-events:auto;
+    transition:opacity .25s, visibility 0s;
+  }
 
   #vo-title {
     font-size:1rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
@@ -19543,10 +19553,6 @@ function setLessonCache(chapter, html) {
     </div>
     <div id="vo-footer">SPEAK NATURALLY · HANDS-FREE LOOP · POWERED BY SYNAPTIQ</div>`;
   document.body.appendChild(div);
-  // Trigger CSS transition after paint
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    if (div.classList.contains('open')) div.classList.add('visible');
-  }));
 })();
 
 // ── VIZ: Web Audio AnalyserNode visualiser ─────────────────────────────────
@@ -19731,7 +19737,6 @@ function voOpen(mode, context) {
   if (title)     title.textContent     = mode === 'teacher' ? '🎓 TEACHER' : '✦ JARVIS';
 
   overlay.classList.add('open');
-  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('visible')));
 
   voSetState('idle');
   document.getElementById('vo-transcript').textContent = '';
@@ -19757,10 +19762,7 @@ function voClose() {
   VO.state = 'idle'; VO.recog = null;
 
   const overlay = document.getElementById('vo-overlay');
-  if (overlay) {
-    overlay.classList.remove('visible');
-    setTimeout(() => overlay.classList.remove('open'), 260);
-  }
+  if (overlay) overlay.classList.remove('open');
   window.speechSynthesis?.cancel();
 }
 
@@ -19858,7 +19860,7 @@ async function voHandleInput(text) {
       ? `You are an expert A-Level Mathematics teacher (${board}). The student is currently studying ${VO.context || 'A-Level Maths'}, ${year}, targeting ${target}. THIS ANSWER WILL BE READ ALOUD — use plain spoken English only, no LaTeX, no markdown, no bullet symbols. Natural sentences, under 90 words unless the student asks for more. Be warm and encouraging.`
       : (typeof getTutorSystem === 'function' ? getTutorSystem() + '\n\nTHIS ANSWER WILL BE READ ALOUD — plain English only, no LaTeX, no markdown. Natural sentences under 90 words unless more detail is requested.' : `You are Synaptiq, an expert A-Level Maths AI tutor. Speak naturally — no LaTeX, no markdown.`);
 
-    const data  = await callClaude(history, spokenSys, 400);
+    const data  = await callClaude(history, spokenSys, 300, 'claude-haiku-4-5-20251001');
     const reply = getReply(data);
 
     history.push({ role: 'assistant', content: reply });
