@@ -9,7 +9,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: ['api/**/*.js', 'src/**/*.js'],
-      exclude: ['tests/**'],
+      exclude: ['tests/**', 'src/jarvis.js'],  // jarvis.js is browser-only (DOM + CDN imports)
       thresholds: {
         lines: 70,
         functions: 70,
