@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        node: ["24.x"]
+        node:  { "node": "24.x" },
 
     steps:
       - name: Checkout
