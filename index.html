@@ -7198,6 +7198,13 @@ Max 4 marks. Accept any other valid physics explanation." style="width:100%;resi
 
 <!-- ═══════════════════════ JAVASCRIPT ═══════════════════════ -->
 <script>
+// Session timer variables declared here so they are initialised before the
+// first _sessionTick() call in enterDashboard (below), which happens before
+// the SESSION TIMER block is reached during sequential execution.
+const _sessionKey = 'synaptiq_session_' + new Date().toISOString().split('T')[0];
+let _sessionStart = Date.now();
+let _sessionSavedMs = (() => { try { return parseInt(localStorage.getItem(_sessionKey) || '0', 10); } catch(e) { return 0; } })();
+
 // Stub defined here so enterDashboard (block 1) never throws if _sessionTick
 // (block 2) hasn't been parsed yet — block 2 overwrites this with the real fn.
 function _sessionTick() {}
@@ -22333,10 +22340,6 @@ function searchFormulas(query) {
 // ══════════════════════════════════════════
 // SESSION TIMER
 // ══════════════════════════════════════════
-const _sessionKey = 'synaptiq_session_' + new Date().toISOString().split('T')[0];
-let _sessionStart = Date.now();
-let _sessionSavedMs = (() => { try { return parseInt(localStorage.getItem(_sessionKey) || '0', 10); } catch(e) { return 0; } })();
-
 function _sessionTick() {
   const totalMs = _sessionSavedMs + (Date.now() - _sessionStart);
   const mins = Math.floor(totalMs / 60000);
