@@ -12771,9 +12771,7 @@ async function aiSummariseNoteById(id, btn) {
   if (btn) { btn.disabled = true; btn.textContent = '⏳…'; }
   const sys = 'You are helping a student create concise revision notes. Summarise the provided text into clear bullet points. Use UK English. Keep it short and memorable — ideal for revision.';
   try {
-    const data = await callClaude([{ role: 'user', content: 'Summarise this for my revision notes:
-
-' + note.text }], sys);
+    const data = await callClaude([{ role: 'user', content: 'Summarise this for my revision notes:\n\n' + note.text }], sys, 600, 'claude-haiku-4-5-20251001');
     const summary = getReply(data);
     // Update the note text in memory and re-render
     note.text = summary;
@@ -20779,7 +20777,6 @@ function renderStudyCoach() {
 }
 
 // Hook into dashboard home display
-const _origShowDash = window.showDash;
 if (typeof showDash === 'function') {
   const __origShowDash = showDash;
   window.showDash = function(sub) {
@@ -20808,7 +20805,7 @@ if (typeof showDash === 'function') {
     'For vectors, always check whether you need magnitude or direction in the question.',
     'Exam technique: attempt every question. Partial marks for working are real marks.',
     'Normal distribution: sketch the curve and shade the required area every time.',
-    'The product rule: (uv)' = u'v + uv'. Say it out loud until it\'s automatic.',
+    "The product rule: (uv)' = u'v + uv'. Say it out loud until it's automatic.",
     'Sequences: write out the first few terms before trying to find a formula.',
     'For logarithm questions, remember ln e = 1 and log 10 = 1 as instant checks.',
     'Parametric equations: eliminate the parameter to check your Cartesian equation.',
