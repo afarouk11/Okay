@@ -1,20 +1,16 @@
 /**
  * J.A.R.V.I.S. — Vanilla-JS "Ear → Brain → Mouth" pipeline
  *
- * Wake word:  Picovoice Porcupine Web  (@picovoice/porcupine-web + @picovoice/web-voice-processor)
+ * Wake word:  Web Speech API (SpeechRecognition — built into Chrome / Edge)
  * Voice AI:   ElevenLabs Conversational AI  (@11labs/client)
  *
  * API keys are injected into jarvis.html at build time by scripts/build.mjs:
- *   PICOVOICE_KEY_PLACEHOLDER   →  meta[name="picovoice-key"]
  *   ELEVEN_AGENT_ID_PLACEHOLDER →  meta[name="eleven-agent-id"]
  *
  * ElevenLabs CDN: https://esm.sh/@11labs/client
- * Porcupine CDN:  https://esm.sh/@picovoice/porcupine-web  +  https://esm.sh/@picovoice/web-voice-processor
- * Model files:    https://unpkg.com/@picovoice/porcupine-web@3/dist/  (WASM + .pv model)
  */
 
 // ── Keys (injected by build pipeline) ────────────────────────────────────────
-const PICOVOICE_KEY   = document.querySelector('meta[name="picovoice-key"]')?.content  ?? '';
 const ELEVEN_AGENT_ID = document.querySelector('meta[name="eleven-agent-id"]')?.content ?? '';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
@@ -31,7 +27,7 @@ const vizCtx          = vizCanvas.getContext('2d');
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let orbState    = 'idle';  // 'idle' | 'greeting' | 'active'
-let porcupine   = null;
+let recognition = null;
 let conversation= null;
 let toastTimer  = null;
 let volumeRafId = null;  // requestAnimationFrame handle for volume tracking
@@ -259,34 +255,84 @@ async function startConversation() {
   });
 }
 
-// ── Porcupine wake-word ───────────────────────────────────────────────────────
+// ── Web Speech API wake-word ──────────────────────────────────────────────────
 
 /**
- * Subscribe Porcupine to the voice processor so it listens for "Jarvis".
+ * Build and configure a SpeechRecognition instance.
+ * Each call creates a fresh object — required because recognition.stop()
+ * disposes the underlying audio pipeline in some browsers.
+ */
+function createRecognition() {
+  const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+  if (!SR) return null;
+
+  const r = new SR();
+  r.continuous      = false;   // restart manually; more reliable than continuous=true
+  r.interimResults  = false;
+  r.lang            = 'en-US';
+  r.maxAlternatives = 3;
+
+  r.onresult = (event) => {
+    for (let resultIdx = event.resultIndex; resultIdx < event.results.length; resultIdx++) {
+      for (let altIdx = 0; altIdx < event.results[resultIdx].length; altIdx++) {
+        const transcript = event.results[resultIdx][altIdx].transcript.trim().toLowerCase();
+        if (transcript.includes('jarvis')) {
+          handleWakeWord();
+          return;
+        }
+      }
+    }
+    // Word heard but wasn't "Jarvis" — restart immediately
+    if (orbState === 'idle') armWakeWord();
+  };
+
+  r.onerror = (event) => {
+    if (event.error === 'no-speech') {
+      // Normal timeout — restart
+      if (orbState === 'idle') armWakeWord();
+    } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      setStatus('MIC ACCESS DENIED', 'error');
+      showToast('Microphone access denied. Allow access and reload the page.', 0);
+    } else {
+      console.warn('[SpeechRecognition]', event.error);
+      if (orbState === 'idle') setTimeout(() => armWakeWord(), 1000);
+    }
+  };
+
+  r.onend = () => {
+    // Restart automatically while idle (handles both normal end and no-speech)
+    if (orbState === 'idle') armWakeWord();
+  };
+
+  return r;
+}
+
+/**
+ * Start listening for the "Jarvis" wake word.
  * Called on page load and again after each session ends.
  */
 async function armWakeWord() {
-  if (!porcupine) return;
-  const { WebVoiceProcessor } = await import('https://esm.sh/@picovoice/web-voice-processor@2');
+  if (!recognition || orbState !== 'idle') return;
   try {
-    await WebVoiceProcessor.subscribe(porcupine);
+    recognition.start();
   } catch (err) {
-    // Already subscribed — safe to ignore
-    if (!String(err).includes('already')) console.warn('[VoiceProcessor]', err);
+    // InvalidStateError fires if already started — safe to ignore
+    if (err.name !== 'InvalidStateError') console.warn('[SpeechRecognition]', err);
   }
 }
 
 /**
- * Unsubscribe Porcupine while ElevenLabs is active (prevents mic echo).
+ * Stop wake-word listening while ElevenLabs is active (prevents mic conflicts).
  */
 async function disarmWakeWord() {
-  if (!porcupine) return;
-  const { WebVoiceProcessor } = await import('https://esm.sh/@picovoice/web-voice-processor@2');
-  await WebVoiceProcessor.unsubscribe(porcupine);
+  if (!recognition) return;
+  try {
+    recognition.abort();
+  } catch { /* ignore */ }
 }
 
 /**
- * Called by Porcupine when the "Jarvis" keyword is detected.
+ * Called when the "Jarvis" keyword is detected in the speech transcript.
  */
 async function handleWakeWord() {
   if (orbState !== 'idle') return;  // already in a session
@@ -323,48 +369,24 @@ endBtn.addEventListener('click', async () => {
 // ── Initialisation ────────────────────────────────────────────────────────────
 
 async function init() {
-  // Guard: keys not yet configured
-  if (!PICOVOICE_KEY || PICOVOICE_KEY === 'PICOVOICE_KEY_PLACEHOLDER') {
-    setStatus('PICOVOICE KEY NOT SET', 'error');
-    showToast('Set PICOVOICE_KEY in Vercel environment variables.', 0);
-    return;
-  }
+  // Guard: ElevenLabs agent ID not yet configured
   if (!ELEVEN_AGENT_ID || ELEVEN_AGENT_ID === 'ELEVEN_AGENT_ID_PLACEHOLDER') {
     setStatus('AGENT ID NOT SET', 'error');
     showToast('Set ELEVEN_AGENT_ID in Vercel environment variables.', 0);
     return;
   }
 
-  setStatus('LOADING ENGINE...', '');
-
-  try {
-    const { PorcupineWorker } = await import('https://esm.sh/@picovoice/porcupine-web@3');
-
-    // Model files (WASM + .pv) are fetched from the unpkg CDN at runtime.
-    // If you self-host, change publicPath to e.g. '/assets/porcupine/'.
-    const porcupineModel = {
-      publicPath: 'https://unpkg.com/@picovoice/porcupine-web@3/dist/',
-      forceWrite:  false,
-    };
-
-    porcupine = await PorcupineWorker.create(
-      PICOVOICE_KEY,
-      [{ builtin: 'Jarvis', sensitivity: 0.6 }],
-      handleWakeWord,   // fires on keyword detection
-      porcupineModel,
-    );
-
-    await armWakeWord();
-    setStatus('SYSTEMS ONLINE', 'online');
-
-  } catch (err) {
-    console.error('[Porcupine] Init failed:', err);
-    const hint = err?.message?.includes('InvalidAccessError')
-      ? 'Microphone access denied.'
-      : `Wake-word engine failed: ${err?.message ?? err}`;
-    setStatus('INIT ERROR', 'error');
-    showToast(hint, 0);
+  // Guard: Web Speech API not available (Firefox, Safari, some mobile browsers)
+  const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+  if (!SR) {
+    setStatus('BROWSER UNSUPPORTED', 'error');
+    showToast('Wake-word detection requires Chrome or Edge.', 0);
+    return;
   }
+
+  recognition = createRecognition();
+  await armWakeWord();
+  setStatus('SYSTEMS ONLINE', 'online');
 }
 
 init();

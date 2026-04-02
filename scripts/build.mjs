@@ -7,7 +7,6 @@
  *
  * Set these in Vercel → Project → Settings → Environment Variables:
  *   GA4_MEASUREMENT_ID   — e.g. G-ABC123DEF4
- *   PICOVOICE_KEY        — Picovoice Console access key (for JARVIS wake-word)
  *   ELEVEN_AGENT_ID      — ElevenLabs Conversational AI agent ID (for JARVIS voice)
  */
 
@@ -71,22 +70,10 @@ if (supabaseUrl && supabaseAnon) {
 }
 
 // ── Inject JARVIS keys into jarvis.html ───────────────────────────────────────
-const picovoiceKey   = process.env.PICOVOICE_KEY;
 const elevenAgentId  = process.env.ELEVEN_AGENT_ID;
 
 let jarvisHtml = readFileSync(join(root, 'jarvis.html'), 'utf8');
 let jarvisChanged = false;
-
-if (picovoiceKey) {
-  jarvisHtml = jarvisHtml.replace(
-    /content="PICOVOICE_KEY_PLACEHOLDER"/,
-    `content="${picovoiceKey}"`
-  );
-  console.log('✅ Picovoice key injected into jarvis.html');
-  jarvisChanged = true;
-} else {
-  console.warn('⚠️  PICOVOICE_KEY not set — JARVIS wake-word disabled');
-}
 
 if (elevenAgentId) {
   jarvisHtml = jarvisHtml.replace(
