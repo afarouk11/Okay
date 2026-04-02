@@ -930,7 +930,9 @@ body {
   display: flex; align-items: center; gap: .85rem;
   padding: .8rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);
   animation: fadeInUp .3s ease both;
+  border-radius: 8px; transition: background .15s;
 }
+.activity-item:hover { background: rgba(255,255,255,0.03); padding-left: .5rem; padding-right: .5rem; }
 .activity-item:last-child { border-bottom: none; }
 .activity-icon {
   width: 38px; height: 38px; border-radius: 12px;
@@ -1429,11 +1431,11 @@ body {
 .progress-item { margin-bottom: 1.1rem; }
 .progress-header { display: flex; justify-content: space-between; font-size: .85rem; margin-bottom: .5rem; font-weight: 500; }
 .progress-bar {
-  height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;
+  height: 10px; background: rgba(255,255,255,0.06); border-radius: 5px; overflow: hidden;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
 }
 .progress-fill {
-  height: 100%; border-radius: 4px; transition: width 1s cubic-bezier(.4,0,.2,1);
+  height: 100%; border-radius: 5px; transition: width 1s cubic-bezier(.4,0,.2,1);
   position: relative; overflow: hidden;
 }
 .progress-fill::after {
@@ -2005,7 +2007,7 @@ body.mode-adhd .adhd-break { display: block; }
   max-width: 320px;
   box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 20px rgba(201,168,76,0.12);
 }
-#toast.show { opacity: 1; transform: translateY(0) scale(1); }
+#toast.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
 
 /* FAQ accordion — glassmorphism */
 .faq-item {
@@ -2056,7 +2058,7 @@ body.mode-adhd .adhd-break { display: block; }
 .skeleton {
   background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.05) 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
+  animation: shimmer 1.5s ease-in-out infinite;
   border-radius: 8px;
 }
 body.light .skeleton {
@@ -4297,7 +4299,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
         </div>
         <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Your full name" autocomplete="name"></div>
         <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@email.com" autocomplete="email"></div>
-        <div class="form-group"><label>Password</label><input type="password" id="reg-pass" placeholder="Min. 8 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')nextStep(1)"></div>
+        <div class="form-group"><label>Password</label><div style="position:relative"><input type="password" id="reg-pass" placeholder="Min. 8 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')nextStep(1)" style="padding-right:2.5rem"><button type="button" onclick="togglePasswordVisibility('reg-pass',this)" aria-label="Show password" style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:0;font-size:.95rem;line-height:1;transition:color .15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">👁</button></div></div>
         <button class="btn-full" onclick="nextStep(1)">Continue →</button>
       </div>
 
@@ -4389,7 +4391,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
         <button class="auth-tab active">Log In</button>
       </div>
       <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()"></div>
-      <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginUser()"></div>
+      <div class="form-group"><label>Password</label><div style="position:relative"><input type="password" id="login-pass" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginUser()" style="padding-right:2.5rem"><button type="button" onclick="togglePasswordVisibility('login-pass',this)" aria-label="Show password" style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:0;font-size:.95rem;line-height:1;transition:color .15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">👁</button></div></div>
       <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem">
         <input type="checkbox" id="login-remember" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">
         <label for="login-remember" style="font-size:.85rem;color:var(--muted);cursor:pointer;margin:0">Remember me for 30 days</label>
@@ -4555,7 +4557,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
         <button onclick="showDash('tutor')" style="margin-left:auto;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.25rem .7rem;color:var(--muted);cursor:pointer;font-size:.75rem">Study now →</button>
       </div>
       <!-- Continue Where You Left Off -->
-      <div id="continue-card" style="display:none;background:rgba(12,14,20,0.85);border:1px solid rgba(201,168,76,0.18);border-radius:16px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;backdrop-filter:blur(20px)">
+      <div id="continue-card" style="display:none;background:rgba(12,14,20,0.85);border:1px solid rgba(201,168,76,0.18);border-radius:16px;padding:1rem 1.25rem;margin-bottom:1.25rem;align-items:center;gap:1rem;flex-wrap:wrap;backdrop-filter:blur(20px);animation:fadeInUp .3s ease both">
         <div style="font-size:1.5rem">📍</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:.7rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.15rem">Continue where you left off</div>
@@ -4622,13 +4624,13 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
         <div style="color:var(--muted);font-size:.875rem;text-align:center;padding:.5rem 0">⚔️ Loading Boss Challenge...</div>
       </div>
       <!-- Daily tip banner -->
-      <div id="daily-tip-bar" style="display:flex;align-items:flex-start;gap:.85rem;background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.2);border-radius:14px;padding:.9rem 1.1rem;margin-bottom:1.5rem">
-        <span style="font-size:1.25rem;line-height:1;flex-shrink:0">💡</span>
+      <div id="daily-tip-bar" style="display:flex;align-items:flex-start;gap:.85rem;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.18);border-radius:14px;padding:.9rem 1.25rem;margin-bottom:1.5rem">
+        <span style="font-size:1.1rem;line-height:1.4;flex-shrink:0">💡</span>
         <div>
-          <div style="font-size:.72rem;font-weight:700;color:rgba(96,165,250,0.8);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.2rem">Study Tip</div>
-          <div id="daily-tip-text" style="font-size:.855rem;color:var(--white);line-height:1.5"></div>
+          <div style="font-size:.7rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.25rem">Study Tip</div>
+          <div id="daily-tip-text" style="font-size:.855rem;color:rgba(240,238,248,0.85);line-height:1.55"></div>
         </div>
-        <button onclick="this.closest('#daily-tip-bar').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;margin-left:auto;flex-shrink:0;padding:0;line-height:1">×</button>
+        <button onclick="document.getElementById('daily-tip-bar').style.display='none'" aria-label="Dismiss tip" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;margin-left:auto;flex-shrink:0;padding:.2rem .3rem;line-height:1;border-radius:4px;transition:color .15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">✕</button>
       </div>
       <div class="stats-row">
         <div class="stat-card" style="border-top:2px solid rgba(96,165,250,0.5)">
@@ -4752,7 +4754,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
           <!-- Quick actions -->
           <div class="card" style="margin-top:1.5rem">
             <div class="card-header"><span class="card-title">🚀 Quick Actions</span></div>
-            <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;padding:1rem 1.25rem 1.25rem">
+            <div class="card-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;padding:1rem 1.25rem 1.25rem">
               <button class="qa-btn" onclick="showDash('tutor')"><span class="qa-icon">🤖</span>AI Tutor</button>
               <button class="qa-btn" onclick="showDash('content')"><span class="qa-icon">📚</span>A-Level Content</button>
               <button class="qa-btn" onclick="showDash('questions')"><span class="qa-icon">📝</span>Practice Questions</button>
@@ -7592,6 +7594,15 @@ async function createAccount() {
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '🚀 Start Free Trial'; }
   }
+}
+
+function togglePasswordVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁';
+  btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
 }
 
 async function loginUser() {
@@ -14519,7 +14530,7 @@ async function renderLeaderboard() {
 
   // Show skeleton while loading
   container.innerHTML = '<div style="display:flex;flex-direction:column;gap:.5rem">' +
-    Array(6).fill('<div style="height:52px;border-radius:12px;background:rgba(255,255,255,0.04);animation:shimmer 1.4s linear infinite;background-size:200% 100%"></div>').join('') + '</div>';
+    Array(6).fill('<div style="height:52px;border-radius:12px;background:rgba(255,255,255,0.04);animation:shimmer 1.5s ease-in-out infinite;background-size:200% 100%"></div>').join('') + '</div>';
 
   let data;
   let userRank = null;
