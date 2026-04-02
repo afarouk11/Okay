@@ -8,7 +8,12 @@
  * either a short-lived WebRTC conversation token (preferred) or the plain agent ID.
  *
  * ElevenLabs CDN: https://esm.sh/@elevenlabs/client
+ *
+ * Episodic memory: each session is persisted via /api/memory so Jarvis can
+ * surface where the student left off at the start of the next session.
  */
+
+import { latexToSpeech } from '/src/latex-speech.js';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const hologram        = document.getElementById('hologram');
@@ -25,6 +30,20 @@ const vizCanvas       = document.getElementById('viz-canvas');
 const vizCtx          = vizCanvas.getContext('2d');
 
 // ── State ─────────────────────────────────────────────────────────────────────
+let orbState       = 'idle';  // 'idle' | 'greeting' | 'active'
+let recognition    = null;
+let conversation   = null;
+let toastTimer     = null;
+let volumeRafId    = null;  // requestAnimationFrame handle for volume tracking
+let jarvisConfig   = null;  // { signedUrl? } or { agentId? } — fetched from /api/jarvis-config
+let micEnabled     = true;  // whether the wake-word mic is active
+
+/**
+ * Session timer — module-level ref that survives any UI refresh.
+ * Tracks when the current ElevenLabs session started (ms since epoch).
+ * Equivalent to a React useRef — value persists without triggering re-renders.
+ */
+let _sessionStartMs = null;
 let orbState    = 'idle';  // 'idle' | 'greeting' | 'active'
 let recognition = null;
 let conversation= null;
@@ -206,14 +225,96 @@ function setStatus(text, dotVariant = '') {
   statusDot.className = `status-dot ${dotVariant}`;
 }
 
+// ── Episodic Memory ───────────────────────────────────────────────────────────
+
+/** Return the stored auth token, or null if not logged in. */
+function _authToken() {
+  try { return localStorage.getItem('synaptiq_token') || null; } catch { return null; }
+}
+
+/**
+ * Fetch the last `limit` Jarvis sessions for the current user.
+ * Returns an empty array if unauthenticated or the API is unavailable.
+ * @param {number} limit
+ * @returns {Promise<Array>}
+ */
+async function fetchMemory(limit = 3) {
+  const token = _authToken();
+  if (!token) return [];
+  try {
+    const res = await fetch(`/api/memory?limit=${limit}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return [];
+    const { sessions } = await res.json();
+    return Array.isArray(sessions) ? sessions : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Persist a session record to /api/memory.
+ * Fails silently — memory is best-effort; the tutoring session is the priority.
+ * @param {{ topic?: string, mastery_score?: number, specific_errors?: string[], duration_ms?: number }} data
+ */
+async function saveMemory(data) {
+  const token = _authToken();
+  if (!token) return;
+  try {
+    await fetch('/api/memory', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+  } catch { /* best-effort */ }
+}
+
+/**
+ * Build a short context string from recent sessions to show the student
+ * before or at the start of a conversation.
+ * @param {Array} sessions
+ * @returns {string}  Human-readable summary, or '' if no history.
+ */
+function buildMemoryContext(sessions) {
+  if (!sessions.length) return '';
+
+  const latest = sessions[0];
+  const parts  = [];
+
+  if (latest.topic) parts.push(`Last topic: ${latest.topic}`);
+
+  const errors = latest.specific_errors?.filter(Boolean);
+  if (errors?.length) parts.push(`Recent errors: ${errors.slice(0, 3).join(', ')}`);
+
+  if (latest.mastery_score != null) {
+    parts.push(`Mastery: ${Math.round(latest.mastery_score * 100)}%`);
+  }
+
+  return parts.length ? parts.join(' · ') : '';
+}
+
 // ── ElevenLabs ────────────────────────────────────────────────────────────────
 
 /**
  * Start a Conversational AI session with the configured ElevenLabs agent.
- * On disconnect we re-arm the Porcupine wake-word listener.
+ * Fetches recent session history (episodic memory) and displays it briefly
+ * so the student knows Jarvis remembers where they left off.
+ * On disconnect we save the session and re-arm the Porcupine wake-word listener.
  * @param {{ signedUrl?: string, agentId?: string }} config
  */
 async function startConversation(config) {
+  // ── Session timer ─────────────────────────────────────────────────────────
+  _sessionStartMs = Date.now();
+
+  // ── Retrieve episodic memory ──────────────────────────────────────────────
+  const sessions = await fetchMemory(3);
+  const context  = buildMemoryContext(sessions);
+  if (context) showTranscript(context);
+
   const { Conversation } = await import('https://esm.sh/@elevenlabs/client@1');
 
   conversation = await Conversation.startSession({
@@ -229,6 +330,14 @@ async function startConversation(config) {
     onDisconnect: async () => {
       stopVolumeTracking();
       clearTranscript();
+
+      // ── Save episodic memory ────────────────────────────────────────────
+      const duration_ms = _sessionStartMs != null
+        ? Date.now() - _sessionStartMs
+        : null;
+      _sessionStartMs = null;
+      await saveMemory({ duration_ms });
+
       conversation = null;
       setOrbState('idle');
       setStatus('SYSTEMS ONLINE', 'online');
@@ -245,12 +354,12 @@ async function startConversation(config) {
       }
     },
 
-    // Show AI's spoken text as an on-screen subtitle
+    // Show AI's spoken text as an on-screen subtitle (LaTeX cleaned to spoken form)
     onMessage: (msg) => {
-      const text = msg?.agent_response
+      const raw  = msg?.agent_response
         ?? (msg?.source === 'ai' ? msg?.message : null)
         ?? null;
-      if (typeof text === 'string' && text.trim()) showTranscript(text);
+      if (typeof raw === 'string' && raw.trim()) showTranscript(latexToSpeech(raw));
     },
 
     onError: (errMsg) => {
