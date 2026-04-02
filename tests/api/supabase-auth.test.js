@@ -5,7 +5,7 @@
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import handler from '../../api/supabase-auth.js';
+import handler from '../../api/auth.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
