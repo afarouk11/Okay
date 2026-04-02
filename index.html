@@ -4865,12 +4865,12 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
                 <button class="tts-btn" onclick="document.getElementById('tutor-img-input').click()" title="Upload a photo of your question" style="flex-shrink:0;margin-bottom:2px">📷</button>
                 <input type="file" id="tutor-img-input" accept="image/*" style="display:none" onchange="handleTutorImage(event)">
                 <div style="position:relative;flex:1">
-                  <textarea class="tutor-input" id="tutor-input" placeholder="Message Jarvis..." onkeydown="tutorKey(event)" rows="1"></textarea>
+                  <textarea class="tutor-input" id="tutor-input" placeholder="Ask anything about A-Level Maths — e.g. 'Explain integration by parts'..." onkeydown="tutorKey(event)" rows="1"></textarea>
                   <button class="tutor-send" onclick="tutorSend()" title="Send">↑</button>
                 </div>
               </div>
             </div>
-            <p style="font-size:.72rem;color:rgba(90,116,153,0.6);margin-top:.6rem;text-align:center;max-width:780px;margin-left:auto;margin-right:auto">Synaptiq AI · A-Level Maths · Mark-scheme aligned · Type "show me the steps" for a visual breakdown</p>
+            <p style="font-size:.72rem;color:rgba(90,116,153,0.6);margin-top:.6rem;text-align:center;max-width:780px;margin-left:auto;margin-right:auto">Synaptiq AI · A-Level Maths · Mark-scheme aligned · <kbd style="font-family:inherit;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:3px;padding:.1rem .3rem;font-size:.7rem">Enter</kbd> to send · <kbd style="font-family:inherit;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:3px;padding:.1rem .3rem;font-size:.7rem">Shift+Enter</kbd> for new line</p>
           </div>
         </div>
       </div>
@@ -5631,7 +5631,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
           </div>
         </div>
         <!-- Filter -->
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center">
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem;align-items:center">
           <span style="font-size:.8rem;color:var(--muted)">Filter:</span>
           <button class="note-tag-btn selected" id="filter-all" onclick="filterNotes('all',this)">All</button>
           <button class="note-tag-btn" id="filter-Mathematics" onclick="filterNotes('Mathematics',this)">Mathematics</button>
@@ -5641,6 +5641,10 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
           <button class="note-tag-btn" id="filter-English" onclick="filterNotes('English',this)">English</button>
           <button class="note-tag-btn" id="filter-History" onclick="filterNotes('History',this)">History</button>
           <button class="note-tag-btn" id="filter-General" onclick="filterNotes('General',this)">General</button>
+        </div>
+        <!-- Notes search -->
+        <div style="margin-bottom:1.5rem">
+          <input type="search" id="notes-search" placeholder="🔍 Search notes..." oninput="searchNotes(this.value)" style="width:100%;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;padding:.6rem 1rem;color:var(--white);font-size:.875rem;box-sizing:border-box;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(201,168,76,0.4)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'">
         </div>
         <!-- Notes list -->
         <div id="notes-list">
@@ -7384,6 +7388,7 @@ function _showDashCore(sub) {
     // Render today's plan card before greeting (async, handles its own skeleton)
     if (typeof _renderTodaysPlan === 'function') _renderTodaysPlan();
     if (state.tutorHistory.length === 0) addTutorMsg('bot', typeof _buildTutorGreeting === 'function' ? _buildTutorGreeting() : `Hey! I'm Synaptiq ✦ — your AI study friend for A-Level Maths. Ask me anything!`);
+    setTimeout(() => { const inp = document.getElementById('tutor-input'); if (inp) inp.focus(); }, 100);
   }
 }
 
@@ -8678,7 +8683,7 @@ function addTutorMsg(role, text) {
     saveBtn.innerHTML = '📓 Save';
     saveBtn.onclick = () => {
       const noteInput = document.getElementById('note-text-input');
-      if (noteInput) { noteInput.value = el.textContent.trim(); showDash('notes'); showToast('✦ Saved to Notes'); saveBtn.innerHTML = '✓ Saved!'; saveBtn.style.color = 'var(--green)'; }
+      if (noteInput) { noteInput.value = el.textContent.trim(); saveNote(); saveBtn.innerHTML = '✓ Saved!'; saveBtn.style.color = 'var(--green)'; setTimeout(() => { saveBtn.innerHTML = '📓 Save'; saveBtn.style.color = 'var(--muted)'; }, 1500); }
     };
     utilRow.appendChild(copyBtn);
     utilRow.appendChild(saveBtn);
@@ -8768,6 +8773,7 @@ function tutorQuick(prompt) {
 }
 
 function clearTutor() {
+  if (state.tutorHistory.length > 0 && !confirm('Clear this chat? Your conversation history will be lost.')) return;
   state.tutorHistory = [];
   document.getElementById('tutor-messages').innerHTML = '';
   if (typeof _saveTutorMemory === 'function') _saveTutorMemory({ confusionStreak: 0 });
@@ -8835,6 +8841,8 @@ async function generateQuestions() {
   const genBtn = document.getElementById('generate-q-btn');
   if (genBtn) { genBtn.disabled = true; genBtn.textContent = '⏳ Generating…'; }
   output.classList.add('show');
+  // On mobile, scroll the output panel into view so the student sees the results
+  if (window.innerWidth < 768) { setTimeout(() => output.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100); }
   document.getElementById('q-output-title').textContent = `A-Level Maths — ${module}`;
   document.getElementById('q-output-sub').textContent = `${num} questions · ${board} ${level} · Target: ${grade} · ${difficulty}`;
   qContainer.innerHTML = '<div class="msg bot" style="max-width:100%">✦ Generating your questions...</div>';
@@ -12728,6 +12736,7 @@ function updatePomDisplay() {
 // ═══════════════════════════════════════
 let notes = [];
 let noteFilter = 'all';
+let noteSearch = '';
 let selectedNoteTag = 'Mathematics';
 
 function selectNoteTag(btn) {
@@ -12847,30 +12856,45 @@ async function deleteNote(id) {
 
 function filterNotes(filter, btn) {
   noteFilter = filter;
+  noteSearch = '';
+  const searchEl = document.getElementById('notes-search');
+  if (searchEl) searchEl.value = '';
   document.querySelectorAll('[id^="filter-"]').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   renderNotes();
 }
 
+function searchNotes(query) {
+  noteSearch = (query || '').trim().toLowerCase();
+  renderNotes();
+}
+
 function renderNotes() {
   const container = document.getElementById('notes-list');
-  const filtered = noteFilter === 'all' ? notes : notes.filter(n => n.subject === noteFilter);
+  let filtered = noteFilter === 'all' ? notes : notes.filter(n => n.subject === noteFilter);
+  if (noteSearch) filtered = filtered.filter(n => n.text.toLowerCase().includes(noteSearch) || (n.subject || '').toLowerCase().includes(noteSearch));
   if (!filtered.length) {
+    const emptyMsg = noteSearch ? `No notes matching "${noteSearch}"` : noteFilter === 'all' ? 'No notes yet' : 'No ' + noteFilter + ' notes';
     container.innerHTML = `<div style="text-align:center;padding:3rem;color:var(--muted)">
       <div style="font-size:3rem;margin-bottom:1rem">📓</div>
-      <div style="font-weight:700;margin-bottom:.5rem">${noteFilter === 'all' ? 'No notes yet' : 'No ' + noteFilter + ' notes'}</div>
+      <div style="font-weight:700;margin-bottom:.5rem">${emptyMsg}</div>
       <div style="font-size:.875rem">Write a note above or save an AI explanation</div>
     </div>`;
     return;
   }
   const subjectColors = {Mathematics:'#60A5FA',Physics:'#4ADE80',Chemistry:'#A78BFA',Biology:'#F472B6',English:'#FB923C',History:'#FBBF24',General:'#C9A84C'};
+  const highlight = (text) => {
+    if (!noteSearch) return text.replace(/\n/g,'<br>');
+    const escaped = noteSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return text.replace(/\n/g,'<br>').replace(new RegExp('(' + escaped + ')', 'gi'), '<mark style="background:rgba(201,168,76,0.35);color:var(--white);border-radius:2px;padding:0 1px">$1</mark>');
+  };
   container.innerHTML = filtered.map(n => `
     <div class="note-card" style="border-left-color:${subjectColors[n.subject]||'var(--gold)'}">
       <div class="note-card-header">
         <span class="note-subject-tag" style="background:${subjectColors[n.subject]||'var(--gold)'}22;color:${subjectColors[n.subject]||'var(--gold)'}">${n.subject}</span>
         <span class="note-date">${n.date} · ${n.time}</span>
       </div>
-      <div class="note-text">${n.text.replace(/\n/g,'<br>')}</div>
+      <div class="note-text">${highlight(n.text)}</div>
       <div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap">
         <button onclick="flashcardsFromNote(${n.id})" style="font-size:.75rem;padding:.3rem .7rem;background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:var(--blue);border-radius:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(96,165,250,0.2)'" onmouseout="this.style.background='rgba(96,165,250,0.1)'">🗂 Create Flashcards</button>
         <button onclick="copyNote(${n.id},this)" style="font-size:.75rem;padding:.3rem .7rem;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer">📋 Copy</button>
@@ -20855,6 +20879,8 @@ if (typeof showDash === 'function') {
 document.addEventListener('DOMContentLoaded', () => {
   initDailyChallenge();
   renderStudyCoach();
+  renderTipOfDay();
+  renderSpecProgress();
   // Auto-resize for tutor and dash chat textareas
   ['tutor-input', 'dash-input'].forEach(id => {
     const ta = document.getElementById(id);
