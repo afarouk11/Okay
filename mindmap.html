@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synaptiq — Website Roadmap Mind Map</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #03050D;
+    color: #fff;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  header {
+    text-align: center;
+    padding: 2.5rem 1rem 1.5rem;
+    background: linear-gradient(180deg, rgba(201,168,76,0.08) 0%, transparent 100%);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  header h1 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 0%, #C9A84C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.4rem;
+  }
+
+  header p {
+    color: rgba(255,255,255,0.45);
+    font-size: 0.85rem;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.6rem 1.2rem;
+    padding: 1.2rem 1.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .legend-item:hover { color: #fff; }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .map-container {
+    padding: 2rem 1.5rem 4rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  .phase-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .branch {
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.07);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .branch:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .branch-header {
+    padding: 1.1rem 1.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .branch-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+  }
+
+  .branch-title {
+    font-size: 1rem;
+    font-weight: 700;
+    flex: 1;
+  }
+
+  .branch-count {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.1);
+  }
+
+  .branch-arrow {
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.4);
+    transition: transform 0.25s;
+  }
+
+  .branch.open .branch-arrow { transform: rotate(90deg); }
+
+  .branch-body {
+    display: none;
+    padding: 0 1.4rem 1.2rem;
+  }
+
+  .branch.open .branch-body { display: block; }
+
+  .phase-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.3);
+    margin: 0.9rem 0 0.45rem;
+  }
+
+  .node-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .node {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.45rem 0.7rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.15s;
+    cursor: default;
+  }
+
+  .node:hover { background: rgba(255,255,255,0.07); }
+
+  .node-priority {
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-top: 0.35rem;
+  }
+
+  .node-text { color: rgba(255,255,255,0.8); }
+
+  .node-tag {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .tag-critical { background: rgba(239,68,68,0.2); color: #f87171; }
+  .tag-high     { background: rgba(249,115,22,0.2); color: #fb923c; }
+  .tag-medium   { background: rgba(234,179,8,0.2);  color: #facc15; }
+  .tag-low      { background: rgba(34,197,94,0.2);  color: #4ade80; }
+  .tag-future   { background: rgba(139,92,246,0.2); color: #a78bfa; }
+
+  /* Branch colour themes */
+  .branch-security .branch-header { background: rgba(239,68,68,0.1); border-bottom: 1px solid rgba(239,68,68,0.15); }
+  .branch-security .legend-dot, .branch-security .node-priority { background: #ef4444; }
+  .branch-security .branch-count { background: rgba(239,68,68,0.2); color: #f87171; }
+
+  .branch-infra .branch-header { background: rgba(249,115,22,0.1); border-bottom: 1px solid rgba(249,115,22,0.15); }
+  .branch-infra .legend-dot, .branch-infra .node-priority { background: #f97316; }
+  .branch-infra .branch-count { background: rgba(249,115,22,0.2); color: #fb923c; }
+
+  .branch-arch .branch-header { background: rgba(234,179,8,0.1); border-bottom: 1px solid rgba(234,179,8,0.15); }
+  .branch-arch .legend-dot, .branch-arch .node-priority { background: #eab308; }
+  .branch-arch .branch-count { background: rgba(234,179,8,0.2); color: #facc15; }
+
+  .branch-features .branch-header { background: rgba(34,197,94,0.1); border-bottom: 1px solid rgba(34,197,94,0.15); }
+  .branch-features .legend-dot, .branch-features .node-priority { background: #22c55e; }
+  .branch-features .branch-count { background: rgba(34,197,94,0.2); color: #4ade80; }
+
+  .branch-seo .branch-header { background: rgba(59,130,246,0.1); border-bottom: 1px solid rgba(59,130,246,0.15); }
+  .branch-seo .legend-dot, .branch-seo .node-priority { background: #3b82f6; }
+  .branch-seo .branch-count { background: rgba(59,130,246,0.2); color: #60a5fa; }
+
+  .branch-content .branch-header { background: rgba(139,92,246,0.1); border-bottom: 1px solid rgba(139,92,246,0.15); }
+  .branch-content .legend-dot, .branch-content .node-priority { background: #8b5cf6; }
+  .branch-content .branch-count { background: rgba(139,92,246,0.2); color: #a78bfa; }
+
+  .summary-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+  }
+
+  .summary-stat {
+    text-align: center;
+  }
+
+  .summary-stat .num {
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .summary-stat .lbl {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.45);
+    margin-top: 0.25rem;
+  }
+
+  .expand-all-btn {
+    display: block;
+    margin: 0 auto 1.5rem;
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.3);
+    color: #C9A84C;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.5rem 1.4rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .expand-all-btn:hover { background: rgba(201,168,76,0.2); }
+
+  footer {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: rgba(255,255,255,0.2);
+    font-size: 0.75rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Synaptiq — Roadmap Mind Map</h1>
+  <p>Full codebase audit · 31 March 2026 · 6 focus areas · 60+ action items</p>
+</header>
+
+<div class="legend">
+  <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Security</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#f97316"></span>Infrastructure</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#eab308"></span>Architecture</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#22c55e"></span>Features</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span>Marketing / SEO</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span>Content</span>
+  <span class="legend-item"><span class="legend-dot" style="background:transparent;border:1px solid #f87171;width:10px;height:10px;border-radius:2px"></span>
+    <span style="color:#f87171;font-size:.72rem">Critical</span></span>
+  <span class="legend-item"><span class="legend-dot" style="background:transparent;border:1px solid #fb923c;width:10px;height:10px;border-radius:2px"></span>
+    <span style="color:#fb923c;font-size:.72rem">High</span></span>
+  <span class="legend-item"><span class="legend-dot" style="background:transparent;border:1px solid #facc15;width:10px;height:10px;border-radius:2px"></span>
+    <span style="color:#facc15;font-size:.72rem">Medium</span></span>
+  <span class="legend-item"><span class="legend-dot" style="background:transparent;border:1px solid #4ade80;width:10px;height:10px;border-radius:2px"></span>
+    <span style="color:#4ade80;font-size:.72rem">Low / Future</span></span>
+</div>
+
+<div class="map-container">
+
+  <div class="summary-bar">
+    <div class="summary-stat"><div class="num" style="color:#ef4444">8</div><div class="lbl">Critical Security Issues</div></div>
+    <div class="summary-stat"><div class="num" style="color:#f97316">7</div><div class="lbl">Infrastructure Gaps</div></div>
+    <div class="summary-stat"><div class="num" style="color:#eab308">8</div><div class="lbl">Architecture Debts</div></div>
+    <div class="summary-stat"><div class="num" style="color:#22c55e">9</div><div class="lbl">Feature Completions</div></div>
+    <div class="summary-stat"><div class="num" style="color:#3b82f6">12</div><div class="lbl">Marketing / SEO Fixes</div></div>
+    <div class="summary-stat"><div class="num" style="color:#8b5cf6">4</div><div class="lbl">Content Actions</div></div>
+  </div>
+
+  <button class="expand-all-btn" onclick="toggleAll()">Expand All Branches</button>
+
+  <div class="phase-grid">
+
+    <!-- ─── SECURITY ─────────────────────────────────────────── -->
+    <div class="branch branch-security open" id="branch-security">
+      <div class="branch-header" onclick="toggle('branch-security')">
+        <span class="branch-icon">🔴</span>
+        <span class="branch-title">Security</span>
+        <span class="branch-count">8 issues</span>
+        <span class="branch-arrow">▶</span>
+      </div>
+      <div class="branch-body">
+        <div class="phase-label">Do before any growth</div>
+        <ul class="node-list">
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/supabase-auth</strong> — upsert_profile, patch_profile, get_profile have zero auth. Any caller can escalate to is_admin=true</span><span class="node-tag tag-critical">Critical</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/resend</strong> — no auth, no rate limit. Anyone can send Synaptiq-branded emails to any address</span><span class="node-tag tag-critical">Critical</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/chat</strong> — no auth gate. Caller controls model + max_tokens. Unauthenticated Anthropic credit burn</span><span class="node-tag tag-critical">Critical</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/stripe</strong> — CORS wildcard hardcoded. Billing portal accessible by any caller who knows an email</span><span class="node-tag tag-critical">Critical</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/tts</strong> — no auth. Unauthenticated ElevenLabs quota drain</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/auth verify</strong> — accepts demo_token_ strings even when Supabase is fully configured</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/auth login</strong> — auto-confirms unverified emails, bypassing email verification entirely</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/admin</strong> — reset_users deletes all accounts with only a static key and a confirm() dialog. No timing-safe key comparison</span><span class="node-tag tag-high">High</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ─── INFRASTRUCTURE ──────────────────────────────────── -->
+    <div class="branch branch-infra open" id="branch-infra">
+      <div class="branch-header" onclick="toggle('branch-infra')">
+        <span class="branch-icon">🟠</span>
+        <span class="branch-title">Infrastructure</span>
+        <span class="branch-count">7 gaps</span>
+        <span class="branch-arrow">▶</span>
+      </div>
+      <div class="branch-body">
+        <div class="phase-label">Stability before scale</div>
+        <ul class="node-list">
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Missing migration</strong> — processed_webhooks table used by webhook.js but never created. First Stripe webhook throws a DB error</span><span class="node-tag tag-critical">Critical</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Missing migration</strong> — exams table listed in export.js TABLES array but no CREATE TABLE exists</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Schema drift</strong> — duplicate columns in profiles: board + exam_board, target + target_grade, year + year_group. Pick one per concept</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Flashcards</strong> — stored as JSONB in profiles.flashcards but export.js treats it as a separate table. Pick one approach</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Env vars</strong> — ADMIN_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_STUDENT_ANNUAL, SITE_URL missing from .env.example. £20 vs £35 price discrepancy</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Rate limiting</strong> — in-memory per Vercel instance. Ineffective under concurrent load. Replace with Upstash Redis</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>JWT refresh</strong> — no refresh token loop on frontend. Supabase tokens expire ~1hr, users silently get 401s</span><span class="node-tag tag-medium">Medium</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ─── ARCHITECTURE ─────────────────────────────────────── -->
+    <div class="branch branch-arch" id="branch-arch">
+      <div class="branch-header" onclick="toggle('branch-arch')">
+        <span class="branch-icon">🟡</span>
+        <span class="branch-title">Architecture</span>
+        <span class="branch-count">8 debts</span>
+        <span class="branch-arrow">▶</span>
+      </div>
+      <div class="branch-body">
+        <div class="phase-label">Long-term maintainability</div>
+        <ul class="node-list">
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>22,407-line index.html</strong> — entire app in one file. No code splitting, no bundler, no modules. Biggest long-term risk</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Dual auth systems</strong> — auth.js and supabase-auth.js both handle login/profile. Reconcile into one canonical handler</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Service worker</strong> — cache version (v13) manually bumped. No precaching of JS/CSS/fonts. No background sync. skipWaiting on install can cause tab split-brain</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>PWA icons</strong> — SVG only. iOS Safari ignores SVG manifest icons. Need PNG at 192×192 and 512×512. Empty screenshots array</span><span class="node-tag tag-low">Low</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Newton's-laws apostrophe bug</strong> — topic name interpolated into single-quoted onclick string in lessons.html. Breaks JS syntax</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>notes.js / progress.js</strong> — do not use applyHeaders from _lib.js. Missing security headers. No rate limiting</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>SITE_URL fallback</strong> — auth.js password reset falls back to synaptiq.vercel.app, not synaptiqai.co.uk. Wrong canonical domain in reset emails</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>MRR hardcoded</strong> — admin.js uses magic number 35 for MRR calculation. Breaks silently if pricing changes</span><span class="node-tag tag-low">Low</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ─── FEATURES ─────────────────────────────────────────── -->
+    <div class="branch branch-features" id="branch-features">
+      <div class="branch-header" onclick="toggle('branch-features')">
+        <span class="branch-icon">🟢</span>
+        <span class="branch-title">Feature Completion</span>
+        <span class="branch-count">9 items</span>
+        <span class="branch-arrow">▶</span>
+      </div>
+      <div class="branch-body">
+        <div class="phase-label">Half-built features to finish</div>
+        <ul class="node-list">
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Real leaderboard</strong> — sp-leaderboard shows deterministic fake data (seeded by week). Wire to actual Supabase XP rankings</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Real assignments</strong> — sp-assignments shows 2 hardcoded fake entries. Build /api/assignments CRUD + real teacher dashboard backend</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Real peer presence</strong> — "X students studying now" is a Math.floor(Date.now()) fake. Wire to Supabase Realtime or a presence counter</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Assignments sidebar badge</strong> — hardcoded "2" badge. Replace with live unread count from backend</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Daily Quests + Boss Challenge</strong> — render as "Loading…" with no fallback if JS fails. Add static fallback content</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Curriculum panel</strong> — sp-curriculum shows "Loading curriculum…" with one hardcoded tab. Complete with all boards and topics</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Family plan</strong> — mentioned in FAQ as "coming soon". Not implemented anywhere. Build pricing tier + Stripe integration</span><span class="node-tag tag-low">Low</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Dead stubs</strong> — molecule-panel and force-diagram-panel are unreachable display:none canvases. Remove or build them out</span><span class="node-tag tag-low">Low</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>sp-repetition</strong> — duplicate of sp-flashcards, not in sidebar, not reachable. Merge or remove</span><span class="node-tag tag-low">Low</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ─── MARKETING / SEO ──────────────────────────────────── -->
+    <div class="branch branch-seo" id="branch-seo">
+      <div class="branch-header" onclick="toggle('branch-seo')">
+        <span class="branch-icon">🔵</span>
+        <span class="branch-title">Marketing &amp; SEO</span>
+        <span class="branch-count">12 fixes</span>
+        <span class="branch-arrow">▶</span>
+      </div>
+      <div class="branch-body">
+        <div class="phase-label">Quick wins</div>
+        <ul class="node-list">
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>sitemap.xml</strong> — does not exist. Essential for Google indexing of all public pages</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>robots.txt</strong> — does not exist. Needed to block /admin, /api, test.html from crawlers</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Open Graph + Twitter Cards</strong> — zero pages have og: or twitter: meta tags. Social previews are blank</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Broken footer links</strong> — pricing.html links /privacy, /terms, /cookies but files are privacy-policy.html etc. Will 404 on static host</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>admin.html noindex</strong> — page is indexable by Google. Add meta robots noindex + nofollow</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Registered address placeholder</strong> — privacy-policy.html has [Your Registered Address] still in place. Legal risk</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Cookie consent banner</strong> — cookies.html references a consent banner but none exists in any audited page. ICO requirement</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Canonical tags</strong> — missing from pricing.html, contact.html, lessons.html, questions.html. Duplicate content risk</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/schools landing page</strong> — Schools is a key revenue tier but has no dedicated page. Decision-makers need a proper landing page</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/about page</strong> — no team or mission page. Trust signal for parents, schools, and press</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/help centre</strong> — FAQs scattered across pricing, contact, and lessons pages. Consolidate into a single searchable /help page</span><span class="node-tag tag-low">Low</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/accessibility statement</strong> — platform advertises ADHD/Dyslexia/Dyscalculia modes. A dedicated statement page builds trust and may be legally required</span><span class="node-tag tag-low">Low</span></li>
+        </ul>
+
+        <div class="phase-label">Growth pages</div>
+        <ul class="node-list">
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/blog</strong> — high-value A-Level Maths SEO opportunity ("differentiation explained", "AQA past paper tips"). No blog exists yet</span><span class="node-tag tag-low">Low</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ─── CONTENT ──────────────────────────────────────────── -->
+    <div class="branch branch-content" id="branch-content">
+      <div class="branch-header" onclick="toggle('branch-content')">
+        <span class="branch-icon">🟣</span>
+        <span class="branch-title">Content (A-Level Maths Only)</span>
+        <span class="branch-count">4 items</span>
+        <span class="branch-arrow">▶</span>
+      </div>
+      <div class="branch-body">
+        <div class="phase-label">A-Level Maths only — no other subjects</div>
+        <ul class="node-list">
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Fix false subject claims</strong> — contact.html FAQ lists Physics, Chemistry, Biology, English, History as supported. These do not exist. Remove and replace with accurate scope: A-Level Mathematics only</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>AS-Level alignment</strong> — Year 12 AS-Level topics inconsistently scoped across sp-tutor, lessons.html, questions.html. Define and align all tools</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Board parity</strong> — MEI appears in lessons.html but not questions.html. WJEC + Eduqas coverage uneven. Align both tools to same board set</span><span class="node-tag tag-medium">Medium</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Exam Prediction accuracy</strong> — currently pure AI guess with no past paper frequency data. Consider embedding topic frequency per board per year</span><span class="node-tag tag-low">Low</span></li>
+        </ul>
+      </div>
+    </div>
+
+  </div><!-- end phase-grid -->
+</div><!-- end map-container -->
+
+<footer>
+  Synaptiq Roadmap · Generated 31 March 2026 · Full multi-agent codebase audit
+</footer>
+
+<script>
+  function toggle(id) {
+    const el = document.getElementById(id);
+    el.classList.toggle('open');
+  }
+
+  let allOpen = true;
+  function toggleAll() {
+    const branches = document.querySelectorAll('.branch');
+    allOpen = !allOpen;
+    branches.forEach(b => allOpen ? b.classList.add('open') : b.classList.remove('open'));
+    document.querySelector('.expand-all-btn').textContent = allOpen ? 'Collapse All Branches' : 'Expand All Branches';
+  }
+
+  // Set initial button state
+  document.querySelector('.expand-all-btn').textContent = 'Collapse All Branches';
+</script>
+</body>
+</html>
