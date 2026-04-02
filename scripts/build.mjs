@@ -8,6 +8,7 @@
  * Set these in Vercel → Project → Settings → Environment Variables:
  *   GA4_MEASUREMENT_ID   — e.g. G-ABC123DEF4
  *   ELEVEN_AGENT_ID      — ElevenLabs Conversational AI agent ID (for JARVIS voice)
+ *                          Served at runtime via /api/jarvis-config — no build injection needed.
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -67,28 +68,6 @@ if (supabaseUrl && supabaseAnon) {
       console.log(`✅ Supabase keys injected into ${page}`);
     }
   }
-}
-
-// ── Inject JARVIS keys into jarvis.html ───────────────────────────────────────
-const elevenAgentId  = process.env.ELEVEN_AGENT_ID;
-
-let jarvisHtml = readFileSync(join(root, 'jarvis.html'), 'utf8');
-let jarvisChanged = false;
-
-if (elevenAgentId) {
-  jarvisHtml = jarvisHtml.replace(
-    /content="ELEVEN_AGENT_ID_PLACEHOLDER"/,
-    `content="${elevenAgentId}"`
-  );
-  console.log('✅ ElevenLabs agent ID injected into jarvis.html');
-  jarvisChanged = true;
-} else {
-  console.warn('⚠️  ELEVEN_AGENT_ID not set — JARVIS voice disabled');
-}
-
-if (jarvisChanged) {
-  writeFileSync(join(root, 'jarvis.html'), jarvisHtml, 'utf8');
-  console.log('✅ jarvis.html updated');
 }
 
 console.log('✅ Build complete');

@@ -4,14 +4,11 @@
  * Wake word:  Web Speech API (SpeechRecognition — built into Chrome / Edge)
  * Voice AI:   ElevenLabs Conversational AI  (@11labs/client)
  *
- * API keys are injected into jarvis.html at build time by scripts/build.mjs:
- *   ELEVEN_AGENT_ID_PLACEHOLDER →  meta[name="eleven-agent-id"]
+ * Agent config is fetched at runtime from /api/jarvis-config, which returns
+ * either a short-lived signed URL (preferred) or the plain agent ID.
  *
  * ElevenLabs CDN: https://esm.sh/@11labs/client
  */
-
-// ── Keys (injected by build pipeline) ────────────────────────────────────────
-const ELEVEN_AGENT_ID = document.querySelector('meta[name="eleven-agent-id"]')?.content ?? '';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const hologram        = document.getElementById('hologram');
@@ -31,6 +28,7 @@ let recognition = null;
 let conversation= null;
 let toastTimer  = null;
 let volumeRafId = null;  // requestAnimationFrame handle for volume tracking
+let jarvisConfig= null;  // { signedUrl? } or { agentId? } — fetched from /api/jarvis-config
 
 // Maximum additional scale applied at peak volume (orb grows by up to 35 %)
 const VOLUME_SCALE_FACTOR = 0.35;
@@ -209,12 +207,13 @@ function setStatus(text, dotVariant = '') {
 /**
  * Start a Conversational AI session with the configured ElevenLabs agent.
  * On disconnect we re-arm the Porcupine wake-word listener.
+ * @param {{ signedUrl?: string, agentId?: string }} config
  */
-async function startConversation() {
+async function startConversation(config) {
   const { Conversation } = await import('https://esm.sh/@11labs/client');
 
   conversation = await Conversation.startSession({
-    agentId: ELEVEN_AGENT_ID,
+    ...(config.signedUrl ? { signedUrl: config.signedUrl } : { agentId: config.agentId }),
 
     onConnect: () => {
       setOrbState('active');
@@ -346,7 +345,7 @@ async function handleWakeWord() {
 
   try {
     await disarmWakeWord();
-    await startConversation();
+    await startConversation(jarvisConfig);
   } catch (err) {
     console.error('[JARVIS] Session start failed:', err);
     showToast('Could not reach ElevenLabs — check your agent ID and network.');
@@ -369,8 +368,27 @@ endBtn.addEventListener('click', async () => {
 // ── Initialisation ────────────────────────────────────────────────────────────
 
 async function init() {
-  // Guard: ElevenLabs agent ID not yet configured
-  if (!ELEVEN_AGENT_ID || ELEVEN_AGENT_ID === 'ELEVEN_AGENT_ID_PLACEHOLDER') {
+  // Fetch agent config at runtime — avoids build-time injection dependency
+  try {
+    const res = await fetch('/api/jarvis-config');
+    if (!res.ok) {
+      const { error } = await res.json().catch((parseErr) => {
+        console.error('[JARVIS] Config response parse error (HTTP', res.status, '):', parseErr);
+        return {};
+      });
+      setStatus('AGENT ID NOT SET', 'error');
+      showToast(error || 'Set ELEVEN_AGENT_ID in Vercel environment variables.', 0);
+      return;
+    }
+    jarvisConfig = await res.json();
+  } catch (err) {
+    console.error('[JARVIS] Failed to fetch config:', err);
+    setStatus('AGENT ID NOT SET', 'error');
+    showToast('Set ELEVEN_AGENT_ID in Vercel environment variables.', 0);
+    return;
+  }
+
+  if (!jarvisConfig.signedUrl && !jarvisConfig.agentId) {
     setStatus('AGENT ID NOT SET', 'error');
     showToast('Set ELEVEN_AGENT_ID in Vercel environment variables.', 0);
     return;
