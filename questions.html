@@ -4,9 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Question Paper Generator — Synaptiq</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false},{left:'$',right:'$',display:false}],throwOnError:false})"></script>
 <style>
 :root {
   --black:#0A0C12; --bg2:#12141C; --bg3:#1A1D28; --bg4:#22263A;
@@ -63,6 +68,7 @@ body{background:var(--black);color:var(--white);font-family:var(--font);min-heig
 .question-num{font-size:.8rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem}
 .marks-badge{background:rgba(201,168,76,0.15);color:var(--gold);border-radius:6px;padding:.2rem .5rem;font-size:.75rem}
 .question-text{font-size:.9rem;line-height:1.7;margin-bottom:.75rem;color:var(--white)}
+.question-hint{font-size:.8rem;color:var(--gold);margin-bottom:.75rem}
 .answer-space{min-height:80px;background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.1);border-radius:8px;padding:.75rem;font-size:.875rem;color:var(--muted);cursor:text;transition:all .2s}
 .answer-space:focus{color:var(--white);border-color:rgba(201,168,76,0.3);background:rgba(201,168,76,0.03);outline:none}
 
@@ -159,7 +165,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font);min-heig
       </div>
       <div class="form-group" style="margin-top:.25rem">
         <label>Specific Topics (optional)</label>
-        <input type="text" id="q-topics" placeholder="e.g. Quadratics, Pythagoras, Trigonometry">
+        <input type="text" id="q-topics" placeholder="e.g. Quadratics, Pythagoras, Trigonometry"
+               onblur="suggestZPDDifficulty(this.value)">
+        <div id="zpd-hint" style="display:none;font-size:.72rem;margin-top:.4rem;padding:.35rem .65rem;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:8px;color:#34d399"></div>
       </div>
       <button class="btn-gold" id="gen-btn" onclick="generateQuestions()">✦ Generate with Synaptiq</button>
     </div>
@@ -177,127 +185,158 @@ body{background:var(--black);color:var(--white);font-family:var(--font);min-heig
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script>
-const SUPABASE_URL = window.SUPABASE_URL || '';
-const SUPABASE_ANON = window.SUPABASE_ANON_KEY || '';
-let supabaseClient = null;
-let currentUser = null;
+<script type="module">
+import { initAuth, callClaude, getReply, showToast, sanitizeHTML, getUser } from '/src/tutor-common.js';
 
-async function initAuth() {
-  const overlay = document.getElementById('auth-overlay');
-  // Try Supabase first
-  if (SUPABASE_URL && SUPABASE_ANON && window.supabase) {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
-      currentUser = { token: session.access_token, ...session.user };
-      overlay.remove();
+// ── ZPD Difficulty Suggestion ─────────────────────────────────────────────────
+const GRADE_OPTIONS = ['Grade 4–5', 'Grade 6–7', 'Grade 7–8', 'Grade 8–9'];
+
+function masteryToGradeIndex(level) {
+  if (level <= 1) return 0;
+  if (level <= 2) return 1;
+  if (level <= 3) return 2;
+  return 3;
+}
+
+async function suggestZPDDifficulty(topicsValue) {
+  const hint = document.getElementById('zpd-hint');
+  if (!hint) return;
+
+  const firstTopic = topicsValue.split(',')[0].trim();
+  if (!firstTopic) { hint.style.display = 'none'; return; }
+
+  const user  = getUser();
+  const token = user?.token || localStorage.getItem('synaptiq_token');
+  if (!token || token.startsWith('demo_token_')) return;
+
+  try {
+    const res = await fetch('/api/adaptive', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'get_review_queue' })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const match = (data.review_queue || []).find(t =>
+      t.topic.toLowerCase().includes(firstTopic.toLowerCase()) ||
+      firstTopic.toLowerCase().includes(t.topic.toLowerCase())
+    );
+
+    const gradeEl = document.getElementById('q-grade');
+    if (!match) {
+      if (gradeEl) gradeEl.value = GRADE_OPTIONS[0];
+      hint.textContent = `🧠 No practice data for "${firstTopic}" yet — starting at Grade 4–5. Work your way up!`;
+      hint.style.display = '';
       return;
     }
-  }
-  // Fallback: check localStorage token
-  try {
-    const token = localStorage.getItem('synaptiq_token');
-    if (token) { currentUser = { token }; overlay.remove(); return; }
-    const saved = localStorage.getItem('synaptiq_user');
-    if (saved) { currentUser = JSON.parse(saved); overlay.remove(); return; }
-  } catch(e) {}
-  // Not logged in — redirect
-  window.location.href = '/';
+
+    const gradeIdx = masteryToGradeIndex(match.mastery_level);
+    const suggestedGrade = GRADE_OPTIONS[gradeIdx];
+
+    if (gradeEl) {
+      const opts = Array.from(gradeEl.options);
+      const target = opts.find(o => o.text.replace('–', '-') === suggestedGrade.replace('–', '-'));
+      if (target) gradeEl.value = target.value;
+    }
+
+    hint.textContent = `🧠 Mastery level ${match.mastery_level}/5 for "${firstTopic}" — set to ${suggestedGrade} (ZPD targeting)`;
+    hint.style.display = '';
+  } catch (_) {}
 }
 
-async function callClaude(messages, system) {
-  const body = { max_tokens:2000, messages };
-  if (system) body.system = system;
-  const headers = { 'Content-Type':'application/json' };
-  if (currentUser?.token) headers['Authorization'] = 'Bearer ' + currentUser.token;
-  const r = await fetch('/api/chat', { method:'POST', headers, body:JSON.stringify(body) });
-  const text = await r.text();
-  let data;
-  try { data = JSON.parse(text); } catch(e) { throw new Error('Bad response (' + r.status + ')'); }
-  if (!r.ok) throw new Error(data.error || 'API error ' + r.status);
-  if (data.error) throw new Error(data.error.message || 'Anthropic error');
-  return data;
-}
-
-function getReply(data) {
-  return data.content && data.content[0] ? data.content[0].text : '';
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
+// ── Question generation ───────────────────────────────────────────────────────
 async function generateQuestions() {
-  const sub = document.getElementById('q-subject').value;
-  const board = document.getElementById('q-board').value;
-  const level = document.getElementById('q-level').value;
-  const num = document.getElementById('q-num').value;
-  const type = document.getElementById('q-type').value;
-  const grade = document.getElementById('q-grade').value;
+  const sub    = document.getElementById('q-subject').value;
+  const board  = document.getElementById('q-board').value;
+  const level  = document.getElementById('q-level').value;
+  const num    = document.getElementById('q-num').value;
+  const type   = document.getElementById('q-type').value;
+  const grade  = document.getElementById('q-grade').value;
   const topics = document.getElementById('q-topics').value;
-  const btn = document.getElementById('gen-btn');
+  const btn    = document.getElementById('gen-btn');
   const output = document.getElementById('output-area');
 
   btn.disabled = true;
   btn.textContent = '✦ Generating...';
-  output.innerHTML = `<div class="loading-msg"><div class="dot-pulse"><span></span><span></span><span></span></div>Synaptiq is generating your ${num} ${sub} questions...</div>`;
+  output.innerHTML = `<div class="loading-msg"><div class="dot-pulse"><span></span><span></span><span></span></div>Synaptiq is generating your ${sanitizeHTML(num)} ${sanitizeHTML(sub)} questions...</div>`;
 
   const sys = `You are an expert UK exam question writer specialising in ${board} ${level} ${sub}.
 Generate exactly ${num} exam-style questions for ${grade} target.
 Question types: ${type}. ${topics ? 'Focus on: ' + topics : 'Cover key specification topics.'}
 Format STRICTLY as JSON array: [{"question":"...","marks":3,"type":"short answer","hint":"..."}]
 Each question must be exam-quality, use UK spelling, follow ${board} mark scheme style.
+Use LaTeX for all mathematical expressions: $...$ for inline, $$...$$ for display.
 ONLY return the JSON array, nothing else.`;
 
   try {
-    const data = await callClaude([{ role:'user', content:`Generate ${num} ${board} ${level} ${sub} questions, ${grade} target.${topics?' Topics: '+topics:''}` }], sys);
+    const data  = await callClaude(
+      [{ role: 'user', content: `Generate ${num} ${board} ${level} ${sub} questions, ${grade} target.${topics ? ' Topics: ' + topics : ''}` }],
+      sys,
+      2000
+    );
     const reply = getReply(data);
+
     let questions;
     try {
-      questions = JSON.parse(reply.replace(/```json|```/g, '').trim());
-    } catch(e) {
-      output.innerHTML = '<div style="background:var(--bg3);border-radius:12px;padding:1.5rem;color:var(--muted)">⚠️ Could not generate questions. Please try again with fewer questions or a different subject.</div>';
+      const clean = reply.replace(/```json|```/g, '').trim();
+      const sanitized = clean.replace(/(?<!\\)\\(?!["\\/bfnrtu])/g, '\\\\');
+      questions = JSON.parse(sanitized);
+      if (!Array.isArray(questions) || questions.length === 0) throw new Error('empty');
+    } catch (_) {
+      output.innerHTML = '<div style="background:var(--bg3);border-radius:12px;padding:1.5rem;color:var(--muted)">⚠️ Could not parse the generated questions. Please try again.</div>';
       return;
     }
 
     let html = `<div class="output-header">
-      <div><div class="output-title">${sub} Practice Paper</div>
-      <div class="output-meta">${num} questions · ${board} ${level} · ${grade}</div></div>
+      <div>
+        <div class="output-title">${sanitizeHTML(sub)} Practice Paper</div>
+        <div class="output-meta">${sanitizeHTML(String(num))} questions · ${sanitizeHTML(board)} ${sanitizeHTML(level)} · ${sanitizeHTML(grade)}</div>
+      </div>
       <div class="output-actions">
         <button class="btn-outline" onclick="window.print()">🖨️ Print</button>
-        <button class="btn-outline" onclick="generateQuestions()">↻ Regenerate</button>
+        <button class="btn-outline" id="regen-btn">↻ Regenerate</button>
       </div>
     </div>`;
 
     questions.forEach((q, i) => {
       html += `<div class="question-block">
-        <div class="question-num">Question ${i+1} <span class="marks-badge">${q.marks||3} marks</span></div>
+        <div class="question-num">Question ${i + 1} <span class="marks-badge">${sanitizeHTML(String(q.marks || 3))} marks</span></div>
         <div class="question-text">${sanitizeHTML(q.question)}</div>
-        ${q.hint ? `<div style="font-size:.8rem;color:var(--gold);margin-bottom:.75rem">💡 Hint: ${sanitizeHTML(q.hint)}</div>` : ''}
-        <div class="answer-space" contenteditable="true" spellcheck="true">Click here to write your answer...</div>
+        ${q.hint ? `<div class="question-hint">💡 Hint: ${sanitizeHTML(q.hint)}</div>` : ''}
+        <div class="answer-space" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true" aria-label="Answer space for question ${i + 1}">Click here to write your answer...</div>
       </div>`;
     });
 
     output.innerHTML = html;
+
+    // Wire regenerate button
+    document.getElementById('regen-btn')?.addEventListener('click', generateQuestions);
+
+    // Render LaTeX in the output
+    if (window.renderMathInElement) {
+      try { renderMathInElement(output, { delimiters: [{left:'$$',right:'$$',display:true},{left:'\\(',right:'\\)',display:false},{left:'$',right:'$',display:false}], throwOnError: false }); } catch (_) {}
+    }
+
     showToast('✦ Questions generated!');
-  } catch(e) {
-    output.innerHTML = `<div style="background:var(--bg3);border-radius:12px;padding:1.5rem;color:var(--muted)">⚠️ ${sanitizeHTML(e.message || 'Error generating questions. Please try again.')}</div>`;
+  } catch (e) {
+    const isLimit = e.code === 'daily_limit_exceeded';
+    output.innerHTML = `<div style="background:var(--bg3);border-radius:12px;padding:1.5rem;color:var(--muted)">
+      ⚠️ ${sanitizeHTML(e.message || 'Error generating questions. Please try again.')}
+      ${isLimit ? '<br><br><a href="/pricing.html" style="color:var(--gold)">Upgrade your plan →</a>' : ''}
+    </div>`;
   }
+
   btn.disabled = false;
   btn.textContent = '✦ Generate with Synaptiq';
 }
 
-function sanitizeHTML(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// ── Initialise ────────────────────────────────────────────────────────────────
+await initAuth();
 
-// Init on load
-initAuth();
+// Expose for inline onclick handlers
+window.generateQuestions    = generateQuestions;
+window.suggestZPDDifficulty = suggestZPDDifficulty;
 </script>
 </body>
 </html>

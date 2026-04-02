@@ -1,10 +1,15 @@
 // Stripe Checkout Session + Customer Portal Handler
+import { applyHeaders, isRateLimited, getIp } from './_lib.js';
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  applyHeaders(res, 'POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const ip = getIp(req);
+  if (isRateLimited(`${ip}:stripe`, 10, 60_000)) {
+    return res.status(429).json({ error: 'Too many requests — please try again later' });
+  }
 
   const stripeKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeKey) return res.status(500).json({ error: 'Missing Stripe key' });
