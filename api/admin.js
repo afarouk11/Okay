@@ -63,7 +63,7 @@ export default async function handler(req, res) {
     let failed = 0;
     for (const user of (users || [])) {
       try {
-        await fetch(`${process.env.SITE_URL}/api/email`, {
+        await fetch(`${process.env.SITE_URL}/api/resend`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

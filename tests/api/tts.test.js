@@ -89,6 +89,13 @@ describe('validation', () => {
     expect(r.body.error).toMatch(/text/i);
   });
 
+  it('returns 400 when text is an empty string', async () => {
+    const r = res();
+    await handler(req({ text: '' }), r);
+    expect(r.statusCode).toBe(400);
+    expect(r.body.error).toMatch(/text/i);
+  });
+
   it('returns 400 when text is not a string', async () => {
     const r = res();
     await handler(req({ text: 42 }), r);
@@ -141,6 +148,26 @@ describe('successful TTS stream', () => {
     });
     await handler(req({ text: 'Hi', voice: 'jarvis' }), res());
     expect(capturedUrl).toContain('JBFqnCBsd6RMkjVDRZzb');
+  });
+
+  it('uses the daniel voice when requested', async () => {
+    let capturedUrl;
+    global.fetch = vi.fn().mockImplementationOnce((url) => {
+      capturedUrl = url;
+      return Promise.resolve({ ok: true, body: mockStream() });
+    });
+    await handler(req({ text: 'Hi', voice: 'daniel' }), res());
+    expect(capturedUrl).toContain('onwK4e9ZLuTAKqWW03F9');
+  });
+
+  it('uses the dorothy voice when requested', async () => {
+    let capturedUrl;
+    global.fetch = vi.fn().mockImplementationOnce((url) => {
+      capturedUrl = url;
+      return Promise.resolve({ ok: true, body: mockStream() });
+    });
+    await handler(req({ text: 'Hi', voice: 'dorothy' }), res());
+    expect(capturedUrl).toContain('ThT5KcBeYPX3keUQqHPh');
   });
 
   it('falls back to alice for an unknown voice name', async () => {
