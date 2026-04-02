@@ -17,6 +17,31 @@ The platform is fundamentally solid — auth, payments, emails, gamification, 30
 ## Phase 0 — Critical Security
 > Do these before any marketing, growth, or press coverage.
 
+Every item here reflects a live security risk in production.
+
+### 0.1 Lock down chat-related API access
+- **Risk:** Unauthenticated or weakly controlled access to AI chat functionality can lead to uncontrolled cost exposure and abuse.
+- **Mitigation:** Require strong authentication for all chat-related API calls, enforce a server-side allowlist of supported models, and cap response sizes to a safe upper bound.
+- **Priority:** CRITICAL
+
+### 0.2 Lock down text-to-speech access
+- **Risk:** Unauthenticated access to text-to-speech functionality can drain third-party quotas and be used for abuse.
+- **Mitigation:** Require the same level of authentication and authorization checks as other user-facing features, ensuring only valid, logged-in users can invoke TTS operations.
+- **Priority:** CRITICAL
+
+### 0.3 Secure outbound email functionality
+- **Risk:** Email-sending capabilities without proper authentication and rate limiting can allow impersonation of the product and large-scale spam.
+- **Mitigation:** Restrict email-sending to authenticated, authorized flows and/or internal-only usage, and ensure appropriate abuse safeguards (e.g. rate limits, template and recipient validation).
+- **Priority:** CRITICAL
+
+### 0.4 Prevent privilege escalation in profile and storage flows
+- **Risk:** Profile and upload-related operations without authentication or authorization checks can allow users to read or modify other users’ data or escalate privileges.
+- **Mitigation:** Enforce authentication on all profile and upload operations and ensure that callers can only act on their own data, with explicit checks for any elevated roles.
+- **Priority:** CRITICAL
+
+### 0.5 Restrict access to billing and subscription management
+- **Risk:** Overly permissive access controls or cross-origin policies around billing and subscription management can expose sensitive customer billing portals.
+- **Mitigation:** Require authentication and strict authorization checks for billing-related actions, and ensure cross-origin and redirect policies only allow trusted origins.
 Every item here is a live vulnerability on production.
 
 ### 0.1 Add auth gate to `/api/chat`
