@@ -174,3 +174,24 @@ describe('unsupported method', () => {
     expect(r.statusCode).toBe(405);
   });
 });
+
+// ─── POST — activity log update path ─────────────────────────────────────────
+
+describe('POST — activity log update (existing entry)', () => {
+  it('updates the existing activity_log entry when one exists for today', async () => {
+    const existingActivity = { id: 'act-1', questions_done: 5, xp_earned: 20 };
+
+    mocks.supabase.auth.getUser.mockResolvedValueOnce({ data: { user: VALID_USER }, error: null });
+
+    // Sequence: upsert progress, rpc, activity_log select (returns existing), activity_log update
+    mocks.supabase.from
+      .mockReturnValueOnce(makeBuilder({ data: null, error: null }))              // progress upsert
+      .mockReturnValueOnce(makeBuilder({ data: existingActivity, error: null }))  // activity_log select
+      .mockReturnValueOnce(makeBuilder({ data: null, error: null }));             // activity_log update
+
+    const r = res();
+    await handler(req('POST', { subject: 'Maths', topic: 'Calculus', correct: 3, total: 5, xpEarned: 15 }, { authorization: 'Bearer valid-tok' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.success).toBe(true);
+  });
+});

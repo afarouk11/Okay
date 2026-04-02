@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { applyHeaders, isRateLimited, getIp } from './_lib.js';
 
 let supabase = null;
 if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
@@ -6,10 +7,13 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
 }
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', process.env.SITE_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  applyHeaders(res, 'POST, GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  const ip = getIp(req);
+  if (isRateLimited(`${ip}:progress`, 60, 60_000)) {
+    return res.status(429).json({ error: 'Too many requests — please try again later' });
+  }
 
   if (!supabase) {
     // Demo mode: progress stored client-side only

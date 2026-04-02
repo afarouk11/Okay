@@ -1,9 +1,11 @@
-import { applyHeaders, isRateLimited, getIp } from './_lib.js';
+import { applyHeaders, isRateLimited, getIp, fetchWithRetry } from './_lib.js';
 
 /**
- * POST /api/tts
- * Body: { text: string, voice?: string }
- * Returns: audio/mpeg stream (ElevenLabs TTS)
+ * GET  /api/tts  — JARVIS agent config (ElevenLabs conversation token or agentId).
+ * POST /api/tts  — Text-to-speech stream (ElevenLabs).
+ *
+ * POST body: { text: string, voice?: string }
+ * POST returns: audio/mpeg stream
  *
  * Jarvis voice: George (deep authoritative British male)
  * Settings tuned for natural AI-assistant delivery — not robotic, not script-reader.
@@ -11,6 +13,9 @@ import { applyHeaders, isRateLimited, getIp } from './_lib.js';
  * similarity_boost 0.82 = strong voice character without sounding processed
  * style 0.18 = slight expressiveness so it doesn't sound flat
  */
+
+const JARVIS_CONFIG_RATE_LIMIT_MAX    = 10;
+const JARVIS_CONFIG_RATE_LIMIT_WINDOW = 60_000;
 
 const VOICE_IDS = {
   alice:     'Xb7hH8MSUJpSbSDYk0k2',
@@ -22,12 +27,47 @@ const VOICE_IDS = {
 
 const VOICE_SETTINGS = {
   jarvis:  { stability: 0.48, similarity_boost: 0.82, style: 0.18, use_speaker_boost: true },
+  alice:   { stability: 0.55, similarity_boost: 0.80, style: 0.12, use_speaker_boost: true },
   default: { stability: 0.5,  similarity_boost: 0.75 },
 };
 
 export default async function handler(req, res) {
-  applyHeaders(res, 'POST, OPTIONS');
+  applyHeaders(res, 'GET, POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // ── GET /api/tts — JARVIS agent config ────────────────────────────────────
+  if (req.method === 'GET') {
+    const ip = getIp(req);
+    if (isRateLimited(`${ip}:jarvis-config`, JARVIS_CONFIG_RATE_LIMIT_MAX, JARVIS_CONFIG_RATE_LIMIT_WINDOW)) {
+      return res.status(429).json({ error: 'Too many requests — please try again later' });
+    }
+
+    const agentId = process.env.ELEVEN_AGENT_ID || 'agent_4101kn5cm6t2efwsasfhx8cgh1r3';
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+    if (!apiKey) {
+      return res.status(200).json({ agentId });
+    }
+
+    try {
+      const elevenRes = await fetch(
+        `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${encodeURIComponent(agentId)}`,
+        { headers: { 'xi-api-key': apiKey } }
+      );
+
+      if (!elevenRes.ok) {
+        const text = await elevenRes.text();
+        console.error('ElevenLabs token error:', elevenRes.status, text);
+        return res.status(200).json({ agentId });
+      }
+
+      const { token: conversationToken } = await elevenRes.json();
+      return res.status(200).json({ conversationToken });
+    } catch (err) {
+      console.error('jarvis-config fetch error:', err);
+      return res.status(200).json({ agentId });
+    }
+  }
+
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const apiKey = process.env.ELEVENLABS_API_KEY;
@@ -47,22 +87,27 @@ export default async function handler(req, res) {
   const input = text.slice(0, 5000);
   const voiceSettings = VOICE_SETTINGS[voice] || VOICE_SETTINGS.default;
 
-  const upstream = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
-    {
-      method: 'POST',
-      headers: {
-        'xi-api-key': apiKey,
-        'Content-Type': 'application/json',
-        'Accept': 'audio/mpeg',
-      },
-      body: JSON.stringify({
-        text: input,
-        model_id: 'eleven_turbo_v2_5',
-        voice_settings: voiceSettings,
-      }),
-    }
-  );
+  let upstream;
+  try {
+    upstream = await fetchWithRetry(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
+      {
+        method: 'POST',
+        headers: {
+          'xi-api-key': apiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'audio/mpeg',
+        },
+        body: JSON.stringify({
+          text: input,
+          model_id: 'eleven_turbo_v2_5',
+          voice_settings: voiceSettings,
+        }),
+      }
+    );
+  } catch (_) {
+    return res.status(503).json({ error: 'TTS service unavailable — please try again' });
+  }
 
   if (!upstream.ok) {
     const err = await upstream.text();
