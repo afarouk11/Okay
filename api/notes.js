@@ -1,15 +1,80 @@
 import { createClient } from '@supabase/supabase-js';
+import { applyHeaders, isRateLimited, getIp } from './_lib.js';
 
 let supabase = null;
 if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
   supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 }
 
+const EXPORT_TABLES = [
+  'profiles',
+  'progress',
+  'notes',
+  'chat_history',
+  'flashcards',
+  'mistakes',
+  'exams',
+  'activity_log',
+];
+
+const EXPORT_RATE_LIMIT_MAX    = 5;
+const EXPORT_RATE_LIMIT_WINDOW = 60 * 60_000;
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', process.env.SITE_URL || '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  applyHeaders(res, 'POST, GET, PUT, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
+
+  // ── GET ?action=export — GDPR data export ──────────────────────────────────
+  if (req.method === 'GET' && req.query?.action === 'export') {
+    if (!supabase) {
+      return res.status(200).json({ exported_at: new Date().toISOString(), data: {}, note: 'Demo mode — no server data stored' });
+    }
+
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
+
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+    if (authErr || !user) return res.status(401).json({ error: 'Unauthorized' });
+
+    if (isRateLimited(`${user.id}:export`, EXPORT_RATE_LIMIT_MAX, EXPORT_RATE_LIMIT_WINDOW)) {
+      return res.status(429).json({ error: 'Too many export requests — please wait before trying again' });
+    }
+
+    try {
+      const result = {
+        exported_at: new Date().toISOString(),
+        user_id: user.id,
+        email: user.email,
+        data: {},
+      };
+
+      const fetches = EXPORT_TABLES.map(async (table) => {
+        const col = table === 'profiles' ? 'id' : 'user_id';
+        const { data, error } = await supabase
+          .from(table)
+          .select('*')
+          .eq(col, user.id);
+
+        if (!error) result.data[table] = data || [];
+      });
+
+      await Promise.all(fetches);
+
+      res.setHeader('Content-Disposition', `attachment; filename="synaptiq-data-export-${Date.now()}.json"`);
+      res.setHeader('Content-Type', 'application/json');
+      return res.status(200).json(result);
+    } catch (e) {
+      const msg = /fetch|network|ECONNREFUSED|ETIMEDOUT|socket/i.test(e.message)
+        ? 'Unable to reach the database. Please try again shortly.'
+        : e.message;
+      return res.status(500).json({ error: msg });
+    }
+  }
+
+  const ip = getIp(req);
+  if (isRateLimited(`${ip}:notes`, 60, 60_000)) {
+    return res.status(429).json({ error: 'Too many requests — please try again later' });
+  }
 
   if (!supabase) {
     // Demo mode: notes stored client-side only
