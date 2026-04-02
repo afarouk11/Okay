@@ -259,7 +259,7 @@ async function generateQuestions() {
 
   btn.disabled = true;
   btn.textContent = '✦ Generating...';
-  output.innerHTML = `<div class="loading-msg"><div class="dot-pulse"><span></span><span></span><span></span></div>Synaptiq is generating your ${num} ${sub} questions...</div>`;
+  output.innerHTML = `<div class="loading-msg"><div class="dot-pulse"><span></span><span></span><span></span></div>Synaptiq is generating your ${sanitizeHTML(num)} ${sanitizeHTML(sub)} questions...</div>`;
 
   const sys = `You are an expert UK exam question writer specialising in ${board} ${level} ${sub}.
 Generate exactly ${num} exam-style questions for ${grade} target.
