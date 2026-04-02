@@ -60,7 +60,7 @@ if (supabaseUrl && supabaseAnon) {
   const safeUrl  = supabaseUrl.replace(/'/g, "\\'");
   const safeAnon = supabaseAnon.replace(/'/g, "\\'");
   const keyScript = `<script>window.SUPABASE_URL='${safeUrl}';window.SUPABASE_ANON_KEY='${safeAnon}';</script>`;
-  for (const page of ['questions.html', 'lessons.html', 'reset-password.html']) {
+  for (const page of ['questions.html', 'lessons.html', 'reset-password.html', 'jarvis.html']) {
     const pageHtml = readFileSync(join(root, page), 'utf8');
     if (!pageHtml.includes('window.SUPABASE_URL=')) {
       const updated = pageHtml.replace('</head>', `${keyScript}\n</head>`);

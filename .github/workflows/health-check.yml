@@ -1,0 +1,32 @@
+name: Health Check
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+    inputs:
+      app_url:
+        description: "App URL to check (defaults to production)"
+        required: false
+        default: "https://synaptiq.co.uk"
+
+jobs:
+  health-check:
+    name: Health Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+
+      - name: Run health check
+        env:
+          APP_URL: ${{ inputs.app_url || 'https://synaptiq.co.uk' }}
+        run: node scripts/health-check.mjs

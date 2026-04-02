@@ -50,10 +50,10 @@ const VOLUME_SCALE_FACTOR = 0.35;
 
 // ── Canvas visualizer ─────────────────────────────────────────────────────────
 const BAR_COUNT              = 80;
-const INNER_R                = 58;    // px — sits just outside the 90px-diameter orb
-const MAX_BAR_LEN            = 68;    // px — tallest possible bar
-const VIZ_CX                 = 150;
-const VIZ_CY                 = 150;
+const INNER_R                = 42;    // px — sits just outside the 68px-diameter orb
+const MAX_BAR_LEN            = 50;    // px — tallest possible bar
+const VIZ_CX                 = 110;
+const VIZ_CY                 = 110;
 const AMPLITUDE_SMOOTHING    = 0.18;  // lerp factor: higher = faster response
 const IDLE_WAVE_FREQ         = 6;     // sine-wave cycles across all bars (idle)
 const IDLE_ANIM_SPEED        = 0.001; // radians per millisecond (idle rotation)
@@ -105,7 +105,7 @@ function _vizTick(t) {
     smoothAmps[i] += (target[i] - smoothAmps[i]) * AMPLITUDE_SMOOTHING;
   }
 
-  vizCtx.clearRect(0, 0, 300, 300);
+  vizCtx.clearRect(0, 0, 220, 220);
   for (let i = 0; i < BAR_COUNT; i++) {
     const ang = (i / BAR_COUNT) * Math.PI * 2 - Math.PI / 2;
     const v   = smoothAmps[i];
