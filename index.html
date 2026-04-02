@@ -930,7 +930,9 @@ body {
   display: flex; align-items: center; gap: .85rem;
   padding: .8rem 0; border-bottom: 1px solid rgba(255,255,255,0.04);
   animation: fadeInUp .3s ease both;
+  border-radius: 8px; transition: background .15s;
 }
+.activity-item:hover { background: rgba(255,255,255,0.03); padding-left: .5rem; padding-right: .5rem; }
 .activity-item:last-child { border-bottom: none; }
 .activity-icon {
   width: 38px; height: 38px; border-radius: 12px;
@@ -1429,11 +1431,11 @@ body {
 .progress-item { margin-bottom: 1.1rem; }
 .progress-header { display: flex; justify-content: space-between; font-size: .85rem; margin-bottom: .5rem; font-weight: 500; }
 .progress-bar {
-  height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden;
+  height: 10px; background: rgba(255,255,255,0.06); border-radius: 5px; overflow: hidden;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
 }
 .progress-fill {
-  height: 100%; border-radius: 4px; transition: width 1s cubic-bezier(.4,0,.2,1);
+  height: 100%; border-radius: 5px; transition: width 1s cubic-bezier(.4,0,.2,1);
   position: relative; overflow: hidden;
 }
 .progress-fill::after {
@@ -2005,7 +2007,7 @@ body.mode-adhd .adhd-break { display: block; }
   max-width: 320px;
   box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 20px rgba(201,168,76,0.12);
 }
-#toast.show { opacity: 1; transform: translateY(0) scale(1); }
+#toast.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
 
 /* FAQ accordion — glassmorphism */
 .faq-item {
@@ -2056,7 +2058,7 @@ body.mode-adhd .adhd-break { display: block; }
 .skeleton {
   background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.05) 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
+  animation: shimmer 1.5s ease-in-out infinite;
   border-radius: 8px;
 }
 body.light .skeleton {
@@ -4297,7 +4299,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
         </div>
         <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Your full name" autocomplete="name"></div>
         <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@email.com" autocomplete="email"></div>
-        <div class="form-group"><label>Password</label><input type="password" id="reg-pass" placeholder="Min. 8 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')nextStep(1)"></div>
+        <div class="form-group"><label>Password</label><div style="position:relative"><input type="password" id="reg-pass" placeholder="Min. 8 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')nextStep(1)" style="padding-right:2.5rem"><button type="button" onclick="togglePasswordVisibility('reg-pass',this)" aria-label="Show password" style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:0;font-size:.95rem;line-height:1;transition:color .15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">👁</button></div></div>
         <button class="btn-full" onclick="nextStep(1)">Continue →</button>
       </div>
 
@@ -4389,7 +4391,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
         <button class="auth-tab active">Log In</button>
       </div>
       <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@email.com" autocomplete="email" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()"></div>
-      <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginUser()"></div>
+      <div class="form-group"><label>Password</label><div style="position:relative"><input type="password" id="login-pass" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')loginUser()" style="padding-right:2.5rem"><button type="button" onclick="togglePasswordVisibility('login-pass',this)" aria-label="Show password" style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:0;font-size:.95rem;line-height:1;transition:color .15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">👁</button></div></div>
       <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem">
         <input type="checkbox" id="login-remember" style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">
         <label for="login-remember" style="font-size:.85rem;color:var(--muted);cursor:pointer;margin:0">Remember me for 30 days</label>
@@ -4555,7 +4557,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
         <button onclick="showDash('tutor')" style="margin-left:auto;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:.25rem .7rem;color:var(--muted);cursor:pointer;font-size:.75rem">Study now →</button>
       </div>
       <!-- Continue Where You Left Off -->
-      <div id="continue-card" style="display:none;background:rgba(12,14,20,0.85);border:1px solid rgba(201,168,76,0.18);border-radius:16px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;backdrop-filter:blur(20px)">
+      <div id="continue-card" style="display:none;background:rgba(12,14,20,0.85);border:1px solid rgba(201,168,76,0.18);border-radius:16px;padding:1rem 1.25rem;margin-bottom:1.25rem;align-items:center;gap:1rem;flex-wrap:wrap;backdrop-filter:blur(20px);animation:fadeInUp .3s ease both">
         <div style="font-size:1.5rem">📍</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:.7rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.15rem">Continue where you left off</div>
@@ -4622,13 +4624,13 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
         <div style="color:var(--muted);font-size:.875rem;text-align:center;padding:.5rem 0">⚔️ Loading Boss Challenge...</div>
       </div>
       <!-- Daily tip banner -->
-      <div id="daily-tip-bar" style="display:flex;align-items:flex-start;gap:.85rem;background:rgba(96,165,250,0.06);border:1px solid rgba(96,165,250,0.2);border-radius:14px;padding:.9rem 1.1rem;margin-bottom:1.5rem">
-        <span style="font-size:1.25rem;line-height:1;flex-shrink:0">💡</span>
+      <div id="daily-tip-bar" style="display:flex;align-items:flex-start;gap:.85rem;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.18);border-radius:14px;padding:.9rem 1.25rem;margin-bottom:1.5rem">
+        <span style="font-size:1.1rem;line-height:1.4;flex-shrink:0">💡</span>
         <div>
-          <div style="font-size:.72rem;font-weight:700;color:rgba(96,165,250,0.8);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.2rem">Study Tip</div>
-          <div id="daily-tip-text" style="font-size:.855rem;color:var(--white);line-height:1.5"></div>
+          <div style="font-size:.7rem;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.25rem">Study Tip</div>
+          <div id="daily-tip-text" style="font-size:.855rem;color:rgba(240,238,248,0.85);line-height:1.55"></div>
         </div>
-        <button onclick="this.closest('#daily-tip-bar').style.display='none'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;margin-left:auto;flex-shrink:0;padding:0;line-height:1">×</button>
+        <button onclick="document.getElementById('daily-tip-bar').style.display='none'" aria-label="Dismiss tip" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;margin-left:auto;flex-shrink:0;padding:.2rem .3rem;line-height:1;border-radius:4px;transition:color .15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">✕</button>
       </div>
       <div class="stats-row">
         <div class="stat-card" style="border-top:2px solid rgba(96,165,250,0.5)">
@@ -4752,7 +4754,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
           <!-- Quick actions -->
           <div class="card" style="margin-top:1.5rem">
             <div class="card-header"><span class="card-title">🚀 Quick Actions</span></div>
-            <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;padding:1rem 1.25rem 1.25rem">
+            <div class="card-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;padding:1rem 1.25rem 1.25rem">
               <button class="qa-btn" onclick="showDash('tutor')"><span class="qa-icon">🤖</span>AI Tutor</button>
               <button class="qa-btn" onclick="showDash('content')"><span class="qa-icon">📚</span>A-Level Content</button>
               <button class="qa-btn" onclick="showDash('questions')"><span class="qa-icon">📝</span>Practice Questions</button>
@@ -4865,12 +4867,12 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
                 <button class="tts-btn" onclick="document.getElementById('tutor-img-input').click()" title="Upload a photo of your question" style="flex-shrink:0;margin-bottom:2px">📷</button>
                 <input type="file" id="tutor-img-input" accept="image/*" style="display:none" onchange="handleTutorImage(event)">
                 <div style="position:relative;flex:1">
-                  <textarea class="tutor-input" id="tutor-input" placeholder="Message Jarvis..." onkeydown="tutorKey(event)" rows="1"></textarea>
+                  <textarea class="tutor-input" id="tutor-input" placeholder="Ask anything about A-Level Maths — e.g. 'Explain integration by parts'..." onkeydown="tutorKey(event)" rows="1"></textarea>
                   <button class="tutor-send" onclick="tutorSend()" title="Send">↑</button>
                 </div>
               </div>
             </div>
-            <p style="font-size:.72rem;color:rgba(90,116,153,0.6);margin-top:.6rem;text-align:center;max-width:780px;margin-left:auto;margin-right:auto">Synaptiq AI · A-Level Maths · Mark-scheme aligned · Type "show me the steps" for a visual breakdown</p>
+            <p style="font-size:.72rem;color:rgba(90,116,153,0.6);margin-top:.6rem;text-align:center;max-width:780px;margin-left:auto;margin-right:auto">Synaptiq AI · A-Level Maths · Mark-scheme aligned · <kbd style="font-family:inherit;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:3px;padding:.1rem .3rem;font-size:.7rem">Enter</kbd> to send · <kbd style="font-family:inherit;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:3px;padding:.1rem .3rem;font-size:.7rem">Shift+Enter</kbd> for new line</p>
           </div>
         </div>
       </div>
@@ -5631,7 +5633,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
           </div>
         </div>
         <!-- Filter -->
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center">
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem;align-items:center">
           <span style="font-size:.8rem;color:var(--muted)">Filter:</span>
           <button class="note-tag-btn selected" id="filter-all" onclick="filterNotes('all',this)">All</button>
           <button class="note-tag-btn" id="filter-Mathematics" onclick="filterNotes('Mathematics',this)">Mathematics</button>
@@ -5641,6 +5643,10 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
           <button class="note-tag-btn" id="filter-English" onclick="filterNotes('English',this)">English</button>
           <button class="note-tag-btn" id="filter-History" onclick="filterNotes('History',this)">History</button>
           <button class="note-tag-btn" id="filter-General" onclick="filterNotes('General',this)">General</button>
+        </div>
+        <!-- Notes search -->
+        <div style="margin-bottom:1.5rem">
+          <input type="search" id="notes-search" placeholder="🔍 Search notes..." oninput="searchNotes(this.value)" style="width:100%;background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);border-radius:10px;padding:.6rem 1rem;color:var(--white);font-size:.875rem;box-sizing:border-box;outline:none;transition:border-color .2s" onfocus="this.style.borderColor='rgba(201,168,76,0.4)'" onblur="this.style.borderColor='rgba(255,255,255,0.08)'">
         </div>
         <!-- Notes list -->
         <div id="notes-list">
@@ -7384,6 +7390,7 @@ function _showDashCore(sub) {
     // Render today's plan card before greeting (async, handles its own skeleton)
     if (typeof _renderTodaysPlan === 'function') _renderTodaysPlan();
     if (state.tutorHistory.length === 0) addTutorMsg('bot', typeof _buildTutorGreeting === 'function' ? _buildTutorGreeting() : `Hey! I'm Synaptiq ✦ — your AI study friend for A-Level Maths. Ask me anything!`);
+    setTimeout(() => { const inp = document.getElementById('tutor-input'); if (inp) inp.focus(); }, 100);
   }
 }
 
@@ -7587,6 +7594,15 @@ async function createAccount() {
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '🚀 Start Free Trial'; }
   }
+}
+
+function togglePasswordVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const show = input.type === 'password';
+  input.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁';
+  btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
 }
 
 async function loginUser() {
@@ -8678,7 +8694,7 @@ function addTutorMsg(role, text) {
     saveBtn.innerHTML = '📓 Save';
     saveBtn.onclick = () => {
       const noteInput = document.getElementById('note-text-input');
-      if (noteInput) { noteInput.value = el.textContent.trim(); showDash('notes'); showToast('✦ Saved to Notes'); saveBtn.innerHTML = '✓ Saved!'; saveBtn.style.color = 'var(--green)'; }
+      if (noteInput) { noteInput.value = el.textContent.trim(); saveNote(); saveBtn.innerHTML = '✓ Saved!'; saveBtn.style.color = 'var(--green)'; setTimeout(() => { saveBtn.innerHTML = '📓 Save'; saveBtn.style.color = 'var(--muted)'; }, 1500); }
     };
     utilRow.appendChild(copyBtn);
     utilRow.appendChild(saveBtn);
@@ -8768,6 +8784,7 @@ function tutorQuick(prompt) {
 }
 
 function clearTutor() {
+  if (state.tutorHistory.length > 0 && !confirm('Clear this chat? Your conversation history will be lost.')) return;
   state.tutorHistory = [];
   document.getElementById('tutor-messages').innerHTML = '';
   if (typeof _saveTutorMemory === 'function') _saveTutorMemory({ confusionStreak: 0 });
@@ -8835,6 +8852,8 @@ async function generateQuestions() {
   const genBtn = document.getElementById('generate-q-btn');
   if (genBtn) { genBtn.disabled = true; genBtn.textContent = '⏳ Generating…'; }
   output.classList.add('show');
+  // On mobile, scroll the output panel into view so the student sees the results
+  if (window.innerWidth < 768) { setTimeout(() => output.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100); }
   document.getElementById('q-output-title').textContent = `A-Level Maths — ${module}`;
   document.getElementById('q-output-sub').textContent = `${num} questions · ${board} ${level} · Target: ${grade} · ${difficulty}`;
   qContainer.innerHTML = '<div class="msg bot" style="max-width:100%">✦ Generating your questions...</div>';
@@ -12728,6 +12747,7 @@ function updatePomDisplay() {
 // ═══════════════════════════════════════
 let notes = [];
 let noteFilter = 'all';
+let noteSearch = '';
 let selectedNoteTag = 'Mathematics';
 
 function selectNoteTag(btn) {
@@ -12847,30 +12867,45 @@ async function deleteNote(id) {
 
 function filterNotes(filter, btn) {
   noteFilter = filter;
+  noteSearch = '';
+  const searchEl = document.getElementById('notes-search');
+  if (searchEl) searchEl.value = '';
   document.querySelectorAll('[id^="filter-"]').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   renderNotes();
 }
 
+function searchNotes(query) {
+  noteSearch = (query || '').trim().toLowerCase();
+  renderNotes();
+}
+
 function renderNotes() {
   const container = document.getElementById('notes-list');
-  const filtered = noteFilter === 'all' ? notes : notes.filter(n => n.subject === noteFilter);
+  let filtered = noteFilter === 'all' ? notes : notes.filter(n => n.subject === noteFilter);
+  if (noteSearch) filtered = filtered.filter(n => n.text.toLowerCase().includes(noteSearch) || (n.subject || '').toLowerCase().includes(noteSearch));
   if (!filtered.length) {
+    const emptyMsg = noteSearch ? `No notes matching "${noteSearch}"` : noteFilter === 'all' ? 'No notes yet' : 'No ' + noteFilter + ' notes';
     container.innerHTML = `<div style="text-align:center;padding:3rem;color:var(--muted)">
       <div style="font-size:3rem;margin-bottom:1rem">📓</div>
-      <div style="font-weight:700;margin-bottom:.5rem">${noteFilter === 'all' ? 'No notes yet' : 'No ' + noteFilter + ' notes'}</div>
+      <div style="font-weight:700;margin-bottom:.5rem">${emptyMsg}</div>
       <div style="font-size:.875rem">Write a note above or save an AI explanation</div>
     </div>`;
     return;
   }
   const subjectColors = {Mathematics:'#60A5FA',Physics:'#4ADE80',Chemistry:'#A78BFA',Biology:'#F472B6',English:'#FB923C',History:'#FBBF24',General:'#C9A84C'};
+  const highlight = (text) => {
+    if (!noteSearch) return text.replace(/\n/g,'<br>');
+    const escaped = noteSearch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return text.replace(/\n/g,'<br>').replace(new RegExp('(' + escaped + ')', 'gi'), '<mark style="background:rgba(201,168,76,0.35);color:var(--white);border-radius:2px;padding:0 1px">$1</mark>');
+  };
   container.innerHTML = filtered.map(n => `
     <div class="note-card" style="border-left-color:${subjectColors[n.subject]||'var(--gold)'}">
       <div class="note-card-header">
         <span class="note-subject-tag" style="background:${subjectColors[n.subject]||'var(--gold)'}22;color:${subjectColors[n.subject]||'var(--gold)'}">${n.subject}</span>
         <span class="note-date">${n.date} · ${n.time}</span>
       </div>
-      <div class="note-text">${n.text.replace(/\n/g,'<br>')}</div>
+      <div class="note-text">${highlight(n.text)}</div>
       <div style="display:flex;gap:.5rem;margin-top:.75rem;flex-wrap:wrap">
         <button onclick="flashcardsFromNote(${n.id})" style="font-size:.75rem;padding:.3rem .7rem;background:rgba(96,165,250,0.1);border:1px solid rgba(96,165,250,0.3);color:var(--blue);border-radius:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(96,165,250,0.2)'" onmouseout="this.style.background='rgba(96,165,250,0.1)'">🗂 Create Flashcards</button>
         <button onclick="copyNote(${n.id},this)" style="font-size:.75rem;padding:.3rem .7rem;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);border-radius:8px;cursor:pointer">📋 Copy</button>
@@ -14495,7 +14530,7 @@ async function renderLeaderboard() {
 
   // Show skeleton while loading
   container.innerHTML = '<div style="display:flex;flex-direction:column;gap:.5rem">' +
-    Array(6).fill('<div style="height:52px;border-radius:12px;background:rgba(255,255,255,0.04);animation:shimmer 1.4s linear infinite;background-size:200% 100%"></div>').join('') + '</div>';
+    Array(6).fill('<div style="height:52px;border-radius:12px;background:rgba(255,255,255,0.04);animation:shimmer 1.5s ease-in-out infinite;background-size:200% 100%"></div>').join('') + '</div>';
 
   let data;
   let userRank = null;
@@ -20855,6 +20890,8 @@ if (typeof showDash === 'function') {
 document.addEventListener('DOMContentLoaded', () => {
   initDailyChallenge();
   renderStudyCoach();
+  renderTipOfDay();
+  renderSpecProgress();
   // Auto-resize for tutor and dash chat textareas
   ['tutor-input', 'dash-input'].forEach(id => {
     const ta = document.getElementById(id);
