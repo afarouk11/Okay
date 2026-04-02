@@ -133,6 +133,16 @@ describe('successful TTS stream', () => {
     expect(capturedUrl).toContain('XB0fDUnXU5powFXDhCwa');
   });
 
+  it('uses the jarvis voice when requested', async () => {
+    let capturedUrl;
+    global.fetch = vi.fn().mockImplementationOnce((url) => {
+      capturedUrl = url;
+      return Promise.resolve({ ok: true, body: mockStream() });
+    });
+    await handler(req({ text: 'Hi', voice: 'jarvis' }), res());
+    expect(capturedUrl).toContain('JBFqnCBsd6RMkjVDRZzb');
+  });
+
   it('falls back to alice for an unknown voice name', async () => {
     let capturedUrl;
     global.fetch = vi.fn().mockImplementationOnce((url) => {
