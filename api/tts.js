@@ -22,6 +22,7 @@ const VOICE_IDS = {
 
 const VOICE_SETTINGS = {
   jarvis:  { stability: 0.48, similarity_boost: 0.82, style: 0.18, use_speaker_boost: true },
+  alice:   { stability: 0.55, similarity_boost: 0.80, style: 0.12, use_speaker_boost: true },
   default: { stability: 0.5,  similarity_boost: 0.75 },
 };
 

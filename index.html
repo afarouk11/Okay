@@ -2401,7 +2401,7 @@ body.light .skeleton {
    AI TEACHER
 ═══════════════════════════════════════ */
 .teacher-layout{display:grid;grid-template-columns:260px 1fr;height:calc(100vh - 64px);overflow:hidden}
-.teacher-sidebar{overflow-y:auto;border-right:1px solid rgba(255,255,255,0.07);padding:1rem 0;background:var(--bg1)}
+.teacher-sidebar{overflow-y:auto;border-right:1px solid rgba(255,255,255,0.07);padding:1rem 0;background:var(--bg1);min-height:0}
 .teacher-tabs{display:flex;gap:.25rem;padding:0 .75rem .75rem;flex-wrap:wrap}
 .teacher-tab{background:rgba(255,255,255,0.05);border:none;color:var(--muted);padding:.35rem .7rem;border-radius:6px;cursor:pointer;font-size:.75rem;transition:.15s}
 .teacher-tab.active{background:var(--gold);color:#000;font-weight:600}
@@ -2913,6 +2913,10 @@ body.light .skeleton {
   .tutor-input-area { padding: 1rem; }
   .tutor-header { padding: 1rem 1.25rem; }
   .quick-actions { padding: .75rem 1rem; gap: .4rem; }
+
+  /* ── AI Teacher ── */
+  .teacher-layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; min-height: calc(100vh - 64px); }
+  .teacher-sidebar { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.07); max-height: 45vh; overflow-y: auto; }
 
   /* ── Subpage content ── */
   .subpage { padding: 1rem !important; }
@@ -18361,6 +18365,8 @@ function fixJsonLatex(str) {
 
 function initTeacher() {
   renderTeacherChapters();
+  // Safety-net: re-render after a tick in case the sidebar was hidden during first render
+  setTimeout(renderTeacherChapters, 0);
 }
 
 // Pre-populate chapter list as soon as this script block loads
@@ -19855,11 +19861,12 @@ function voSpeak(text, onEnd) {
 
   if (VO.cancelTTS) VO.cancelTTS();
 
-  // Hook into elSpeak so we can attach the audio to our analyser
+  // Use a warm teacher voice (alice) for teacher mode, Jarvis for tutor mode
+  const voice = VO.mode === 'teacher' ? 'alice' : 'jarvis';
   VO.cancelTTS = elSpeak(clean, () => {
     VO.cancelTTS = null;
     if (onEnd) onEnd();
-  }, 'jarvis', audioEl => vizConnectAudio(audioEl));
+  }, voice, audioEl => vizConnectAudio(audioEl));
 }
 
 async function voHandleInput(text) {
