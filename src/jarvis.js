@@ -44,13 +44,6 @@ let micEnabled     = true;  // whether the wake-word mic is active
  * Equivalent to a React useRef — value persists without triggering re-renders.
  */
 let _sessionStartMs = null;
-let orbState    = 'idle';  // 'idle' | 'greeting' | 'active'
-let recognition = null;
-let conversation= null;
-let toastTimer  = null;
-let volumeRafId = null;  // requestAnimationFrame handle for volume tracking
-let jarvisConfig= null;  // { signedUrl? } or { agentId? } — fetched from /api/tts
-let micEnabled  = true;  // whether the wake-word mic is active
 
 // Maximum additional scale applied at peak volume (orb grows by up to 35 %)
 const VOLUME_SCALE_FACTOR = 0.35;
