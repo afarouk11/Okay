@@ -19756,12 +19756,13 @@ function vizDraw(mode) {
 
 // ── VO: unified voice state machine ─────────────────────────────────────────
 const VO = {
-  state: 'idle',    // idle | listening | thinking | speaking
-  mode: 'tutor',    // 'tutor' | 'teacher'
-  context: '',      // current chapter/topic
+  state: 'idle',       // idle | listening | thinking | speaking
+  mode: 'tutor',       // 'tutor' | 'teacher'
+  context: '',         // current chapter/topic
   history: [],
   recog: null,
   cancelTTS: null,
+  conversation: null,  // ElevenLabs Conversation session (tutor mode)
 };
 
 function voSetState(s) {
@@ -19789,7 +19790,7 @@ function voSetState(s) {
   vizDraw(modeMap[s] || 'idle');
 }
 
-function voOpen(mode, context) {
+async function voOpen(mode, context) {
   VO.mode    = mode    || 'tutor';
   VO.context = context || state?.topic || 'A-Level Maths';
   VO.history = [];
@@ -19808,19 +19809,87 @@ function voOpen(mode, context) {
   document.getElementById('vo-transcript').textContent = '';
   document.getElementById('vo-reply').textContent = '';
 
-  // Greet and start listening
-  const name = state?.user?.name?.split(' ')[0] || 'there';
-  const greeting = mode === 'teacher' && context
-    ? `Right. We're covering ${context}. Ask me anything about it, or I can run through the key ideas first — your call.`
-    : `Good to have you back${name !== 'there' ? ', ' + name : ''}. What would you like help with?`;
+  if (VO.mode === 'tutor') {
+    // Tutor mode: use ElevenLabs Conversational AI (Jarvis)
+    voSetState('thinking');
+    try {
+      const res = await fetch('/api/jarvis-config');
+      if (!res.ok) throw new Error('Could not load Jarvis config');
+      const config = await res.json();
+      if (!config.conversationToken && !config.agentId) throw new Error('Jarvis agent not configured');
 
-  setTimeout(() => voSpeak(greeting, () => {
-    voSetState('idle');
-    setTimeout(voStartListening, 400);
-  }), 300);
+      const { Conversation } = await import('https://esm.sh/@elevenlabs/client@1');
+
+      VO.conversation = await Conversation.startSession({
+        ...(config.conversationToken
+          ? { conversationToken: config.conversationToken, connectionType: 'webrtc' }
+          : { agentId: config.agentId }),
+
+        onConnect: () => {
+          voSetState('listening');
+        },
+
+        onDisconnect: () => {
+          if (VO.conversation) {
+            VO.conversation = null;
+            voClose();
+          }
+        },
+
+        onModeChange: ({ mode: agentMode }) => {
+          voSetState(agentMode === 'speaking' ? 'speaking' : 'listening');
+        },
+
+        onMessage: (msg) => {
+          const aiText = msg?.agent_response
+            ?? (msg?.source === 'ai' ? msg?.message : null)
+            ?? null;
+          if (typeof aiText === 'string' && aiText.trim()) {
+            document.getElementById('vo-reply').textContent = aiText;
+            state.tutorHistory.push({ role: 'assistant', content: aiText });
+            addTutorMsg('bot', aiText);
+            if (typeof addXP === 'function') addXP(10, '🎙️ Voice question +10 XP');
+          }
+          const userText = msg?.source === 'user'
+            ? (msg?.user_transcription ?? msg?.message ?? null)
+            : null;
+          if (typeof userText === 'string' && userText.trim()) {
+            document.getElementById('vo-transcript').textContent = userText;
+            state.tutorHistory.push({ role: 'user', content: userText });
+            addTutorMsg('user', userText);
+          }
+        },
+
+        onError: (errMsg) => {
+          console.error('[JARVIS]', errMsg);
+          showToast('⚠️ ' + errMsg);
+        },
+      });
+    } catch(e) {
+      VO.conversation = null;
+      voClose();
+      showToast('⚠️ ' + (e.message || 'Could not start Jarvis'));
+    }
+  } else {
+    // Teacher mode: keep existing Claude + TTS flow
+    const name = state?.user?.name?.split(' ')[0] || 'there';
+    const greeting = context
+      ? `Right. We're covering ${context}. Ask me anything about it, or I can run through the key ideas first — your call.`
+      : `Good to have you back${name !== 'there' ? ', ' + name : ''}. What would you like help with?`;
+
+    setTimeout(() => voSpeak(greeting, () => {
+      voSetState('idle');
+      setTimeout(voStartListening, 400);
+    }), 300);
+  }
 }
 
 function voClose() {
+  if (VO.conversation) {
+    const conv = VO.conversation;
+    VO.conversation = null;  // null first to prevent re-entry from onDisconnect
+    conv.endSession().catch(() => {});
+  }
   VO.recog?.stop();
   if (VO.cancelTTS) { VO.cancelTTS(); VO.cancelTTS = null; }
   vizStop();
@@ -19874,6 +19943,9 @@ function voStartListening() {
 }
 
 function voTapMic() {
+  // In ElevenLabs (Jarvis) mode the session handles turn detection automatically
+  if (VO.conversation) return;
+
   if (VO.state === 'listening') {
     VO.recog?.stop();
     vizDisconnectMic();
