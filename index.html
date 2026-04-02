@@ -10064,9 +10064,6 @@ function copyLesson(btn) {
 
 
 
-// ═══════════════════════════════════════
-// PORTED FUNCTIONS FROM LUMINA AI
-// ═══════════════════════════════════════
 
 // ═══════════════════════════════════════
 // EXAM SIMULATOR
@@ -13454,7 +13451,7 @@ const featureChecklist = {
 Object.entries(featureChecklist).forEach(([cat, items]) => {
 });
 // ════════════════════════════════════════════════════
-// LUMINA AI V9 — ALL MISSING FEATURES
+// ESSAY MARKER AND ADDITIONAL FEATURES
 // ════════════════════════════════════════════════════
 
 // ─── ESSAY MARKER ───────────────────────────────────
@@ -15601,7 +15598,7 @@ window.sendTutor = function() {
 
 
 // ════════════════════════════════════════════════════
-// LUMINA AI V10 — ALL NEW FEATURES + REAL AUTH
+// AUTHENTICATION AND USER FEATURES
 // ════════════════════════════════════════════════════
 
 // ─── SUPABASE AUTH ───────────────────────────────────
@@ -16539,7 +16536,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
 
 // ════════════════════════════════════════════════════
-// LUMINA AI V11 — COMPLETE FEATURE SET
+// SCIENTIFIC CALCULATOR AND UTILITIES
 // ════════════════════════════════════════════════════
 
 // Cookie banner handled by main script section
@@ -18107,13 +18104,24 @@ window.addEventListener('unhandledrejection', (e) => {
 
 console.log('Synaptiq v11 loaded');
 // ═══════════════════════════════════════════════════════
-// LUMINA AI v12 — Spaced Repetition Full Page + Curriculum
+// SPACED REPETITION FULL PAGE + CURRICULUM
 // ═══════════════════════════════════════════════════════
+
+// ─── Migrate old lumina_sr_cards key to synaptiq_sr_cards ────
+(function migrateSRCards() {
+  try {
+    const old = localStorage.getItem('lumina_sr_cards');
+    if (old && !localStorage.getItem('synaptiq_sr_cards')) {
+      localStorage.setItem('synaptiq_sr_cards', old);
+      localStorage.removeItem('lumina_sr_cards');
+    }
+  } catch(e) {}
+})();
 
 // ─── SR Page Functions ────────────────────────────────
 function refreshSRPage() {
   let cards = [];
-  try { cards = JSON.parse(localStorage.getItem('lumina_sr_cards') || '[]'); } catch(e) {}
+  try { cards = JSON.parse(localStorage.getItem('synaptiq_sr_cards') || '[]'); } catch(e) {}
   const today = new Date().toDateString();
   const due = cards.filter(c => !c.nextReview || new Date(c.nextReview) <= new Date());
   document.getElementById('sr-due-count').textContent = due.length;
@@ -18153,9 +18161,9 @@ function saveManualSRCard() {
   const subj = document.getElementById('sr-manual-subj')?.value;
   if (!q || !a) { showToast('Please enter both question and answer'); return; }
   let cards = [];
-  try { cards = JSON.parse(localStorage.getItem('lumina_sr_cards') || '[]'); } catch(e) {}
+  try { cards = JSON.parse(localStorage.getItem('synaptiq_sr_cards') || '[]'); } catch(e) {}
   cards.push({ q, a, subj, color: '#C9A84C', interval: 1, easiness: 2.5, created: new Date().toISOString() });
-  try { localStorage.setItem('lumina_sr_cards', JSON.stringify(cards)); } catch(e) {}
+  try { localStorage.setItem('synaptiq_sr_cards', JSON.stringify(cards)); } catch(e) {}
   document.getElementById('sr-manual-q').value = '';
   document.getElementById('sr-manual-a').value = '';
   document.getElementById('sr-add-form').style.display = 'none';
@@ -18165,9 +18173,9 @@ function saveManualSRCard() {
 
 function deleteSRCard(idx) {
   let cards = [];
-  try { cards = JSON.parse(localStorage.getItem('lumina_sr_cards') || '[]'); } catch(e) {}
+  try { cards = JSON.parse(localStorage.getItem('synaptiq_sr_cards') || '[]'); } catch(e) {}
   cards.splice(idx, 1);
-  try { localStorage.setItem('lumina_sr_cards', JSON.stringify(cards)); } catch(e) {}
+  try { localStorage.setItem('synaptiq_sr_cards', JSON.stringify(cards)); } catch(e) {}
   refreshSRPage();
 }
 
