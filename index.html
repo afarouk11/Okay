@@ -10883,7 +10883,7 @@ async function downloadMyData() {
   try {
     const token = localStorage.getItem('synaptiq_token');
     if (!token) { showToast('⚠️ Please log in first'); return; }
-    const res = await fetch('/api/export', { headers: { Authorization: 'Bearer ' + token } });
+    const res = await fetch('/api/notes?action=export', { headers: { Authorization: 'Bearer ' + token } });
     if (!res.ok) { const d = await res.json(); showToast('⚠️ ' + (d.error || 'Export failed')); return; }
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
@@ -19904,7 +19904,7 @@ async function voOpen(mode, context) {
     // Tutor mode: use ElevenLabs Conversational AI (Jarvis)
     voSetState('thinking');
     try {
-      const res = await fetch('/api/jarvis-config');
+      const res = await fetch('/api/tts');
       if (!res.ok) throw new Error('Could not load Jarvis config');
       const config = await res.json();
       if (!config.conversationToken && !config.agentId) throw new Error('Jarvis agent not configured');

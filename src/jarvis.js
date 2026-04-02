@@ -4,7 +4,7 @@
  * Wake word:  Web Speech API (SpeechRecognition — built into Chrome / Edge)
  * Voice AI:   ElevenLabs Conversational AI  (@elevenlabs/client)
  *
- * Agent config is fetched at runtime from /api/jarvis-config, which returns
+ * Agent config is fetched at runtime from /api/tts (GET), which returns
  * either a short-lived WebRTC conversation token (preferred) or the plain agent ID.
  *
  * ElevenLabs CDN: https://esm.sh/@elevenlabs/client
@@ -30,7 +30,7 @@ let recognition = null;
 let conversation= null;
 let toastTimer  = null;
 let volumeRafId = null;  // requestAnimationFrame handle for volume tracking
-let jarvisConfig= null;  // { signedUrl? } or { agentId? } — fetched from /api/jarvis-config
+let jarvisConfig= null;  // { signedUrl? } or { agentId? } — fetched from /api/tts
 let micEnabled  = true;  // whether the wake-word mic is active
 
 // Maximum additional scale applied at peak volume (orb grows by up to 35 %)
@@ -401,7 +401,7 @@ endBtn.addEventListener('click', async () => {
 async function init() {
   // Fetch agent config at runtime — avoids build-time injection dependency
   try {
-    const res = await fetch('/api/jarvis-config');
+    const res = await fetch('/api/tts');
     if (!res.ok) {
       const { error } = await res.json().catch((parseErr) => {
         console.error('[JARVIS] Config response parse error (HTTP', res.status, '):', parseErr);
