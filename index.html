@@ -10883,7 +10883,7 @@ async function downloadMyData() {
   try {
     const token = localStorage.getItem('synaptiq_token');
     if (!token) { showToast('⚠️ Please log in first'); return; }
-    const res = await fetch('/api/export', { headers: { Authorization: 'Bearer ' + token } });
+    const res = await fetch('/api/notes?action=export', { headers: { Authorization: 'Bearer ' + token } });
     if (!res.ok) { const d = await res.json(); showToast('⚠️ ' + (d.error || 'Export failed')); return; }
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
@@ -19631,20 +19631,137 @@ function setLessonCache(chapter, html) {
     text-transform:uppercase;margin-top:-.8rem;
   }
 
+  /* Jarvis Holographic Orb */
+  #vo-orb-container {
+    position:relative;
+    width:220px;height:220px;
+    display:flex;align-items:center;justify-content:center;
+    perspective:800px;
+    flex-shrink:0;
+  }
+  .vo-ring {
+    position:absolute;
+    border-radius:50%;
+    border:1px solid rgba(0,212,255,0.18);
+  }
+  .vo-ring-outer {
+    width:200px;height:200px;
+    border-top:2px solid #00d4ff;
+    border-right:1px solid rgba(0,212,255,0.18);
+    animation:vo-ring-outer-spin 5s linear infinite;
+  }
+  .vo-ring-mid {
+    width:150px;height:150px;
+    border-bottom:2px solid rgba(0,180,255,0.7);
+    border-left:1px solid rgba(0,212,255,0.18);
+    animation:vo-ring-mid-spin 3.5s linear infinite reverse;
+  }
+  .vo-ring-inner {
+    width:110px;height:110px;
+    border-top:1.5px solid rgba(0,140,255,0.5);
+    border-right:1px solid rgba(0,212,255,0.18);
+    animation:vo-ring-inner-spin 2.2s linear infinite;
+  }
+  @keyframes vo-ring-outer-spin {
+    from{transform:rotateX(72deg) rotateZ(0deg)}
+    to  {transform:rotateX(72deg) rotateZ(360deg)}
+  }
+  @keyframes vo-ring-mid-spin {
+    from{transform:rotateX(60deg) rotateZ(0deg)}
+    to  {transform:rotateX(60deg) rotateZ(360deg)}
+  }
+  @keyframes vo-ring-inner-spin {
+    from{transform:rotateX(48deg) rotateZ(0deg)}
+    to  {transform:rotateX(48deg) rotateZ(360deg)}
+  }
+  #vo-core-orb {
+    position:relative;z-index:2;
+    width:65px;height:65px;
+    border-radius:50%;
+    background:radial-gradient(circle at 38% 36%, #55eeff 0%, #00d4ff 35%, #090979 100%);
+    box-shadow:
+      0 0 20px rgba(0,212,255,0.55),
+      0 0 50px rgba(0,140,255,0.30),
+      0 0 90px rgba(0,80,200,0.15),
+      inset 0 0 20px rgba(0,30,80,0.5);
+    transition:box-shadow .3s ease, transform .15s ease;
+  }
+  #vo-scan-line {
+    position:absolute;z-index:3;
+    left:50%;top:50%;
+    transform:translate(-50%,-50%);
+    width:65px;height:2px;
+    background:linear-gradient(90deg, transparent 0%, rgba(0,212,255,0.8) 50%, transparent 100%);
+    border-radius:2px;
+    animation:vo-scan 2.8s ease-in-out infinite;
+    opacity:.7;
+  }
+  @keyframes vo-scan {
+    0%  {transform:translate(-50%,-50%) translateY(-30px); opacity:0}
+    20% {opacity:.8}
+    80% {opacity:.8}
+    100%{transform:translate(-50%,-50%) translateY(30px);  opacity:0}
+  }
+  .vo-hud {
+    position:absolute;width:14px;height:14px;z-index:4;pointer-events:none;opacity:.75;
+  }
+  .vo-hud::before,.vo-hud::after { content:'';position:absolute;background:#00d4ff; }
+  .vo-hud::before{width:100%;height:1.5px;top:0;left:0}
+  .vo-hud::after {width:1.5px;height:100%;top:0;left:0}
+  .vo-hud-tl{top:5px;left:5px}
+  .vo-hud-tr{top:5px;right:5px;transform:rotate(90deg)}
+  .vo-hud-bl{bottom:5px;left:5px;transform:rotate(-90deg)}
+  .vo-hud-br{bottom:5px;right:5px;transform:rotate(180deg)}
+  /* Idle state */
+  #vo-orb-container.idle #vo-core-orb {
+    animation:vo-orb-idle 3s ease-in-out infinite alternate;
+  }
+  @keyframes vo-orb-idle {
+    from{box-shadow:0 0 20px rgba(0,212,255,0.55),0 0 50px rgba(0,140,255,0.30)}
+    to  {box-shadow:0 0 28px rgba(0,212,255,0.65),0 0 60px rgba(0,140,255,0.40)}
+  }
+  /* Listening state */
+  #vo-orb-container.listening #vo-core-orb {
+    background:radial-gradient(circle at 38% 36%, #88ffff 0%, #00d4ff 35%, #0044aa 100%);
+    box-shadow:0 0 30px rgba(0,212,255,0.9),0 0 70px rgba(0,160,255,0.5),0 0 120px rgba(0,80,200,0.3);
+    animation:vo-orb-listen 2.4s ease-in-out infinite alternate;
+  }
+  #vo-orb-container.listening .vo-ring-outer{animation-duration:3.5s}
+  #vo-orb-container.listening .vo-ring-mid  {animation-duration:2.4s}
+  #vo-orb-container.listening .vo-ring-inner{animation-duration:1.5s}
+  @keyframes vo-orb-listen {
+    from{transform:scale(1);    box-shadow:0 0 30px rgba(0,212,255,0.9),0 0 70px rgba(0,160,255,0.5)}
+    to  {transform:scale(1.12); box-shadow:0 0 50px rgba(0,212,255,1),  0 0 100px rgba(0,200,255,0.7)}
+  }
+  /* Speaking state */
+  #vo-orb-container.speaking #vo-core-orb {
+    animation:none;
+    transform:scale(var(--vo-orb-scale,1));
+    transition:transform .08s ease-out;
+    box-shadow:0 0 40px rgba(201,168,76,0.6),0 0 80px rgba(201,168,76,0.3);
+  }
+  #vo-orb-container.speaking .vo-ring-outer{animation-duration:2s;border-top-color:rgba(201,168,76,0.9)}
+  #vo-orb-container.speaking .vo-ring-mid  {animation-duration:1.4s;border-bottom-color:rgba(201,168,76,0.6)}
+  #vo-orb-container.speaking .vo-ring-inner{animation-duration:.9s;border-top-color:rgba(201,168,76,0.4)}
+  /* Thinking state */
+  #vo-orb-container.thinking #vo-core-orb {
+    background:radial-gradient(circle at 38% 36%, #d8b4fe 0%, #a78bfa 35%, #4c1d95 100%);
+    box-shadow:0 0 30px rgba(167,139,250,0.6),0 0 60px rgba(139,92,246,0.3);
+    animation:vo-orb-think .8s ease-in-out infinite alternate;
+  }
+  @keyframes vo-orb-think {
+    from{transform:scale(1);    box-shadow:0 0 25px rgba(167,139,250,0.5)}
+    to  {transform:scale(1.06); box-shadow:0 0 45px rgba(167,139,250,0.8),0 0 70px rgba(139,92,246,0.4)}
+  }
   /* Waveform canvas */
   #vo-canvas {
-    display:block;border-radius:12px;
+    display:block;border-radius:8px;
     image-rendering:pixelated;
+    opacity:.7;
   }
-
-  /* Outer ring that glows when speaking */
-  #vo-ring {
-    position:absolute;width:380px;height:120px;border-radius:12px;
-    pointer-events:none;transition:box-shadow .3s;
+  @media(prefers-reduced-motion:reduce) {
+    .vo-ring,#vo-core-orb,#vo-scan-line{animation:none!important}
   }
-  #vo-ring.speaking { box-shadow:0 0 40px 6px rgba(201,168,76,.18); }
-  #vo-ring.listening { box-shadow:0 0 30px 4px rgba(99,179,237,.15); }
-  #vo-ring.thinking { box-shadow:0 0 20px 3px rgba(167,139,250,.12); }
 
   #vo-status {
     font-size:.9rem;font-weight:600;letter-spacing:.05em;
@@ -19696,10 +19813,18 @@ function setLessonCache(chapter, html) {
   div.innerHTML = `
     <div id="vo-title">✦ JARVIS</div>
     <div id="vo-mode-label">AI Tutor</div>
-    <div style="position:relative;display:flex;align-items:center;justify-content:center">
-      <div id="vo-ring"></div>
-      <canvas id="vo-canvas" width="480" height="110" aria-hidden="true"></canvas>
+    <div id="vo-orb-container" class="idle">
+      <div class="vo-hud vo-hud-tl"></div>
+      <div class="vo-hud vo-hud-tr"></div>
+      <div class="vo-hud vo-hud-bl"></div>
+      <div class="vo-hud vo-hud-br"></div>
+      <div class="vo-ring vo-ring-outer"></div>
+      <div class="vo-ring vo-ring-mid"></div>
+      <div class="vo-ring vo-ring-inner"></div>
+      <div id="vo-core-orb"></div>
+      <div id="vo-scan-line"></div>
     </div>
+    <canvas id="vo-canvas" width="480" height="80" aria-hidden="true" style="margin-top:-.25rem"></canvas>
     <div id="vo-status">Tap Speak to begin</div>
     <div id="vo-transcript"></div>
     <div id="vo-reply"></div>
@@ -19847,21 +19972,22 @@ function vizDraw(mode) {
 
 // ── VO: unified voice state machine ─────────────────────────────────────────
 const VO = {
-  state: 'idle',    // idle | listening | thinking | speaking
-  mode: 'tutor',    // 'tutor' | 'teacher'
-  context: '',      // current chapter/topic
+  state: 'idle',       // idle | listening | thinking | speaking
+  mode: 'tutor',       // 'tutor' | 'teacher'
+  context: '',         // current chapter/topic
   history: [],
   recog: null,
   cancelTTS: null,
+  conversation: null,  // ElevenLabs Conversation session (tutor mode)
 };
 
 function voSetState(s) {
   VO.state = s;
-  const ring     = document.getElementById('vo-ring');
+  const orb      = document.getElementById('vo-orb-container');
   const status   = document.getElementById('vo-status');
   const micBtn   = document.getElementById('vo-mic-btn');
   const stopBtn  = document.getElementById('vo-stop-btn');
-  if (ring)   { ring.className = s; }
+  if (orb)    { orb.className = s; }
   if (status) { status.className = s; }
 
   const labels = {
@@ -19880,7 +20006,7 @@ function voSetState(s) {
   vizDraw(modeMap[s] || 'idle');
 }
 
-function voOpen(mode, context) {
+async function voOpen(mode, context) {
   VO.mode    = mode    || 'tutor';
   VO.context = context || state?.topic || 'A-Level Maths';
   VO.history = [];
@@ -19899,19 +20025,87 @@ function voOpen(mode, context) {
   document.getElementById('vo-transcript').textContent = '';
   document.getElementById('vo-reply').textContent = '';
 
-  // Greet and start listening
-  const name = state?.user?.name?.split(' ')[0] || 'there';
-  const greeting = mode === 'teacher' && context
-    ? `Right. We're covering ${context}. Ask me anything about it, or I can run through the key ideas first — your call.`
-    : `Good to have you back${name !== 'there' ? ', ' + name : ''}. What would you like help with?`;
+  if (VO.mode === 'tutor') {
+    // Tutor mode: use ElevenLabs Conversational AI (Jarvis)
+    voSetState('thinking');
+    try {
+      const res = await fetch('/api/tts');
+      if (!res.ok) throw new Error('Could not load Jarvis config');
+      const config = await res.json();
+      if (!config.conversationToken && !config.agentId) throw new Error('Jarvis agent not configured');
 
-  setTimeout(() => voSpeak(greeting, () => {
-    voSetState('idle');
-    setTimeout(voStartListening, 400);
-  }), 300);
+      const { Conversation } = await import('https://esm.sh/@elevenlabs/client@1');
+
+      VO.conversation = await Conversation.startSession({
+        ...(config.conversationToken
+          ? { conversationToken: config.conversationToken, connectionType: 'webrtc' }
+          : { agentId: config.agentId }),
+
+        onConnect: () => {
+          voSetState('listening');
+        },
+
+        onDisconnect: () => {
+          if (VO.conversation) {
+            VO.conversation = null;
+            voClose();
+          }
+        },
+
+        onModeChange: ({ mode: agentMode }) => {
+          voSetState(agentMode === 'speaking' ? 'speaking' : 'listening');
+        },
+
+        onMessage: (msg) => {
+          const aiText = msg?.agent_response
+            ?? (msg?.source === 'ai' ? msg?.message : null)
+            ?? null;
+          if (typeof aiText === 'string' && aiText.trim()) {
+            document.getElementById('vo-reply').textContent = aiText;
+            state.tutorHistory.push({ role: 'assistant', content: aiText });
+            addTutorMsg('bot', aiText);
+            if (typeof addXP === 'function') addXP(10, '🎙️ Voice question +10 XP');
+          }
+          const userText = msg?.source === 'user'
+            ? (msg?.user_transcription ?? msg?.message ?? null)
+            : null;
+          if (typeof userText === 'string' && userText.trim()) {
+            document.getElementById('vo-transcript').textContent = userText;
+            state.tutorHistory.push({ role: 'user', content: userText });
+            addTutorMsg('user', userText);
+          }
+        },
+
+        onError: (errMsg) => {
+          console.error('[JARVIS]', errMsg);
+          showToast('⚠️ ' + errMsg);
+        },
+      });
+    } catch(e) {
+      VO.conversation = null;
+      voClose();
+      showToast('⚠️ ' + (e.message || 'Could not start Jarvis'));
+    }
+  } else {
+    // Teacher mode: keep existing Claude + TTS flow
+    const name = state?.user?.name?.split(' ')[0] || 'there';
+    const greeting = context
+      ? `Right. We're covering ${context}. Ask me anything about it, or I can run through the key ideas first — your call.`
+      : `Good to have you back${name !== 'there' ? ', ' + name : ''}. What would you like help with?`;
+
+    setTimeout(() => voSpeak(greeting, () => {
+      voSetState('idle');
+      setTimeout(voStartListening, 400);
+    }), 300);
+  }
 }
 
 function voClose() {
+  if (VO.conversation) {
+    const conv = VO.conversation;
+    VO.conversation = null;  // null first to prevent re-entry from onDisconnect
+    conv.endSession().catch(() => {});
+  }
   VO.recog?.stop();
   if (VO.cancelTTS) { VO.cancelTTS(); VO.cancelTTS = null; }
   vizStop();
@@ -19965,6 +20159,9 @@ function voStartListening() {
 }
 
 function voTapMic() {
+  // In ElevenLabs (Jarvis) mode the session handles turn detection automatically
+  if (VO.conversation) return;
+
   if (VO.state === 'listening') {
     VO.recog?.stop();
     vizDisconnectMic();

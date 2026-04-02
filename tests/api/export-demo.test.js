@@ -1,5 +1,5 @@
 /**
- * Tests for the demo mode of api/export.js.
+ * Tests for the demo mode of export functionality in api/notes.js.
  *
  * When supabase is null the handler returns a demo-mode placeholder response.
  */
@@ -15,10 +15,10 @@ vi.mock('@supabase/supabase-js', () => ({
   createClient: () => null,
 }));
 
-import handler from '../../api/export.js';
+import handler from '../../api/notes.js';
 
 function req(method = 'GET', headers = {}) {
-  return { method, headers, socket: { remoteAddress: '1.2.3.4' } };
+  return { method, headers, query: { action: 'export' }, socket: { remoteAddress: '1.2.3.4' } };
 }
 
 function res() {

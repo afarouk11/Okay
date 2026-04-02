@@ -1,5 +1,5 @@
 /**
- * Tests for api/export.js — GDPR data export endpoint.
+ * Tests for export functionality in api/notes.js — GDPR data export endpoint.
  */
 
 import { vi, describe, it, expect, beforeEach } from 'vitest';
@@ -20,7 +20,7 @@ vi.mock('@supabase/supabase-js', () => ({
   createClient: () => mocks.supabase,
 }));
 
-import handler from '../../api/export.js';
+import handler from '../../api/notes.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ function makeBuilder(resolution = { data: [], error: null }) {
 }
 
 function req(method = 'GET', headers = {}) {
-  return { method, headers, socket: { remoteAddress: '1.2.3.4' } };
+  return { method, headers, query: { action: 'export' }, socket: { remoteAddress: '1.2.3.4' } };
 }
 
 function res() {
@@ -63,16 +63,6 @@ describe('OPTIONS', () => {
     const r = res();
     await handler(req('OPTIONS'), r);
     expect(r.statusCode).toBe(200);
-  });
-});
-
-// ─── Non-GET method ───────────────────────────────────────────────────────────
-
-describe('non-GET', () => {
-  it('returns 405 for POST', async () => {
-    const r = res();
-    await handler(req('POST', { authorization: 'Bearer valid-tok' }), r);
-    expect(r.statusCode).toBe(405);
   });
 });
 

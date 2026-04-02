@@ -121,8 +121,8 @@ body{background:var(--black);color:var(--white);font-family:var(--font);min-heig
 .slide-content .callout{background:rgba(201,168,76,0.07);border-left:3px solid var(--gold);padding:.7rem .9rem;border-radius:0 8px 8px 0;margin:.7rem 0}
 .slide-content .example{background:rgba(96,165,250,0.07);border-left:3px solid var(--blue);padding:.7rem .9rem;border-radius:0 8px 8px 0;margin:.7rem 0}
 .slide-content .warning{background:rgba(244,114,182,0.07);border-left:3px solid var(--pink);padding:.7rem .9rem;border-radius:0 8px 8px 0;margin:.7rem 0}
-.slide-keypint{margin-top:1.4rem;background:rgba(201,168,76,0.1);border:1.5px solid rgba(201,168,76,0.4);border-radius:10px;padding:1rem 1.2rem;font-size:.92rem;color:var(--white);line-height:1.7}
-.slide-keypint::before{content:"✦ Key Point";color:var(--gold);font-weight:800;font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:.35rem}
+.slide-keypoint{margin-top:1.4rem;background:rgba(201,168,76,0.1);border:1.5px solid rgba(201,168,76,0.4);border-radius:10px;padding:1rem 1.2rem;font-size:.92rem;color:var(--white);line-height:1.7}
+.slide-keypoint::before{content:"✦ Key Point";color:var(--gold);font-weight:800;font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;display:block;margin-bottom:.35rem}
 .slide-essential-badge{display:inline-flex;align-items:center;gap:.3rem;background:rgba(201,168,76,0.18);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-size:.72rem;font-weight:700;padding:.2rem .6rem;border-radius:20px;margin-bottom:.6rem;letter-spacing:.04em}
 .slide-bonus-badge{display:inline-flex;align-items:center;gap:.3rem;background:rgba(139,137,156,0.12);border:1px solid rgba(139,137,156,0.25);color:var(--muted);font-size:.72rem;font-weight:600;padding:.2rem .6rem;border-radius:20px;margin-bottom:.6rem}
 
@@ -216,10 +216,10 @@ body{background:var(--black);color:var(--white);font-family:var(--font);min-heig
     <div class="grade-row">
       <label>Target Grade</label>
       <div class="grade-pills" id="grade-pills">
-        <button class="grade-pill selected-astar" data-grade="A*" onclick="selectGrade(this)">A*</button>
-        <button class="grade-pill" data-grade="A" onclick="selectGrade(this)">A</button>
-        <button class="grade-pill" data-grade="B" onclick="selectGrade(this)">B</button>
-        <button class="grade-pill" data-grade="C" onclick="selectGrade(this)">C</button>
+        <button class="grade-pill selected-astar" data-grade="A*" aria-pressed="true" onclick="selectGrade(this)">A*</button>
+        <button class="grade-pill" data-grade="A" aria-pressed="false" onclick="selectGrade(this)">A</button>
+        <button class="grade-pill" data-grade="B" aria-pressed="false" onclick="selectGrade(this)">B</button>
+        <button class="grade-pill" data-grade="C" aria-pressed="false" onclick="selectGrade(this)">C</button>
       </div>
       <span id="grade-hint" style="font-size:.75rem;color:var(--muted);margin-left:.25rem">All content shown</span>
     </div>
@@ -253,7 +253,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font);min-heig
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script>
+<script type="module">
+import { initAuth, callClaude, getReply, showToast, sanitizeHTML, getUser } from '/src/tutor-common.js';
+
 // ─── Curriculum Data ───────────────────────────────────
 const CURRICULUM = {
   alevel: {
@@ -278,70 +280,24 @@ const GRADE_CONFIG = {
 };
 
 // ─── State ─────────────────────────────────────────────
-const SUPABASE_URL = window.SUPABASE_URL || '';
-const SUPABASE_ANON = window.SUPABASE_ANON_KEY || '';
-let supabaseClient = null;
-let currentUser = null;
-let selectedTopic = null;
+let selectedTopic    = null;
 let selectedSubtopic = null;
-let selectedMode = 'full';
-let selectedGrade = 'A*';
-let slideData = [];
-let currentSlide = 0;
-let visitedSlides = new Set();
-
-// ─── Auth ──────────────────────────────────────────────
-async function initAuth() {
-  if (SUPABASE_URL && SUPABASE_ANON && window.supabase) {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) { currentUser = { token: session.access_token, ...session.user }; }
-  }
-  if (!currentUser) {
-    try {
-      const token = localStorage.getItem('synaptiq_token');
-      if (token) currentUser = { token };
-      else {
-        const saved = localStorage.getItem('synaptiq_user');
-        if (saved) currentUser = JSON.parse(saved);
-      }
-    } catch(e) {}
-  }
-  const overlay = document.getElementById('auth-overlay');
-  if (!currentUser) { window.location.href = '/'; return; }
-  overlay.remove();
-  updateSubjects();
-}
-
-async function callClaude(messages, system) {
-  const body = { max_tokens:4000, messages };
-  if (system) body.system = system;
-  const headers = { 'Content-Type':'application/json' };
-  if (currentUser?.token) headers['Authorization'] = 'Bearer ' + currentUser.token;
-  const r = await fetch('/api/chat', { method:'POST', headers, body:JSON.stringify(body) });
-  const text = await r.text();
-  let data;
-  try { data = JSON.parse(text); } catch(e) { throw new Error('Bad response (' + r.status + ')'); }
-  if (!r.ok) throw new Error(data.error || 'API error ' + r.status);
-  if (data.error) throw new Error(data.error.message || 'Anthropic error');
-  return data;
-}
-function getReply(d) { return d.content && d.content[0] ? d.content[0].text : ''; }
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
+let selectedMode     = 'full';
+let selectedGrade    = 'A*';
+let slideData        = [];
+let currentSlide     = 0;
+let visitedSlides    = new Set();
 
 // ─── Grade Selection ────────────────────────────────────
 function selectGrade(btn) {
   document.querySelectorAll('.grade-pill').forEach(b => {
     b.className = 'grade-pill';
+    b.setAttribute('aria-pressed', 'false');
   });
   selectedGrade = btn.dataset.grade;
   const cfg = GRADE_CONFIG[selectedGrade];
   btn.classList.add(cfg.cls);
+  btn.setAttribute('aria-pressed', 'true');
   document.getElementById('grade-hint').textContent = cfg.hint;
 }
 
@@ -393,6 +349,9 @@ function selectTopic(btn, topicEnc) {
   ).join('');
   area.classList.add('show');
   document.getElementById('start-btn').disabled = false;
+
+  // ZPD: suggest difficulty based on mastery for this topic
+  suggestZPDGrade(topic);
 }
 
 function selectSubtopic(btn, stEnc) {
@@ -405,6 +364,45 @@ function selectMode(btn) {
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
   selectedMode = btn.dataset.mode;
+}
+
+// ─── ZPD Grade Suggestion ───────────────────────────────
+/** mastery (0-5) → A-Level grade letter */
+function masteryToGrade(level) {
+  if (level <= 1) return 'C';
+  if (level <= 2) return 'B';
+  if (level <= 3) return 'A';
+  return 'A*';
+}
+
+async function suggestZPDGrade(topic) {
+  if (!topic) return;
+  const user  = getUser();
+  const token = user?.token || localStorage.getItem('synaptiq_token');
+  if (!token || token.startsWith('demo_token_')) return;
+
+  try {
+    const res = await fetch('/api/adaptive', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'get_review_queue' })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    const match = (data.review_queue || []).find(t =>
+      t.topic.toLowerCase().includes(topic.toLowerCase()) ||
+      topic.toLowerCase().includes(t.topic.toLowerCase())
+    );
+    if (!match) return;
+
+    const suggestedGrade = masteryToGrade(match.mastery_level);
+    const gradeBtn = document.querySelector(`.grade-pill[data-grade="${suggestedGrade}"]`);
+    if (gradeBtn) {
+      selectGrade(gradeBtn);
+      showToast(`🧠 ZPD: mastery ${match.mastery_level}/5 on ${topic} — ${suggestedGrade} target set`);
+    }
+  } catch (_) {}
 }
 
 // ─── Grade-aware system prompt builder ─────────────────
@@ -477,7 +475,7 @@ Make it engaging, thorough, and exam-focused.` : selectedMode === 'slides' ? `AL
     const data = await callClaude([{
       role: 'user',
       content: `Teach me "${topicFocus}" from ${subject} ${board} ${levelLabel}. Topic area: ${selectedTopic}. Target grade: ${selectedGrade}.`
-    }], sys);
+    }], sys, 4000);
     let reply = getReply(data);
 
     if (selectedMode === 'quiz') {
@@ -488,7 +486,11 @@ Make it engaging, thorough, and exam-focused.` : selectedMode === 'slides' ? `AL
       renderLesson(reply, subject, topicFocus, levelLabel, board);
     }
   } catch(e) {
-    output.innerHTML = `<div style="background:var(--bg3);border-radius:12px;padding:1.5rem;color:var(--muted)">⚠️ ${e.message || 'Could not generate lesson. Please try again.'}</div>`;
+    const isLimit = e.code === 'daily_limit_exceeded';
+    output.innerHTML = `<div style="background:var(--bg3);border-radius:12px;padding:1.5rem;color:var(--muted)">
+      ⚠️ ${sanitizeHTML(e.message || 'Could not generate lesson. Please try again.')}
+      ${isLimit ? '<br><br><a href="/pricing.html" style="color:var(--gold)">Upgrade your plan →</a>' : ''}
+    </div>`;
   }
   btn.disabled = false;
   btn.textContent = '✦ Start Lesson';
@@ -506,7 +508,7 @@ function rerenderMath(el) {
         ],
         throwOnError:false
       });
-    } catch(e) {}
+    } catch(_) {}
   }
 }
 
@@ -532,25 +534,26 @@ function renderLesson(text, subject, topic, level, board) {
     <div class="lesson-header">
       <div>
         <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.35rem">
-          <div class="lesson-title" style="margin-bottom:0">${subject}: ${topic}</div>
-          <span class="grade-indicator ${gradeClass()}">${selectedGrade} Target</span>
+          <div class="lesson-title" style="margin-bottom:0">${sanitizeHTML(subject)}: ${sanitizeHTML(topic)}</div>
+          <span class="grade-indicator ${gradeClass()}">${sanitizeHTML(selectedGrade)} Target</span>
         </div>
-        <div class="lesson-meta">${level} · ${board} · ${modeLabels[selectedMode]||''}</div>
+        <div class="lesson-meta">${sanitizeHTML(level)} · ${sanitizeHTML(board)} · ${sanitizeHTML(modeLabels[selectedMode]||'')}</div>
       </div>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap">
         <button class="btn-outline" onclick="window.print()">🖨️ Print</button>
-        <button class="btn-outline" onclick="startLesson()">↻ Regenerate</button>
+        <button class="btn-outline" id="regen-lesson-btn">↻ Regenerate</button>
         <button class="btn-outline" onclick="document.getElementById('selector-card').scrollIntoView({behavior:'smooth'})">← Change Topic</button>
       </div>
     </div>
     <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-radius:8px;padding:.65rem 1rem;margin-bottom:1.25rem;font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:.5rem">
       <span style="color:var(--gold)">✦</span>
-      <span>Content is <strong style="color:var(--white)">filtered for ${selectedGrade} grade</strong>.
+      <span>Content is <strong style="color:var(--white)">filtered for ${sanitizeHTML(selectedGrade)} grade</strong>.
       <span class="essential-tag" style="font-size:.65rem;padding:.15rem .4rem">✦ Essential</span> = must-know for your grade.
       ${selectedGrade === 'A*' || selectedGrade === 'A' ? '<span class="bonus-tag" style="font-size:.65rem;padding:.15rem .4rem">★ Bonus</span> = advanced/extra depth.' : ''}
       </span>
     </div>
     <div class="lesson-body">${formatLessonHTML(text)}</div>`;
+  document.getElementById('regen-lesson-btn')?.addEventListener('click', startLesson);
   setTimeout(() => rerenderMath(output), 100);
 }
 
@@ -564,7 +567,7 @@ function renderSlides(rawText, subject, topic, level, board) {
     const sanitized = clean.replace(/(?<!\\)\\(?!["\\/bfnrtu])/g, '\\\\');
     slides = JSON.parse(sanitized);
     if (!Array.isArray(slides) || slides.length === 0) throw new Error('empty');
-  } catch(e) {
+  } catch(_) {
     // If JSON parse fails, fall back to lesson render
     renderLesson(rawText, subject, topic, level, board);
     return;
@@ -588,9 +591,9 @@ function renderSlides(rawText, subject, topic, level, board) {
   const slidesHTML = filteredSlides.map((s, i) => {
     const isEssential = s.essential !== false;
     const badge = isEssential
-      ? `<span class="slide-essential-badge">✦ Essential for ${selectedGrade}</span>`
+      ? `<span class="slide-essential-badge">✦ Essential for ${sanitizeHTML(selectedGrade)}</span>`
       : `<span class="slide-bonus-badge">★ Bonus / Advanced</span>`;
-    const keyPt = s.keyPoint ? `<div class="slide-keypint">${sanitizeHTML(s.keyPoint)}</div>` : '';
+    const keyPt = s.keyPoint ? `<div class="slide-keypoint">${sanitizeHTML(s.keyPoint)}</div>` : '';
     const worked = s.workedExample ? `<div class="example" style="margin-top:1rem"><strong>Worked example:</strong><br>${s.workedExample}</div>` : '';
     return `<div class="slide${i===0?' active':''}" id="slide-${i}">
       <div class="slide-card">
@@ -607,23 +610,23 @@ function renderSlides(rawText, subject, topic, level, board) {
   }).join('');
 
   const dots = filteredSlides.map((_, i) =>
-    `<div class="slide-dot${i===0?' active visited':''}" id="dot-${i}" onclick="goToSlide(${i})" title="Step ${i+1}"></div>`
+    `<div class="slide-dot${i===0?' active visited':''}" id="dot-${i}" onclick="goToSlide(${i})" title="Step ${i+1}" role="button" aria-label="Go to step ${i+1}"></div>`
   ).join('');
 
-  const skippedNote = skipped > 0 ? `<div style="font-size:.75rem;color:var(--muted);text-align:center;margin-top:.75rem">⚡ ${skipped} advanced step${skipped>1?'s':''} hidden for ${selectedGrade} target — <a href="#" onclick="selectedGrade='A*';startLesson();return false" style="color:var(--gold);text-decoration:none">show all</a></div>` : '';
+  const skippedNote = skipped > 0 ? `<div style="font-size:.75rem;color:var(--muted);text-align:center;margin-top:.75rem">⚡ ${skipped} advanced step${skipped>1?'s':''} hidden for ${sanitizeHTML(selectedGrade)} target — <button class="btn-outline" style="font-size:.75rem;padding:.2rem .6rem" id="show-all-btn" aria-label="Show all advanced steps">show all</button></div>` : '';
 
   output.innerHTML = `
     <div class="lesson-header">
       <div>
         <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.35rem">
-          <div class="lesson-title" style="margin-bottom:0">${subject}: ${topic}</div>
-          <span class="grade-indicator ${gradeClass()}">${selectedGrade} Target</span>
+          <div class="lesson-title" style="margin-bottom:0">${sanitizeHTML(subject)}: ${sanitizeHTML(topic)}</div>
+          <span class="grade-indicator ${gradeClass()}">${sanitizeHTML(selectedGrade)} Target</span>
         </div>
-        <div class="lesson-meta">${level} · ${board} · Step-by-Step Slides · ${total} steps</div>
+        <div class="lesson-meta">${sanitizeHTML(level)} · ${sanitizeHTML(board)} · Step-by-Step Slides · ${total} steps</div>
       </div>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap">
         <button class="btn-outline" onclick="window.print()">🖨️ Print All</button>
-        <button class="btn-outline" onclick="startLesson()">↻ Regenerate</button>
+        <button class="btn-outline" id="regen-slides-btn">↻ Regenerate</button>
         <button class="btn-outline" onclick="document.getElementById('selector-card').scrollIntoView({behavior:'smooth'})">← Change Topic</button>
       </div>
     </div>
@@ -640,6 +643,13 @@ function renderSlides(rawText, subject, topic, level, board) {
       </div>
     </div>
     ${skippedNote}`;
+
+  document.getElementById('regen-slides-btn')?.addEventListener('click', startLesson);
+  document.getElementById('show-all-btn')?.addEventListener('click', () => {
+    selectedGrade = 'A*';
+    selectGrade(document.querySelector('.grade-pill[data-grade="A*"]'));
+    startLesson();
+  });
   setTimeout(() => rerenderMath(output), 100);
 }
 
@@ -671,11 +681,15 @@ function goToSlide(idx) {
   // Update counter and nav buttons
   document.getElementById('slide-counter').textContent = `Step ${idx+1} of ${total}`;
   document.getElementById('prev-btn').disabled = idx === 0;
-  document.getElementById('next-btn').disabled = idx === total - 1;
+
+  const nextBtn = document.getElementById('next-btn');
   if (idx === total - 1) {
-    document.getElementById('next-btn').textContent = '✓ Complete';
+    nextBtn.textContent = '✓ Complete';
+    nextBtn.disabled = true;
+    showToast('🎉 Lesson complete! Well done.');
   } else {
-    document.getElementById('next-btn').textContent = 'Next →';
+    nextBtn.textContent = 'Next →';
+    nextBtn.disabled = false;
   }
   // Re-render math for this slide
   const activeSlide = document.getElementById('slide-' + idx);
@@ -690,7 +704,8 @@ function renderQuiz(rawText, subject, topic, level, board) {
     const clean = rawText.replace(/```json|```/g,'').trim();
     const sanitized = clean.replace(/(?<!\\)\\(?!["\\/bfnrtu])/g, '\\\\');
     questions = JSON.parse(sanitized);
-  } catch(e) {
+    if (!Array.isArray(questions) || questions.length === 0) throw new Error('empty');
+  } catch(_) {
     renderLesson(rawText, subject, topic, level, board);
     return;
   }
@@ -699,28 +714,32 @@ function renderQuiz(rawText, subject, topic, level, board) {
     <div class="lesson-header">
       <div>
         <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.35rem">
-          <div class="lesson-title" style="margin-bottom:0">Quiz: ${subject} — ${topic}</div>
-          <span class="grade-indicator ${gradeClass()}">${selectedGrade} Target</span>
+          <div class="lesson-title" style="margin-bottom:0">Quiz: ${sanitizeHTML(subject)} — ${sanitizeHTML(topic)}</div>
+          <span class="grade-indicator ${gradeClass()}">${sanitizeHTML(selectedGrade)} Target</span>
         </div>
-        <div class="lesson-meta">${level} · ${board} · ${questions.length} questions</div>
+        <div class="lesson-meta">${sanitizeHTML(level)} · ${sanitizeHTML(board)} · ${questions.length} questions</div>
       </div>
-      <button class="btn-outline" onclick="startLesson()">↻ New Quiz</button>
+      <button class="btn-outline" id="new-quiz-btn">↻ New Quiz</button>
     </div>
     <div id="quiz-score" style="background:rgba(201,168,76,0.1);border-radius:12px;padding:1rem;margin-bottom:1.5rem;display:none">
       <strong>Score: <span id="score-val">0</span> / ${questions.length}</strong>
     </div>`;
 
   questions.forEach((q, i) => {
+    // Guard against missing options / explanation
+    const opts  = Array.isArray(q.options) ? q.options : [];
+    const expEnc = encodeURIComponent(q.explanation || q.explanation_text || '');
     html += `<div class="lesson-quiz" id="quiz-${i}">
       <div class="quiz-q">${i+1}. ${sanitizeHTML(q.question)}</div>
-      <div class="quiz-options">${q.options.map((opt, j) =>
-        `<button class="quiz-opt" onclick="checkAnswer(${i},${j},${q.correct},'${encodeURIComponent(q.explanation||'')}')">${sanitizeHTML(opt)}</button>`
+      <div class="quiz-options">${opts.map((opt, j) =>
+        `<button class="quiz-opt" onclick="checkAnswer(${i},${j},${q.correct ?? 0},'${expEnc}')">${sanitizeHTML(opt)}</button>`
       ).join('')}</div>
       <div class="quiz-feedback" id="qfb-${i}"></div>
     </div>`;
   });
 
   output.innerHTML = html;
+  document.getElementById('new-quiz-btn')?.addEventListener('click', startLesson);
   window._quizAnswered = new Array(questions.length).fill(false);
   window._quizScore = 0;
 }
@@ -744,16 +763,27 @@ function checkAnswer(qIdx, chosenIdx, correctIdx, explanationEnc) {
   const total = (window._quizAnswered || []).length;
   if (answered === total) {
     const scoreDiv = document.getElementById('quiz-score');
-    if (scoreDiv) { scoreDiv.style.display = 'block'; document.getElementById('score-val').textContent = window._quizScore; }
+    if (scoreDiv) {
+      scoreDiv.style.display = 'block';
+      document.getElementById('score-val').textContent = window._quizScore;
+      showToast(`Quiz complete! You scored ${window._quizScore}/${total}`);
+    }
   }
 }
 
-function sanitizeHTML(str) {
-  if (!str) return '';
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// ─── Initialise ─────────────────────────────────────────
+await initAuth();
+updateSubjects();
 
-initAuth();
+// Expose functions used by inline onclick handlers
+window.selectGrade    = selectGrade;
+window.selectTopic    = selectTopic;
+window.selectSubtopic = selectSubtopic;
+window.selectMode     = selectMode;
+window.startLesson    = startLesson;
+window.navigateSlide  = navigateSlide;
+window.goToSlide      = goToSlide;
+window.checkAnswer    = checkAnswer;
 </script>
 </body>
 </html>
