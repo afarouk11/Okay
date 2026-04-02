@@ -6073,8 +6073,8 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
 
 
     <div class="subpage" id="sp-photo">
-      <div class="page-title">📷 Photo a Question</div>
-      <p class="page-subtitle">Point your camera at any textbook, worksheet, or past paper — Synaptiq solves it instantly</p>
+      <div class="page-title">📷 Photo Question</div>
+      <p class="page-subtitle">Photograph any question or notes — solve it instantly or practice active recall with redacted key terms</p>
       <div style="max-width:700px">
         <div class="form-row" style="grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
           <div class="form-group">
@@ -6085,12 +6085,13 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">What do you need?</label>
-            <select class="form-select" id="photo-mode">
+            <label class="form-label">Mode</label>
+            <select class="form-select" id="photo-mode" onchange="updatePhotoBtn()">
               <option value="solve">Full solution with steps</option>
               <option value="explain">Explanation only</option>
               <option value="check">Check my working</option>
               <option value="hint">Just give me a hint</option>
+              <option value="recall">⬛ Active Recall — cover key terms</option>
             </select>
           </div>
         </div>
@@ -6102,6 +6103,8 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
         </div>
         <img id="photo-preview" class="photo-preview" style="display:none" alt="Question preview">
         <button class="btn-gold" id="photo-solve-btn" onclick="solvePhoto()" style="display:none;width:100%;padding:1rem;font-size:1rem;margin-bottom:1.5rem">✦ Solve This Question</button>
+
+        <!-- Standard answer panel -->
         <div id="photo-answer" style="display:none">
           <div style="background:rgba(12,14,20,0.82);backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:1.5rem">
             <div style="font-weight:700;margin-bottom:1rem;color:var(--gold)">✦ Answer</div>
@@ -6110,7 +6113,27 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
           <div style="display:flex;gap:.75rem;margin-top:1rem;flex-wrap:wrap">
             <button class="btn-gold" onclick="askFollowUp()">Ask follow-up question</button>
             <button class="vid-ctrl-btn" onclick="savePhotoToNotes()">📓 Save to Notes</button>
-            <button class="vid-ctrl-btn" onclick="['photo-answer','photo-preview','photo-solve-btn'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.display='none'})">↺ New Question</button>
+            <button class="vid-ctrl-btn" onclick="resetPhoto()">↺ New Question</button>
+          </div>
+        </div>
+
+        <!-- Active Recall panel -->
+        <div id="photo-recall" style="display:none">
+          <div style="background:rgba(12,14,20,0.88);backdrop-filter:blur(16px);border:1px solid rgba(0,212,255,0.18);border-radius:16px;padding:1.5rem">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;flex-wrap:wrap;gap:.5rem">
+              <div style="font-weight:700;color:var(--gold)">⬛ Active Recall</div>
+              <span class="recall-progress" id="recall-score">0 / 0 revealed</span>
+            </div>
+            <div class="recall-hint">Click any <span style="background:#000;color:transparent;border-radius:3px;padding:1px 8px;font-size:.78rem;border:1px solid #333">▓▓▓▓▓</span> redacted box to reveal the hidden term. Try to recall it first!</div>
+            <div class="recall-controls">
+              <button class="vid-ctrl-btn" onclick="revealAll()">👁 Reveal All</button>
+              <button class="vid-ctrl-btn" onclick="coverAll()">⬛ Cover All</button>
+            </div>
+            <div id="photo-recall-text" style="line-height:2.2;font-size:.95rem"></div>
+          </div>
+          <div style="display:flex;gap:.75rem;margin-top:1rem;flex-wrap:wrap">
+            <button class="vid-ctrl-btn" onclick="savePhotoToNotes()">📓 Save to Notes</button>
+            <button class="vid-ctrl-btn" onclick="resetPhoto()">↺ New Question</button>
           </div>
         </div>
       </div>
@@ -14566,6 +14589,31 @@ function exportQuestionsPDF() {
   width: 100%; border-radius: 12px; margin: 1rem 0;
   border: 1px solid var(--border); max-height: 300px; object-fit: contain;
 }
+/* ── ACTIVE RECALL REDACTION ── */
+.redact-box {
+  display: inline;
+  background: #000;
+  color: transparent;
+  border-radius: 3px;
+  cursor: pointer;
+  user-select: none;
+  padding: 1px 4px;
+  margin: 0 1px;
+  transition: background .2s, color .2s, border .2s;
+  min-width: 2ch;
+  border: 1px solid #222;
+}
+.redact-box:hover { background: #1c1c1c; border-color: #444; }
+.redact-box.revealed {
+  background: rgba(0,212,255,0.1);
+  color: var(--white);
+  border: 1px solid rgba(0,212,255,0.35);
+}
+.recall-controls { display:flex; gap:.6rem; margin-bottom:1.25rem; flex-wrap:wrap; }
+.recall-hint {
+  font-size:.8rem; color:var(--muted); text-align:center; margin-bottom:1rem;
+}
+.recall-progress { font-size:.85rem; color:var(--gold); font-weight:600; }
 /* ── MIND MAP ── */
 .mindmap-canvas-wrap {
   background: rgba(8,10,16,0.95); border: 1px solid rgba(255,255,255,0.07);
@@ -15600,10 +15648,66 @@ function handlePhotoQuestion(e) {
     const preview = document.getElementById('photo-preview');
     preview.src = ev.target.result;
     preview.style.display = 'block';
+    updatePhotoBtn();
     document.getElementById('photo-solve-btn').style.display = 'block';
     document.getElementById('photo-answer').style.display = 'none';
+    document.getElementById('photo-recall').style.display = 'none';
   };
   reader.readAsDataURL(file);
+}
+
+function updatePhotoBtn() {
+  const btn = document.getElementById('photo-solve-btn');
+  if (!btn) return;
+  const mode = document.getElementById('photo-mode')?.value;
+  btn.textContent = mode === 'recall' ? '⬛ Prepare Active Recall' : '✦ Solve This Question';
+}
+
+function resetPhoto() {
+  photoImageData = null;
+  ['photo-answer','photo-preview','photo-solve-btn','photo-recall'].forEach(id => {
+    const e = document.getElementById(id); if (e) e.style.display = 'none';
+  });
+  const f = document.getElementById('photo-file'); if (f) f.value = '';
+}
+
+// ── Active Recall helpers ──────────────────────────────────────────────────
+function renderRedacted(text) {
+  const parts = text.split(/\[\[([^\]]+)\]\]/g);
+  let html = ''; let total = 0;
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 0) {
+      // plain text — preserve line breaks
+      html += parts[i].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    } else {
+      total++;
+      const safe = parts[i].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      html += `<span class="redact-box" onclick="toggleRedact(this)" data-term="${safe}">${safe}</span>`;
+    }
+  }
+  return { html, total };
+}
+
+function toggleRedact(el) {
+  el.classList.toggle('revealed');
+  updateRecallScore();
+}
+
+function updateRecallScore() {
+  const boxes = document.querySelectorAll('#photo-recall-text .redact-box');
+  const revealed = document.querySelectorAll('#photo-recall-text .redact-box.revealed').length;
+  const el = document.getElementById('recall-score');
+  if (el) el.textContent = `${revealed} / ${boxes.length} revealed`;
+}
+
+function revealAll() {
+  document.querySelectorAll('#photo-recall-text .redact-box').forEach(b => b.classList.add('revealed'));
+  updateRecallScore();
+}
+
+function coverAll() {
+  document.querySelectorAll('#photo-recall-text .redact-box').forEach(b => b.classList.remove('revealed'));
+  updateRecallScore();
 }
 
 async function solvePhoto() {
@@ -15612,49 +15716,84 @@ async function solvePhoto() {
   const subject = document.getElementById('photo-subject').value;
   const mode = document.getElementById('photo-mode').value;
   const btn = document.getElementById('photo-solve-btn');
-  btn.textContent = '✦ Analysing...'; btn.disabled = true;
+  btn.disabled = true;
 
-  const modeInstructions = {
-    solve: 'Provide a complete step-by-step solution. Show every step clearly.',
-    explain: 'Explain what this question is asking and the key concepts involved.',
-    check: 'I am checking my working. Identify any errors and explain what went wrong.',
-    hint: 'Give me just a hint — one or two sentences pointing me in the right direction. Do not solve it.'
-  };
-
-  let sys = `You are an expert UK A-Level Mathematics tutor. A student has photographed a question. ${modeInstructions[mode]} Use UK curriculum standards and clear formatting.`;
-  sys += getSafeguardingPrompt();
-  try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6', max_tokens: 1500,
-        system: sys,
-        messages: [{ role: 'user', content: [
-          { type: 'image', source: { type: 'base64', media_type: photoImageData.type, data: photoImageData.data } },
-          { type: 'text', text: `Please ${mode} this ${subject} question.` }
-        ]}]
-      })
-    });
-    const data = await res.json();
-    const answer = data.content?.[0]?.text || 'Could not analyse image';
-    document.getElementById('photo-answer-text').innerHTML = renderAIResponse(answer);
-    document.getElementById('photo-answer').style.display = 'block';
-    if (window.MathJax) MathJax.typesetPromise([document.getElementById('photo-answer-text')]).catch(()=>{});
-    addXP(15, '📷 Photo question solved +15 XP');
-    saveChatToHistory(subject, 'Photo question', answer.slice(0,100));
-  } catch(e) { showToast('⚠️ Could not analyse image — check your API'); }
-  btn.textContent = '✦ Solve This Question'; btn.disabled = false;
+  if (mode === 'recall') {
+    btn.textContent = '⬛ Preparing Recall...';
+    const sys = `You are an expert study assistant helping a student memorise content.
+The student has uploaded an image of notes, a question, or printed text they want to practise.
+1. Transcribe ALL text from the image accurately.
+2. Identify every key term, important fact, formula, definition, date, name, or answer worth memorising.
+3. Wrap EACH key item with [[double square brackets]] — e.g. [[photosynthesis]], [[y = mx + c]], [[1066]].
+4. Return ONLY the transcribed text with [[key terms]] marked. No extra commentary or headings outside the transcribed content.`;
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6', max_tokens: 2000,
+          system: sys,
+          messages: [{ role: 'user', content: [
+            { type: 'image', source: { type: 'base64', media_type: photoImageData.type, data: photoImageData.data } },
+            { type: 'text', text: 'Transcribe this content and mark all key terms with [[double square brackets]] for active recall.' }
+          ]}]
+        })
+      });
+      const data = await res.json();
+      const raw = data.content?.[0]?.text || 'Could not analyse image';
+      const { html, total } = renderRedacted(raw);
+      document.getElementById('photo-recall-text').innerHTML = html;
+      document.getElementById('recall-score').textContent = `0 / ${total} revealed`;
+      document.getElementById('photo-recall').style.display = 'block';
+      document.getElementById('photo-answer').style.display = 'none';
+      addXP(15, '⬛ Active recall prepared +15 XP');
+    } catch(e) { showToast('⚠️ Could not analyse image — check your API'); }
+  } else {
+    btn.textContent = '✦ Analysing...';
+    const modeInstructions = {
+      solve: 'Provide a complete step-by-step solution. Show every step clearly.',
+      explain: 'Explain what this question is asking and the key concepts involved.',
+      check: 'I am checking my working. Identify any errors and explain what went wrong.',
+      hint: 'Give me just a hint — one or two sentences pointing me in the right direction. Do not solve it.'
+    };
+    let sys = `You are an expert UK A-Level Mathematics tutor. A student has photographed a question. ${modeInstructions[mode]} Use UK curriculum standards and clear formatting.`;
+    sys += getSafeguardingPrompt();
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6', max_tokens: 1500,
+          system: sys,
+          messages: [{ role: 'user', content: [
+            { type: 'image', source: { type: 'base64', media_type: photoImageData.type, data: photoImageData.data } },
+            { type: 'text', text: `Please ${mode} this ${subject} question.` }
+          ]}]
+        })
+      });
+      const data = await res.json();
+      const answer = data.content?.[0]?.text || 'Could not analyse image';
+      document.getElementById('photo-answer-text').innerHTML = renderAIResponse(answer);
+      document.getElementById('photo-answer').style.display = 'block';
+      document.getElementById('photo-recall').style.display = 'none';
+      if (window.MathJax) MathJax.typesetPromise([document.getElementById('photo-answer-text')]).catch(()=>{});
+      addXP(15, '📷 Photo question solved +15 XP');
+      saveChatToHistory(subject, 'Photo question', answer.slice(0,100));
+    } catch(e) { showToast('⚠️ Could not analyse image — check your API'); }
+  }
+  updatePhotoBtn(); btn.disabled = false;
 }
 
 function savePhotoToNotes() {
-  const text = document.getElementById('photo-answer-text').textContent;
-  document.getElementById('note-text-input').value = 'PHOTO QUESTION ANSWER:\n\n' + text;
+  const recallVisible = document.getElementById('photo-recall')?.style.display !== 'none';
+  const srcEl = recallVisible ? document.getElementById('photo-recall-text') : document.getElementById('photo-answer-text');
+  const text = srcEl?.innerText || srcEl?.textContent || '';
+  const prefix = recallVisible ? 'ACTIVE RECALL NOTES:\n\n' : 'PHOTO QUESTION ANSWER:\n\n';
+  document.getElementById('note-text-input').value = prefix + text;
   showDash('notes'); showToast('📓 Saved to Notes');
 }
 
 function askFollowUp() {
-  const answer = document.getElementById('photo-answer-text').textContent;
   showDash('tutor');
   const input = document.getElementById('tutor-input');
   if (input) { input.value = 'Following up on the photo question I just solved: '; input.focus(); }
