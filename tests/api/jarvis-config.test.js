@@ -1,10 +1,10 @@
 /**
- * Tests for api/jarvis-config.js — runtime JARVIS agent config endpoint.
+ * Tests for jarvis-config functionality in api/tts.js — runtime JARVIS agent config endpoint.
  */
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import handler from '../../api/jarvis-config.js';
+import handler from '../../api/tts.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -45,9 +45,9 @@ describe('OPTIONS', () => {
 // ─── Non-GET ──────────────────────────────────────────────────────────────────
 
 describe('non-GET', () => {
-  it('returns 405 for POST', async () => {
+  it('returns 405 for PUT', async () => {
     const r = res();
-    await handler(req('POST'), r);
+    await handler(req('PUT'), r);
     expect(r.statusCode).toBe(405);
   });
 });

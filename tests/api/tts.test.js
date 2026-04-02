@@ -58,10 +58,10 @@ describe('OPTIONS', () => {
 // ─── Non-POST ─────────────────────────────────────────────────────────────────
 
 describe('non-POST', () => {
-  it('returns 405 for GET', async () => {
+  it('returns 405 for PUT', async () => {
     process.env.ELEVENLABS_API_KEY = 'el-key';
     const r = res();
-    await handler(req({}, 'GET'), r);
+    await handler(req({}, 'PUT'), r);
     expect(r.statusCode).toBe(405);
   });
 });
