@@ -2,12 +2,12 @@
  * J.A.R.V.I.S. — Vanilla-JS "Ear → Brain → Mouth" pipeline
  *
  * Wake word:  Web Speech API (SpeechRecognition — built into Chrome / Edge)
- * Voice AI:   ElevenLabs Conversational AI  (@11labs/client)
+ * Voice AI:   ElevenLabs Conversational AI  (@elevenlabs/client)
  *
  * Agent config is fetched at runtime from /api/jarvis-config, which returns
- * either a short-lived signed URL (preferred) or the plain agent ID.
+ * either a short-lived WebRTC conversation token (preferred) or the plain agent ID.
  *
- * ElevenLabs CDN: https://esm.sh/@11labs/client
+ * ElevenLabs CDN: https://esm.sh/@elevenlabs/client
  */
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
@@ -214,10 +214,12 @@ function setStatus(text, dotVariant = '') {
  * @param {{ signedUrl?: string, agentId?: string }} config
  */
 async function startConversation(config) {
-  const { Conversation } = await import('https://esm.sh/@11labs/client');
+  const { Conversation } = await import('https://esm.sh/@elevenlabs/client@1');
 
   conversation = await Conversation.startSession({
-    ...(config.signedUrl ? { signedUrl: config.signedUrl } : { agentId: config.agentId }),
+    ...(config.conversationToken
+      ? { conversationToken: config.conversationToken, connectionType: 'webrtc' }
+      : { agentId: config.agentId }),
 
     onConnect: () => {
       setOrbState('active');
@@ -417,7 +419,7 @@ async function init() {
     return;
   }
 
-  if (!jarvisConfig.signedUrl && !jarvisConfig.agentId) {
+  if (!jarvisConfig.conversationToken && !jarvisConfig.agentId) {
     setStatus('AGENT ID NOT SET', 'error');
     showToast('Set ELEVEN_AGENT_ID in Vercel environment variables.', 0);
     return;

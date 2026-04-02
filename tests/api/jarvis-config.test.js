@@ -87,32 +87,32 @@ describe('ELEVEN_AGENT_ID + ELEVENLABS_API_KEY set', () => {
     process.env.ELEVENLABS_API_KEY = 'el-key';
   });
 
-  it('returns signedUrl from ElevenLabs', async () => {
+  it('returns conversationToken from ElevenLabs', async () => {
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
-      json: () => Promise.resolve({ signed_url: 'wss://api.elevenlabs.io/v1/convai/conversation?token=abc' }),
+      json: () => Promise.resolve({ token: 'eyJhbGciOiJIUzI1NiJ9.abc' }),
     });
 
     const r = res();
     await handler(req(), r);
 
     expect(r.statusCode).toBe(200);
-    expect(r.body.signedUrl).toBe('wss://api.elevenlabs.io/v1/convai/conversation?token=abc');
+    expect(r.body.conversationToken).toBe('eyJhbGciOiJIUzI1NiJ9.abc');
     expect(r.body.agentId).toBeUndefined();
   });
 
-  it('calls ElevenLabs with the correct agent_id query param', async () => {
+  it('calls ElevenLabs token endpoint with the correct agent_id query param', async () => {
     let capturedUrl;
     global.fetch = vi.fn().mockImplementationOnce((url) => {
       capturedUrl = url;
       return Promise.resolve({
         ok: true,
-        json: () => Promise.resolve({ signed_url: 'wss://...' }),
+        json: () => Promise.resolve({ token: 'test-token' }),
       });
     });
 
     await handler(req(), res());
-    expect(capturedUrl).toContain('agent_id=test-agent-123');
+    expect(capturedUrl).toContain('/token?agent_id=test-agent-123');
   });
 
   it('falls back to agentId when ElevenLabs returns an error', async () => {

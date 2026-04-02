@@ -2,10 +2,11 @@ import { applyHeaders, isRateLimited, getIp } from './_lib.js';
 
 /**
  * GET /api/jarvis-config
- * Returns a short-lived ElevenLabs signed URL for the JARVIS Conversational AI agent.
+ * Returns a short-lived ElevenLabs WebRTC conversation token for the JARVIS agent.
  *
- * Using a signed URL keeps ELEVEN_AGENT_ID server-side and avoids build-time
- * injection — the token is fetched fresh each time the user opens a session.
+ * Using a server-issued token keeps ELEVEN_AGENT_ID and ELEVENLABS_API_KEY
+ * server-side — the token is fetched fresh each time the user opens a session.
+ * Falls back to the plain agent ID for public agents when no API key is set.
  */
 
 const RATE_LIMIT_MAX    = 10;      // max requests
@@ -27,25 +28,25 @@ export default async function handler(req, res) {
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
     // No API key — fall back to exposing the agent ID directly so the client
-    // can still connect (public agents do not require a signed URL).
+    // can still connect (public agents do not require a token).
     return res.status(200).json({ agentId });
   }
 
   try {
     const elevenRes = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${encodeURIComponent(agentId)}`,
+      `https://api.elevenlabs.io/v1/convai/conversation/token?agent_id=${encodeURIComponent(agentId)}`,
       { headers: { 'xi-api-key': apiKey } }
     );
 
     if (!elevenRes.ok) {
       const text = await elevenRes.text();
-      console.error('ElevenLabs signed URL error:', elevenRes.status, text);
+      console.error('ElevenLabs token error:', elevenRes.status, text);
       // Fall back to plain agent ID so JARVIS still works for public agents.
       return res.status(200).json({ agentId });
     }
 
-    const { signed_url: signedUrl } = await elevenRes.json();
-    return res.status(200).json({ signedUrl });
+    const { token: conversationToken } = await elevenRes.json();
+    return res.status(200).json({ conversationToken });
   } catch (err) {
     console.error('jarvis-config fetch error:', err);
     return res.status(200).json({ agentId });
