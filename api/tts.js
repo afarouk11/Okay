@@ -17,7 +17,6 @@ const VOICE_IDS = {
   charlotte: 'XB0fDUnXU5powFXDhCwa',
   dorothy:   'ThT5KcBeYPX3keUQqHPh',
   daniel:    'onwK4e9ZLuTAKqWW03F9',
-  sarah:     'Xa6FiFljSPqBPi9LqiXS',
   jarvis:    'JBFqnCBsd6RMkjVDRZzb', // George — deep, authoritative British male
 };
 
