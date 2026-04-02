@@ -7747,7 +7747,7 @@ async function sendPasswordReset() {
   btn.disabled = true;
   btn.textContent = 'Sending…';
   try {
-    await fetch('/api/supabase-auth', {
+    await fetch('/api/auth', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'forgot_password', payload: { email } })
     });
@@ -7838,7 +7838,7 @@ document.addEventListener('DOMContentLoaded', () => {
       enterDashboard();
       // Background re-fetch latest profile data from DB to sync across devices
       if (state.user.id && state.user.email) {
-        fetch('/api/supabase-auth', {
+        fetch('/api/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'get_profile', payload: { email: state.user.email } })
@@ -9150,7 +9150,7 @@ function syncToCloud() {
     try {
       const stats = JSON.parse(localStorage.getItem('synaptiq_stats') || '{}');
       const flashcards = JSON.parse(localStorage.getItem('synaptiq_fc') || '[]');
-      fetch('/api/supabase-auth', {
+      fetch('/api/auth', {
         method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ action: 'patch_profile', payload: { id: state.user.id, xp: state.xp, level: state.level, stats, flashcards } })
       }).catch(()=>{});
@@ -9472,7 +9472,7 @@ async function confirmUpload() {
   showToast('✅ Resource uploaded! AI tutor will now use it.', 'success');
   // Persist to Supabase (per-user, not global)
   if (state.user?.id) {
-    fetch('/api/supabase-auth', {
+    fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'save_upload', upload: { ...resource, user_id: state.user.id, is_global: false } })
@@ -9784,7 +9784,7 @@ document.addEventListener('synaptiq-login', () => {
   }
   // Load resources (user-specific + global) from Supabase
   if (state.user?.id) {
-    fetch('/api/supabase-auth', {
+    fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'get_uploads', userId: state.user.id })
@@ -14497,7 +14497,7 @@ async function renderLeaderboard() {
   let userRank = null;
 
   try {
-    const r = await fetch('/api/supabase-auth', {
+    const r = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'leaderboard', payload: { tab: lbTab, userId: state.user?.id } })
@@ -15883,7 +15883,7 @@ function selectMood(btn) {
   // Optionally sync mood to Supabase if user is logged in
   if (state.user?.id) {
     try {
-      fetch('/api/supabase-auth', {
+      fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'saveMood', payload: { userId: state.user.id, mood, date: new Date().toISOString() } })
@@ -18835,7 +18835,7 @@ async function adminConfirmUpload() {
 
   if (typeof state !== 'undefined' && state.user?.id) {
     try {
-      await fetch('/api/supabase-auth', {
+      await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'save_upload', upload: { ...resource, user_id: state.user.id } })
@@ -19186,7 +19186,7 @@ window.enterDashboard = function() {
   }
   // Load global resources from Supabase on login
   if (typeof state !== 'undefined' && state.user?.id) {
-    fetch('/api/supabase-auth', {
+    fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'get_uploads', userId: state.user.id })
