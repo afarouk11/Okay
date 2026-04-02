@@ -52,11 +52,29 @@
     gap: 0.4rem;
     font-size: 0.78rem;
     color: rgba(255,255,255,0.6);
-    cursor: pointer;
+    cursor: default;
     transition: color 0.2s;
   }
 
-  .legend-item:hover { color: #fff; }
+  /* Only category items (with data-branch) are clickable */
+  .legend-item[data-branch] {
+    cursor: pointer;
+  }
+
+  .legend-item[data-branch]:hover { color: #fff; }
+
+  .legend-item[data-branch].active {
+    color: #fff;
+    font-weight: 600;
+  }
+
+  /* Dim non-active branches when a filter is applied */
+  .branch.branch-dimmed {
+    opacity: 0.2;
+    filter: grayscale(0.6);
+    pointer-events: none;
+    transition: opacity 0.2s, filter 0.2s;
+  }
 
   .legend-dot {
     width: 10px; height: 10px;
@@ -275,12 +293,12 @@
 </header>
 
 <div class="legend">
-  <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Security</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#f97316"></span>Infrastructure</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#eab308"></span>Architecture</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#22c55e"></span>Features</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span>Marketing / SEO</span>
-  <span class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span>Content</span>
+  <span class="legend-item" data-branch="branch-security" role="button" tabindex="0" aria-pressed="false" onclick="filterBranch(this)" onkeydown="if(event.key==='Enter'||event.key===' ')filterBranch(this)"><span class="legend-dot" style="background:#ef4444"></span>Security</span>
+  <span class="legend-item" data-branch="branch-infra"     role="button" tabindex="0" aria-pressed="false" onclick="filterBranch(this)" onkeydown="if(event.key==='Enter'||event.key===' ')filterBranch(this)"><span class="legend-dot" style="background:#f97316"></span>Infrastructure</span>
+  <span class="legend-item" data-branch="branch-arch"     role="button" tabindex="0" aria-pressed="false" onclick="filterBranch(this)" onkeydown="if(event.key==='Enter'||event.key===' ')filterBranch(this)"><span class="legend-dot" style="background:#eab308"></span>Architecture</span>
+  <span class="legend-item" data-branch="branch-features" role="button" tabindex="0" aria-pressed="false" onclick="filterBranch(this)" onkeydown="if(event.key==='Enter'||event.key===' ')filterBranch(this)"><span class="legend-dot" style="background:#22c55e"></span>Features</span>
+  <span class="legend-item" data-branch="branch-seo"      role="button" tabindex="0" aria-pressed="false" onclick="filterBranch(this)" onkeydown="if(event.key==='Enter'||event.key===' ')filterBranch(this)"><span class="legend-dot" style="background:#3b82f6"></span>Marketing / SEO</span>
+  <span class="legend-item" data-branch="branch-content"  role="button" tabindex="0" aria-pressed="false" onclick="filterBranch(this)" onkeydown="if(event.key==='Enter'||event.key===' ')filterBranch(this)"><span class="legend-dot" style="background:#8b5cf6"></span>Content</span>
   <span class="legend-item"><span class="legend-dot" style="background:transparent;border:1px solid #f87171;width:10px;height:10px;border-radius:2px"></span>
     <span style="color:#f87171;font-size:.72rem">Critical</span></span>
   <span class="legend-item"><span class="legend-dot" style="background:transparent;border:1px solid #fb923c;width:10px;height:10px;border-radius:2px"></span>
@@ -470,7 +488,7 @@
     el.classList.toggle('open');
   }
 
-  // Determine whether all branches are initially open based on the DOM
+  // Expand / Collapse All
   let allOpen = Array.from(document.querySelectorAll('.branch'))
     .every(b => b.classList.contains('open'));
 
@@ -493,18 +511,38 @@
     updateExpandAllButtonLabel();
   }
 
-  // Set initial button state based on initial branch openness
   updateExpandAllButtonLabel();
-  let allOpen = true;
-  function toggleAll() {
-    const branches = document.querySelectorAll('.branch');
-    allOpen = !allOpen;
-    branches.forEach(b => allOpen ? b.classList.add('open') : b.classList.remove('open'));
-    document.querySelector('.expand-all-btn').textContent = allOpen ? 'Collapse All Branches' : 'Expand All Branches';
-  }
 
-  // Set initial button state
-  document.querySelector('.expand-all-btn').textContent = 'Collapse All Branches';
+  // Legend category filter
+  let activeFilterBranch = null;
+
+  function filterBranch(item) {
+    const target = item.dataset.branch;
+    const branches = document.querySelectorAll('.branch');
+    const legendItems = document.querySelectorAll('.legend-item[data-branch]');
+
+    if (activeFilterBranch === target) {
+      // Second click on same item — reset filter
+      activeFilterBranch = null;
+      branches.forEach(b => b.classList.remove('branch-dimmed'));
+      legendItems.forEach(el => { el.classList.remove('active'); el.setAttribute('aria-pressed', 'false'); });
+    } else {
+      activeFilterBranch = target;
+      branches.forEach(b => {
+        if (b.classList.contains(target)) {
+          b.classList.remove('branch-dimmed');
+          b.classList.add('open');
+        } else {
+          b.classList.add('branch-dimmed');
+        }
+      });
+      legendItems.forEach(el => {
+        const isActive = el.dataset.branch === target;
+        el.classList.toggle('active', isActive);
+        el.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      });
+    }
+  }
 </script>
 </body>
 </html>
