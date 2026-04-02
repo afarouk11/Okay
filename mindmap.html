@@ -326,7 +326,7 @@
 
     <!-- ─── SECURITY ─────────────────────────────────────────── -->
     <div class="branch branch-security open" id="branch-security">
-      <div class="branch-header" onclick="toggle('branch-security')">
+      <div class="branch-header" role="button" tabindex="0" aria-expanded="true" onclick="toggle('branch-security')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle('branch-security');}">
         <span class="branch-icon">🔴</span>
         <span class="branch-title">Security</span>
         <span class="branch-count">8 issues</span>
@@ -357,7 +357,7 @@
 
     <!-- ─── INFRASTRUCTURE ──────────────────────────────────── -->
     <div class="branch branch-infra open" id="branch-infra">
-      <div class="branch-header" onclick="toggle('branch-infra')">
+      <div class="branch-header" role="button" tabindex="0" aria-expanded="true" onclick="toggle('branch-infra')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle('branch-infra');}">
         <span class="branch-icon">🟠</span>
         <span class="branch-title">Infrastructure</span>
         <span class="branch-count">7 gaps</span>
@@ -379,7 +379,7 @@
 
     <!-- ─── ARCHITECTURE ─────────────────────────────────────── -->
     <div class="branch branch-arch" id="branch-arch">
-      <div class="branch-header" onclick="toggle('branch-arch')">
+      <div class="branch-header" role="button" tabindex="0" aria-expanded="false" onclick="toggle('branch-arch')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle('branch-arch');}">
         <span class="branch-icon">🟡</span>
         <span class="branch-title">Architecture</span>
         <span class="branch-count">8 debts</span>
@@ -402,7 +402,7 @@
 
     <!-- ─── FEATURES ─────────────────────────────────────────── -->
     <div class="branch branch-features" id="branch-features">
-      <div class="branch-header" onclick="toggle('branch-features')">
+      <div class="branch-header" role="button" tabindex="0" aria-expanded="false" onclick="toggle('branch-features')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle('branch-features');}">
         <span class="branch-icon">🟢</span>
         <span class="branch-title">Feature Completion</span>
         <span class="branch-count">9 items</span>
@@ -426,7 +426,7 @@
 
     <!-- ─── MARKETING / SEO ──────────────────────────────────── -->
     <div class="branch branch-seo" id="branch-seo">
-      <div class="branch-header" onclick="toggle('branch-seo')">
+      <div class="branch-header" role="button" tabindex="0" aria-expanded="false" onclick="toggle('branch-seo')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle('branch-seo');}">
         <span class="branch-icon">🔵</span>
         <span class="branch-title">Marketing &amp; SEO</span>
         <span class="branch-count">12 fixes</span>
@@ -458,7 +458,7 @@
 
     <!-- ─── CONTENT ──────────────────────────────────────────── -->
     <div class="branch branch-content" id="branch-content">
-      <div class="branch-header" onclick="toggle('branch-content')">
+      <div class="branch-header" role="button" tabindex="0" aria-expanded="false" onclick="toggle('branch-content')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggle('branch-content');}">
         <span class="branch-icon">🟣</span>
         <span class="branch-title">Content (A-Level Maths Only)</span>
         <span class="branch-count">4 items</span>
@@ -486,6 +486,8 @@
   function toggle(id) {
     const el = document.getElementById(id);
     el.classList.toggle('open');
+    const isOpen = el.classList.contains('open');
+    el.querySelector('.branch-header').setAttribute('aria-expanded', isOpen ? 'true' : 'false');
   }
 
   // Expand / Collapse All
@@ -507,6 +509,7 @@
       } else {
         b.classList.remove('open');
       }
+      b.querySelector('.branch-header').setAttribute('aria-expanded', allOpen ? 'true' : 'false');
     });
     updateExpandAllButtonLabel();
   }
@@ -532,6 +535,7 @@
         if (b.classList.contains(target)) {
           b.classList.remove('branch-dimmed');
           b.classList.add('open');
+          b.querySelector('.branch-header').setAttribute('aria-expanded', 'true');
         } else {
           b.classList.add('branch-dimmed');
         }
