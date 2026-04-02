@@ -462,16 +462,31 @@
     el.classList.toggle('open');
   }
 
-  let allOpen = true;
+  // Determine whether all branches are initially open based on the DOM
+  let allOpen = Array.from(document.querySelectorAll('.branch'))
+    .every(b => b.classList.contains('open'));
+
+  function updateExpandAllButtonLabel() {
+    const btn = document.querySelector('.expand-all-btn');
+    if (!btn) return;
+    btn.textContent = allOpen ? 'Collapse All Branches' : 'Expand All Branches';
+  }
+
   function toggleAll() {
     const branches = document.querySelectorAll('.branch');
     allOpen = !allOpen;
-    branches.forEach(b => allOpen ? b.classList.add('open') : b.classList.remove('open'));
-    document.querySelector('.expand-all-btn').textContent = allOpen ? 'Collapse All Branches' : 'Expand All Branches';
+    branches.forEach(b => {
+      if (allOpen) {
+        b.classList.add('open');
+      } else {
+        b.classList.remove('open');
+      }
+    });
+    updateExpandAllButtonLabel();
   }
 
-  // Set initial button state
-  document.querySelector('.expand-all-btn').textContent = 'Collapse All Branches';
+  // Set initial button state based on initial branch openness
+  updateExpandAllButtonLabel();
 </script>
 </body>
 </html>
