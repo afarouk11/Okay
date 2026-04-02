@@ -23,7 +23,7 @@
   --pink:    #FF40A0;
   --orange:  #FF8C00;
   --glow:    0 0 40px rgba(0,212,255,0.10);
-  --glow-g:  0 0 40px rgba(201,168,76,0.15);
+  --glow-gold: 0 0 40px rgba(201,168,76,0.15);
   --radius:  14px;
   --font:    'DM Sans', sans-serif;
   --font-head: 'Playfair Display', serif;
@@ -85,7 +85,7 @@ body::before{content:'';position:fixed;inset:0;background:
 .glass-card{background:rgba(13,17,32,0.7);backdrop-filter:blur(20px);
   -webkit-backdrop-filter:blur(20px);border:1px solid var(--border);
   border-radius:var(--radius);padding:1.5rem;box-shadow:var(--shadow)}
-.glass-card+.glass-card,.glass-card + .glass-card{margin-top:1rem}
+.glass-card+.glass-card{margin-top:1rem}
 
 /* ─── SECTION LABEL ─── */
 .section-label{font-size:.7rem;font-weight:700;color:var(--cyan);text-transform:uppercase;
