@@ -20,10 +20,9 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Too many requests — please try again later' });
   }
 
-  const agentId = process.env.ELEVEN_AGENT_ID;
-  if (!agentId) {
-    return res.status(503).json({ error: 'ELEVEN_AGENT_ID not configured. Add it to your Vercel environment variables.' });
-  }
+  // Fall back to the known public agent ID (already committed in .env.example)
+  // so JARVIS works even before ELEVEN_AGENT_ID is configured in Vercel.
+  const agentId = process.env.ELEVEN_AGENT_ID || 'agent_4101kn5cm6t2efwsasfhx8cgh1r3';
 
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) {
