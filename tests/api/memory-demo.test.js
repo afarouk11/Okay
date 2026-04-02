@@ -1,0 +1,63 @@
+/**
+ * Tests for the demo mode of api/memory.js.
+ *
+ * When SUPABASE_URL / SUPABASE_SERVICE_KEY are not set the handler short-circuits
+ * to lightweight stub responses — no authentication needed.
+ */
+
+import { vi, describe, it, expect } from 'vitest';
+
+vi.hoisted(() => {
+  delete process.env.SUPABASE_URL;
+  delete process.env.SUPABASE_SERVICE_KEY;
+});
+
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: () => null,
+}));
+
+import handler from '../../api/memory.js';
+
+function req(method, { body = {}, headers = {}, query = {} } = {}) {
+  return { method, body, headers, query };
+}
+
+function res() {
+  const r = { statusCode: 200, body: null };
+  r.setHeader = () => r;
+  r.status = (c) => { r.statusCode = c; return r; };
+  r.json  = (d) => { r.body = d; return r; };
+  r.end   = () => r;
+  return r;
+}
+
+describe('demo mode — memory', () => {
+  it('OPTIONS returns 200', async () => {
+    const r = res();
+    await handler(req('OPTIONS'), r);
+    expect(r.statusCode).toBe(200);
+  });
+
+  it('GET returns 200 with an empty sessions array', async () => {
+    const r = res();
+    await handler(req('GET'), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.sessions).toEqual([]);
+  });
+
+  it('POST returns 200 with success: true', async () => {
+    const r = res();
+    await handler(req('POST', {
+      body: { topic: 'Calculus', mastery_score: 0.8, specific_errors: [], duration_ms: 3600 },
+    }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.success).toBe(true);
+  });
+
+  it('POST returns success even with an empty body', async () => {
+    const r = res();
+    await handler(req('POST'), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.success).toBe(true);
+  });
+});

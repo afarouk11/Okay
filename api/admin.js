@@ -6,6 +6,22 @@ if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
   supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 }
 
+/**
+ * Record an admin action to the audit log.
+ * Returns a Promise but callers fire-and-forget — never await this.
+ *
+ * @param {object}  client    Supabase service-role client
+ * @param {string}  action    Action name, e.g. 'stats'
+ * @param {string}  ip        Caller IP
+ * @param {object}  [metadata]  Any extra context to store
+ * @returns {Promise<void>}
+ */
+function logAdminAction(client, action, ip, metadata = {}) {
+  return client.from('admin_audit_log')
+    .insert({ action, ip, metadata })
+    .then(null, () => {}); // swallow errors — never fail the main request
+}
+
 export default async function handler(req, res) {
   applyHeaders(res, 'POST, GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -34,12 +50,14 @@ export default async function handler(req, res) {
     ]);
     // MRR: count active subscribers × £35/month (student plan)
     const mrr = (paying.count || 0) * 35;
-    return res.status(200).json({
+    const result = {
       total_users: users.count || 0,
       active_7d: active.count || 0,
       paying: paying.count || 0,
       mrr
-    });
+    };
+    logAdminAction(supabase, 'stats', ip, result);
+    return res.status(200).json(result);
   }
 
   if (action === 'users') {
@@ -52,6 +70,7 @@ export default async function handler(req, res) {
       .order('created_at', { ascending: false })
       .range(from, to);
     const pages = Math.ceil((count || 0) / limit);
+    logAdminAction(supabase, 'users', ip, { page, total: count || 0 });
     return res.status(200).json({ users: data || [], total: count || 0, page, pages });
   }
 
@@ -63,7 +82,7 @@ export default async function handler(req, res) {
     let failed = 0;
     for (const user of (users || [])) {
       try {
-        await fetch(`${process.env.SITE_URL}/api/email`, {
+        await fetch(`${process.env.SITE_URL}/api/resend`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -83,6 +102,7 @@ export default async function handler(req, res) {
         failed++;
       }
     }
+    logAdminAction(supabase, 'send_weekly_emails', ip, { sent, failed });
     return res.status(200).json({ sent, failed });
   }
 
@@ -99,6 +119,7 @@ export default async function handler(req, res) {
       await supabase.auth.admin.deleteUser(user.id);
       deleted++;
     }
+    logAdminAction(supabase, 'reset_users', ip, { deleted });
     return res.status(200).json({ ok: true, deleted, message: `Deleted ${deleted} account(s)` });
   }
 
