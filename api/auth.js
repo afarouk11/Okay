@@ -242,7 +242,60 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
 
-    return res.status(400).json({ error: 'Unknown action. Valid: signup, login, reset, verify, update_profile, delete_account' });
+    if (action === 'get_profile') {
+      const { email: profileEmail } = body.payload || {};
+      if (!profileEmail) return res.status(400).json({ error: 'email required' });
+      const { data: profile } = await supabase.from('profiles').select('*').eq('email', profileEmail).single();
+      return res.status(200).json(profile || null);
+    }
+
+    if (action === 'patch_profile') {
+      const { id: profileId, ...fields } = body.payload || {};
+      if (!profileId) return res.status(400).json({ error: 'id required' });
+      const { data: profile, error } = await supabase.from('profiles').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', profileId).select().single();
+      if (error) return res.status(400).json({ error: error.message });
+      return res.status(200).json(profile || {});
+    }
+
+    if (action === 'save_upload') {
+      const upload = body.upload || body.payload;
+      const { data, error } = await supabase.from('resources').insert(upload).select();
+      if (error) return res.status(400).json({ error: error.message });
+      return res.status(200).json(data);
+    }
+
+    if (action === 'get_uploads') {
+      const uid = body.userId || (body.payload && body.payload.userId);
+      if (!uid) return res.status(400).json({ error: 'userId required' });
+      const { data, error } = await supabase.from('resources').select('*').or(`user_id.eq.${uid},is_global.eq.true`).order('uploaded_at', { ascending: false });
+      if (error) return res.status(400).json({ error: error.message });
+      return res.status(200).json({ data: data || [] });
+    }
+
+    if (action === 'leaderboard') {
+      const { userId: uid } = body.payload || {};
+      const { data: top } = await supabase.from('profiles').select('name,xp,streak,avatar_emoji').order('xp', { ascending: false }).limit(20);
+      let userRank = null;
+      if (uid) {
+        const { data: meRows } = await supabase.from('profiles').select('xp').eq('id', uid).single();
+        if (meRows) {
+          const { count } = await supabase.from('profiles').select('id', { count: 'exact', head: true }).gt('xp', meRows.xp || 0);
+          userRank = (count || 0) + 1;
+        }
+      }
+      return res.status(200).json({ top: top || [], userRank });
+    }
+
+    if (action === 'forgot_password') {
+      const { email: resetEmail } = body.payload || {};
+      if (!resetEmail || !EMAIL_RE.test(resetEmail)) return res.status(400).json({ error: 'A valid email is required' });
+      const siteUrl = process.env.SITE_URL || 'https://synaptiq.co.uk';
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.toLowerCase().trim(), { redirectTo: `${siteUrl}/reset-password` });
+      if (error) return res.status(400).json({ error: error.message });
+      return res.status(200).json({ ok: true });
+    }
+
+    return res.status(400).json({ error: 'Unknown action' });
   } catch (e) {
     const msg = /fetch|network|ECONNREFUSED|ETIMEDOUT|socket|abort/i.test(e.message)
       ? 'Unable to reach the database. Please check your connection and try again.'
@@ -294,5 +347,11 @@ function handleDemoMode(res, { action, email, password, name, plan, year_group, 
   if (action === 'reset') return res.status(200).json({ success: true, message: 'If an account exists with this email, a reset link has been sent.' });
   if (action === 'update_profile') return res.status(200).json({ success: true, profile: { name, learning_difficulty, year_group, subjects } });
   if (action === 'delete_account') return res.status(200).json({ success: true });
+  if (action === 'get_profile') return res.status(200).json({ id: 'demo', email: 'demo@synaptiq.app', name: 'Student', plan: 'student' });
+  if (action === 'patch_profile') return res.status(200).json(body.payload || {});
+  if (action === 'save_upload') return res.status(200).json([]);
+  if (action === 'get_uploads') return res.status(200).json({ data: [] });
+  if (action === 'leaderboard') return res.status(200).json({ top: [], userRank: null });
+  if (action === 'forgot_password') return res.status(200).json({ ok: true });
   return res.status(400).json({ error: 'Unknown action' });
 }
