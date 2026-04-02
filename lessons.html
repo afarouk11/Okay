@@ -101,6 +101,11 @@ body{background:var(--black);color:var(--white);font-family:var(--font);min-heig
 .lesson-body .bonus-block{background:rgba(139,137,156,0.06);border:1px solid rgba(139,137,156,0.18);border-radius:10px;padding:.8rem 1rem;margin:.75rem 0;position:relative}
 .bonus-tag{display:inline-flex;align-items:center;gap:.35rem;background:rgba(139,137,156,0.2);color:var(--muted);font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:.2rem .55rem;border-radius:20px;margin-bottom:.4rem}
 
+/* ── DIAGRAM BLOCK ── */
+.diagram-block{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin:1.25rem 0;text-align:center;overflow-x:auto}
+.diagram-block svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.diagram-caption{font-size:.78rem;color:var(--muted);margin-top:.6rem;font-style:italic}
+
 /* ── SLIDE DECK ── */
 .slide-deck{position:relative}
 .slide-track{overflow:hidden;border-radius:var(--radius)}
@@ -260,13 +265,14 @@ import { initAuth, callClaude, getReply, showToast, sanitizeHTML, getUser } from
 const CURRICULUM = {
   alevel: {
     Mathematics: { boards:['AQA','Edexcel','OCR','MEI'], topics:{
-      'Pure — Algebra':['Proof & surds','Quadratics & polynomials','Binomial expansion','Partial fractions','Parametric equations'],
-      'Pure — Calculus':['Differentiation rules (chain, product, quotient)','Integration (by parts, substitution)','Differential equations'],
-      'Pure — Trigonometry':['Radians & sector','Compound & double angle formulae','Solving trig equations'],
-      'Pure — Exponentials & Logs':['e^x & ln(x)','Laws of logarithms','Exponential growth & decay'],
-      'Pure — Vectors':['3D vectors','Dot product','Lines & planes'],
-      'Statistics':['Binomial & normal distributions','Hypothesis testing','Regression & correlation'],
-      'Mechanics':['SUVAT in 2D','Forces & Newton\'s laws','Moments & equilibrium','Projectiles','Work, energy & power']
+      'Pure 1 — Algebra & Functions':['Algebraic expressions & proof','Quadratics & completing the square','Equations & inequalities','Graphs & transformations','Straight line graphs','Circles','Algebraic methods (factor theorem, partial fractions)','Binomial expansion (Year 1)'],
+      'Pure 1 — Trigonometry & Calculus':['Trigonometric ratios (SOHCAHTOA, sine & cosine rules)','Trigonometric identities & equations','Exponentials & logarithms','Differentiation (polynomials, tangents & normals)','Integration (indefinite & definite)','Vectors (2D)'],
+      'Pure 2 — Advanced Algebra':['Algebraic methods (proof by contradiction, partial fractions)','Functions & mappings','Sequences & series (arithmetic & geometric)','Binomial expansion (Year 2, any n)','Radians & arc length'],
+      'Pure 2 — Advanced Calculus':['Trigonometric functions (sec, cosec, cot)','Trigonometry & modelling','Parametric equations','Differentiation (chain, product, quotient, implicit)','Numerical methods (Newton-Raphson, iteration)','Integration (by parts, substitution, partial fractions)','Differential equations','Vectors (3D, dot product, lines)'],
+      'Statistics Year 1':['Statistical sampling','Data presentation & interpretation (histograms, box plots, scatter graphs)','Probability (set notation, Venn diagrams, tree diagrams)','Statistical distributions (binomial)','Hypothesis testing (binomial)'],
+      'Statistics Year 2':['Regression, correlation & hypothesis testing','Conditional probability','The normal distribution','Further hypothesis testing (normal)'],
+      'Mechanics Year 1':['Quantities & units in mechanics','Kinematics — constant acceleration (SUVAT)','Forces & Newton\'s laws','Variable acceleration (calculus)'],
+      'Mechanics Year 2':['Moments','Forces & friction','Projectiles','Applications of forces','Further kinematics','Circular motion','Simple harmonic motion']
     }}
   }
 };
@@ -462,6 +468,8 @@ Rules:
 - ${gradeInstruction.replace(/\[ESSENTIAL: \.\.\.\]|\[BONUS: \.\.\.\]/g,'')}`
   };
 
+  const visualInstruction = `When a concept benefits from visual representation (coordinate graphs, circles, geometric shapes, curves, transformations, vectors, histograms, probability trees, force diagrams, etc.), generate a clean inline SVG diagram wrapped in <div class="diagram-block"><svg viewBox="0 0 500 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:500px;height:auto;display:block"><rect width="500" height="320" fill="#1A1D28" rx="8"/>...</svg><p class="diagram-caption">Descriptive caption here</p></div>. Use colours: #C9A84C for axes/labels/key elements, #60A5FA for curves/lines, #4ADE80 for secondary curves, #F472B6 for highlight points, text in #F0EEF8. Always include axis labels, tick marks, and annotations. Generate SVG directly in the HTML response — do not use placeholder text or describe the diagram, actually produce the SVG code.`;
+
   const sys = `You are Synaptiq AI, an expert UK ${levelLabel} ${board} Mathematics teacher.
 Target grade: ${gradeCfg.label}.
 ${modeGuides[selectedMode]}
@@ -469,7 +477,8 @@ ${selectedMode !== 'slides' && selectedMode !== 'quiz' ? `Format in HTML using: 
 Use [CALLOUT: text] for key points, [EXAMPLE: text] for examples, [WARNING: text] for common mistakes.
 Use [ESSENTIAL: text] for must-know content, [BONUS: text] for advanced/extra content.
 ALWAYS wrap mathematical expressions in LaTeX: use $...$ for inline math (e.g. $x^2 + y^2 = r^2$) and $$...$$ on its own line for display equations. Never write bare formulas without LaTeX delimiters.
-Make it engaging, thorough, and exam-focused.` : selectedMode === 'slides' ? `ALWAYS use LaTeX in slide content: $...$ for inline math, $$...$$ for display equations. For example: "The equation of a circle is $x^2 + y^2 = r^2$" and for the general form: $$( x - a)^2 + (y - b)^2 = r^2$$` : ''}`;
+${visualInstruction}
+Make it engaging, thorough, and exam-focused.` : selectedMode === 'slides' ? `ALWAYS use LaTeX in slide content: $...$ for inline math, $$...$$ for display equations. For example: "The equation of a circle is $x^2 + y^2 = r^2$" and for the general form: $$( x - a)^2 + (y - b)^2 = r^2$$\n${visualInstruction}` : ''}`;
 
   try {
     const data = await callClaude([{

@@ -325,6 +325,14 @@
           <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Token verification</strong> — legacy/demo tokens still accepted in production-like flows; harden verification logic</span><span class="node-tag tag-high">High</span></li>
           <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Login flows</strong> — gaps around email verification and account confirmation requirements</span><span class="node-tag tag-high">High</span></li>
           <li class="node"><span class="node-priority"></span><span class="node-text"><strong>Admin tooling</strong> — overly powerful administrative actions protected by weak secrets and lacking defense-in-depth</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/supabase-auth</strong> — upsert_profile, patch_profile, get_profile have zero auth. Any caller can escalate to is_admin=true</span><span class="node-tag tag-critical">Critical</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/resend</strong> — no auth, no rate limit. Anyone can send Synaptiq-branded emails to any address</span><span class="node-tag tag-critical">Critical</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/chat</strong> — no auth gate. Caller controls model + max_tokens. Unauthenticated Anthropic credit burn</span><span class="node-tag tag-critical">Critical</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/stripe</strong> — CORS wildcard hardcoded. Billing portal accessible by any caller who knows an email</span><span class="node-tag tag-critical">Critical</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/tts</strong> — no auth. Unauthenticated ElevenLabs quota drain</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/auth verify</strong> — accepts demo_token_ strings even when Supabase is fully configured</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/auth login</strong> — auto-confirms unverified emails, bypassing email verification entirely</span><span class="node-tag tag-high">High</span></li>
+          <li class="node"><span class="node-priority"></span><span class="node-text"><strong>/api/admin</strong> — reset_users deletes all accounts with only a static key and a confirm() dialog. No timing-safe key comparison</span><span class="node-tag tag-high">High</span></li>
         </ul>
       </div>
     </div>
@@ -487,6 +495,16 @@
 
   // Set initial button state based on initial branch openness
   updateExpandAllButtonLabel();
+  let allOpen = true;
+  function toggleAll() {
+    const branches = document.querySelectorAll('.branch');
+    allOpen = !allOpen;
+    branches.forEach(b => allOpen ? b.classList.add('open') : b.classList.remove('open'));
+    document.querySelector('.expand-all-btn').textContent = allOpen ? 'Collapse All Branches' : 'Expand All Branches';
+  }
+
+  // Set initial button state
+  document.querySelector('.expand-all-btn').textContent = 'Collapse All Branches';
 </script>
 </body>
 </html>
