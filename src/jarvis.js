@@ -17,6 +17,8 @@ const statusText      = document.getElementById('status-text');
 const statusTitle     = document.getElementById('status-title');
 const statusHint      = document.getElementById('status-hint');
 const endBtn          = document.getElementById('end-btn');
+const micBtn          = document.getElementById('mic-btn');
+const micBtnLabel     = document.getElementById('mic-btn-label');
 const toast           = document.getElementById('toast');
 const transcriptPanel = document.getElementById('transcript');
 const vizCanvas       = document.getElementById('viz-canvas');
@@ -29,6 +31,7 @@ let conversation= null;
 let toastTimer  = null;
 let volumeRafId = null;  // requestAnimationFrame handle for volume tracking
 let jarvisConfig= null;  // { signedUrl? } or { agentId? } — fetched from /api/jarvis-config
+let micEnabled  = true;  // whether the wake-word mic is active
 
 // Maximum additional scale applied at peak volume (orb grows by up to 35 %)
 const VOLUME_SCALE_FACTOR = 0.35;
@@ -188,6 +191,7 @@ function setOrbState(state) {
 
   statusHint.style.opacity = state === 'idle' ? '0.6' : '0';
   endBtn.classList.toggle('hidden', state !== 'active');
+  micBtn.classList.toggle('hidden', state !== 'idle');
 }
 
 function showToast(msg, durationMs = 5000) {
@@ -311,7 +315,7 @@ function createRecognition() {
  * Called on page load and again after each session ends.
  */
 async function armWakeWord() {
-  if (!recognition || orbState !== 'idle') return;
+  if (!recognition || orbState !== 'idle' || !micEnabled) return;
   try {
     recognition.start();
   } catch (err) {
@@ -354,6 +358,31 @@ async function handleWakeWord() {
     await armWakeWord();
   }
 }
+
+// ── Mic toggle button ─────────────────────────────────────────────────────────
+
+function updateMicButton() {
+  micBtn.classList.toggle('muted', !micEnabled);
+  micBtnLabel.textContent = micEnabled ? 'MIC ON' : 'MIC OFF';
+  micBtn.setAttribute('aria-label', micEnabled ? 'Mute microphone' : 'Unmute microphone');
+}
+
+micBtn.addEventListener('click', async () => {
+  micEnabled = !micEnabled;
+  updateMicButton();
+  try {
+    if (micEnabled) {
+      await armWakeWord();
+    } else {
+      await disarmWakeWord();
+    }
+  } catch (err) {
+    console.error('[JARVIS] Mic toggle failed:', err);
+    micEnabled = !micEnabled;  // revert state on failure
+    updateMicButton();
+    showToast('Could not toggle microphone — please try again.');
+  }
+});
 
 // ── Manual end-session button ─────────────────────────────────────────────────
 
@@ -405,6 +434,8 @@ async function init() {
   recognition = createRecognition();
   await armWakeWord();
   setStatus('SYSTEMS ONLINE', 'online');
+  micBtn.classList.remove('hidden');
+  updateMicButton();
 }
 
 init();
