@@ -547,3 +547,12 @@ init();
 // Start the ambient canvas visualizer immediately — shows idle animation
 // before keys load, then transitions to live frequency data during sessions.
 startCanvasLoop();
+
+// ── Cleanup on page unload ────────────────────────────────────────────────────
+window.addEventListener('beforeunload', () => {
+  if (canvasRafId !== null) {
+    cancelAnimationFrame(canvasRafId);
+    canvasRafId = null;
+  }
+  stopVolumeTracking();
+});

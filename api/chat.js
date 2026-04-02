@@ -1,4 +1,4 @@
-import { applyHeaders, isRateLimited, getIp } from './_lib.js';
+import { applyHeaders, isRateLimited, getIp, fetchWithRetry } from './_lib.js';
 import { createClient } from '@supabase/supabase-js';
 
 const TRIAL_DAILY_LIMIT = 20;
@@ -18,9 +18,11 @@ try {
  * Makes every Claude response personalised to the individual student.
  *
  * Fetches in parallel:
- *   1. Profile (accessibility modes, exam board, target grade, learning_profile)
- *   2. Weak topics (mastery_level < 3, up to 5)
- *   3. Review queue (topics due today, up to 3)
+ *   1. Weak topics (mastery_level < 3, up to 5)
+ *   2. Review queue (topics due today, up to 3)
+ *
+ * The student profile is supplied by the caller to avoid a redundant DB round-trip
+ * (it has already been fetched during the authentication + rate-limit check).
  *
  * Scientific frameworks applied:
  *   • Cognitive Load Theory  — accessibility-aware language instructions
@@ -29,18 +31,16 @@ try {
  *
  * @param {string} userId
  * @param {string|undefined} baseSystem  Caller-supplied system prompt
+ * @param {object|null} cachedProfile    Already-fetched profile row (may be null)
  * @returns {Promise<string>}
  */
-async function buildAdaptiveSystemPrompt(userId, baseSystem) {
-  if (!supabase) return baseSystem || '';
+async function buildAdaptiveSystemPrompt(userId, baseSystem, cachedProfile) {
+  if (!supabase || !cachedProfile) return baseSystem || '';
 
   const today = new Date().toISOString().split('T')[0];
 
   try {
-    const [profileRes, weakRes, reviewRes] = await Promise.all([
-      supabase.from('profiles')
-        .select('year_group, exam_board, target_grade, adhd_mode, dyslexia_mode, dyscalculia_mode, learning_profile')
-        .eq('id', userId).single(),
+    const [weakRes, reviewRes] = await Promise.all([
       supabase.from('topic_mastery')
         .select('topic, mastery_level, correct_attempts, total_attempts')
         .eq('user_id', userId)
@@ -55,7 +55,7 @@ async function buildAdaptiveSystemPrompt(userId, baseSystem) {
         .limit(3)
     ]);
 
-    const p = profileRes.data;
+    const p = cachedProfile;
     if (!p) return baseSystem || '';
 
     const lp = p.learning_profile || {};
@@ -130,26 +130,41 @@ export default async function handler(req, res) {
         const { data: { user }, error } = await supabase.auth.getUser(token);
         if (!error && user) {
           userId = user.id;
+          // Fetch all profile columns needed for: subscription check, trial limit,
+          // and adaptive system prompt — one round-trip instead of two.
           const { data: profile } = await supabase
             .from('profiles')
-            .select('subscription_status')
+            .select('subscription_status, trial_messages_today, trial_messages_reset_date, year_group, exam_board, target_grade, adhd_mode, dyslexia_mode, dyscalculia_mode, learning_profile')
             .eq('id', user.id)
             .single();
           isPaidUser = profile?.subscription_status === 'active';
-          // userId already set above — used later for adaptive prompt
+          // Store for adaptive prompt (avoids a second profile fetch)
+          req._profile = profile || null;
         }
       } catch (_) {}
     }
   }
 
-  // Per-user daily cap: trial/free users → 20 calls/day
+  // Per-user daily cap: trial/free users → 20 calls/day.
+  // Stored in the profiles table so it persists across serverless instances and
+  // cold starts. Fire-and-forget increment keeps the hot path non-blocking.
   if (userId && !isPaidUser) {
-    const dayKey = `user:${userId}:chat:${new Date().toISOString().slice(0, 10)}`;
-    if (isRateLimited(dayKey, TRIAL_DAILY_LIMIT, 24 * 60 * 60_000)) {
-      return res.status(429).json({
-        error: `You've reached your daily limit of ${TRIAL_DAILY_LIMIT} AI messages. Upgrade to continue.`,
-        code: 'daily_limit_exceeded'
-      });
+    const profile = req._profile;
+    if (profile) {
+      const today = new Date().toISOString().slice(0, 10);
+      const resetDate = profile.trial_messages_reset_date;
+      const todayCount = resetDate === today ? (profile.trial_messages_today || 0) : 0;
+      if (todayCount >= TRIAL_DAILY_LIMIT) {
+        return res.status(429).json({
+          error: `You've reached your daily limit of ${TRIAL_DAILY_LIMIT} AI messages. Upgrade to continue.`,
+          code: 'daily_limit_exceeded'
+        });
+      }
+      // Increment counter (non-blocking — does not delay the response)
+      supabase.from('profiles').update({
+        trial_messages_today: todayCount + 1,
+        trial_messages_reset_date: today
+      }).eq('id', userId).then(null, () => {});
     }
   }
 
@@ -169,7 +184,7 @@ export default async function handler(req, res) {
   let effectiveSystem = system;
   if (userId) {
     // Authenticated user: personalise the system prompt with their learning data
-    effectiveSystem = await buildAdaptiveSystemPrompt(userId, system);
+    effectiveSystem = await buildAdaptiveSystemPrompt(userId, system, req._profile || null);
   }
 
   // ── Call Anthropic ────────────────────────────────────────────────────────
@@ -177,7 +192,7 @@ export default async function handler(req, res) {
     const body = { model: model || 'claude-sonnet-4-6', messages, max_tokens: max_tokens || 1500 };
     if (effectiveSystem) body.system = effectiveSystem;
 
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
+    const r = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
