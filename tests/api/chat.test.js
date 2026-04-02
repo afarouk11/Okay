@@ -31,7 +31,7 @@ function makeBuilder(resolution = { data: null, error: null }) {
     _r: resolution,
     then(res, rej) { return Promise.resolve(b._r).then(res, rej); },
   };
-  ['select', 'eq', 'single'].forEach(m => {
+  ['select', 'eq', 'single', 'update', 'lt', 'lte', 'gt', 'limit', 'order'].forEach(m => {
     b[m] = vi.fn().mockReturnValue(b);
   });
   return b;
@@ -296,3 +296,64 @@ describe('authenticated paid user', () => {
     expect(r.statusCode).toBe(200);
   });
 });
+
+// ─── DB-backed daily trial limit ─────────────────────────────────────────────
+
+describe('DB-backed daily trial limit', () => {
+  it('returns 429 when the free user has reached their daily chat limit', async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    mocks.supabase.auth.getUser.mockResolvedValueOnce({
+      data: { user: { id: 'user-at-limit' } },
+      error: null,
+    });
+    // Profile shows 20/20 messages used today
+    mocks.supabase.from.mockReturnValueOnce(
+      makeBuilder({
+        data: {
+          subscription_status: 'free',
+          trial_messages_today: 20,
+          trial_messages_reset_date: today,
+        },
+        error: null,
+      })
+    );
+
+    const r = res();
+    await handler(
+      req({ messages: VALID_MESSAGES }, 'POST', { authorization: 'Bearer free-at-limit-token' }),
+      r
+    );
+    expect(r.statusCode).toBe(429);
+    expect(r.body.code).toBe('daily_limit_exceeded');
+  });
+
+  it('resets the counter when the stored date is not today', async () => {
+    mocks.supabase.auth.getUser.mockResolvedValueOnce({
+      data: { user: { id: 'user-yesterday-limit' } },
+      error: null,
+    });
+    // Limit was hit yesterday — treated as 0 for today
+    mocks.supabase.from.mockReturnValueOnce(
+      makeBuilder({
+        data: {
+          subscription_status: 'free',
+          trial_messages_today: 20,
+          trial_messages_reset_date: '2000-01-01',
+        },
+        error: null,
+      })
+    );
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      status: 200,
+      json: () => Promise.resolve({ content: [{ text: 'Good morning' }] }),
+    });
+
+    const r = res();
+    await handler(
+      req({ messages: VALID_MESSAGES }, 'POST', { authorization: 'Bearer reset-date-token' }),
+      r
+    );
+    expect(r.statusCode).toBe(200);
+  });
+});
+
