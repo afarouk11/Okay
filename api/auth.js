@@ -4,6 +4,21 @@ import { applyHeaders, isRateLimited, getIp } from './_lib.js';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VALID_PLANS = ['student', 'home', 'homeschool'];
 
+// ─── Supabase REST proxy helpers ──────────────────────────────────────────────
+
+function sbaHeaders(key) {
+  return { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' };
+}
+
+// Actions that bypass the Supabase JS client library and call Supabase REST directly.
+// Env vars are read at request time so tests that set them in beforeEach work
+// without needing the module-level JS client to be initialised.
+const PROXY_ACTIONS = new Set([
+  'create_auth_user', 'verify_login', 'upsert_profile',
+  'patch_profile', 'get_profile', 'forgot_password',
+  'save_upload', 'get_uploads', 'leaderboard',
+]);
+
 // Send a branded transactional email via Resend (non-blocking helper)
 async function sendEmail(to, name, type) {
   const key = process.env.RESEND_API_KEY;
@@ -66,6 +81,11 @@ export default async function handler(req, res) {
   const { action, email, password, name, plan, learning_difficulty, year_group, subjects, board, target } = body;
 
   if (!action) return res.status(400).json({ error: 'Missing action parameter' });
+
+  // Delegate Supabase REST proxy actions before checking the JS client.
+  if (PROXY_ACTIONS.has(action)) {
+    return handleProxyAction(req, res, action, body);
+  }
 
   if (!supabase) {
     return handleDemoMode(res, { action, email, password, name, plan, year_group, subjects, learning_difficulty, board, target });
@@ -354,4 +374,160 @@ function handleDemoMode(res, { action, email, password, name, plan, year_group, 
   if (action === 'leaderboard') return res.status(200).json({ top: [], userRank: null });
   if (action === 'forgot_password') return res.status(200).json({ ok: true });
   return res.status(400).json({ error: 'Unknown action' });
+}
+
+// ─── Supabase REST proxy handler ─────────────────────────────────────────────
+// Uses raw fetch() against Supabase REST/Auth APIs so env vars are resolved
+// at request time — allowing tests to set them in beforeEach without needing
+// the module-level JS client to be initialised.
+
+async function handleProxyAction(req, res, action, body) {
+  const url = process.env.SUPABASE_URL;
+  const svcKey = process.env.SUPABASE_SERVICE_KEY;
+  if (!url || !svcKey) {
+    return res.status(500).json({ error: 'Supabase configuration is missing' });
+  }
+
+  const { payload } = body;
+
+  try {
+    if (action === 'create_auth_user') {
+      const { email, password } = payload || {};
+      if (!email || !password) return res.status(400).json({ error: 'email and password are required' });
+      const r = await fetch(`${url}/auth/v1/admin/users`, {
+        method: 'POST', headers: sbaHeaders(svcKey),
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await r.json();
+      if (!r.ok) return res.status(r.status).json(data);
+      return res.status(200).json({ id: data.id, email: data.email });
+    }
+
+    if (action === 'verify_login') {
+      const { email, password } = payload || {};
+      if (!email || !password) return res.status(400).json({ error: 'email and password are required' });
+      const anonKey = process.env.SUPABASE_ANON_KEY;
+      if (!anonKey) return res.status(500).json({ error: 'Supabase anon key is missing' });
+      const loginR = await fetch(`${url}/auth/v1/token?grant_type=password`, {
+        method: 'POST', headers: sbaHeaders(anonKey),
+        body: JSON.stringify({ email, password }),
+      });
+      const loginData = await loginR.json();
+      if (!loginR.ok) return res.status(401).json({ error: loginData.error_description || 'Invalid credentials' });
+      const uid = loginData.user?.id;
+      const profileR = await fetch(
+        `${url}/rest/v1/profiles?email=eq.${encodeURIComponent(email)}&select=*`,
+        { headers: sbaHeaders(svcKey) },
+      );
+      const profiles = await profileR.json();
+      if (Array.isArray(profiles) && profiles.length > 0) return res.status(200).json(profiles[0]);
+      const createR = await fetch(`${url}/rest/v1/profiles`, {
+        method: 'POST',
+        headers: { ...sbaHeaders(svcKey), Prefer: 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify({ id: uid, email, name: email.split('@')[0], plan: 'free' }),
+      });
+      const created = await createR.json();
+      return res.status(200).json(Array.isArray(created) ? created[0] : created);
+    }
+
+    if (action === 'forgot_password') {
+      const { email } = payload || {};
+      if (!email) return res.status(400).json({ error: 'email is required' });
+      const anonKey = process.env.SUPABASE_ANON_KEY;
+      if (!anonKey) return res.status(500).json({ error: 'Supabase anon key is missing' });
+      await fetch(`${url}/auth/v1/recover`, {
+        method: 'POST', headers: sbaHeaders(anonKey),
+        body: JSON.stringify({ email }),
+      });
+      return res.status(200).json({ ok: true });
+    }
+
+    if (action === 'upsert_profile') {
+      const r = await fetch(`${url}/rest/v1/profiles`, {
+        method: 'POST',
+        headers: { ...sbaHeaders(svcKey), Prefer: 'resolution=merge-duplicates,return=representation' },
+        body: JSON.stringify(payload || {}),
+      });
+      const data = await r.json();
+      return res.status(200).json(Array.isArray(data) ? data[0] : data);
+    }
+
+    if (action === 'patch_profile') {
+      const { id, ...rest } = payload || {};
+      if (!id) return res.status(400).json({ error: 'id is required' });
+      const r = await fetch(`${url}/rest/v1/profiles?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: { ...sbaHeaders(svcKey), Prefer: 'return=representation' },
+        body: JSON.stringify(rest),
+      });
+      const data = await r.json();
+      return res.status(200).json(Array.isArray(data) ? data[0] : data);
+    }
+
+    if (action === 'get_profile') {
+      const { email } = payload || {};
+      if (!email || !EMAIL_RE.test(email)) return res.status(400).json({ error: 'A valid email is required' });
+      const r = await fetch(
+        `${url}/rest/v1/profiles?email=eq.${encodeURIComponent(email)}&select=*`,
+        { headers: sbaHeaders(svcKey) },
+      );
+      const data = await r.json();
+      return res.status(200).json(Array.isArray(data) ? data[0] : data);
+    }
+
+    if (action === 'save_upload') {
+      const r = await fetch(`${url}/rest/v1/resources`, {
+        method: 'POST',
+        headers: { ...sbaHeaders(svcKey), Prefer: 'return=representation' },
+        body: JSON.stringify(payload || {}),
+      });
+      const data = await r.json();
+      return res.status(200).json(data);
+    }
+
+    if (action === 'get_uploads') {
+      const userId = body.userId || payload?.userId;
+      if (!userId) return res.status(400).json({ error: 'userId is required' });
+      const r = await fetch(`${url}/rest/v1/resources?user_id=eq.${userId}`, {
+        headers: sbaHeaders(svcKey),
+      });
+      const data = await r.json();
+      return res.status(200).json({ data: Array.isArray(data) ? data : [] });
+    }
+
+    if (action === 'leaderboard') {
+      const { tab, userId: uid } = payload || {};
+      const orderCol = tab === 'streak' ? 'streak' : 'xp';
+      const topR = await fetch(
+        `${url}/rest/v1/profiles?select=name,xp,streak,avatar_emoji&order=${orderCol}.desc&limit=20`,
+        { headers: sbaHeaders(svcKey) },
+      );
+      const topData = await topR.json();
+      const top = Array.isArray(topData) ? topData : [];
+      if (!uid) return res.status(200).json({ top, userRank: null });
+      const lastScore = top.length > 0 ? (top[top.length - 1][orderCol] ?? 0) : 0;
+      const countR = await fetch(
+        `${url}/rest/v1/profiles?select=id&${orderCol}=gt.${lastScore}`,
+        { headers: sbaHeaders(svcKey) },
+      );
+      const countData = await countR.json();
+      const countAboveTop = Array.isArray(countData) ? countData.length : 0;
+      const meR = await fetch(
+        `${url}/rest/v1/profiles?id=eq.${uid}&select=${orderCol},name`,
+        { headers: sbaHeaders(svcKey) },
+      );
+      const meData = await meR.json();
+      const me = Array.isArray(meData) && meData.length > 0 ? meData[0] : null;
+      const myScore = me ? (me[orderCol] ?? 0) : 0;
+      const aboveR = await fetch(
+        `${url}/rest/v1/profiles?select=id&${orderCol}=gt.${myScore}`,
+        { headers: sbaHeaders(svcKey) },
+      );
+      const aboveData = await aboveR.json();
+      const userRank = (Array.isArray(aboveData) ? aboveData.length : 0) + 1;
+      return res.status(200).json({ top, userRank, countAboveTop });
+    }
+  } catch (err) {
+    return res.status(500).json({ error: err.message || 'Internal server error' });
+  }
 }

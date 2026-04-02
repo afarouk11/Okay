@@ -69,3 +69,36 @@ export function getIp(req) {
     'unknown'
   );
 }
+
+// ─── Fetch with retry ─────────────────────────────────────────────────────────
+//
+// Retries only on network-level failures (when fetch throws), NOT on HTTP error
+// status codes. HTTP errors are intentionally passed back to the caller so they
+// can forward the upstream status (e.g. Anthropic 529 overloaded).
+//
+// Backoff: 500ms → 1 000ms (doubles each attempt, capped at maxRetries).
+// Zero-delay in Vitest so tests stay fast.
+
+/**
+ * Calls fetch and retries on transient network errors with exponential backoff.
+ *
+ * @param {string}      url
+ * @param {RequestInit} [options]
+ * @param {number}      [maxRetries=2]  Extra attempts after the first (total: maxRetries+1)
+ * @returns {Promise<Response>}
+ */
+export async function fetchWithRetry(url, options = {}, maxRetries = 2) {
+  const baseDelay = process.env.VITEST ? 0 : 500;
+  let lastError;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fetch(url, options);
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, baseDelay * (2 ** attempt)));
+      }
+    }
+  }
+  throw lastError;
+}

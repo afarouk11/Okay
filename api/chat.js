@@ -1,4 +1,4 @@
-import { applyHeaders, isRateLimited, getIp } from './_lib.js';
+import { applyHeaders, isRateLimited, getIp, fetchWithRetry } from './_lib.js';
 import { createClient } from '@supabase/supabase-js';
 
 const TRIAL_DAILY_LIMIT = 20;
@@ -12,6 +12,97 @@ try {
     });
   }
 } catch (_) {}
+
+/**
+ * Fetch student-specific context and prepend it to the caller's system prompt.
+ * Makes every Claude response personalised to the individual student.
+ *
+ * Fetches in parallel:
+ *   1. Weak topics (mastery_level < 3, up to 5)
+ *   2. Review queue (topics due today, up to 3)
+ *
+ * The student profile is supplied by the caller to avoid a redundant DB round-trip
+ * (it has already been fetched during the authentication + rate-limit check).
+ *
+ * Scientific frameworks applied:
+ *   • Cognitive Load Theory  — accessibility-aware language instructions
+ *   • Mastery Learning       — tutor knows which foundations need reinforcing
+ *   • Spaced Repetition cues — tutor can surface due topics organically
+ *
+ * @param {string} userId
+ * @param {string|undefined} baseSystem  Caller-supplied system prompt
+ * @param {object|null} cachedProfile    Already-fetched profile row (may be null)
+ * @returns {Promise<string>}
+ */
+async function buildAdaptiveSystemPrompt(userId, baseSystem, cachedProfile) {
+  if (!supabase || !cachedProfile) return baseSystem || '';
+
+  const today = new Date().toISOString().split('T')[0];
+
+  try {
+    const [weakRes, reviewRes] = await Promise.all([
+      supabase.from('topic_mastery')
+        .select('topic, mastery_level, correct_attempts, total_attempts')
+        .eq('user_id', userId)
+        .lt('mastery_level', 3)
+        .order('mastery_level', { ascending: true })
+        .limit(5),
+      supabase.from('topic_mastery')
+        .select('topic')
+        .eq('user_id', userId)
+        .lte('next_review_date', today)
+        .gt('repetitions', 0)
+        .limit(3)
+    ]);
+
+    const p = cachedProfile;
+    if (!p) return baseSystem || '';
+
+    const lp = p.learning_profile || {};
+
+    // ── Accessibility instructions ──
+    const a11y = [];
+    if (p.adhd_mode)        a11y.push('ADHD: keep responses focused and concise; use bullet points; avoid dense paragraphs; chunk information into short steps.');
+    if (p.dyslexia_mode)    a11y.push('Dyslexia: use clear headings; short sentences; avoid italics; prefer numbered lists over flowing prose.');
+    if (p.dyscalculia_mode) a11y.push('Dyscalculia: colour-code each working step in your description; use visual analogies for numbers; number every calculation step explicitly.');
+
+    // ── Weak topic summary ──
+    const weakTopics = (weakRes.data || []).map(t => {
+      const acc = t.total_attempts > 0
+        ? Math.round((t.correct_attempts / t.total_attempts) * 100)
+        : 0;
+      return `${t.topic} (${acc}% accuracy, mastery ${t.mastery_level}/5)`;
+    });
+
+    // ── Review queue ──
+    const dueTopics = (reviewRes.data || []).map(t => t.topic);
+
+    // ── Learning pace / depth ──
+    const depthNote = lp.explanation_depth === 'brief'
+      ? 'This student grasps concepts quickly — be concise and skip over-explanation.'
+      : lp.needs_scaffolding
+        ? 'This student needs careful scaffolding — break every solution into small, labelled steps before moving on.'
+        : 'Provide clear, structured explanations with worked examples.';
+
+    // ── Assemble context block ──
+    const lines = [
+      '[STUDENT CONTEXT — use this to personalise your response]',
+      p.year_group   ? `Year group: ${p.year_group}` : null,
+      p.exam_board   ? `Exam board: ${p.exam_board}` : null,
+      p.target_grade ? `Target grade: ${p.target_grade}` : null,
+      a11y.length    ? `Accessibility needs:\n  • ${a11y.join('\n  • ')}` : null,
+      weakTopics.length ? `Topics needing extra support: ${weakTopics.join(', ')}` : null,
+      dueTopics.length  ? `Topics due for review today (mention if relevant): ${dueTopics.join(', ')}` : null,
+      depthNote,
+      '[/STUDENT CONTEXT]'
+    ].filter(Boolean).join('\n');
+
+    return baseSystem ? `${lines}\n\n${baseSystem}` : lines;
+  } catch (_) {
+    // Non-fatal: fall back to base system prompt
+    return baseSystem || '';
+  }
+}
 
 export default async function handler(req, res) {
   applyHeaders(res, 'POST, OPTIONS');
@@ -39,25 +130,41 @@ export default async function handler(req, res) {
         const { data: { user }, error } = await supabase.auth.getUser(token);
         if (!error && user) {
           userId = user.id;
+          // Fetch all profile columns needed for: subscription check, trial limit,
+          // and adaptive system prompt — one round-trip instead of two.
           const { data: profile } = await supabase
             .from('profiles')
-            .select('subscription_status')
+            .select('subscription_status, trial_messages_today, trial_messages_reset_date, year_group, exam_board, target_grade, adhd_mode, dyslexia_mode, dyscalculia_mode, learning_profile')
             .eq('id', user.id)
             .single();
           isPaidUser = profile?.subscription_status === 'active';
+          // Store for adaptive prompt (avoids a second profile fetch)
+          req._profile = profile || null;
         }
       } catch (_) {}
     }
   }
 
-  // Per-user daily cap: trial/free users → 20 calls/day
+  // Per-user daily cap: trial/free users → 20 calls/day.
+  // Stored in the profiles table so it persists across serverless instances and
+  // cold starts. Fire-and-forget increment keeps the hot path non-blocking.
   if (userId && !isPaidUser) {
-    const dayKey = `user:${userId}:chat:${new Date().toISOString().slice(0, 10)}`;
-    if (isRateLimited(dayKey, TRIAL_DAILY_LIMIT, 24 * 60 * 60_000)) {
-      return res.status(429).json({
-        error: `You've reached your daily limit of ${TRIAL_DAILY_LIMIT} AI messages. Upgrade to continue.`,
-        code: 'daily_limit_exceeded'
-      });
+    const profile = req._profile;
+    if (profile) {
+      const today = new Date().toISOString().slice(0, 10);
+      const resetDate = profile.trial_messages_reset_date;
+      const todayCount = resetDate === today ? (profile.trial_messages_today || 0) : 0;
+      if (todayCount >= TRIAL_DAILY_LIMIT) {
+        return res.status(429).json({
+          error: `You've reached your daily limit of ${TRIAL_DAILY_LIMIT} AI messages. Upgrade to continue.`,
+          code: 'daily_limit_exceeded'
+        });
+      }
+      // Increment counter (non-blocking — does not delay the response)
+      supabase.from('profiles').update({
+        trial_messages_today: todayCount + 1,
+        trial_messages_reset_date: today
+      }).eq('id', userId).then(null, () => {});
     }
   }
 
@@ -73,12 +180,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Message content too long. Please shorten your request.' });
   }
 
+  // ── Build adaptive system prompt (enriched with student context) ─────────
+  let effectiveSystem = system;
+  if (userId) {
+    // Authenticated user: personalise the system prompt with their learning data
+    effectiveSystem = await buildAdaptiveSystemPrompt(userId, system, req._profile || null);
+  }
+
   // ── Call Anthropic ────────────────────────────────────────────────────────
   try {
     const body = { model: model || 'claude-sonnet-4-6', messages, max_tokens: max_tokens || 1500 };
-    if (system) body.system = system;
+    if (effectiveSystem) body.system = effectiveSystem;
 
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
+    const r = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

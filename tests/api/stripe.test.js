@@ -259,3 +259,32 @@ describe('annual plan', () => {
     delete process.env.STRIPE_PRICE_STUDENT;
   });
 });
+
+// ─── Homeschool plan ──────────────────────────────────────────────────────────
+
+describe('homeschool plan', () => {
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+    process.env.STRIPE_PRICE_HOMESCHOOL = 'price_homeschool_test';
+  });
+
+  afterEach(() => {
+    delete process.env.STRIPE_PRICE_HOMESCHOOL;
+  });
+
+  it('uses the homeschool price when plan=homeschool', async () => {
+    let capturedBody;
+    global.fetch = vi.fn().mockImplementationOnce((_url, opts) => {
+      capturedBody = opts.body.toString();
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ id: 'cs_homeschool', url: 'https://stripe.com/homeschool' }),
+      });
+    });
+
+    const r = res();
+    await handler(req({ plan: 'homeschool', email: 'parent@test.com' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(capturedBody).toContain('price_homeschool_test');
+  });
+});
