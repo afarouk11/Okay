@@ -52,14 +52,14 @@ describe('non-GET', () => {
   });
 });
 
-// ─── Missing ELEVEN_AGENT_ID ──────────────────────────────────────────────────
+// ─── Missing ELEVEN_AGENT_ID — falls back to built-in agent ──────────────────
 
 describe('missing ELEVEN_AGENT_ID', () => {
-  it('returns 503 with a helpful error message', async () => {
+  it('falls back to the built-in agent ID when env var is absent', async () => {
     const r = res();
     await handler(req(), r);
-    expect(r.statusCode).toBe(503);
-    expect(r.body.error).toMatch(/ELEVEN_AGENT_ID/);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.agentId).toBe('agent_4101kn5cm6t2efwsasfhx8cgh1r3');
   });
 });
 
