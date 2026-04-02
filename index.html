@@ -4821,7 +4821,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
             </div>
             <div style="display:flex;gap:.5rem">
               <button class="tts-btn" id="tts-toggle" onclick="toggleTTS()" title="Read aloud">🔊</button>
-              <button id="voice-mode-btn" onclick="window.location.href='/jarvis.html'" title="Voice conversation with Jarvis" style="display:flex;align-items:center;gap:.4rem;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--gold);border-radius:20px;padding:.35rem .85rem;font-size:.78rem;font-weight:600;cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(201,168,76,0.22)'" onmouseout="this.style.background='rgba(201,168,76,0.12)'">🎙 Voice Chat</button>
+              <button id="voice-mode-btn" onclick="voOpen('tutor')" title="Voice conversation with Jarvis" style="display:flex;align-items:center;gap:.4rem;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--gold);border-radius:20px;padding:.35rem .85rem;font-size:.78rem;font-weight:600;cursor:pointer;transition:background .15s" onmouseover="this.style.background='rgba(201,168,76,0.22)'" onmouseout="this.style.background='rgba(201,168,76,0.12)'">🎙 Voice Chat</button>
               <button class="btn btn-outline" style="font-size:.75rem" onclick="clearTutor()">Clear Chat</button>
             </div>
           </div>
@@ -4863,7 +4863,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
           <div class="tutor-input-area">
             <div class="tutor-input-row">
               <div style="display:flex;gap:.5rem;max-width:780px;width:100%;margin:0 auto;align-items:flex-end">
-                <button class="tts-btn" id="voice-input-btn" onclick="window.location.href='/jarvis.html'" title="Voice chat with Jarvis" style="flex-shrink:0;margin-bottom:2px;font-size:.95rem" aria-label="Open voice chat">🎙</button>
+                <button class="tts-btn" id="voice-input-btn" onclick="voOpen('tutor')" title="Voice chat with Jarvis" style="flex-shrink:0;margin-bottom:2px;font-size:.95rem" aria-label="Open voice chat">🎙</button>
                 <button class="tts-btn" onclick="document.getElementById('tutor-img-input').click()" title="Upload a photo of your question" style="flex-shrink:0;margin-bottom:2px">📷</button>
                 <input type="file" id="tutor-img-input" accept="image/*" style="display:none" onchange="handleTutorImage(event)">
                 <div style="position:relative;flex:1">
