@@ -159,7 +159,9 @@ body{background:var(--black);color:var(--white);font-family:var(--font);min-heig
       </div>
       <div class="form-group" style="margin-top:.25rem">
         <label>Specific Topics (optional)</label>
-        <input type="text" id="q-topics" placeholder="e.g. Quadratics, Pythagoras, Trigonometry">
+        <input type="text" id="q-topics" placeholder="e.g. Quadratics, Pythagoras, Trigonometry"
+               onblur="suggestZPDDifficulty(this.value)">
+        <div id="zpd-hint" style="display:none;font-size:.72rem;margin-top:.4rem;padding:.35rem .65rem;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:8px;color:#34d399"></div>
       </div>
       <button class="btn-gold" id="gen-btn" onclick="generateQuestions()">✦ Generate with Synaptiq</button>
     </div>
@@ -298,6 +300,72 @@ function sanitizeHTML(str) {
 
 // Init on load
 initAuth();
+
+// ── ZPD Difficulty Suggestion ─────────────────────────────────────────────────
+// When the student specifies a topic, query their mastery level from
+// /api/adaptive and auto-select the appropriate grade target.
+// Zone of Proximal Development: difficulty = mastery_level + 1 tier.
+
+const GRADE_OPTIONS = ['Grade 4–5', 'Grade 6–7', 'Grade 7–8', 'Grade 8–9'];
+
+/** mastery_level (0-5) → index into GRADE_OPTIONS */
+function masteryToGradeIndex(level) {
+  if (level <= 1) return 0;   // mastery 0-1 → Grade 4-5
+  if (level <= 2) return 1;   // mastery 2   → Grade 6-7
+  if (level <= 3) return 2;   // mastery 3   → Grade 7-8
+  return 3;                   // mastery 4-5 → Grade 8-9
+}
+
+async function suggestZPDDifficulty(topicsValue) {
+  const hint = document.getElementById('zpd-hint');
+  if (!hint) return;
+
+  const firstTopic = topicsValue.split(',')[0].trim();
+  if (!firstTopic) { hint.style.display = 'none'; return; }
+
+  const token = (currentUser?.token) || localStorage.getItem('synaptiq_token');
+  if (!token || token.startsWith('demo_token_')) return;
+
+  try {
+    const res = await fetch('/api/adaptive', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'get_review_queue' })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    // Find the mastery row for the typed topic (case-insensitive prefix match)
+    const match = (data.review_queue || []).find(t =>
+      t.topic.toLowerCase().includes(firstTopic.toLowerCase()) ||
+      firstTopic.toLowerCase().includes(t.topic.toLowerCase())
+    );
+
+    if (!match) {
+      // Topic not yet practised — default to easiest
+      const gradeEl = document.getElementById('q-grade');
+      if (gradeEl) gradeEl.value = GRADE_OPTIONS[0];
+      hint.textContent = `🧠 No practice data for "${firstTopic}" yet — starting at Grade 4–5. Work your way up!`;
+      hint.style.display = '';
+      return;
+    }
+
+    const gradeIdx = masteryToGradeIndex(match.mastery_level);
+    const suggestedGrade = GRADE_OPTIONS[gradeIdx];
+
+    // Auto-select the grade target
+    const gradeEl = document.getElementById('q-grade');
+    if (gradeEl) {
+      // Normalise the option text for comparison (handle en-dash variants)
+      const opts = Array.from(gradeEl.options);
+      const target = opts.find(o => o.text.replace('–','-') === suggestedGrade.replace('–','-'));
+      if (target) gradeEl.value = target.value;
+    }
+
+    hint.textContent = `🧠 Mastery level ${match.mastery_level}/5 for "${firstTopic}" — set to ${suggestedGrade} (ZPD targeting)`;
+    hint.style.display = '';
+  } catch (_) {}
+}
 </script>
 </body>
 </html>

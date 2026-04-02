@@ -1286,6 +1286,51 @@ body {
   text-transform: uppercase; letter-spacing: .1em;
   padding: 1rem 1rem .5rem;
 }
+/* Smart Study panel — sidebar */
+.ss-review-chip {
+  font-size: .68rem; font-weight: 600;
+  background: rgba(96,165,250,0.12); border: 1px solid rgba(96,165,250,0.3);
+  border-radius: 20px; padding: .2rem .55rem;
+  color: #93c5fd; cursor: pointer; transition: background .15s, transform .1s;
+  white-space: nowrap; max-width: 110px; overflow: hidden; text-overflow: ellipsis;
+}
+.ss-review-chip:hover { background: rgba(96,165,250,0.22); transform: scale(1.03); }
+.ss-weak-bar-wrap { margin-bottom: .4rem; }
+.ss-weak-bar-label {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: .68rem; color: var(--muted); margin-bottom: .18rem;
+}
+.ss-weak-bar-label span:first-child {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 130px;
+}
+.ss-weak-bar-track {
+  height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden;
+}
+.ss-weak-bar-fill {
+  height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, #ef4444, #f97316);
+  transition: width .5s cubic-bezier(.4,0,.2,1);
+}
+/* Smart Study card — home dashboard */
+.ss-card-chip {
+  font-size: .75rem; font-weight: 600; padding: .3rem .75rem; border-radius: 20px;
+  background: rgba(96,165,250,0.12); border: 1px solid rgba(96,165,250,0.3);
+  color: #93c5fd; cursor: pointer; transition: background .15s;
+}
+.ss-card-chip:hover { background: rgba(96,165,250,0.22); }
+.ss-card-bar-wrap { margin-bottom: .5rem; }
+.ss-card-bar-label {
+  display: flex; justify-content: space-between; font-size: .78rem;
+  color: var(--muted); margin-bottom: .22rem;
+}
+.ss-card-bar-track {
+  height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden;
+}
+.ss-card-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, #ef4444, #f97316);
+  transition: width .5s cubic-bezier(.4,0,.2,1);
+}
 
 .main-content {
   flex: 1; padding: 2rem;
@@ -4454,6 +4499,26 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
       <div class="sidebar-item" id="si-content" onclick="showDash('content')"><i class="fas fa-chalkboard-teacher"></i>AI Teacher</div>
       <div class="sidebar-item" id="si-questions" onclick="showDash('questions')"><i class="fas fa-file-lines"></i>Practice Questions</div>
       <div class="sidebar-item" id="si-photo" onclick="showDash('photo')"><i class="fas fa-camera"></i>Photo Question</div>
+      <!-- ── Smart Study Panel (Adaptive Learning) ─────────────────────── -->
+      <div class="sidebar-section-label">SMART STUDY</div>
+      <div id="smart-study-panel" style="padding:.5rem .75rem .75rem;margin-bottom:.25rem">
+        <!-- Review Queue -->
+        <div id="ss-review-section" style="margin-bottom:.65rem;display:none">
+          <div style="font-size:.65rem;font-weight:700;color:#60a5fa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.35rem;display:flex;align-items:center;gap:.35rem">
+            <span>🔁</span> Due for review
+          </div>
+          <div id="ss-review-chips" style="display:flex;flex-wrap:wrap;gap:.3rem"></div>
+        </div>
+        <!-- Weak Topics -->
+        <div id="ss-weak-section" style="display:none">
+          <div style="font-size:.65rem;font-weight:700;color:#f97316;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;display:flex;align-items:center;gap:.35rem">
+            <span>⚠️</span> Needs work
+          </div>
+          <div id="ss-weak-list"></div>
+        </div>
+        <!-- Empty state -->
+        <div id="ss-empty" style="font-size:.75rem;color:var(--muted);text-align:center;padding:.5rem 0">Answer questions to unlock insights</div>
+      </div>
       <div class="sidebar-section-label">REVISION</div>
       <div class="sidebar-item" id="si-flashcards" onclick="showDash('flashcards')"><i class="fas fa-clone"></i>Flashcards<span id="fc-sidebar-count" style="margin-left:auto;background:var(--gold);color:#000;border-radius:10px;font-size:.65rem;font-weight:700;padding:.1rem .45rem;display:none"></span></div>
       <div class="sidebar-item" id="si-exams" onclick="showDash('exams')"><i class="fas fa-calendar"></i>Exam Countdown</div>
@@ -4576,6 +4641,30 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
           </div>
         </div>
         <button class="btn" style="font-size:.8rem;padding:.45rem 1rem;border-color:rgba(139,92,246,0.4);color:#a78bfa;background:rgba(139,92,246,0.08);white-space:nowrap" onclick="showDash('predict')">Full Prediction →</button>
+      </div>
+      <!-- Smart Study Card (Adaptive Learning) -->
+      <div id="smart-study-card" style="display:none;background:linear-gradient(135deg,rgba(16,185,129,0.10),rgba(16,185,129,0.04));border:1px solid rgba(16,185,129,0.28);border-radius:16px;padding:1rem 1.25rem;margin-bottom:1.25rem;backdrop-filter:blur(20px)">
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.85rem">
+          <span style="font-size:1.5rem">🧠</span>
+          <div>
+            <div style="font-size:.7rem;font-weight:700;color:#34d399;text-transform:uppercase;letter-spacing:.07em">Smart Study</div>
+            <div style="font-size:.82rem;color:var(--muted)" id="ss-card-subtitle">Personalised to your learning</div>
+          </div>
+          <div id="ss-grade-badge" style="margin-left:auto;display:none;text-align:center">
+            <div style="font-size:1.5rem;font-weight:900;color:#34d399;line-height:1" id="ss-predicted-grade">—</div>
+            <div style="font-size:.6rem;color:var(--muted)">predicted</div>
+          </div>
+        </div>
+        <!-- Review queue chips -->
+        <div id="ss-card-review" style="display:none;margin-bottom:.75rem">
+          <div style="font-size:.68rem;font-weight:700;color:#60a5fa;margin-bottom:.35rem">🔁 Due for review today</div>
+          <div id="ss-card-review-chips" style="display:flex;flex-wrap:wrap;gap:.35rem"></div>
+        </div>
+        <!-- Weak topic bars -->
+        <div id="ss-card-weak" style="display:none">
+          <div style="font-size:.68rem;font-weight:700;color:#f97316;margin-bottom:.4rem">⚠️ Topics needing work</div>
+          <div id="ss-card-weak-bars"></div>
+        </div>
       </div>
       <!-- Daily Challenge Card -->
       <div id="daily-challenge-card" class="daily-challenge-glow" style="background:linear-gradient(135deg,rgba(96,165,250,0.12),rgba(96,165,250,0.04));border:1px solid rgba(96,165,250,0.28);border-radius:16px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 32px rgba(0,0,0,0.3)">
@@ -7739,6 +7828,8 @@ function enterDashboard() {
   checkTrialStatus();
   // Render dashboard widgets
   setTimeout(() => { renderTipOfDay(); renderSpecProgress(); applyBoardPreference(); updateGreeting(); _loadActivityFeed(); }, 200);
+  // Adaptive learning: load personalised Smart Study panel (non-blocking)
+  setTimeout(() => { if (typeof fetchAdaptiveInsights === 'function') fetchAdaptiveInsights(); }, 600);
   // Show new feature UI elements
   if (typeof updateMobileNav === 'function') updateMobileNav();
 
@@ -22829,6 +22920,143 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   hero.insertBefore(wrap, hero.firstChild);
 })();
+
+// ═══════════════════════════════════════
+// ADAPTIVE LEARNING — Smart Study Panel
+// ═══════════════════════════════════════
+
+/**
+ * Fetch personalised learning insights from /api/adaptive and render
+ * the Smart Study widgets in both the sidebar and the home dashboard card.
+ * Called (non-blocking) every time the user enters the dashboard.
+ * Falls back silently on any error.
+ */
+async function fetchAdaptiveInsights() {
+  const token = localStorage.getItem('synaptiq_token');
+  if (!token || token.startsWith('demo_token_')) return;
+
+  try {
+    const res = await fetch('/api/adaptive', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ action: 'get_learning_insights' })
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.demo) return;
+    renderSmartStudyPanel(data);
+  } catch (_) {}
+}
+
+function renderSmartStudyPanel(data) {
+  const reviewQueue = data.review_queue || [];
+  const weakTopics  = data.weak_topics  || [];
+  const trajectory  = data.grade_trajectory;
+
+  const isEmpty = reviewQueue.length === 0 && weakTopics.length === 0;
+
+  // ── Sidebar panel ──
+  const emptyEl      = document.getElementById('ss-empty');
+  const reviewSec    = document.getElementById('ss-review-section');
+  const reviewChips  = document.getElementById('ss-review-chips');
+  const weakSec      = document.getElementById('ss-weak-section');
+  const weakList     = document.getElementById('ss-weak-list');
+
+  if (emptyEl) emptyEl.style.display = isEmpty ? '' : 'none';
+
+  if (reviewChips && reviewQueue.length > 0) {
+    reviewSec.style.display = '';
+    reviewChips.innerHTML = reviewQueue.map(t =>
+      `<button class="ss-review-chip" title="Review ${t.topic}" onclick="smartStudyReview('${escHtml(t.topic)}')">${escHtml(t.topic)}</button>`
+    ).join('');
+  }
+
+  if (weakList && weakTopics.length > 0) {
+    weakSec.style.display = '';
+    weakList.innerHTML = weakTopics.map(t =>
+      `<div class="ss-weak-bar-wrap">
+        <div class="ss-weak-bar-label">
+          <span title="${escHtml(t.topic)}">${escHtml(t.topic)}</span>
+          <span>${Math.round(t.accuracy * 100)}%</span>
+        </div>
+        <div class="ss-weak-bar-track">
+          <div class="ss-weak-bar-fill" style="width:${Math.round(t.accuracy * 100)}%"></div>
+        </div>
+      </div>`
+    ).join('');
+  }
+
+  // ── Home dashboard card ──
+  const card         = document.getElementById('smart-study-card');
+  const cardSubtitle = document.getElementById('ss-card-subtitle');
+  const gradeBadge   = document.getElementById('ss-grade-badge');
+  const predictedGr  = document.getElementById('ss-predicted-grade');
+  const cardReview   = document.getElementById('ss-card-review');
+  const cardReviewCh = document.getElementById('ss-card-review-chips');
+  const cardWeak     = document.getElementById('ss-card-weak');
+  const cardWeakBars = document.getElementById('ss-card-weak-bars');
+
+  if (!card) return;
+  card.style.display = '';
+
+  if (trajectory && predictedGr && gradeBadge) {
+    predictedGr.textContent = trajectory.predicted;
+    gradeBadge.style.display = '';
+    if (cardSubtitle) {
+      cardSubtitle.textContent = trajectory.on_track
+        ? `On track for ${trajectory.target} ✓`
+        : `${trajectory.gap} grade${trajectory.gap !== 1 ? 's' : ''} below target ${trajectory.target}`;
+      cardSubtitle.style.color = trajectory.on_track ? '#34d399' : '#f97316';
+    }
+  }
+
+  if (cardReviewCh && reviewQueue.length > 0) {
+    cardReview.style.display = '';
+    cardReviewCh.innerHTML = reviewQueue.map(t =>
+      `<button class="ss-card-chip" onclick="smartStudyReview('${escHtml(t.topic)}')">${escHtml(t.topic)}</button>`
+    ).join('');
+  }
+
+  if (cardWeakBars && weakTopics.length > 0) {
+    cardWeak.style.display = '';
+    cardWeakBars.innerHTML = weakTopics.slice(0, 3).map(t =>
+      `<div class="ss-card-bar-wrap">
+        <div class="ss-card-bar-label">
+          <span>${escHtml(t.topic)}</span>
+          <span>${Math.round(t.accuracy * 100)}% accuracy</span>
+        </div>
+        <div class="ss-card-bar-track">
+          <div class="ss-card-bar-fill" style="width:${Math.round(t.accuracy * 100)}%"></div>
+        </div>
+      </div>`
+    ).join('');
+  }
+}
+
+/**
+ * When the student clicks a review chip, switch to the AI tutor tab
+ * and pre-fill a message asking Claude to test them on that topic.
+ */
+function smartStudyReview(topic) {
+  showDash('tutor');
+  setTimeout(() => {
+    const inp = document.getElementById('user-input') || document.getElementById('chat-input');
+    if (inp) {
+      inp.value = `Please test me on ${topic} with a practice question.`;
+      inp.focus();
+    }
+  }, 200);
+}
+
+/** Minimal HTML escape to prevent XSS in injected topic names */
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 </script>
 
