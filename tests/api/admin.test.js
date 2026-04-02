@@ -162,6 +162,23 @@ describe('send_weekly_emails', () => {
     expect(r.body.sent).toBe(2);
   });
 
+  it('calls the /api/resend endpoint (not /api/email)', async () => {
+    const activeUsers = [
+      { email: 'a@b.com', name: 'Alice', xp: 100, accuracy: 80, streak: 3, questions_answered: 20 },
+    ];
+    mocks.supabase.from.mockReturnValueOnce(makeBuilder({ data: activeUsers, error: null }));
+    process.env.SITE_URL = 'https://synaptiq.test';
+    const calledUrls = [];
+    global.fetch = vi.fn().mockImplementation((url) => {
+      calledUrls.push(url);
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true }) });
+    });
+
+    await handler(req('POST', { action: 'send_weekly_emails' }, ADMIN_HEADERS), res());
+    expect(calledUrls[0]).toContain('/api/resend');
+    expect(calledUrls[0]).not.toContain('/api/email');
+  });
+
   it('returns 0 sent when there are no active subscribers', async () => {
     mocks.supabase.from.mockReturnValueOnce(makeBuilder({ data: [], error: null }));
     const r = res();
