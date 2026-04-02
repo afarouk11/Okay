@@ -48,7 +48,19 @@ self.addEventListener('fetch', e => {
         }
         return resp;
       }).catch(() => null);
-      return cached || networkFetch || caches.match('/index.html');
+
+      // Serve from cache immediately and refresh in the background.
+      if (cached) return cached;
+
+      // No cache hit — wait for the network response.
+      return networkFetch.then(networkResp => {
+        if (networkResp) return networkResp;
+        // Network failed: for navigation requests only, serve the cached app
+        // shell so the page loads offline. For JS/CSS/font requests return a
+        // 503 so the browser surfaces a proper error instead of HTML-as-script.
+        if (e.request.mode === 'navigate') return caches.match('/index.html');
+        return new Response('Service Unavailable', { status: 503 });
+      });
     })
   );
 });
