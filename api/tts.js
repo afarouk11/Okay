@@ -1,4 +1,4 @@
-import { applyHeaders, isRateLimited, getIp } from './_lib.js';
+import { applyHeaders, isRateLimited, getIp, fetchWithRetry } from './_lib.js';
 
 /**
  * GET  /api/tts  — JARVIS agent config (ElevenLabs conversation token or agentId).
@@ -87,22 +87,27 @@ export default async function handler(req, res) {
   const input = text.slice(0, 5000);
   const voiceSettings = VOICE_SETTINGS[voice] || VOICE_SETTINGS.default;
 
-  const upstream = await fetch(
-    `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
-    {
-      method: 'POST',
-      headers: {
-        'xi-api-key': apiKey,
-        'Content-Type': 'application/json',
-        'Accept': 'audio/mpeg',
-      },
-      body: JSON.stringify({
-        text: input,
-        model_id: 'eleven_turbo_v2_5',
-        voice_settings: voiceSettings,
-      }),
-    }
-  );
+  let upstream;
+  try {
+    upstream = await fetchWithRetry(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/stream`,
+      {
+        method: 'POST',
+        headers: {
+          'xi-api-key': apiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'audio/mpeg',
+        },
+        body: JSON.stringify({
+          text: input,
+          model_id: 'eleven_turbo_v2_5',
+          voice_settings: voiceSettings,
+        }),
+      }
+    );
+  } catch (_) {
+    return res.status(503).json({ error: 'TTS service unavailable — please try again' });
+  }
 
   if (!upstream.ok) {
     const err = await upstream.text();
