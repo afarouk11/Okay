@@ -13477,6 +13477,22 @@ let tutorImages = [];
 function handleTutorImage(e) {
   const file = e.target.files[0];
   if (!file) return;
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    showToast('Unsupported image type. Please upload a JPEG, PNG, GIF, or WEBP file.', 'error');
+    e.target.value = '';
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Image too large. Maximum size is 5 MB.', 'error');
+    e.target.value = '';
+    return;
+  }
+  if (tutorImages.length >= 3) {
+    showToast('Maximum 3 images per message.', 'error');
+    e.target.value = '';
+    return;
+  }
   const reader = new FileReader();
   reader.onload = ev => {
     tutorImages.push({ data: ev.target.result.split(',')[1], type: file.type });
@@ -15640,6 +15656,17 @@ let photoImageData = null;
 function handlePhotoQuestion(e) {
   const file = e.target.files[0];
   if (!file) return;
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    showToast('Unsupported image type. Please upload a JPEG, PNG, GIF, or WEBP file.', 'error');
+    e.target.value = '';
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('Image too large. Maximum size is 5 MB.', 'error');
+    e.target.value = '';
+    return;
+  }
   const reader = new FileReader();
   reader.onload = ev => {
     photoImageData = { data: ev.target.result.split(',')[1], type: file.type };

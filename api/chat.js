@@ -69,6 +69,32 @@ export default async function handler(req, res) {
   if (messages.length > 50) {
     return res.status(400).json({ error: 'Too many messages. Please start a new conversation.' });
   }
+
+  // ── Validate image content blocks ─────────────────────────────────────────
+  const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+  const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB binary
+  const MAX_IMAGES_PER_REQUEST = 5;
+
+  let totalImages = 0;
+  for (const msg of messages) {
+    const parts = Array.isArray(msg.content) ? msg.content : [];
+    for (const part of parts) {
+      if (part.type !== 'image') continue;
+      totalImages++;
+      if (totalImages > MAX_IMAGES_PER_REQUEST) {
+        return res.status(400).json({ error: `Too many images. Maximum ${MAX_IMAGES_PER_REQUEST} images per request.` });
+      }
+      const src = part.source || {};
+      if (!ALLOWED_IMAGE_TYPES.has(src.media_type)) {
+        return res.status(400).json({ error: 'Unsupported image type. Allowed: JPEG, PNG, GIF, WEBP.' });
+      }
+      if (typeof src.data === 'string' && src.data.length * 0.75 > MAX_IMAGE_BYTES) {
+        // base64 encodes 3 bytes as 4 chars, so binary size ≈ data.length × 0.75
+        return res.status(400).json({ error: 'Image too large. Maximum size is 5 MB.' });
+      }
+    }
+  }
+
   if (JSON.stringify(messages).length > 100000) {
     return res.status(400).json({ error: 'Message content too long. Please shorten your request.' });
   }
