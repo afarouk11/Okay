@@ -159,10 +159,10 @@ async function submitContact() {
   }
   btn.textContent = 'Sending…'; btn.disabled = true;
   try {
-    const res = await fetch('/api/contact', {
+    const res = await fetch('/api/resend', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, category, message }),
+      body: JSON.stringify({ type: 'contact', name, email, category, message }),
     });
     const data = await res.json();
     if (!res.ok) { errEl.textContent = data.error || 'Something went wrong.'; errEl.style.display = 'block'; return; }

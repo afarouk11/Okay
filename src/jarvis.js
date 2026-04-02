@@ -2,16 +2,18 @@
  * J.A.R.V.I.S. — Vanilla-JS "Ear → Brain → Mouth" pipeline
  *
  * Wake word:  Web Speech API (SpeechRecognition — built into Chrome / Edge)
- * Voice AI:   ElevenLabs Conversational AI  (@11labs/client)
+ * Voice AI:   ElevenLabs Conversational AI  (@elevenlabs/client)
  *
- * API keys are injected into jarvis.html at build time by scripts/build.mjs:
- *   ELEVEN_AGENT_ID_PLACEHOLDER →  meta[name="eleven-agent-id"]
+ * Agent config is fetched at runtime from /api/tts (GET), which returns
+ * either a short-lived WebRTC conversation token (preferred) or the plain agent ID.
  *
- * ElevenLabs CDN: https://esm.sh/@11labs/client
+ * ElevenLabs CDN: https://esm.sh/@elevenlabs/client
+ *
+ * Episodic memory: each session is persisted via /api/memory so Jarvis can
+ * surface where the student left off at the start of the next session.
  */
 
-// ── Keys (injected by build pipeline) ────────────────────────────────────────
-const ELEVEN_AGENT_ID = document.querySelector('meta[name="eleven-agent-id"]')?.content ?? '';
+import { latexToSpeech } from '/src/latex-speech.js';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const hologram        = document.getElementById('hologram');
@@ -20,17 +22,28 @@ const statusText      = document.getElementById('status-text');
 const statusTitle     = document.getElementById('status-title');
 const statusHint      = document.getElementById('status-hint');
 const endBtn          = document.getElementById('end-btn');
+const micBtn          = document.getElementById('mic-btn');
+const micBtnLabel     = document.getElementById('mic-btn-label');
 const toast           = document.getElementById('toast');
 const transcriptPanel = document.getElementById('transcript');
 const vizCanvas       = document.getElementById('viz-canvas');
 const vizCtx          = vizCanvas.getContext('2d');
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let orbState    = 'idle';  // 'idle' | 'greeting' | 'active'
-let recognition = null;
-let conversation= null;
-let toastTimer  = null;
-let volumeRafId = null;  // requestAnimationFrame handle for volume tracking
+let orbState       = 'idle';  // 'idle' | 'greeting' | 'active'
+let recognition    = null;
+let conversation   = null;
+let toastTimer     = null;
+let volumeRafId    = null;  // requestAnimationFrame handle for volume tracking
+let jarvisConfig   = null;  // { signedUrl? } or { agentId? } — fetched from /api/jarvis-config
+let micEnabled     = true;  // whether the wake-word mic is active
+
+/**
+ * Session timer — module-level ref that survives any UI refresh.
+ * Tracks when the current ElevenLabs session started (ms since epoch).
+ * Equivalent to a React useRef — value persists without triggering re-renders.
+ */
+let _sessionStartMs = null;
 
 // Maximum additional scale applied at peak volume (orb grows by up to 35 %)
 const VOLUME_SCALE_FACTOR = 0.35;
@@ -190,6 +203,7 @@ function setOrbState(state) {
 
   statusHint.style.opacity = state === 'idle' ? '0.6' : '0';
   endBtn.classList.toggle('hidden', state !== 'active');
+  micBtn.classList.toggle('hidden', state !== 'idle');
 }
 
 function showToast(msg, durationMs = 5000) {
@@ -204,17 +218,102 @@ function setStatus(text, dotVariant = '') {
   statusDot.className = `status-dot ${dotVariant}`;
 }
 
+// ── Episodic Memory ───────────────────────────────────────────────────────────
+
+/** Return the stored auth token, or null if not logged in. */
+function _authToken() {
+  try { return localStorage.getItem('synaptiq_token') || null; } catch { return null; }
+}
+
+/**
+ * Fetch the last `limit` Jarvis sessions for the current user.
+ * Returns an empty array if unauthenticated or the API is unavailable.
+ * @param {number} limit
+ * @returns {Promise<Array>}
+ */
+async function fetchMemory(limit = 3) {
+  const token = _authToken();
+  if (!token) return [];
+  try {
+    const res = await fetch(`/api/memory?limit=${limit}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return [];
+    const { sessions } = await res.json();
+    return Array.isArray(sessions) ? sessions : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Persist a session record to /api/memory.
+ * Fails silently — memory is best-effort; the tutoring session is the priority.
+ * @param {{ topic?: string, mastery_score?: number, specific_errors?: string[], duration_ms?: number }} data
+ */
+async function saveMemory(data) {
+  const token = _authToken();
+  if (!token) return;
+  try {
+    await fetch('/api/memory', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+  } catch { /* best-effort */ }
+}
+
+/**
+ * Build a short context string from recent sessions to show the student
+ * before or at the start of a conversation.
+ * @param {Array} sessions
+ * @returns {string}  Human-readable summary, or '' if no history.
+ */
+function buildMemoryContext(sessions) {
+  if (!sessions.length) return '';
+
+  const latest = sessions[0];
+  const parts  = [];
+
+  if (latest.topic) parts.push(`Last topic: ${latest.topic}`);
+
+  const errors = latest.specific_errors?.filter(Boolean);
+  if (errors?.length) parts.push(`Recent errors: ${errors.slice(0, 3).join(', ')}`);
+
+  if (latest.mastery_score != null) {
+    parts.push(`Mastery: ${Math.round(latest.mastery_score * 100)}%`);
+  }
+
+  return parts.length ? parts.join(' · ') : '';
+}
+
 // ── ElevenLabs ────────────────────────────────────────────────────────────────
 
 /**
  * Start a Conversational AI session with the configured ElevenLabs agent.
- * On disconnect we re-arm the Porcupine wake-word listener.
+ * Fetches recent session history (episodic memory) and displays it briefly
+ * so the student knows Jarvis remembers where they left off.
+ * On disconnect we save the session and re-arm the Porcupine wake-word listener.
+ * @param {{ signedUrl?: string, agentId?: string }} config
  */
-async function startConversation() {
-  const { Conversation } = await import('https://esm.sh/@11labs/client');
+async function startConversation(config) {
+  // ── Session timer ─────────────────────────────────────────────────────────
+  _sessionStartMs = Date.now();
+
+  // ── Retrieve episodic memory ──────────────────────────────────────────────
+  const sessions = await fetchMemory(3);
+  const context  = buildMemoryContext(sessions);
+  if (context) showTranscript(context);
+
+  const { Conversation } = await import('https://esm.sh/@elevenlabs/client@1');
 
   conversation = await Conversation.startSession({
-    agentId: ELEVEN_AGENT_ID,
+    ...(config.conversationToken
+      ? { conversationToken: config.conversationToken, connectionType: 'webrtc' }
+      : { agentId: config.agentId }),
 
     onConnect: () => {
       setOrbState('active');
@@ -224,6 +323,14 @@ async function startConversation() {
     onDisconnect: async () => {
       stopVolumeTracking();
       clearTranscript();
+
+      // ── Save episodic memory ────────────────────────────────────────────
+      const duration_ms = _sessionStartMs != null
+        ? Date.now() - _sessionStartMs
+        : null;
+      _sessionStartMs = null;
+      await saveMemory({ duration_ms });
+
       conversation = null;
       setOrbState('idle');
       setStatus('SYSTEMS ONLINE', 'online');
@@ -240,12 +347,12 @@ async function startConversation() {
       }
     },
 
-    // Show AI's spoken text as an on-screen subtitle
+    // Show AI's spoken text as an on-screen subtitle (LaTeX cleaned to spoken form)
     onMessage: (msg) => {
-      const text = msg?.agent_response
+      const raw  = msg?.agent_response
         ?? (msg?.source === 'ai' ? msg?.message : null)
         ?? null;
-      if (typeof text === 'string' && text.trim()) showTranscript(text);
+      if (typeof raw === 'string' && raw.trim()) showTranscript(latexToSpeech(raw));
     },
 
     onError: (errMsg) => {
@@ -312,7 +419,7 @@ function createRecognition() {
  * Called on page load and again after each session ends.
  */
 async function armWakeWord() {
-  if (!recognition || orbState !== 'idle') return;
+  if (!recognition || orbState !== 'idle' || !micEnabled) return;
   try {
     recognition.start();
   } catch (err) {
@@ -346,7 +453,7 @@ async function handleWakeWord() {
 
   try {
     await disarmWakeWord();
-    await startConversation();
+    await startConversation(jarvisConfig);
   } catch (err) {
     console.error('[JARVIS] Session start failed:', err);
     showToast('Could not reach ElevenLabs — check your agent ID and network.');
@@ -355,6 +462,31 @@ async function handleWakeWord() {
     await armWakeWord();
   }
 }
+
+// ── Mic toggle button ─────────────────────────────────────────────────────────
+
+function updateMicButton() {
+  micBtn.classList.toggle('muted', !micEnabled);
+  micBtnLabel.textContent = micEnabled ? 'MIC ON' : 'MIC OFF';
+  micBtn.setAttribute('aria-label', micEnabled ? 'Mute microphone' : 'Unmute microphone');
+}
+
+micBtn.addEventListener('click', async () => {
+  micEnabled = !micEnabled;
+  updateMicButton();
+  try {
+    if (micEnabled) {
+      await armWakeWord();
+    } else {
+      await disarmWakeWord();
+    }
+  } catch (err) {
+    console.error('[JARVIS] Mic toggle failed:', err);
+    micEnabled = !micEnabled;  // revert state on failure
+    updateMicButton();
+    showToast('Could not toggle microphone — please try again.');
+  }
+});
 
 // ── Manual end-session button ─────────────────────────────────────────────────
 
@@ -369,8 +501,27 @@ endBtn.addEventListener('click', async () => {
 // ── Initialisation ────────────────────────────────────────────────────────────
 
 async function init() {
-  // Guard: ElevenLabs agent ID not yet configured
-  if (!ELEVEN_AGENT_ID || ELEVEN_AGENT_ID === 'ELEVEN_AGENT_ID_PLACEHOLDER') {
+  // Fetch agent config at runtime — avoids build-time injection dependency
+  try {
+    const res = await fetch('/api/tts');
+    if (!res.ok) {
+      const { error } = await res.json().catch((parseErr) => {
+        console.error('[JARVIS] Config response parse error (HTTP', res.status, '):', parseErr);
+        return {};
+      });
+      setStatus('AGENT ID NOT SET', 'error');
+      showToast(error || 'Set ELEVEN_AGENT_ID in Vercel environment variables.', 0);
+      return;
+    }
+    jarvisConfig = await res.json();
+  } catch (err) {
+    console.error('[JARVIS] Failed to fetch config:', err);
+    setStatus('AGENT ID NOT SET', 'error');
+    showToast('Set ELEVEN_AGENT_ID in Vercel environment variables.', 0);
+    return;
+  }
+
+  if (!jarvisConfig.conversationToken && !jarvisConfig.agentId) {
     setStatus('AGENT ID NOT SET', 'error');
     showToast('Set ELEVEN_AGENT_ID in Vercel environment variables.', 0);
     return;
@@ -387,6 +538,8 @@ async function init() {
   recognition = createRecognition();
   await armWakeWord();
   setStatus('SYSTEMS ONLINE', 'online');
+  micBtn.classList.remove('hidden');
+  updateMicButton();
 }
 
 init();
@@ -394,3 +547,12 @@ init();
 // Start the ambient canvas visualizer immediately — shows idle animation
 // before keys load, then transitions to live frequency data during sessions.
 startCanvasLoop();
+
+// ── Cleanup on page unload ────────────────────────────────────────────────────
+window.addEventListener('beforeunload', () => {
+  if (canvasRafId !== null) {
+    cancelAnimationFrame(canvasRafId);
+    canvasRafId = null;
+  }
+  stopVolumeTracking();
+});
