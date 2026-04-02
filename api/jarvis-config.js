@@ -8,8 +8,8 @@ import { applyHeaders, isRateLimited, getIp } from './_lib.js';
  * injection — the token is fetched fresh each time the user opens a session.
  */
 
-const RATE_LIMIT_MAX    = 10;   // max requests
-const RATE_LIMIT_WINDOW = 60_000; // per 60 s
+const RATE_LIMIT_MAX    = 10;      // max requests
+const RATE_LIMIT_WINDOW = 60_000;  // per 60 seconds
 export default async function handler(req, res) {
   applyHeaders(res, 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
