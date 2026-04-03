@@ -1500,7 +1500,7 @@ body {
    AI TUTOR PAGE
 ═══════════════════════════════════════ */
 .tutor-layout {
-  display: grid; grid-template-columns: 220px 1fr;
+  display: grid; grid-template-columns: 280px 1fr;
   gap: 0; height: calc(100vh - 64px);
 }
 .tutor-subjects {
@@ -1535,6 +1535,76 @@ body {
   background: rgba(201,168,76,0.12); color: var(--gold);
   border-color: rgba(201,168,76,0.25);
   box-shadow: inset 2px 0 0 var(--gold);
+}
+
+/* ─── Jarvis Side Panel ──────────────────────── */
+.jarvis-side-panel {
+  background: linear-gradient(180deg, rgba(0,4,16,0.99) 0%, rgba(3,5,13,0.98) 100%);
+  border-right: 1px solid rgba(0,212,255,0.12);
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 2rem 1.5rem;
+  position: relative; overflow: hidden; gap: 1.75rem;
+}
+.jarvis-side-panel::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 90% 60% at 50% 38%, rgba(0,212,255,0.07) 0%, transparent 68%);
+  pointer-events: none;
+}
+.jarvis-orb-large {
+  width: 160px; height: 160px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, #00D4FF 0%, #7B40FF 55%, #00D4FF 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 3.6rem; position: relative;
+  box-shadow: 0 0 40px rgba(0,212,255,0.45), 0 0 80px rgba(0,212,255,0.18), inset 0 0 40px rgba(123,64,255,0.2);
+  animation: jarvis-orb-pulse 3s ease-in-out infinite;
+  cursor: default; user-select: none;
+}
+.jarvis-orb-large.speaking {
+  animation: jarvis-orb-speak 0.6s ease-in-out infinite !important;
+}
+.jarvis-orb-ring {
+  position: absolute; border-radius: 50%;
+  border: 1px solid rgba(0,212,255,0.22);
+  animation: jarvis-ring-spin 9s linear infinite;
+}
+.jarvis-orb-ring:nth-child(1) { inset: -14px; }
+.jarvis-orb-ring:nth-child(2) { inset: -28px; border-color: rgba(123,64,255,0.14); animation-duration: 14s; animation-direction: reverse; }
+.jarvis-side-label { text-align: center; }
+.jarvis-side-label h3 {
+  font-family: var(--font-head); font-size: 1.3rem; font-weight: 900;
+  background: linear-gradient(135deg, #E8F0FF, #00D4FF);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  margin-bottom: .3rem;
+}
+.jarvis-side-label p { font-size: .8rem; color: var(--muted); line-height: 1.55; }
+.jarvis-status-badge {
+  display: inline-flex; align-items: center; gap: .4rem;
+  font-size: .72rem; color: rgba(0,212,255,0.75);
+  background: rgba(0,212,255,0.07); border: 1px solid rgba(0,212,255,0.18);
+  border-radius: 20px; padding: .3rem .75rem; margin-top: .25rem;
+}
+.jarvis-status-badge::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: #00D4FF; box-shadow: 0 0 6px rgba(0,212,255,0.9);
+  animation: jarvis-dot-blink 1.8s ease-in-out infinite;
+}
+@keyframes jarvis-orb-pulse {
+  0%,100% { box-shadow: 0 0 40px rgba(0,212,255,0.45), 0 0 80px rgba(0,212,255,0.18); transform: scale(1); }
+  50%     { box-shadow: 0 0 60px rgba(0,212,255,0.65), 0 0 120px rgba(0,212,255,0.28); transform: scale(1.03); }
+}
+@keyframes jarvis-orb-speak {
+  0%,100% { box-shadow: 0 0 55px rgba(0,212,255,0.85), 0 0 110px rgba(0,212,255,0.45); transform: scale(1); }
+  50%     { box-shadow: 0 0 85px rgba(0,212,255,1), 0 0 160px rgba(0,212,255,0.65); transform: scale(1.09); }
+}
+@keyframes jarvis-ring-spin {
+  from { transform: rotate(0deg); } to { transform: rotate(360deg); }
+}
+@keyframes jarvis-dot-blink {
+  0%,100% { opacity: 1; } 50% { opacity: 0.25; }
+}
+@media (max-width: 860px) {
+  .tutor-layout { grid-template-columns: 1fr !important; }
+  .jarvis-side-panel { display: none; }
 }
 
 /* ─── ChatGPT-style tutor chat ──────────────────────── */
@@ -4854,51 +4924,21 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
       </div>
     </div>
 
-    <!-- AI TUTOR SUBPAGE -->
+    <!-- AI MATHS ASSISTANT SUBPAGE -->
     <div class="subpage" id="sp-tutor" style="padding:0;margin:-2rem;height:calc(100vh - 64px)">
       <div class="tutor-layout">
-        <!-- Topic sidebar -->
-        <div class="tutor-subjects">
-          <h4>A-Level Topics</h4>
-          <button class="subj-btn active" onclick="setTopic('A-Level Maths — General')">📐 General</button>
-          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Pure 1</div>
-          <button class="subj-btn" onclick="setTopic('Algebraic Expressions')">Algebraic Expressions</button>
-          <button class="subj-btn" onclick="setTopic('Quadratics')">Quadratics</button>
-          <button class="subj-btn" onclick="setTopic('Equations & Inequalities')">Equations & Inequalities</button>
-          <button class="subj-btn" onclick="setTopic('Graphs & Transformations')">Graphs & Transformations</button>
-          <button class="subj-btn" onclick="setTopic('Straight Line Graphs')">Straight Line Graphs</button>
-          <button class="subj-btn" onclick="setTopic('Circles')">Circles</button>
-          <button class="subj-btn" onclick="setTopic('Algebraic Methods')">Algebraic Methods</button>
-          <button class="subj-btn" onclick="setTopic('Binomial Expansion (Y1)')">Binomial Expansion</button>
-          <button class="subj-btn" onclick="setTopic('Trigonometric Ratios')">Trigonometric Ratios</button>
-          <button class="subj-btn" onclick="setTopic('Trigonometric Identities')">Trig Identities</button>
-          <button class="subj-btn" onclick="setTopic('Vectors (Pure 1)')">Vectors</button>
-          <button class="subj-btn" onclick="setTopic('Differentiation (Pure 1)')">Differentiation</button>
-          <button class="subj-btn" onclick="setTopic('Integration (Pure 1)')">Integration</button>
-          <button class="subj-btn" onclick="setTopic('Exponentials & Logarithms')">Exponentials & Logs</button>
-          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Pure 2</div>
-          <button class="subj-btn" onclick="setTopic('Algebraic Methods (Pure 2)')">Algebraic Methods</button>
-          <button class="subj-btn" onclick="setTopic('Functions & Graphs')">Functions & Graphs</button>
-          <button class="subj-btn" onclick="setTopic('Sequences & Series')">Sequences & Series</button>
-          <button class="subj-btn" onclick="setTopic('Radians')">Radians</button>
-          <button class="subj-btn" onclick="setTopic('Trigonometric Functions')">Trig Functions</button>
-          <button class="subj-btn" onclick="setTopic('Parametric Equations')">Parametric Equations</button>
-          <button class="subj-btn" onclick="setTopic('Differentiation (Pure 2)')">Differentiation</button>
-          <button class="subj-btn" onclick="setTopic('Numerical Methods')">Numerical Methods</button>
-          <button class="subj-btn" onclick="setTopic('Integration (Pure 2)')">Integration</button>
-          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Statistics</div>
-          <button class="subj-btn" onclick="setTopic('Statistical Sampling')">Statistical Sampling</button>
-          <button class="subj-btn" onclick="setTopic('Data Presentation')">Data Presentation</button>
-          <button class="subj-btn" onclick="setTopic('Probability')">Probability</button>
-          <button class="subj-btn" onclick="setTopic('Statistical Distributions')">Distributions</button>
-          <button class="subj-btn" onclick="setTopic('Hypothesis Testing')">Hypothesis Testing</button>
-          <button class="subj-btn" onclick="setTopic('Normal Distribution')">Normal Distribution</button>
-          <div style="font-size:.65rem;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:.75rem .9rem .25rem">Mechanics</div>
-          <button class="subj-btn" onclick="setTopic('Kinematics')">Kinematics</button>
-          <button class="subj-btn" onclick="setTopic('Forces & Newton\'s Laws')">Forces & Newton's Laws</button>
-          <button class="subj-btn" onclick="setTopic('Moments')">Moments</button>
-          <button class="subj-btn" onclick="setTopic('Projectiles')">Projectiles</button>
-          <button class="subj-btn" onclick="setTopic('Friction')">Friction</button>
+        <!-- Jarvis Side Panel -->
+        <div class="jarvis-side-panel" id="jarvis-side-panel">
+          <div class="jarvis-orb-large" id="jarvis-orb-large">
+            <div class="jarvis-orb-ring"></div>
+            <div class="jarvis-orb-ring"></div>
+            ✦
+          </div>
+          <div class="jarvis-side-label">
+            <h3>Jarvis</h3>
+            <p>Your A-Level Maths<br>AI Assistant</p>
+            <div class="jarvis-status-badge">Online &amp; Ready</div>
+          </div>
         </div>
         <div class="tutor-chat">
           <div class="tutor-header">
@@ -7499,7 +7539,7 @@ function _showDashCore(sub) {
   if (sub === 'tutor') {
     // Render today's plan card before greeting (async, handles its own skeleton)
     if (typeof _renderTodaysPlan === 'function') _renderTodaysPlan();
-    if (state.tutorHistory.length === 0) addTutorMsg('bot', typeof _buildTutorGreeting === 'function' ? _buildTutorGreeting() : `Hey! I'm Synaptiq ✦ — your AI study friend for A-Level Maths. Ask me anything!`);
+    if (state.tutorHistory.length === 0) _startJarvisOnboarding();
     setTimeout(() => { const inp = document.getElementById('tutor-input'); if (inp) inp.focus(); }, 100);
   }
 }
@@ -8330,6 +8370,129 @@ function _buildTutorGreeting() {
 }
 
 // ═══════════════════════════════════════
+// JARVIS ONBOARDING FLOW
+// ═══════════════════════════════════════
+
+const _JARVIS_CHAPTERS = {
+  'Pure': {
+    'Year 12': ['Algebraic Expressions','Quadratics','Equations & Inequalities','Graphs & Transformations','Straight Line Graphs','Circles','Algebraic Methods','Binomial Expansion','Trigonometric Ratios','Trigonometric Identities','Vectors','Differentiation','Integration','Exponentials & Logarithms'],
+    'Year 13': ['Algebraic Methods (Pure 2)','Functions & Graphs','Sequences & Series','Radians','Trigonometric Functions','Parametric Equations','Differentiation (Pure 2)','Numerical Methods','Integration (Pure 2)','Proof']
+  },
+  'Statistics': {
+    'Year 12': ['Statistical Sampling','Data Presentation','Probability','Statistical Distributions','Hypothesis Testing'],
+    'Year 13': ['Normal Distribution','Conditional Probability','Further Statistical Distributions','Further Hypothesis Testing','Regression & Correlation']
+  },
+  'Mechanics': {
+    'Year 12': ['Kinematics','Forces & Newton\'s Laws','Moments','Projectiles','Friction'],
+    'Year 13': ['Further Kinematics','Variable Acceleration','Dynamics','Further Moments','Connected Particles']
+  }
+};
+
+function _startJarvisOnboarding() {
+  const starters = document.getElementById('tutor-starters');
+  const msgs = document.getElementById('tutor-messages');
+  if (starters) starters.style.display = 'none';
+  if (msgs) { msgs.style.display = ''; msgs.innerHTML = ''; }
+
+  const m = typeof _getTutorMemory === 'function' ? _getTutorMemory() : {};
+  const sessions = m.sessionCount || 0;
+  const name = (state.user?.name || '').split(' ')[0];
+  const hour = new Date().getHours();
+  const timeGreet = hour < 12 ? 'Good morning' : hour < 17 ? 'Hello' : 'Good evening';
+  const hi = name ? `${timeGreet}, ${name}!` : `${timeGreet}!`;
+  const intro = sessions === 0
+    ? `${hi} I'm Jarvis, your A-Level Maths AI assistant. 🎓\n\nI'll walk you step by step through any topic — explaining concepts, working through examples, and generating exam-style questions.\n\n**What area of maths would you like to work on today?**`
+    : `${hi} Great to have you back. What area of maths are we working on today?`;
+
+  addTutorMsg('bot', intro);
+
+  const container = document.getElementById('tutor-messages');
+  const btnRow = document.createElement('div');
+  btnRow.id = '_jarvis-area-btns';
+  btnRow.style.cssText = 'display:flex;gap:.65rem;flex-wrap:wrap;padding:.25rem 0 1rem 46px;max-width:780px;margin:0 auto';
+  [
+    { label: '📐 Pure', value: 'Pure' },
+    { label: '📊 Statistics', value: 'Statistics' },
+    { label: '⚙️ Mechanics', value: 'Mechanics' }
+  ].forEach(opt => {
+    const btn = document.createElement('button');
+    btn.textContent = opt.label;
+    btn.style.cssText = 'background:rgba(0,212,255,0.08);border:1.5px solid rgba(0,212,255,0.3);border-radius:24px;padding:.55rem 1.4rem;color:#00D4FF;cursor:pointer;font-size:.9rem;font-weight:600;font-family:var(--font-body);transition:all .18s';
+    btn.onmouseover = () => { btn.style.background = 'rgba(0,212,255,0.18)'; btn.style.transform = 'translateY(-1px)'; };
+    btn.onmouseout  = () => { btn.style.background = 'rgba(0,212,255,0.08)';  btn.style.transform = ''; };
+    btn.onclick = () => _jarvisPickArea(opt.value);
+    btnRow.appendChild(btn);
+  });
+  container.appendChild(btnRow);
+  container.scrollTop = 99999;
+}
+
+function _jarvisPickArea(area) {
+  const el = document.getElementById('_jarvis-area-btns');
+  if (el) el.remove();
+  const icon = area === 'Pure' ? '📐' : area === 'Statistics' ? '📊' : '⚙️';
+  addTutorMsg('user', `${icon} ${area}`);
+  addTutorMsg('bot', `Great choice! What year are you in?`);
+
+  const container = document.getElementById('tutor-messages');
+  const btnRow = document.createElement('div');
+  btnRow.id = '_jarvis-year-btns';
+  btnRow.style.cssText = 'display:flex;gap:.65rem;flex-wrap:wrap;padding:.25rem 0 1rem 46px;max-width:780px;margin:0 auto';
+  [
+    { label: '📗 Year 12', value: 'Year 12' },
+    { label: '📘 Year 13', value: 'Year 13' }
+  ].forEach(opt => {
+    const btn = document.createElement('button');
+    btn.textContent = opt.label;
+    btn.style.cssText = 'background:rgba(123,64,255,0.1);border:1.5px solid rgba(123,64,255,0.35);border-radius:24px;padding:.55rem 1.4rem;color:#A78BFA;cursor:pointer;font-size:.9rem;font-weight:600;font-family:var(--font-body);transition:all .18s';
+    btn.onmouseover = () => { btn.style.background = 'rgba(123,64,255,0.22)'; btn.style.transform = 'translateY(-1px)'; };
+    btn.onmouseout  = () => { btn.style.background = 'rgba(123,64,255,0.1)';  btn.style.transform = ''; };
+    btn.onclick = () => _jarvisPickYear(area, opt.value);
+    btnRow.appendChild(btn);
+  });
+  container.appendChild(btnRow);
+  container.scrollTop = 99999;
+}
+
+function _jarvisPickYear(area, year) {
+  const el = document.getElementById('_jarvis-year-btns');
+  if (el) el.remove();
+  const icon = year === 'Year 12' ? '📗' : '📘';
+  addTutorMsg('user', `${icon} ${year}`);
+  addTutorMsg('bot', `Perfect! Which chapter would you like to work on?`);
+
+  const chapters = (_JARVIS_CHAPTERS[area] || {})[year] || [];
+  const container = document.getElementById('tutor-messages');
+  const btnGrid = document.createElement('div');
+  btnGrid.id = '_jarvis-chapter-btns';
+  btnGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:.45rem;padding:.25rem 0 1rem 46px;max-width:780px;margin:0 auto';
+  chapters.forEach(ch => {
+    const btn = document.createElement('button');
+    btn.textContent = ch;
+    btn.style.cssText = 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:.6rem .85rem;color:var(--white);cursor:pointer;font-size:.82rem;font-family:var(--font-body);text-align:left;transition:all .18s;line-height:1.35';
+    btn.onmouseover = () => { btn.style.background = 'rgba(0,212,255,0.08)'; btn.style.borderColor = 'rgba(0,212,255,0.3)'; btn.style.color = '#00D4FF'; };
+    btn.onmouseout  = () => { btn.style.background = 'rgba(255,255,255,0.04)'; btn.style.borderColor = 'rgba(255,255,255,0.1)'; btn.style.color = 'var(--white)'; };
+    btn.onclick = () => _jarvisPickChapter(area, year, ch);
+    btnGrid.appendChild(btn);
+  });
+  container.appendChild(btnGrid);
+  container.scrollTop = 99999;
+}
+
+function _jarvisPickChapter(area, year, chapter) {
+  const el = document.getElementById('_jarvis-chapter-btns');
+  if (el) el.remove();
+  addTutorMsg('user', chapter);
+  const fullTopic = `${area} — ${chapter} (${year})`;
+  state.topic = fullTopic;
+  state.tutorHistory = [];
+  const subEl = document.getElementById('tutor-topic-sub');
+  if (subEl) subEl.textContent = `Topic: ${chapter} · ${area} · ${year}`;
+  addTutorMsg('bot', `Let's dive into **${chapter}** — ${area}, ${year}! ✦\n\nI can explain the theory from scratch, walk through worked examples, or generate exam-style questions with full mark-scheme solutions.\n\nWhat would you like to start with?`);
+  trackEvent('chapter_opened', { topic: fullTopic });
+}
+
+// ═══════════════════════════════════════
 // BACKGROUND MEMORY EXTRACTION
 // ═══════════════════════════════════════
 
@@ -8898,10 +9061,10 @@ function tutorQuick(prompt) {
 function clearTutor() {
   if (state.tutorHistory.length > 0 && !confirm('Clear this chat? Your conversation history will be lost.')) return;
   state.tutorHistory = [];
+  state.topic = null;
   document.getElementById('tutor-messages').innerHTML = '';
   if (typeof _saveTutorMemory === 'function') _saveTutorMemory({ confusionStreak: 0 });
-  const name = (state.user?.name || '').split(' ')[0];
-  addTutorMsg('bot', `Fresh start${name ? ', ' + name : ''}! What are we tackling? ✦`);
+  _startJarvisOnboarding();
 }
 
 // ═══════════════════════════════════════
@@ -11415,6 +11578,8 @@ function _jarvisAvatarSpeaking(on) {
   const avatars = document.querySelectorAll('#tutor-messages .msg-row:not(.user-row) .msg-avatar');
   const last = avatars[avatars.length - 1];
   if (last) last.classList.toggle('jarvis-speaking', on);
+  const orb = document.getElementById('jarvis-orb-large');
+  if (orb) orb.classList.toggle('speaking', on);
 }
 function elSpeak(text, onEnd, voice) {
   if (_elAudio) { _elAudio.pause(); _elAudio = null; }
@@ -11803,7 +11968,7 @@ function updateGreeting() {
 function initTutor() {
   if (!document.getElementById('tutor-messages').children.length) {
     if (typeof _renderTodaysPlan === 'function') _renderTodaysPlan();
-    addTutorMsg('bot', typeof _buildTutorGreeting === 'function' ? _buildTutorGreeting() : `Hey! I'm Synaptiq ✦ — your AI study friend for A-Level Maths. What are we working on today?`);
+    _startJarvisOnboarding();
   }
 }
 
