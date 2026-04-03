@@ -100,7 +100,7 @@ body {
 
 /* ── Footer ─────────────────────────────────────────────────────────── */
 footer {
-  background: var(--bg2); border-top: 1px solid var(--border);
+  border-top: 1px solid var(--border);
   padding: 3rem 2rem 2rem; text-align: center;
 }
 footer p { color: var(--muted); font-size: .8rem; }
