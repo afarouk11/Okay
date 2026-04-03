@@ -125,6 +125,8 @@ body::before{content:'';position:fixed;inset:0;background:
   position:relative;width:220px;height:220px;
   display:flex;align-items:center;justify-content:center;
   perspective:900px;flex-shrink:0}
+.hologram-container.idle{cursor:pointer}
+.hologram-container.idle:focus-visible{outline:2px solid var(--orb-core);outline-offset:6px;border-radius:50%}
 .hologram-container::before{content:'';position:absolute;inset:0;border-radius:50%;
   background:
     repeating-linear-gradient(0deg,rgba(0,212,255,0.03) 0px,rgba(0,212,255,0.03) 1px,transparent 1px,transparent 14px),
@@ -446,7 +448,7 @@ body::before{content:'';position:fixed;inset:0;background:
         </div>
         <p id="status-title" class="status-title">J.A.R.V.I.S.</p>
         <p class="status-sub">A-Level Mathematics Assistant</p>
-        <p id="status-hint" class="status-hint">Say <em>"Jarvis"</em> to begin</p>
+        <p id="status-hint" class="status-hint">Click to begin voice session</p>
       </div>
 
       <!-- Transcript subtitle -->
