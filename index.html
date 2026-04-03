@@ -11650,39 +11650,121 @@ function _prepTTS(text) {
 }
 
 let _voiceMode = false;
-let _voiceRecog = null;
+let _voiceRecog = null;  // holds { stop(), cancel() } while recording
+
+/**
+ * Record from the microphone, auto-stop on silence, then POST to /api/transcribe.
+ * Returns { stop(), cancel() } so callers can end recording with or without processing the result.
+ *
+ * @param {function(string)} onTranscript  - called with the final transcript text
+ * @param {function(string)} onError       - called with an error message
+ * @returns {Promise<{stop:function,cancel:function}|null>}
+ */
+async function startDeepgramRecording(onTranscript, onError) {
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  } catch (_) {
+    onError('Microphone access denied'); return null;
+  }
+
+  const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', '']
+    .find(t => !t || MediaRecorder.isTypeSupported(t));
+  const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+  const chunks = [];
+  let settled = false;
+  let cancelled = false;
+
+  // ── Voice-activity detection: auto-stop after 1.5s of silence ──
+  let audioCtx, vadInterval, silenceTimer, hasSpoken = false;
+  let noSpeechTimer;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = audioCtx.createMediaStreamSource(stream);
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    src.connect(analyser);
+    const buf = new Uint8Array(analyser.frequencyBinCount);
+    vadInterval = setInterval(() => {
+      if (settled) return;
+      analyser.getByteFrequencyData(buf);
+      const avg = buf.reduce((a, b) => a + b, 0) / buf.length;
+      if (avg > 8) {
+        hasSpoken = true;
+        clearTimeout(silenceTimer); silenceTimer = null;
+        clearTimeout(noSpeechTimer); noSpeechTimer = null;
+      } else if (hasSpoken && !silenceTimer) {
+        silenceTimer = setTimeout(() => {
+          if (!settled && recorder.state !== 'inactive') { settled = true; recorder.stop(); }
+        }, 1500);
+      }
+    }, 100);
+    // No speech detected within 10s → give up
+    noSpeechTimer = setTimeout(() => {
+      if (!hasSpoken && !settled && recorder.state !== 'inactive') {
+        cancelled = true; settled = true; recorder.stop();
+        onError('no-speech');
+      }
+    }, 10_000);
+  } catch (_) { /* VAD optional */ }
+
+  // Safety max: 60 s
+  const maxTimer = setTimeout(() => {
+    if (!settled && recorder.state !== 'inactive') { settled = true; recorder.stop(); }
+  }, 60_000);
+
+  recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+  recorder.onstop = async () => {
+    clearInterval(vadInterval);
+    clearTimeout(silenceTimer); clearTimeout(noSpeechTimer); clearTimeout(maxTimer);
+    audioCtx?.close().catch(() => {});
+    stream.getTracks().forEach(t => t.stop());
+    if (cancelled) return;
+    if (!chunks.length) { onError('No audio recorded'); return; }
+    const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+    try {
+      const res = await fetch('/api/transcribe', {
+        method: 'POST',
+        headers: { 'Content-Type': blob.type },
+        body: blob,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        onError(err.error || 'Transcription failed'); return;
+      }
+      const data = await res.json();
+      onTranscript(data.transcript || '');
+    } catch (_) {
+      onError('Transcription service unavailable');
+    }
+  };
+
+  recorder.start();
+  return {
+    stop()   { if (!settled && recorder.state !== 'inactive') { settled = true; recorder.stop(); } },
+    cancel() { cancelled = true; settled = true; if (recorder.state !== 'inactive') recorder.stop(); },
+  };
+}
 
 function speakInput() {
-  if (!window.webkitSpeechRecognition && !window.SpeechRecognition) {
-    showToast('Speech recognition not supported in this browser. Try Chrome.');
-    return;
-  }
   if (_voiceRecog) { _voiceRecog.stop(); _voiceRecog = null; return; }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  _voiceRecog = new SR();
-  _voiceRecog.lang = 'en-GB';
-  _voiceRecog.interimResults = false;
   const btn = document.getElementById('voice-input-btn') || document.getElementById('speak-btn');
   if (btn) { btn.style.background = 'rgba(201,168,76,0.3)'; btn.textContent = '🔴'; }
-  showToast('🎤 Listening — speak your question...');
-  _voiceRecog.onresult = (e) => {
-    const transcript = e.results[0][0].transcript;
-    const input = document.getElementById('tutor-input');
-    if (input) input.value = transcript;
-    if (_voiceMode) tutorSend();
-  };
-  _voiceRecog.onend = () => {
-    _voiceRecog = null;
-    const endBtn = document.getElementById('voice-input-btn') || document.getElementById('speak-btn');
-    if (endBtn) { endBtn.style.background = ''; endBtn.textContent = '🎤'; endBtn.title = 'Speak your question'; }
-  };
-  _voiceRecog.onerror = (e) => {
-    _voiceRecog = null;
-    const errBtn = document.getElementById('voice-input-btn') || document.getElementById('speak-btn');
-    if (errBtn) { errBtn.style.background = ''; errBtn.textContent = '🎤'; }
-    if (e.error !== 'no-speech') showToast('🎤 Mic error: ' + e.error);
-  };
-  _voiceRecog.start();
+  showToast('🎤 Listening — tap 🔴 to stop...');
+  startDeepgramRecording(
+    (transcript) => {
+      _voiceRecog = null;
+      if (btn) { btn.style.background = ''; btn.textContent = '🎤'; }
+      const input = document.getElementById('tutor-input');
+      if (input) input.value = transcript;
+      if (_voiceMode) tutorSend();
+    },
+    (err) => {
+      _voiceRecog = null;
+      if (btn) { btn.style.background = ''; btn.textContent = '🎤'; }
+      if (err !== 'no-speech') showToast('🎤 Mic error: ' + err);
+    }
+  ).then(handle => { _voiceRecog = handle || null; });
 }
 
 function toggleVoiceMode() {
@@ -14689,30 +14771,26 @@ function tvStopSpeaking() {
   setTimeout(tvStartListening, 300);
 }
 
-function tvStartListening() {
+async function tvStartListening() {
   if (TV.state === 'listening') return;
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { showToast('Voice needs Chrome or Edge'); return; }
   window.speechSynthesis?.cancel();
   tvSetState('listening');
   const tbox = document.getElementById('teacher-transcript-box');
   if (tbox) { tbox.style.display = 'block'; tbox.textContent = ''; }
 
-  const r = new SR();
-  r.lang = 'en-GB'; r.interimResults = true; r.maxAlternatives = 1;
-  TV.recog = r;
-
-  r.onresult = e => {
-    const interim = Array.from(e.results).map(x => x[0].transcript).join('');
-    if (tbox) tbox.textContent = interim;
-    if (e.results[e.results.length - 1].isFinal) {
+  const handle = await startDeepgramRecording(
+    (transcript) => {
       TV.recog = null;
-      tvHandleInput(interim.trim());
+      if (tbox) tbox.textContent = transcript;
+      tvHandleInput(transcript.trim());
+    },
+    (err) => {
+      TV.recog = null;
+      if (err === 'no-speech') { tvSetState('idle'); setTimeout(tvStartListening, 800); }
+      else tvSetState('idle');
     }
-  };
-  r.onerror = e => { TV.recog = null; if (e.error !== 'no-speech') tvSetState('idle'); else { tvSetState('idle'); setTimeout(tvStartListening, 800); } };
-  r.onend   = () => { if (TV.state === 'listening') tvSetState('idle'); };
-  r.start();
+  );
+  TV.recog = handle || null;
 }
 
 function tvTapOrb() {
@@ -14725,7 +14803,7 @@ function tvSendText(text) {
   // If called with a text argument, send it directly to the teacher AI
   if (typeof text === 'string' && text.trim()) {
     window.speechSynthesis?.cancel();
-    TV.recog?.stop();
+    TV.recog?.cancel();
     tvHandleInput(text.trim());
     return;
   }
@@ -14747,7 +14825,7 @@ function tvSubmitTyped() {
   document.getElementById('tv-type-input').value = '';
   document.getElementById('tv-type-row').style.display = 'none';
   window.speechSynthesis?.cancel();
-  TV.recog?.stop();
+  TV.recog?.cancel();
   tvHandleInput(val);
 }
 
@@ -14759,7 +14837,7 @@ function openTeacherVoice() {
 }
 
 function closeTeacherVoice() {
-  TV.recog?.stop();
+  TV.recog?.cancel();
   if (TV.cancelTTS) { TV.cancelTTS(); TV.cancelTTS = null; }
   TV.state = 'idle'; TV.recog = null;
   const overlay = document.getElementById('teacher-overlay');
@@ -17105,48 +17183,32 @@ function showFormulas(btn, subject) {
 }
 
 // ─── VOICE INPUT ──────────────────────────────────────
-let recognition = null;
+let recognition = null;  // holds { stop(), cancel() } while recording
 let voiceActive = false;
 
 function toggleVoiceInput() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    showToast('⚠️ Voice input not supported in this browser — try Chrome'); return;
-  }
-  if (voiceActive) { recognition?.stop(); return; }
+  if (voiceActive) { recognition?.stop(); recognition = null; return; }
 
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SpeechRecognition();
-  recognition.lang = 'en-GB';
-  recognition.interimResults = true;
-  recognition.maxAlternatives = 1;
+  voiceActive = true;
+  document.getElementById('voice-input-btn')?.classList.add('voice-btn-active');
+  showToast('🎙️ Listening... tap again to stop');
 
-  recognition.onstart = () => {
-    voiceActive = true;
-    document.getElementById('voice-input-btn')?.classList.add('voice-btn-active');
-    showToast('🎙️ Listening... speak your question');
-  };
-
-  recognition.onresult = (event) => {
-    const transcript = Array.from(event.results).map(r => r[0].transcript).join('');
-    const input = document.getElementById('tutor-input');
-    if (input) input.value = transcript;
-  };
-
-  recognition.onend = () => {
-    voiceActive = false;
-    document.getElementById('voice-input-btn')?.classList.remove('voice-btn-active');
-    // Auto send if we have content
-    const input = document.getElementById('tutor-input');
-    if (input?.value.trim()) sendTutor();
-  };
-
-  recognition.onerror = (e) => {
-    voiceActive = false;
-    document.getElementById('voice-input-btn')?.classList.remove('voice-btn-active');
-    showToast('⚠️ Voice error: ' + e.error);
-  };
-
-  recognition.start();
+  startDeepgramRecording(
+    (transcript) => {
+      voiceActive = false;
+      recognition = null;
+      document.getElementById('voice-input-btn')?.classList.remove('voice-btn-active');
+      const input = document.getElementById('tutor-input');
+      if (input) input.value = transcript;
+      if (input?.value.trim()) sendTutor();
+    },
+    (err) => {
+      voiceActive = false;
+      recognition = null;
+      document.getElementById('voice-input-btn')?.classList.remove('voice-btn-active');
+      if (err !== 'no-speech') showToast('⚠️ Voice error: ' + err);
+    }
+  ).then(handle => { recognition = handle || null; });
 }
 
 // ─── BOOKMARKS ───────────────────────────────────────
@@ -20414,7 +20476,7 @@ function voClose() {
     VO.conversation = null;  // null first to prevent re-entry from onDisconnect
     conv.endSession().catch(() => {});
   }
-  VO.recog?.stop();
+  VO.recog?.cancel();
   if (VO.cancelTTS) { VO.cancelTTS(); VO.cancelTTS = null; }
   vizStop();
   vizDisconnectMic();
@@ -20425,45 +20487,32 @@ function voClose() {
   window.speechSynthesis?.cancel();
 }
 
-function voStartListening() {
+async function voStartListening() {
   if (VO.state === 'listening') return;
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { showToast('Voice needs Chrome or Edge — text input works fine too'); return; }
 
   window.speechSynthesis?.cancel();
   voSetState('listening');
   document.getElementById('vo-transcript').textContent = '';
   document.getElementById('vo-reply').textContent = '';
 
-  // Request mic for visualiser
+  // Mic visualiser — nice-to-have, separate stream
   navigator.mediaDevices?.getUserMedia({ audio: true, video: false })
     .then(stream => vizConnectMic(stream))
-    .catch(() => {});  // mic visualiser is nice-to-have, not required
+    .catch(() => {});
 
-  const r = new SR();
-  r.lang = 'en-GB';
-  r.interimResults = true;
-  r.maxAlternatives = 1;
-  VO.recog = r;
-
-  r.onresult = e => {
-    const partial = Array.from(e.results).map(res => res[0].transcript).join('');
-    document.getElementById('vo-transcript').textContent = partial;
-    if (e.results[e.results.length - 1].isFinal) {
+  const handle = await startDeepgramRecording(
+    (transcript) => {
       VO.recog = null;
       vizDisconnectMic();
-      voHandleInput(partial.trim());
+      voHandleInput(transcript.trim());
+    },
+    (err) => {
+      VO.recog = null;
+      vizDisconnectMic();
+      if (err !== 'aborted') voSetState('idle');
     }
-  };
-  r.onerror = e => {
-    VO.recog = null;
-    vizDisconnectMic();
-    if (e.error === 'no-speech') { voSetState('idle'); return; }
-    voSetState('idle');
-    if (e.error !== 'aborted') showToast('Voice error: ' + e.error);
-  };
-  r.onend = () => { if (VO.state === 'listening') { vizDisconnectMic(); voSetState('idle'); } };
-  r.start();
+  );
+  VO.recog = handle || null;
 }
 
 function voTapMic() {
