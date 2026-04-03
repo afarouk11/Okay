@@ -3602,8 +3602,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
   </div>
   <div class="nav-links" id="app-nav" style="display:none">
     <a onclick="showDash('home')" id="nl-home">Dashboard</a>
-    <a onclick="showDash('tutor')" id="nl-tutor">AI Tutor</a>
-    <a onclick="showDash('content')" id="nl-content">AI Teacher</a>
+    <a onclick="showDash('tutor')" id="nl-tutor">AI Maths Assistant</a>
     <a onclick="showDash('questions')" id="nl-questions">Questions</a>
     <a onclick="showDash('resources')" id="nl-resources">Resources</a>
     <a onclick="showDash('progress')" id="nl-progress">Progress</a>
@@ -4495,8 +4494,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
     <div class="sidebar-nav">
       <div class="sidebar-item active" id="si-home" onclick="showDash('home')"><i class="fas fa-house"></i>Dashboard</div>
       <div class="sidebar-section-label">LEARN</div>
-      <div class="sidebar-item" id="si-tutor" onclick="showDash('tutor')"><i class="fas fa-robot"></i>AI Tutor</div>
-      <div class="sidebar-item" id="si-content" onclick="showDash('content')"><i class="fas fa-chalkboard-teacher"></i>AI Teacher</div>
+      <div class="sidebar-item" id="si-tutor" onclick="showDash('tutor')"><i class="fas fa-robot"></i>AI Maths Assistant</div>
       <div class="sidebar-item" id="si-questions" onclick="showDash('questions')"><i class="fas fa-file-lines"></i>Practice Questions</div>
       <div class="sidebar-item" id="si-photo" onclick="showDash('photo')"><i class="fas fa-camera"></i>Photo Question</div>
       <!-- ── Smart Study Panel (Adaptive Learning) ─────────────────────── -->
@@ -9816,8 +9814,8 @@ function showDash(sub) {
   // Track last visited section for "continue where you left off"
   if (sub !== 'home') {
     const sectionLabels = {
-      tutor:'AI Tutor', questions:'Practice Questions', flashcards:'Flashcards', blitz:'Quick Blitz',
-      content:'AI Teacher', progress:'Progress Dashboard', notes:'My Notes', goals:'Daily Goals',
+      tutor:'AI Maths Assistant', questions:'Practice Questions', flashcards:'Flashcards', blitz:'Quick Blitz',
+      content:'AI Maths Assistant', progress:'Progress Dashboard', notes:'My Notes', goals:'Daily Goals',
       papers:'Past Papers', exam_sim:'Exam Simulator', predict:'Exam Prediction',
       timetable:'Revision Timetable', formulas:'Formula Sheets', curriculum:'A-Level Curriculum',
       flashcards:'Flashcards', bookmarks:'Bookmarks', checklist:'Topic Checklist',
@@ -11825,7 +11823,7 @@ function resetStatsForNewUser() {
 <div id="mobile-nav">
   <div class="mob-nav-grid">
     <button class="mob-nav-btn active" id="mn-home" onclick="showDash('home');setMobNav('home')"><i class="fas fa-house"></i>Home</button>
-    <button class="mob-nav-btn" id="mn-tutor" onclick="showDash('tutor');setMobNav('tutor')"><i class="fas fa-robot"></i>Tutor</button>
+    <button class="mob-nav-btn" id="mn-tutor" onclick="showDash('tutor');setMobNav('tutor')"><i class="fas fa-robot"></i>AI Maths</button>
     <button class="mob-nav-btn" id="mn-questions" onclick="showDash('questions');setMobNav('questions')"><i class="fas fa-file-lines"></i>Questions</button>
     <button class="mob-nav-btn" id="mn-notes" onclick="showDash('notes');setMobNav('notes')"><i class="fas fa-book"></i>Notes</button>
     <button class="mob-nav-btn" id="mn-progress" onclick="showDash('progress');setMobNav('progress')"><i class="fas fa-chart-line"></i>Progress</button>
@@ -11842,7 +11840,6 @@ function resetStatsForNewUser() {
       <div class="mob-more-item" onclick="closeMobMore();showDash('flashcards');setMobNav('flashcards')"><i class="fas fa-layer-group"></i>Flashcards</div>
       <div class="mob-more-item" onclick="closeMobMore();showDash('blitz');setMobNav('blitz')"><i class="fas fa-bolt"></i>Blitz</div>
       <div class="mob-more-item" onclick="closeMobMore();showDash('strengths');setMobNav('strengths')"><i class="fas fa-bullseye"></i>Study Plan</div>
-      <div class="mob-more-item" onclick="closeMobMore();showDash('content');setMobNav('content')"><i class="fas fa-graduation-cap"></i>Teacher</div>
       <div class="mob-more-item" onclick="closeMobMore();showDash('formulas');setMobNav('formulas')"><i class="fas fa-function"></i>Formulas</div>
       <div class="mob-more-item" onclick="closeMobMore();showDash('resources');setMobNav('resources')"><i class="fas fa-folder-open"></i>Resources</div>
       <div class="mob-more-item" onclick="closeMobMore();showDash('timetable');setMobNav('timetable')"><i class="fas fa-calendar-days"></i>Planner</div>
@@ -11904,7 +11901,7 @@ function resetStatsForNewUser() {
       <div style="font-weight:700;font-size:1.1rem">⌨️ Keyboard Shortcuts</div>
       <button onclick="document.getElementById('kb-modal').classList.remove('show')" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.3rem">✕</button>
     </div>
-    <div class="kb-row"><span>Open AI Tutor</span><div><kbd>Ctrl</kbd> + <kbd>T</kbd></div></div>
+    <div class="kb-row"><span>Open AI Maths Assistant</span><div><kbd>Ctrl</kbd> + <kbd>T</kbd></div></div>
     <div class="kb-row"><span>Search</span><div><kbd>Ctrl</kbd> + <kbd>K</kbd></div></div>
     <div class="kb-row"><span>New Question</span><div><kbd>Ctrl</kbd> + <kbd>Q</kbd></div></div>
     <div class="kb-row"><span>Open Notebook</span><div><kbd>Ctrl</kbd> + <kbd>N</kbd></div></div>
@@ -13073,7 +13070,7 @@ async function loadNotesFromStorage() {
 // ═══════════════════════════════════════
 const tourSteps = [
   { title: 'Welcome to Synaptiq! 🎓', desc: "You're about to experience AI-powered learning built for every type of learner. Let me show you the 6 key features in 60 seconds.", target: null },
-  { title: 'AI Tutor 🤖', desc: 'This is your personal Synaptiq tutor. Ask anything — it explains step by step, adapts to your level, and remembers the subject you\'re studying.', target: 'si-tutor' },
+  { title: 'AI Maths Assistant 🤖', desc: 'This is your personal Synaptiq tutor. Ask anything — it explains step by step, adapts to your level, and remembers the subject you\'re studying.', target: 'si-tutor' },
   { title: 'Question Generator 📝', desc: 'Generate real exam-style questions for any subject, board, or topic. Get instant AI feedback on your answers.', target: 'si-questions' },
   { title: 'Your Notebook 📓', desc: 'Save important AI explanations and formulas here. Use the Save to Notes button after any tutor response.', target: 'si-notes' },
   { title: 'Accessibility Modes ♿', desc: 'Three independent modes — ADHD, Dyslexia, and Dyscalculia. Each adapts the whole platform to how you learn best. Toggle them anytime.', target: 'a11y-bar' },
@@ -13169,8 +13166,7 @@ function searchDash(query) {
     .filter(t => t.toLowerCase().includes(q)).slice(0, 4);
   // Search features
   const features = [
-    { name:'AI Tutor', action:"showDash('tutor')" },
-    { name:'AI Teacher', action:"showDash('content')" },
+    { name:'AI Maths Assistant', action:"showDash('tutor')" },
     { name:'Practice Questions', action:"showDash('questions')" },
     { name:'Progress', action:"showDash('progress')" },
     { name:'Notebook / Notes', action:"showDash('notes')" },
