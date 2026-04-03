@@ -116,7 +116,7 @@ async function handleWebhook(req, res) {
 
 export default async function handler(req, res) {
   // Route Stripe webhook events by their signature header
-  if (req.headers?.['stripe-signature']) {
+  if (req.headers['stripe-signature']) {
     return handleWebhook(req, res);
   }
 
@@ -125,9 +125,9 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   // Non-webhook: parse JSON body if not already an object (bodyParser is disabled)
-  if (!req.body || typeof req.body !== 'object') {
+  if (req.body === undefined || typeof req.body !== 'object' || req.body === null) {
     const raw = await getRawBody(req);
-    try { req.body = JSON.parse(raw.toString() || '{}'); } catch { req.body = {}; }
+    try { req.body = JSON.parse(raw.toString() || '{}'); } catch (e) { console.error('JSON parse error:', e.message); req.body = {}; }
   }
 
   const ip = getIp(req);
