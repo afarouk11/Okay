@@ -52,9 +52,5 @@
     { "source": "/api/:path*", "destination": "/api/:path*" },
     { "source": "/dashboard", "destination": "/" },
     { "source": "/auth", "destination": "/" }
-  ],
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/404.html", "status": 404 }
   ]
 }
