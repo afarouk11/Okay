@@ -28,7 +28,7 @@ vi.mock('@supabase/supabase-js', () => ({
   createClient: () => mocks.supabase,
 }));
 
-import handler from '../../api/webhook.js';
+import handler from '../../api/stripe.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
