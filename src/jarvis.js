@@ -204,6 +204,17 @@ function setOrbState(state) {
   statusHint.style.opacity = state === 'idle' ? '0.6' : '0';
   endBtn.classList.toggle('hidden', state !== 'active');
   micBtn.classList.toggle('hidden', state !== 'idle');
+
+  // Keep orb aria-label in sync so screen-reader users know what a tap will do
+  if (hologram.hasAttribute('role')) {
+    if (state === 'idle') {
+      hologram.setAttribute('aria-label', 'Start voice session');
+    } else if (state === 'active') {
+      hologram.setAttribute('aria-label', 'End voice session');
+    } else {
+      hologram.setAttribute('aria-label', 'Connecting…');
+    }
+  }
 }
 
 function showToast(msg, durationMs = 5000) {
@@ -463,6 +474,30 @@ async function handleWakeWord() {
   }
 }
 
+// ── Orb click / tap ───────────────────────────────────────────────────────────
+
+async function handleOrbClick() {
+  if (!jarvisConfig) return;  // not yet initialised
+  if (orbState === 'idle') {
+    await handleWakeWord();
+  } else if (orbState === 'active') {
+    if (conversation) {
+      stopVolumeTracking();
+      await conversation.endSession();
+      // onDisconnect fires automatically → re-arms wake word
+    }
+  }
+  // 'greeting' state: connecting in progress — ignore
+}
+
+hologram.addEventListener('click', handleOrbClick);
+hologram.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    handleOrbClick();
+  }
+});
+
 // ── Mic toggle button ─────────────────────────────────────────────────────────
 
 function updateMicButton() {
@@ -527,19 +562,25 @@ async function init() {
     return;
   }
 
-  // Guard: Web Speech API not available (Firefox, Safari, some mobile browsers)
+  // Make the orb interactive now that config is ready
+  hologram.setAttribute('tabindex', '0');
+  hologram.setAttribute('role', 'button');
+  hologram.setAttribute('aria-label', 'Start voice session');
+
+  // Web Speech API for wake-word detection (Chrome / Edge only)
   const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-  if (!SR) {
-    setStatus('BROWSER UNSUPPORTED', 'error');
-    showToast('Wake-word detection requires Chrome or Edge.', 0);
-    return;
+  if (SR) {
+    recognition = createRecognition();
+    await armWakeWord();
+    statusHint.innerHTML = 'Say <em>"Jarvis"</em> or tap the orb';
+    micBtn.classList.remove('hidden');
+    updateMicButton();
+  } else {
+    // Wake-word unavailable — orb tap / click is the only trigger
+    statusHint.textContent = 'Click to begin voice session';
   }
 
-  recognition = createRecognition();
-  await armWakeWord();
   setStatus('SYSTEMS ONLINE', 'online');
-  micBtn.classList.remove('hidden');
-  updateMicButton();
 }
 
 init();
