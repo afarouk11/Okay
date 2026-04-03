@@ -204,6 +204,16 @@ function setOrbState(state) {
   statusHint.style.opacity = state === 'idle' ? '0.6' : '0';
   endBtn.classList.toggle('hidden', state !== 'active');
   micBtn.classList.toggle('hidden', state !== 'idle');
+
+  // Keep the orb's accessible label in sync with its interactive state
+  const labels = {
+    idle:     'Start voice session',
+    greeting: 'Connecting…',
+    active:   'End voice session',
+  };
+  if (hologram.hasAttribute('role')) {
+    hologram.setAttribute('aria-label', labels[state] ?? 'J.A.R.V.I.S.');
+  }
 }
 
 function showToast(msg, durationMs = 5000) {
@@ -498,6 +508,35 @@ endBtn.addEventListener('click', async () => {
   }
 });
 
+// ── Orb click / tap ───────────────────────────────────────────────────────────
+
+/**
+ * Toggle the session by clicking or tapping the orb.
+ * - idle     → start a new session (same path as the wake word)
+ * - active   → end the current session
+ * - greeting → no-op (already connecting)
+ */
+async function handleOrbClick() {
+  if (orbState === 'idle') {
+    await handleWakeWord();
+  } else if (orbState === 'active') {
+    if (conversation) {
+      stopVolumeTracking();
+      await conversation.endSession();
+      // onDisconnect fires automatically → resets state and re-arms wake word
+    }
+  }
+  // no-op while 'greeting'
+}
+
+hologram.addEventListener('click', handleOrbClick);
+hologram.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.code === 'Space') {
+    e.preventDefault();
+    handleOrbClick();
+  }
+});
+
 // ── Initialisation ────────────────────────────────────────────────────────────
 
 async function init() {
@@ -527,11 +566,18 @@ async function init() {
     return;
   }
 
+  // Make the orb interactive via click/tap for all browsers
+  hologram.setAttribute('tabindex', '0');
+  hologram.setAttribute('role', 'button');
+  hologram.setAttribute('aria-label', 'Start voice session');
+
   // Guard: Web Speech API not available (Firefox, Safari, some mobile browsers)
   const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
   if (!SR) {
-    setStatus('BROWSER UNSUPPORTED', 'error');
-    showToast('Wake-word detection requires Chrome or Edge.', 0);
+    setStatus('SYSTEMS ONLINE', 'online');
+    statusHint.innerHTML = 'Click to begin voice session';
+    // Orb tap still works via handleOrbClick(); wake-word and mic button are
+    // skipped because they depend on SpeechRecognition.
     return;
   }
 
@@ -540,6 +586,7 @@ async function init() {
   setStatus('SYSTEMS ONLINE', 'online');
   micBtn.classList.remove('hidden');
   updateMicButton();
+  statusHint.innerHTML = 'Say <em>"Jarvis"</em> or tap the orb';
 }
 
 init();
