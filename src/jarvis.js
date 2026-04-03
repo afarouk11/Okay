@@ -1,36 +1,189 @@
 /**
  * J.A.R.V.I.S. — Vanilla-JS "Ear → Brain → Mouth" pipeline
  *
- * Wake word:  Picovoice Porcupine Web  (@picovoice/porcupine-web + @picovoice/web-voice-processor)
- * Voice AI:   ElevenLabs Conversational AI  (@11labs/client)
+ * Wake word:  Web Speech API (SpeechRecognition — built into Chrome / Edge)
+ * Voice AI:   ElevenLabs Conversational AI  (@elevenlabs/client)
  *
- * API keys are injected into jarvis.html at build time by scripts/build.mjs:
- *   PICOVOICE_KEY_PLACEHOLDER   →  meta[name="picovoice-key"]
- *   ELEVEN_AGENT_ID_PLACEHOLDER →  meta[name="eleven-agent-id"]
+ * Agent config is fetched at runtime from /api/tts (GET), which returns
+ * either a short-lived WebRTC conversation token (preferred) or the plain agent ID.
  *
- * ElevenLabs CDN: https://esm.sh/@11labs/client
- * Porcupine CDN:  https://esm.sh/@picovoice/porcupine-web  +  https://esm.sh/@picovoice/web-voice-processor
- * Model files:    https://unpkg.com/@picovoice/porcupine-web@3/dist/  (WASM + .pv model)
+ * ElevenLabs CDN: https://esm.sh/@elevenlabs/client
+ *
+ * Episodic memory: each session is persisted via /api/memory so Jarvis can
+ * surface where the student left off at the start of the next session.
  */
 
-// ── Keys (injected by build pipeline) ────────────────────────────────────────
-const PICOVOICE_KEY   = document.querySelector('meta[name="picovoice-key"]')?.content  ?? '';
-const ELEVEN_AGENT_ID = document.querySelector('meta[name="eleven-agent-id"]')?.content ?? '';
+import { latexToSpeech } from '/src/latex-speech.js';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
-const hologram   = document.getElementById('hologram');
-const statusDot  = document.getElementById('status-dot');
-const statusText = document.getElementById('status-text');
-const statusTitle= document.getElementById('status-title');
-const statusHint = document.getElementById('status-hint');
-const endBtn     = document.getElementById('end-btn');
-const toast      = document.getElementById('toast');
+const hologram        = document.getElementById('hologram');
+const statusDot       = document.getElementById('status-dot');
+const statusText      = document.getElementById('status-text');
+const statusTitle     = document.getElementById('status-title');
+const statusHint      = document.getElementById('status-hint');
+const endBtn          = document.getElementById('end-btn');
+const micBtn          = document.getElementById('mic-btn');
+const micBtnLabel     = document.getElementById('mic-btn-label');
+const toast           = document.getElementById('toast');
+const transcriptPanel = document.getElementById('transcript');
+const vizCanvas       = document.getElementById('viz-canvas');
+const vizCtx          = vizCanvas.getContext('2d');
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let orbState    = 'idle';  // 'idle' | 'greeting' | 'active'
-let porcupine   = null;
-let conversation= null;
-let toastTimer  = null;
+let orbState       = 'idle';  // 'idle' | 'greeting' | 'active'
+let recognition    = null;
+let conversation   = null;
+let toastTimer     = null;
+let volumeRafId    = null;  // requestAnimationFrame handle for volume tracking
+let jarvisConfig   = null;  // { signedUrl? } or { agentId? } — fetched from /api/jarvis-config
+let micEnabled     = true;  // whether the wake-word mic is active
+
+/**
+ * Session timer — module-level ref that survives any UI refresh.
+ * Tracks when the current ElevenLabs session started (ms since epoch).
+ * Equivalent to a React useRef — value persists without triggering re-renders.
+ */
+let _sessionStartMs = null;
+
+// Maximum additional scale applied at peak volume (orb grows by up to 35 %)
+const VOLUME_SCALE_FACTOR = 0.35;
+
+// ── Canvas visualizer ─────────────────────────────────────────────────────────
+const BAR_COUNT              = 80;
+const INNER_R                = 42;    // px — sits just outside the 68px-diameter orb
+const MAX_BAR_LEN            = 50;    // px — tallest possible bar
+const VIZ_CX                 = 110;
+const VIZ_CY                 = 110;
+const AMPLITUDE_SMOOTHING    = 0.18;  // lerp factor: higher = faster response
+const IDLE_WAVE_FREQ         = 6;     // sine-wave cycles across all bars (idle)
+const IDLE_ANIM_SPEED        = 0.001; // radians per millisecond (idle rotation)
+const GREETING_WAVE_FREQ     = 8;     // denser ripple during greeting/connecting
+const GREETING_ANIM_SPEED    = 0.004; // faster spin during greeting state
+let   canvasRafId            = null;
+const smoothAmps             = new Float32Array(BAR_COUNT);
+
+function _idleAmps(t) {
+  const a = new Float32Array(BAR_COUNT);
+  for (let i = 0; i < BAR_COUNT; i++) {
+    const p = (i / BAR_COUNT) * Math.PI * IDLE_WAVE_FREQ + t * IDLE_ANIM_SPEED;
+    a[i] = 0.04 + 0.06 * (0.5 + 0.5 * Math.sin(p));
+  }
+  return a;
+}
+
+function _greetingAmps(t) {
+  const a = new Float32Array(BAR_COUNT);
+  for (let i = 0; i < BAR_COUNT; i++) {
+    const p = (i / BAR_COUNT) * Math.PI * GREETING_WAVE_FREQ + t * GREETING_ANIM_SPEED;
+    a[i] = 0.1 + 0.22 * Math.abs(Math.sin(p));
+  }
+  return a;
+}
+
+function _freqAmps(fd) {
+  const a    = new Float32Array(BAR_COUNT);
+  const step = Math.max(1, Math.floor((fd.length >> 1) / BAR_COUNT));
+  for (let i = 0; i < BAR_COUNT; i++) {
+    a[i] = fd[Math.min(i * step, fd.length - 1)] / 255;
+  }
+  return a;
+}
+
+function _vizTick(t) {
+  let target, alpha;
+  if (orbState === 'idle') {
+    target = _idleAmps(t);    alpha = 0.65;
+  } else if (orbState === 'greeting') {
+    target = _greetingAmps(t); alpha = 0.85;
+  } else {
+    const fd = conversation?.getOutputByteFrequencyData?.();
+    target   = fd?.length ? _freqAmps(fd) : _greetingAmps(t);
+    alpha    = 1;
+  }
+
+  for (let i = 0; i < BAR_COUNT; i++) {
+    smoothAmps[i] += (target[i] - smoothAmps[i]) * AMPLITUDE_SMOOTHING;
+  }
+
+  vizCtx.clearRect(0, 0, 220, 220);
+  for (let i = 0; i < BAR_COUNT; i++) {
+    const ang = (i / BAR_COUNT) * Math.PI * 2 - Math.PI / 2;
+    const v   = smoothAmps[i];
+    const len = v * MAX_BAR_LEN;
+    if (len < 0.3) continue;
+    const x1 = VIZ_CX + Math.cos(ang) * INNER_R;
+    const y1 = VIZ_CY + Math.sin(ang) * INNER_R;
+    const x2 = VIZ_CX + Math.cos(ang) * (INNER_R + len);
+    const y2 = VIZ_CY + Math.sin(ang) * (INNER_R + len);
+    vizCtx.strokeStyle = `rgba(0,212,255,${((0.3 + v * 0.7) * alpha).toFixed(2)})`;
+    vizCtx.lineWidth   = 2;
+    vizCtx.lineCap     = 'round';
+    vizCtx.beginPath();
+    vizCtx.moveTo(x1, y1);
+    vizCtx.lineTo(x2, y2);
+    vizCtx.stroke();
+  }
+
+  canvasRafId = requestAnimationFrame(_vizTick);
+}
+
+function startCanvasLoop() {
+  if (canvasRafId) return;
+  canvasRafId = requestAnimationFrame(_vizTick);
+}
+
+// ── Transcript ────────────────────────────────────────────────────────────────
+let transcriptTimer = null;
+
+function showTranscript(text) {
+  clearTimeout(transcriptTimer);
+  transcriptPanel.textContent = text;
+  transcriptPanel.classList.add('visible');
+  transcriptTimer = setTimeout(() => transcriptPanel.classList.remove('visible'), 8000);
+}
+
+function clearTranscript() {
+  clearTimeout(transcriptTimer);
+  transcriptPanel.classList.remove('visible');
+}
+
+// ── Volume tracking ───────────────────────────────────────────────────────────
+
+/**
+ * Poll the ElevenLabs output analyser every animation frame and map
+ * the computed mean amplitude to the --orb-scale CSS variable so the orb
+ * pulses in sync with the AI's speech.
+ */
+function startVolumeTracking() {
+  stopVolumeTracking();
+
+  function tick() {
+    if (!conversation) { stopVolumeTracking(); return; }
+
+    const freqData = conversation.getOutputByteFrequencyData?.();
+    if (freqData && freqData.length > 0) {
+      // Compute mean amplitude of the lower half (voice frequencies)
+      let sum = 0;
+      const len = Math.floor(freqData.length / 2);
+      for (let i = 0; i < len; i++) sum += freqData[i];
+      const meanAmplitude = sum / (len * 255);                    // normalise 0..1
+      const scale = 1 + meanAmplitude * VOLUME_SCALE_FACTOR;      // map to 1.00 – 1.35
+      hologram.style.setProperty('--orb-scale', scale.toFixed(3));
+    }
+
+    volumeRafId = requestAnimationFrame(tick);
+  }
+
+  volumeRafId = requestAnimationFrame(tick);
+}
+
+function stopVolumeTracking() {
+  if (volumeRafId !== null) {
+    cancelAnimationFrame(volumeRafId);
+    volumeRafId = null;
+  }
+  hologram.style.setProperty('--orb-scale', '1');
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -50,6 +203,26 @@ function setOrbState(state) {
 
   statusHint.style.opacity = state === 'idle' ? '0.6' : '0';
   endBtn.classList.toggle('hidden', state !== 'active');
+  micBtn.classList.toggle('hidden', state !== 'idle');
+
+  // Keep the orb's accessible label in sync with its interactive state
+  const labels = {
+    idle:     'Start voice session',
+    greeting: 'Connecting…',
+    active:   'End voice session',
+  };
+  if (hologram.hasAttribute('role')) {
+    hologram.setAttribute('aria-label', labels[state] ?? 'J.A.R.V.I.S.');
+  // Keep orb aria-label in sync so screen-reader users know what a tap will do
+  if (hologram.hasAttribute('role')) {
+    if (state === 'idle') {
+      hologram.setAttribute('aria-label', 'Start voice session');
+    } else if (state === 'active') {
+      hologram.setAttribute('aria-label', 'End voice session');
+    } else {
+      hologram.setAttribute('aria-label', 'Connecting…');
+    }
+  }
 }
 
 function showToast(msg, durationMs = 5000) {
@@ -64,17 +237,102 @@ function setStatus(text, dotVariant = '') {
   statusDot.className = `status-dot ${dotVariant}`;
 }
 
+// ── Episodic Memory ───────────────────────────────────────────────────────────
+
+/** Return the stored auth token, or null if not logged in. */
+function _authToken() {
+  try { return localStorage.getItem('synaptiq_token') || null; } catch { return null; }
+}
+
+/**
+ * Fetch the last `limit` Jarvis sessions for the current user.
+ * Returns an empty array if unauthenticated or the API is unavailable.
+ * @param {number} limit
+ * @returns {Promise<Array>}
+ */
+async function fetchMemory(limit = 3) {
+  const token = _authToken();
+  if (!token) return [];
+  try {
+    const res = await fetch(`/api/memory?limit=${limit}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return [];
+    const { sessions } = await res.json();
+    return Array.isArray(sessions) ? sessions : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Persist a session record to /api/memory.
+ * Fails silently — memory is best-effort; the tutoring session is the priority.
+ * @param {{ topic?: string, mastery_score?: number, specific_errors?: string[], duration_ms?: number }} data
+ */
+async function saveMemory(data) {
+  const token = _authToken();
+  if (!token) return;
+  try {
+    await fetch('/api/memory', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+  } catch { /* best-effort */ }
+}
+
+/**
+ * Build a short context string from recent sessions to show the student
+ * before or at the start of a conversation.
+ * @param {Array} sessions
+ * @returns {string}  Human-readable summary, or '' if no history.
+ */
+function buildMemoryContext(sessions) {
+  if (!sessions.length) return '';
+
+  const latest = sessions[0];
+  const parts  = [];
+
+  if (latest.topic) parts.push(`Last topic: ${latest.topic}`);
+
+  const errors = latest.specific_errors?.filter(Boolean);
+  if (errors?.length) parts.push(`Recent errors: ${errors.slice(0, 3).join(', ')}`);
+
+  if (latest.mastery_score != null) {
+    parts.push(`Mastery: ${Math.round(latest.mastery_score * 100)}%`);
+  }
+
+  return parts.length ? parts.join(' · ') : '';
+}
+
 // ── ElevenLabs ────────────────────────────────────────────────────────────────
 
 /**
  * Start a Conversational AI session with the configured ElevenLabs agent.
- * On disconnect we re-arm the Porcupine wake-word listener.
+ * Fetches recent session history (episodic memory) and displays it briefly
+ * so the student knows Jarvis remembers where they left off.
+ * On disconnect we save the session and re-arm the Porcupine wake-word listener.
+ * @param {{ signedUrl?: string, agentId?: string }} config
  */
-async function startConversation() {
-  const { Conversation } = await import('https://esm.sh/@11labs/client');
+async function startConversation(config) {
+  // ── Session timer ─────────────────────────────────────────────────────────
+  _sessionStartMs = Date.now();
+
+  // ── Retrieve episodic memory ──────────────────────────────────────────────
+  const sessions = await fetchMemory(3);
+  const context  = buildMemoryContext(sessions);
+  if (context) showTranscript(context);
+
+  const { Conversation } = await import('https://esm.sh/@elevenlabs/client@1');
 
   conversation = await Conversation.startSession({
-    agentId: ELEVEN_AGENT_ID,
+    ...(config.conversationToken
+      ? { conversationToken: config.conversationToken, connectionType: 'webrtc' }
+      : { agentId: config.agentId }),
 
     onConnect: () => {
       setOrbState('active');
@@ -82,15 +340,38 @@ async function startConversation() {
     },
 
     onDisconnect: async () => {
+      stopVolumeTracking();
+      clearTranscript();
+
+      // ── Save episodic memory ────────────────────────────────────────────
+      const duration_ms = _sessionStartMs != null
+        ? Date.now() - _sessionStartMs
+        : null;
+      _sessionStartMs = null;
+      await saveMemory({ duration_ms });
+
       conversation = null;
       setOrbState('idle');
       setStatus('SYSTEMS ONLINE', 'online');
       await armWakeWord();
     },
 
-    // Visual feedback: ring in while AI is speaking
+    // Volume-reactive orb: start rAF loop when AI speaks, stop when it stops
     onModeChange: ({ mode }) => {
       hologram.classList.toggle('speaking', mode === 'speaking');
+      if (mode === 'speaking') {
+        startVolumeTracking();
+      } else {
+        stopVolumeTracking();
+      }
+    },
+
+    // Show AI's spoken text as an on-screen subtitle (LaTeX cleaned to spoken form)
+    onMessage: (msg) => {
+      const raw  = msg?.agent_response
+        ?? (msg?.source === 'ai' ? msg?.message : null)
+        ?? null;
+      if (typeof raw === 'string' && raw.trim()) showTranscript(latexToSpeech(raw));
     },
 
     onError: (errMsg) => {
@@ -100,44 +381,98 @@ async function startConversation() {
   });
 }
 
-// ── Porcupine wake-word ───────────────────────────────────────────────────────
+// ── Web Speech API wake-word ──────────────────────────────────────────────────
 
 /**
- * Subscribe Porcupine to the voice processor so it listens for "Jarvis".
+ * Build and configure a SpeechRecognition instance.
+ * Each call creates a fresh object — required because recognition.stop()
+ * disposes the underlying audio pipeline in some browsers.
+ */
+function createRecognition() {
+  const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+  if (!SR) return null;
+
+  const r = new SR();
+  r.continuous      = false;   // restart manually; more reliable than continuous=true
+  r.interimResults  = false;
+  r.lang            = 'en-US';
+  r.maxAlternatives = 3;
+
+  r.onresult = (event) => {
+    for (let resultIdx = event.resultIndex; resultIdx < event.results.length; resultIdx++) {
+      for (let altIdx = 0; altIdx < event.results[resultIdx].length; altIdx++) {
+        const transcript = event.results[resultIdx][altIdx].transcript.trim().toLowerCase();
+        if (transcript.includes('jarvis')) {
+          handleWakeWord();
+          return;
+        }
+      }
+    }
+    // Word heard but wasn't "Jarvis" — restart immediately
+    if (orbState === 'idle') armWakeWord();
+  };
+
+  r.onerror = (event) => {
+    if (event.error === 'no-speech') {
+      // Normal timeout — restart
+      if (orbState === 'idle') armWakeWord();
+    } else if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      setStatus('MIC ACCESS DENIED', 'error');
+      showToast('Microphone access denied. Allow access and reload the page.', 0);
+    } else {
+      console.warn('[SpeechRecognition]', event.error);
+      if (orbState === 'idle') setTimeout(() => armWakeWord(), 1000);
+    }
+  };
+
+  r.onend = () => {
+    // Restart automatically while idle (handles both normal end and no-speech)
+    if (orbState === 'idle') armWakeWord();
+  };
+
+  return r;
+}
+
+/**
+ * Start listening for the "Jarvis" wake word.
  * Called on page load and again after each session ends.
  */
 async function armWakeWord() {
-  if (!porcupine) return;
-  const { WebVoiceProcessor } = await import('https://esm.sh/@picovoice/web-voice-processor@2');
+  if (!recognition || orbState !== 'idle' || !micEnabled) return;
   try {
-    await WebVoiceProcessor.subscribe(porcupine);
+    recognition.start();
   } catch (err) {
-    // Already subscribed — safe to ignore
-    if (!String(err).includes('already')) console.warn('[VoiceProcessor]', err);
+    // InvalidStateError fires if already started — safe to ignore
+    if (err.name !== 'InvalidStateError') console.warn('[SpeechRecognition]', err);
   }
 }
 
 /**
- * Unsubscribe Porcupine while ElevenLabs is active (prevents mic echo).
+ * Stop wake-word listening while ElevenLabs is active (prevents mic conflicts).
  */
 async function disarmWakeWord() {
-  if (!porcupine) return;
-  const { WebVoiceProcessor } = await import('https://esm.sh/@picovoice/web-voice-processor@2');
-  await WebVoiceProcessor.unsubscribe(porcupine);
+  if (!recognition) return;
+  try {
+    recognition.abort();
+  } catch { /* ignore */ }
 }
 
 /**
- * Called by Porcupine when the "Jarvis" keyword is detected.
+ * Called when the "Jarvis" keyword is detected in the speech transcript.
  */
 async function handleWakeWord() {
   if (orbState !== 'idle') return;  // already in a session
+
+  // Brief white flash on the orb to acknowledge the wake word
+  hologram.classList.add('wake-flash');
+  setTimeout(() => hologram.classList.remove('wake-flash'), 600);
 
   setOrbState('greeting');
   setStatus('CONNECTING...', 'active');
 
   try {
     await disarmWakeWord();
-    await startConversation();
+    await startConversation(jarvisConfig);
   } catch (err) {
     console.error('[JARVIS] Session start failed:', err);
     showToast('Could not reach ElevenLabs — check your agent ID and network.');
@@ -147,60 +482,167 @@ async function handleWakeWord() {
   }
 }
 
+// ── Orb click / tap ───────────────────────────────────────────────────────────
+
+async function handleOrbClick() {
+  if (!jarvisConfig) return;  // not yet initialised
+  if (orbState === 'idle') {
+    await handleWakeWord();
+  } else if (orbState === 'active') {
+    if (conversation) {
+      stopVolumeTracking();
+      await conversation.endSession();
+      // onDisconnect fires automatically → re-arms wake word
+    }
+  }
+  // 'greeting' state: connecting in progress — ignore
+}
+
+hologram.addEventListener('click', handleOrbClick);
+hologram.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    handleOrbClick();
+  }
+});
+
+// ── Mic toggle button ─────────────────────────────────────────────────────────
+
+function updateMicButton() {
+  micBtn.classList.toggle('muted', !micEnabled);
+  micBtnLabel.textContent = micEnabled ? 'MIC ON' : 'MIC OFF';
+  micBtn.setAttribute('aria-label', micEnabled ? 'Mute microphone' : 'Unmute microphone');
+}
+
+micBtn.addEventListener('click', async () => {
+  micEnabled = !micEnabled;
+  updateMicButton();
+  try {
+    if (micEnabled) {
+      await armWakeWord();
+    } else {
+      await disarmWakeWord();
+    }
+  } catch (err) {
+    console.error('[JARVIS] Mic toggle failed:', err);
+    micEnabled = !micEnabled;  // revert state on failure
+    updateMicButton();
+    showToast('Could not toggle microphone — please try again.');
+  }
+});
+
 // ── Manual end-session button ─────────────────────────────────────────────────
 
 endBtn.addEventListener('click', async () => {
   if (conversation) {
+    stopVolumeTracking();
     await conversation.endSession();
     // onDisconnect fires automatically → re-arms wake word
+  }
+});
+
+// ── Orb click / tap ───────────────────────────────────────────────────────────
+
+/**
+ * Toggle the session by clicking or tapping the orb.
+ * - idle     → start a new session (same path as the wake word)
+ * - active   → end the current session
+ * - greeting → no-op (already connecting)
+ */
+async function handleOrbClick() {
+  if (orbState === 'idle') {
+    await handleWakeWord();
+  } else if (orbState === 'active') {
+    if (conversation) {
+      stopVolumeTracking();
+      await conversation.endSession();
+      // onDisconnect fires automatically → resets state and re-arms wake word
+    }
+  }
+  // no-op while 'greeting'
+}
+
+hologram.addEventListener('click', handleOrbClick);
+hologram.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.code === 'Space') {
+    e.preventDefault();
+    handleOrbClick();
   }
 });
 
 // ── Initialisation ────────────────────────────────────────────────────────────
 
 async function init() {
-  // Guard: keys not yet configured
-  if (!PICOVOICE_KEY || PICOVOICE_KEY === 'PICOVOICE_KEY_PLACEHOLDER') {
-    setStatus('PICOVOICE KEY NOT SET', 'error');
-    showToast('Set PICOVOICE_KEY in Vercel environment variables.', 0);
-    return;
-  }
-  if (!ELEVEN_AGENT_ID || ELEVEN_AGENT_ID === 'ELEVEN_AGENT_ID_PLACEHOLDER') {
+  // Fetch agent config at runtime — avoids build-time injection dependency
+  try {
+    const res = await fetch('/api/tts');
+    if (!res.ok) {
+      const { error } = await res.json().catch((parseErr) => {
+        console.error('[JARVIS] Config response parse error (HTTP', res.status, '):', parseErr);
+        return {};
+      });
+      setStatus('AGENT ID NOT SET', 'error');
+      showToast(error || 'Set ELEVEN_AGENT_ID in Vercel environment variables.', 0);
+      return;
+    }
+    jarvisConfig = await res.json();
+  } catch (err) {
+    console.error('[JARVIS] Failed to fetch config:', err);
     setStatus('AGENT ID NOT SET', 'error');
     showToast('Set ELEVEN_AGENT_ID in Vercel environment variables.', 0);
     return;
   }
 
-  setStatus('LOADING ENGINE...', '');
-
-  try {
-    const { PorcupineWorker } = await import('https://esm.sh/@picovoice/porcupine-web@3');
-
-    // Model files (WASM + .pv) are fetched from the unpkg CDN at runtime.
-    // If you self-host, change publicPath to e.g. '/assets/porcupine/'.
-    const porcupineModel = {
-      publicPath: 'https://unpkg.com/@picovoice/porcupine-web@3/dist/',
-      forceWrite:  false,
-    };
-
-    porcupine = await PorcupineWorker.create(
-      PICOVOICE_KEY,
-      [{ builtin: 'Jarvis', sensitivity: 0.6 }],
-      handleWakeWord,   // fires on keyword detection
-      porcupineModel,
-    );
-
-    await armWakeWord();
-    setStatus('SYSTEMS ONLINE', 'online');
-
-  } catch (err) {
-    console.error('[Porcupine] Init failed:', err);
-    const hint = err?.message?.includes('InvalidAccessError')
-      ? 'Microphone access denied.'
-      : `Wake-word engine failed: ${err?.message ?? err}`;
-    setStatus('INIT ERROR', 'error');
-    showToast(hint, 0);
+  if (!jarvisConfig.conversationToken && !jarvisConfig.agentId) {
+    setStatus('AGENT ID NOT SET', 'error');
+    showToast('Set ELEVEN_AGENT_ID in Vercel environment variables.', 0);
+    return;
   }
+
+  // Make the orb interactive via click/tap for all browsers
+  // Make the orb interactive now that config is ready
+  hologram.setAttribute('tabindex', '0');
+  hologram.setAttribute('role', 'button');
+  hologram.setAttribute('aria-label', 'Start voice session');
+
+  // Guard: Web Speech API not available (Firefox, Safari, some mobile browsers)
+  const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+  if (!SR) {
+    setStatus('SYSTEMS ONLINE', 'online');
+    statusHint.innerHTML = 'Click to begin voice session';
+    // Orb tap still works via handleOrbClick(); wake-word and mic button are
+    // skipped because they depend on SpeechRecognition.
+    return;
+  // Web Speech API for wake-word detection (Chrome / Edge only)
+  const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+  if (SR) {
+    recognition = createRecognition();
+    await armWakeWord();
+    statusHint.innerHTML = 'Say <em>"Jarvis"</em> or tap the orb';
+    micBtn.classList.remove('hidden');
+    updateMicButton();
+  } else {
+    // Wake-word unavailable — orb tap / click is the only trigger
+    statusHint.textContent = 'Click to begin voice session';
+  }
+
+  setStatus('SYSTEMS ONLINE', 'online');
+  micBtn.classList.remove('hidden');
+  updateMicButton();
+  statusHint.innerHTML = 'Say <em>"Jarvis"</em> or tap the orb';
 }
 
 init();
+
+// Start the ambient canvas visualizer immediately — shows idle animation
+// before keys load, then transitions to live frequency data during sessions.
+startCanvasLoop();
+
+// ── Cleanup on page unload ────────────────────────────────────────────────────
+window.addEventListener('beforeunload', () => {
+  if (canvasRafId !== null) {
+    cancelAnimationFrame(canvasRafId);
+    canvasRafId = null;
+  }
+  stopVolumeTracking();
+});

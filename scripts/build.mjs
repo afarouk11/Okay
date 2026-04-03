@@ -7,8 +7,8 @@
  *
  * Set these in Vercel → Project → Settings → Environment Variables:
  *   GA4_MEASUREMENT_ID   — e.g. G-ABC123DEF4
- *   PICOVOICE_KEY        — Picovoice Console access key (for JARVIS wake-word)
  *   ELEVEN_AGENT_ID      — ElevenLabs Conversational AI agent ID (for JARVIS voice)
+ *                          Served at runtime via /api/jarvis-config — no build injection needed.
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -60,7 +60,7 @@ if (supabaseUrl && supabaseAnon) {
   const safeUrl  = supabaseUrl.replace(/'/g, "\\'");
   const safeAnon = supabaseAnon.replace(/'/g, "\\'");
   const keyScript = `<script>window.SUPABASE_URL='${safeUrl}';window.SUPABASE_ANON_KEY='${safeAnon}';</script>`;
-  for (const page of ['questions.html', 'lessons.html', 'reset-password.html']) {
+  for (const page of ['questions.html', 'lessons.html', 'reset-password.html', 'jarvis.html']) {
     const pageHtml = readFileSync(join(root, page), 'utf8');
     if (!pageHtml.includes('window.SUPABASE_URL=')) {
       const updated = pageHtml.replace('</head>', `${keyScript}\n</head>`);
@@ -68,40 +68,6 @@ if (supabaseUrl && supabaseAnon) {
       console.log(`✅ Supabase keys injected into ${page}`);
     }
   }
-}
-
-// ── Inject JARVIS keys into jarvis.html ───────────────────────────────────────
-const picovoiceKey   = process.env.PICOVOICE_KEY;
-const elevenAgentId  = process.env.ELEVEN_AGENT_ID;
-
-let jarvisHtml = readFileSync(join(root, 'jarvis.html'), 'utf8');
-let jarvisChanged = false;
-
-if (picovoiceKey) {
-  jarvisHtml = jarvisHtml.replace(
-    /content="PICOVOICE_KEY_PLACEHOLDER"/,
-    `content="${picovoiceKey}"`
-  );
-  console.log('✅ Picovoice key injected into jarvis.html');
-  jarvisChanged = true;
-} else {
-  console.warn('⚠️  PICOVOICE_KEY not set — JARVIS wake-word disabled');
-}
-
-if (elevenAgentId) {
-  jarvisHtml = jarvisHtml.replace(
-    /content="ELEVEN_AGENT_ID_PLACEHOLDER"/,
-    `content="${elevenAgentId}"`
-  );
-  console.log('✅ ElevenLabs agent ID injected into jarvis.html');
-  jarvisChanged = true;
-} else {
-  console.warn('⚠️  ELEVEN_AGENT_ID not set — JARVIS voice disabled');
-}
-
-if (jarvisChanged) {
-  writeFileSync(join(root, 'jarvis.html'), jarvisHtml, 'utf8');
-  console.log('✅ jarvis.html updated');
 }
 
 console.log('✅ Build complete');
