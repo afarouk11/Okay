@@ -223,11 +223,13 @@ export default async function handler(req, res) {
       if (!token) return res.status(401).json({ error: 'No token' });
       const { data: authData, error: authErr } = await supabase.auth.getUser(token);
       if (authErr) return res.status(401).json({ error: 'Invalid token' });
+      const { exam_date } = body;
       const updates = {};
       if (name) updates.name = name.trim();
       if (learning_difficulty) updates.learning_difficulty = learning_difficulty;
       if (year_group) updates.year_group = year_group;
       if (subjects) updates.subjects = subjects;
+      if (exam_date) updates.exam_date = exam_date;
       const { data: profile, error } = await supabase.from('profiles').update(updates).eq('id', authData.user.id).select().single();
       if (error) return res.status(400).json({ error: error.message });
       return res.status(200).json({ success: true, profile });
@@ -314,6 +316,14 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    if (action === 'peer_count') {
+      // Count users who were active today — used for the real-data peer-presence bar.
+      // Rate-limit this read-only action at the handler level (no auth required).
+      const today = new Date().toISOString().split('T')[0];
+      const { count } = await supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('last_active', today);
+      return res.status(200).json({ count: count || 0, date: today });
+    }
+
     return res.status(400).json({ error: 'Unknown action' });
   } catch (e) {
     const msg = /fetch|network|ECONNREFUSED|ETIMEDOUT|socket|abort/i.test(e.message)
@@ -372,6 +382,7 @@ function handleDemoMode(res, { action, email, password, name, plan, year_group, 
   if (action === 'get_uploads') return res.status(200).json({ data: [] });
   if (action === 'leaderboard') return res.status(200).json({ top: [], userRank: null });
   if (action === 'forgot_password') return res.status(200).json({ ok: true });
+  if (action === 'peer_count') return res.status(200).json({ count: 0, date: new Date().toISOString().split('T')[0] });
   return res.status(400).json({ error: 'Unknown action' });
 }
 

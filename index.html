@@ -4828,24 +4828,27 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
         </div>
       </div>
       <!-- Exam Countdown -->
-      <div id="exam-countdown-card" style="background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.03));border:1px solid rgba(201,168,76,0.28);border-radius:16px;padding:1.35rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 32px rgba(0,0,0,0.25),0 0 0 1px rgba(201,168,76,0.05)">
-        <div style="display:flex;align-items:center;gap:1rem">
-          <div style="font-size:2rem">🎯</div>
-          <div>
-            <div style="font-weight:700;font-size:1rem;color:var(--white)" id="countdown-title">A-Level Maths Exam Countdown</div>
-            <div style="font-size:.85rem;color:var(--muted)" id="countdown-subtitle">Set your exam date to track your preparation</div>
+      <div id="exam-countdown-card" style="background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.03));border:1px solid rgba(201,168,76,0.28);border-radius:16px;padding:1.35rem 1.5rem;margin-bottom:1.5rem;display:flex;flex-direction:column;gap:.75rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 32px rgba(0,0,0,0.25),0 0 0 1px rgba(201,168,76,0.05)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+          <div style="display:flex;align-items:center;gap:1rem">
+            <div style="font-size:2rem">🎯</div>
+            <div>
+              <div style="font-weight:700;font-size:1rem;color:var(--white)" id="countdown-title">A-Level Maths Exam Countdown</div>
+              <div style="font-size:.85rem;color:var(--muted)" id="countdown-subtitle">Set your exam date to track your preparation</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+            <div id="countdown-display" style="display:none;text-align:center">
+              <div style="font-size:2.5rem;font-weight:900;color:var(--gold);line-height:1" id="countdown-days">—</div>
+              <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">days to go</div>
+            </div>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <input type="date" id="exam-date-input" style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(201,168,76,0.25);border-radius:10px;padding:.5rem .75rem;color:var(--white);font-size:.85rem;transition:border .2s;outline:none" onchange="saveExamDate(this.value)" onfocus="this.style.borderColor='rgba(201,168,76,0.5)'" onblur="this.style.borderColor='rgba(201,168,76,0.25)'"  >
+              <button class="btn btn-outline" style="font-size:.8rem;padding:.5rem .9rem;white-space:nowrap" onclick="showDash('questions')">Practice Now →</button>
+            </div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-          <div id="countdown-display" style="display:none;text-align:center">
-            <div style="font-size:2.5rem;font-weight:900;color:var(--gold);line-height:1" id="countdown-days">—</div>
-            <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">days to go</div>
-          </div>
-          <div style="display:flex;gap:.5rem;align-items:center">
-            <input type="date" id="exam-date-input" style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(201,168,76,0.25);border-radius:10px;padding:.5rem .75rem;color:var(--white);font-size:.85rem;transition:border .2s;outline:none" onchange="saveExamDate(this.value)" onfocus="this.style.borderColor='rgba(201,168,76,0.5)'" onblur="this.style.borderColor='rgba(201,168,76,0.25)'"  >
-            <button class="btn btn-outline" style="font-size:.8rem;padding:.5rem .9rem;white-space:nowrap" onclick="showDash('questions')">Practice Now →</button>
-          </div>
-        </div>
+        <div id="study-plan-output"></div>
       </div>
       <div class="dash-grid">
         <div>
@@ -8244,6 +8247,10 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch(e) {}
   buildNumberLine(0);
   initExitIntent();
+  // Sync exam date from profile to local state if available
+  if (state.user?.exam_date) {
+    localStorage.setItem('synaptiq_exam_date', state.user.exam_date);
+  }
   updateExamCountdown();
   // Handle browser back/forward
   window.addEventListener('popstate', (e) => {
@@ -10239,18 +10246,31 @@ function _renderPeerPresence() {
   const avatarsEl = document.getElementById('peer-avatars');
   const labelEl = document.getElementById('peer-label');
   if (!bar || !avatarsEl || !labelEl) return;
-  // Deterministic but time-varying count: 12–47, shifts every ~8 min
-  const seed = Math.floor(Date.now() / 480000);
-  const count = 12 + ((seed * 1103515245 + 12345) & 0x7fffffff) % 36;
+
   const emojis = ['🦁','🦋','🐺','🌟','🦊','🐬','🦅','🌺','🎯','⭐','🔥','💎'];
-  const avatarCount = Math.min(5, Math.floor(count / 6));
-  avatarsEl.innerHTML = Array.from({length: avatarCount}, (_, i) => {
-    const e = emojis[(seed + i) % emojis.length];
-    return `<span style="width:22px;height:22px;border-radius:50%;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;margin-right:-4px">${e}</span>`;
-  }).join('');
   const topics = ['Integration','Trigonometry','Differentiation','Vectors','Statistics','Mechanics','Binomial Expansion','Logarithms'];
-  const hotTopic = topics[(seed * 7 + 3) % topics.length];
-  labelEl.innerHTML = `<strong style="color:var(--white)">${count}</strong> students studying right now · Hot topic: <span style="color:var(--gold)">${hotTopic}</span>`;
+
+  function _applyCount(count) {
+    const seed = Math.floor(Date.now() / 480000);
+    const avatarCount = Math.min(5, Math.max(1, Math.floor(count / 8)));
+    avatarsEl.innerHTML = Array.from({length: avatarCount}, (_, i) => {
+      const e = emojis[(seed + i) % emojis.length];
+      return `<span style="width:22px;height:22px;border-radius:50%;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;margin-right:-4px">${e}</span>`;
+    }).join('');
+    const hotTopic = topics[seed % topics.length];
+    labelEl.innerHTML = `<strong style="color:var(--white)">${count}</strong> student${count !== 1 ? 's' : ''} studying today · Hot topic: <span style="color:var(--gold)">${hotTopic}</span>`;
+  }
+
+  // Show a placeholder immediately, then replace with real data
+  _applyCount(1);
+
+  fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'peer_count' })
+  }).then(r => r.json()).then(data => {
+    if (typeof data.count === 'number') _applyCount(data.count);
+  }).catch(() => {});
 }
 
 function _renderPredictedGradeCard() {
@@ -11049,7 +11069,7 @@ Use UK marking conventions. Award partial marks where appropriate.`;
     showToast(`${totalMarks}/${totalPossible} marks — ${pct}% correct`);
 
     // Save progress to backend
-    const token = localStorage.getItem('synaptiq_token');
+    const token = await getAuthToken();
     if (token && state.user?.id) {
       saveProgressDB(sub, 'practice', correct, results.length, correct * 5);
     }
@@ -11275,7 +11295,7 @@ async function downloadMyData() {
   const btn = document.getElementById('download-data-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
   try {
-    const token = localStorage.getItem('synaptiq_token');
+    const token = await getAuthToken();
     if (!token) { showToast('⚠️ Please log in first'); return; }
     const res = await fetch('/api/notes?action=export', { headers: { Authorization: 'Bearer ' + token } });
     if (!res.ok) { const d = await res.json(); showToast('⚠️ ' + (d.error || 'Export failed')); return; }
@@ -11303,7 +11323,7 @@ async function deleteMyAccount() {
   const btn = document.getElementById('delete-account-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
   try {
-    const token = localStorage.getItem('synaptiq_token');
+    const token = await getAuthToken();
     if (!token) { showToast('⚠️ Please log in first'); return; }
     const res = await fetch('/api/auth', {
       method: 'POST',
@@ -13342,7 +13362,7 @@ async function saveNote() {
   addActivity('📓', 'Note saved', selectedNoteTag || 'Mathematics', 'now');
   showToast('✅ Note saved to your notebook!');
   // Sync to backend
-  const token = localStorage.getItem('synaptiq_token');
+  const token = await getAuthToken();
   if (token) {
     try {
       const res = await fetch('/api/notes', {
@@ -13398,7 +13418,7 @@ async function aiSummariseNoteById(id, btn) {
     renderNotes();
     showToast('✦ Note summarised!');
     // Also sync updated text to backend
-    const token = localStorage.getItem('synaptiq_token');
+    const token = await getAuthToken();
     if (token && note.backendId) {
       try {
         await fetch('/api/notes', {
@@ -13421,7 +13441,7 @@ async function deleteNote(id) {
   renderNotes();
   showToast('🗑️ Note deleted');
   // Sync to backend
-  const token = localStorage.getItem('synaptiq_token');
+  const token = await getAuthToken();
   if (token && note?.backendId) {
     try {
       await fetch('/api/notes', {
@@ -13494,7 +13514,7 @@ async function loadNotesFromStorage() {
     if (saved) { notes = JSON.parse(saved); renderNotes(); }
   } catch(e) {}
   // Try to load from backend
-  const token = localStorage.getItem('synaptiq_token');
+  const token = await getAuthToken();
   if (token) {
     try {
       const res = await fetch('/api/notes', {
@@ -16106,6 +16126,27 @@ const SUPABASE_URL = window.SUPABASE_URL || '';
 const SUPABASE_ANON = window.SUPABASE_ANON_KEY || '';
 let supabaseClient = null;
 
+/**
+ * Returns the current JWT, auto-refreshing it via the Supabase client when
+ * possible. Falls back to the cached localStorage token for non-Supabase
+ * deployments. Using this instead of localStorage.getItem('synaptiq_token')
+ * directly prevents sessions from silently breaking after the 1-hour JWT expiry.
+ */
+async function getAuthToken() {
+  if (supabaseClient) {
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session?.access_token) {
+        // Keep localStorage in sync with the freshest token
+        try { localStorage.setItem('synaptiq_token', session.access_token); } catch(_) {}
+        return session.access_token;
+      }
+    } catch(_) {}
+  }
+  return localStorage.getItem('synaptiq_token');
+}
+
+
 async function initSupabase() {
   if (!SUPABASE_URL || !SUPABASE_ANON) return;
   // Lazy-load SDK only when we need it
@@ -16206,7 +16247,7 @@ function showAuthSuccess(msg) { const el = document.querySelector('.auth-success
 // ─── SAVE PROGRESS TO SUPABASE ───────────────────────
 async function saveProgressDB(subject, topic, correct, total, xpEarned) {
   if (!supabaseClient || !state.user?.id) return;
-  const token = localStorage.getItem('synaptiq_token');
+  const token = await getAuthToken();
   await fetch('/api/progress', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -17417,7 +17458,7 @@ window.enterDashboard = function() {
 window.addEventListener('DOMContentLoaded', () => {
   // If there's a stored token, show a loading overlay to prevent flash of login screen
   try {
-    const hasToken = localStorage.getItem('synaptiq_token');
+    const hasToken = await getAuthToken();
     if (hasToken) {
       const overlay = document.createElement('div');
       overlay.id = 'auth-loading-overlay';
@@ -19883,11 +19924,24 @@ async function adminConfirmUpload() {
 function saveExamDate(val) {
   if (!val) return;
   localStorage.setItem('synaptiq_exam_date', val);
+  // Persist to the user's profile so the AI tutor can use it for context
+  if (state.user?.id) {
+    const token = localStorage.getItem('synaptiq_token');
+    if (token) {
+      fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ action: 'update_profile', exam_date: val })
+      }).catch(() => {});
+    }
+    if (state.user) state.user.exam_date = val;
+  }
   updateExamCountdown();
+  generateStudyPlan(val);
 }
 
 function updateExamCountdown() {
-  const stored = localStorage.getItem('synaptiq_exam_date');
+  const stored = state.user?.exam_date || localStorage.getItem('synaptiq_exam_date');
   const inp = document.getElementById('exam-date-input');
   const settingsInp = document.getElementById('settings-exam-date');
   const display = document.getElementById('countdown-display');
@@ -19905,6 +19959,33 @@ function updateExamCountdown() {
   if (title) title.textContent = diff > 0 ? 'Days Until Your A-Level Maths Exam' : 'Good luck in your exam! 🎓';
   if (subtitle) subtitle.textContent = diff > 30 ? 'Plenty of time — build a strong foundation now.' : diff > 14 ? 'Final stretch — focus on weak areas and past papers.' : diff > 0 ? 'Last push — revise formulas and exam technique!' : examDate.toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'});
 }
+
+async function generateStudyPlan(examDate) {
+  const planEl = document.getElementById('study-plan-output');
+  if (!planEl) return;
+  planEl.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:.5rem">⏳ Generating your personalised study plan…</div>';
+  try {
+    const daysToExam = Math.ceil((new Date(examDate) - new Date()) / 86400000);
+    if (daysToExam <= 0) { planEl.innerHTML = ''; return; }
+    const token = await getAuthToken();
+    const messages = [{
+      role: 'user',
+      content: `I have ${daysToExam} days until my A-Level Maths exam. Please create a concise week-by-week study plan. Focus on: Pure Maths (integration, differentiation, functions), Statistics, Mechanics. Format as a short numbered list of weekly priorities. Be specific and actionable. Maximum 200 words.`
+    }];
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': 'Bearer ' + token } : {}) },
+      body: JSON.stringify({ messages, max_tokens: 300 })
+    });
+    if (!r.ok) { planEl.innerHTML = ''; return; }
+    const data = await r.json();
+    const text = data.content?.[0]?.text || '';
+    if (text) {
+      planEl.innerHTML = `<div style="margin-top:.75rem;padding:.75rem;background:rgba(201,168,76,0.05);border-radius:10px;border:1px solid rgba(201,168,76,0.15)"><div style="font-size:.75rem;color:var(--gold);font-weight:600;margin-bottom:.5rem">📅 YOUR STUDY PLAN</div><div style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div></div>`;
+    }
+  } catch(_) { planEl.innerHTML = ''; }
+}
+
 
 // ═══════════════════════════════════════
 // FORMULA SHEET
@@ -24017,7 +24098,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * Falls back silently on any error.
  */
 async function fetchAdaptiveInsights() {
-  const token = localStorage.getItem('synaptiq_token');
+  const token = await getAuthToken();
   if (!token || token.startsWith('demo_token_')) return;
 
   try {
