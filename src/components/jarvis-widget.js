@@ -79,6 +79,10 @@
     navigate: (label) => `Opening ${label} for you… 🚀`,
   };
 
+  // Delay (ms) between showing the navigation message and actually navigating,
+  // so the student can read the confirmation before the page changes.
+  const NAVIGATION_DELAY_MS = 900;
+
   // ── Helpers ────────────────────────────────────────────────────────────────
   function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
@@ -301,8 +305,8 @@
         setTimeout(() => {
           removeTyping();
           addAIMessage(RESPONSES.navigate(intent.label), intent);
-          // Auto-navigate after brief delay so user sees the message
-          setTimeout(() => navigateTo(intent), 900);
+          // Auto-navigate after brief delay so user can read the confirmation
+          setTimeout(() => navigateTo(intent), NAVIGATION_DELAY_MS);
         }, 500);
         return;
       }
