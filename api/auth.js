@@ -1,8 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 import { applyHeaders, isRateLimited, getIp } from './_lib.js';
+import { timingSafeEqual, createHash } from 'crypto';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VALID_PLANS = ['student', 'home', 'homeschool'];
+const MS_PER_DAY = 86_400_000;
+
+/** Constant-time string comparison to prevent timing-based inference. */
+function safeStringEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const ha = createHash('sha256').update(a).digest();
+  const hb = createHash('sha256').update(b).digest();
+  return timingSafeEqual(ha, hb);
+}
 
 // ─── Supabase REST proxy helpers ──────────────────────────────────────────────
 
@@ -322,6 +332,86 @@ export default async function handler(req, res) {
       const today = new Date().toISOString().split('T')[0];
       const { count } = await supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('last_active', today);
       return res.status(200).json({ count: count || 0, date: today });
+    }
+
+    if (action === 'parent_view') {
+      const { child_email, parent_code } = body;
+      if (!child_email || !EMAIL_RE.test(child_email)) return res.status(400).json({ error: 'A valid child email is required' });
+      if (!parent_code || typeof parent_code !== 'string' || parent_code.trim().length !== 6) return res.status(400).json({ error: 'Parent access code must be exactly 6 characters' });
+
+      // Fetch child profile
+      const { data: profile, error: profErr } = await supabase
+        .from('profiles')
+        .select('id, name, plan, last_active, accuracy, streak, xp, level, exam_date, parent_code')
+        .eq('email', child_email.toLowerCase().trim())
+        .single();
+
+      if (profErr || !profile) return res.status(404).json({ error: 'No account found for that email address' });
+
+      // Validate parent_code — if no code is set on the profile, deny access
+      if (!profile.parent_code) return res.status(403).json({ error: 'Parent access has not been enabled for this account' });
+      if (!safeStringEqual(profile.parent_code.trim(), parent_code.trim())) return res.status(403).json({ error: 'Incorrect access code' });
+
+      const childId = profile.id;
+
+      // Weekly date range (last 7 days)
+      const now = new Date();
+      const weekAgo = new Date(now - 7 * MS_PER_DAY).toISOString().split('T')[0];
+      const today = now.toISOString().split('T')[0];
+
+      // Weekly XP and study time from activity_log
+      const { data: activityRows } = await supabase
+        .from('activity_log')
+        .select('date, xp_earned, questions_done')
+        .eq('user_id', childId)
+        .gte('date', weekAgo)
+        .lte('date', today)
+        .order('date', { ascending: true });
+
+      const activity = activityRows || [];
+      const weeklyXp = activity.reduce((s, r) => s + (r.xp_earned || 0), 0);
+      // Build a 7-day map for the chart (date → xp_earned)
+      const chartData = {};
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now - i * MS_PER_DAY).toISOString().split('T')[0];
+        chartData[d] = 0;
+      }
+      for (const r of activity) {
+        if (r.date in chartData) chartData[r.date] = (r.xp_earned || 0);
+      }
+
+      // Top 3 topics from progress this week
+      const { data: progressRows } = await supabase
+        .from('progress')
+        .select('topic, subject, questions_done, xp_earned')
+        .eq('user_id', childId)
+        .gte('last_practiced', new Date(now - 7 * MS_PER_DAY).toISOString())
+        .order('questions_done', { ascending: false })
+        .limit(3);
+
+      const topTopics = (progressRows || []).map(r => ({ topic: r.topic || r.subject || 'General', questions: r.questions_done || 0 }));
+
+      // Strip parent_code before returning
+      const safeProfile = {
+        name: profile.name,
+        plan: profile.plan,
+        last_active: profile.last_active,
+        accuracy: profile.accuracy,
+        streak: profile.streak,
+        xp: profile.xp,
+        level: profile.level,
+        exam_date: profile.exam_date || null,
+      };
+
+      return res.status(200).json({
+        success: true,
+        profile: safeProfile,
+        weekly: {
+          xp: weeklyXp,
+          chart: chartData,
+          top_topics: topTopics,
+        },
+      });
     }
 
     return res.status(400).json({ error: 'Unknown action' });
