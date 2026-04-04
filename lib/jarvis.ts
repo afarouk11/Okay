@@ -64,7 +64,7 @@ export function detectNavIntent(text: string): { page: string; label: string } |
 }
 
 export function extractNavCommand(text: string): { page: string } | null {
-  const match = text.match(/<nav>(\{[^}]+\})<\/nav>/)
+  const match = text.match(/<nav>(\{[^<>{}]{1,200}\})<\/nav>/)
   if (!match) return null
   try {
     return JSON.parse(match[1])
@@ -74,5 +74,5 @@ export function extractNavCommand(text: string): { page: string } | null {
 }
 
 export function stripNavCommand(text: string): string {
-  return text.replace(/<nav>\{[^}]+\}<\/nav>/g, '').trim()
+  return text.replace(/<nav>\{[^<>{}]{1,200}\}<\/nav>/g, '').trim()
 }

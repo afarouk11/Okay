@@ -115,17 +115,18 @@ export default function ChatWindow() {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+      const recorder = new MediaRecorder(stream, { mimeType })
       const chunks: Blob[] = []
 
       recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data) }
       recorder.onstop = async () => {
         stream.getTracks().forEach(t => t.stop())
-        const blob = new Blob(chunks, { type: 'audio/webm' })
+        const blob = new Blob(chunks, { type: mimeType })
         try {
           const res = await fetch('/api/transcribe', {
             method: 'POST',
-            headers: { 'Content-Type': 'audio/webm' },
+            headers: { 'Content-Type': mimeType },
             body: blob,
           })
           const { transcript } = await res.json()
