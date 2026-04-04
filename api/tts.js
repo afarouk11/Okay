@@ -1,4 +1,14 @@
 import { applyHeaders, isRateLimited, getIp, fetchWithRetry } from './_lib.js';
+import { createClient } from '@supabase/supabase-js';
+
+let supabase = null;
+try {
+  if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+    supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY, {
+      auth: { autoRefreshToken: false, persistSession: false }
+    });
+  }
+} catch (_) {}
 
 /**
  * GET  /api/tts  — JARVIS agent config (ElevenLabs conversation token or agentId).
@@ -69,6 +79,16 @@ export default async function handler(req, res) {
   }
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  // Require authentication when Supabase is configured
+  if (supabase) {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token || token.startsWith('demo_token_')) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    const { error: authErr } = await supabase.auth.getUser(token);
+    if (authErr) return res.status(401).json({ error: 'Invalid or expired session' });
+  }
 
   const apiKey = process.env.ELEVENLABS_API_KEY;
   if (!apiKey) return res.status(503).json({ error: 'TTS not configured' });

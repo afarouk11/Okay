@@ -153,17 +153,9 @@ export default async function handler(req, res) {
         email: email.toLowerCase().trim(), password
       });
 
-      // If email isn't confirmed (e.g. created via Supabase dashboard), auto-confirm and retry
+      // If email isn't confirmed, return a clear message prompting verification.
       if (error && /email not confirmed/i.test(error.message)) {
-        try {
-          const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-          const match = users.find(u => u.email === email.toLowerCase().trim());
-          if (match) {
-            await supabase.auth.admin.updateUserById(match.id, { email_confirm: true });
-            const retry = await supabase.auth.signInWithPassword({ email: email.toLowerCase().trim(), password });
-            if (!retry.error) { data = retry.data; error = null; }
-          }
-        } catch (_) { /* fall through to original error */ }
+        return res.status(401).json({ error: 'Please verify your email address before logging in. Check your inbox for a confirmation link.' });
       }
 
       if (error) return res.status(401).json({ error: 'Invalid email or password' });
@@ -218,7 +210,7 @@ export default async function handler(req, res) {
       const token = req.headers.authorization?.replace('Bearer ', '');
       if (!token) return res.status(401).json({ error: 'No token' });
       if (token.startsWith('demo_token_')) {
-        return res.status(200).json({ success: true, user: { id: 'demo', email: 'demo@synaptiq.app', name: 'Student', plan: 'student' } });
+        return res.status(401).json({ error: 'Session expired. Please log in again.' });
       }
       const { data, error } = await supabase.auth.getUser(token);
       if (error) return res.status(401).json({ error: 'Session expired. Please log in again.' });
@@ -270,8 +262,15 @@ export default async function handler(req, res) {
     }
 
     if (action === 'patch_profile') {
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      if (!token) return res.status(401).json({ error: 'Authentication required' });
+      const { data: authData, error: authErr } = await supabase.auth.getUser(token);
+      if (authErr) return res.status(401).json({ error: 'Invalid token' });
       const { id: profileId, ...fields } = body.payload || {};
       if (!profileId) return res.status(400).json({ error: 'id required' });
+      if (profileId !== authData.user.id) return res.status(403).json({ error: 'Forbidden' });
+      // Strip is_admin — cannot self-escalate
+      delete fields.is_admin;
       const { data: profile, error } = await supabase.from('profiles').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', profileId).select().single();
       if (error) return res.status(400).json({ error: error.message });
       return res.status(200).json(profile || {});
@@ -390,6 +389,20 @@ async function handleProxyAction(req, res, action, body) {
 
   const { payload } = body;
 
+  // Helper: extract and validate the caller's JWT, returning the user's ID or null.
+  // Only called for actions that require the caller to be the owner of the resource.
+  async function getCallerUserId() {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token || token.startsWith('demo_token_')) return null;
+    const anonKey = process.env.SUPABASE_ANON_KEY || svcKey;
+    const r = await fetch(`${url}/auth/v1/user`, {
+      headers: { ...sbaHeaders(anonKey), Authorization: `Bearer ${token}` }
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+    return data?.id || null;
+  }
+
   try {
     if (action === 'create_auth_user') {
       const { email, password } = payload || {};
@@ -443,10 +456,16 @@ async function handleProxyAction(req, res, action, body) {
     }
 
     if (action === 'upsert_profile') {
+      // Strip is_admin — callers cannot elevate their own privileges
+      const safePayload = { ...(payload || {}) };
+      delete safePayload.is_admin;
+      const callerId = await getCallerUserId();
+      if (!callerId) return res.status(401).json({ error: 'Authentication required' });
+      if (safePayload.id && safePayload.id !== callerId) return res.status(403).json({ error: 'Forbidden' });
       const r = await fetch(`${url}/rest/v1/profiles`, {
         method: 'POST',
         headers: { ...sbaHeaders(svcKey), Prefer: 'resolution=merge-duplicates,return=representation' },
-        body: JSON.stringify(payload || {}),
+        body: JSON.stringify(safePayload),
       });
       const data = await r.json();
       return res.status(200).json(Array.isArray(data) ? data[0] : data);
@@ -455,6 +474,11 @@ async function handleProxyAction(req, res, action, body) {
     if (action === 'patch_profile') {
       const { id, ...rest } = payload || {};
       if (!id) return res.status(400).json({ error: 'id is required' });
+      // Strip is_admin — callers cannot elevate their own privileges
+      delete rest.is_admin;
+      const callerId = await getCallerUserId();
+      if (!callerId) return res.status(401).json({ error: 'Authentication required' });
+      if (id !== callerId) return res.status(403).json({ error: 'Forbidden' });
       const r = await fetch(`${url}/rest/v1/profiles?id=eq.${id}`, {
         method: 'PATCH',
         headers: { ...sbaHeaders(svcKey), Prefer: 'return=representation' },
@@ -465,6 +489,8 @@ async function handleProxyAction(req, res, action, body) {
     }
 
     if (action === 'get_profile') {
+      const callerId = await getCallerUserId();
+      if (!callerId) return res.status(401).json({ error: 'Authentication required' });
       const { email } = payload || {};
       if (!email || !EMAIL_RE.test(email)) return res.status(400).json({ error: 'A valid email is required' });
       const r = await fetch(
@@ -476,19 +502,25 @@ async function handleProxyAction(req, res, action, body) {
     }
 
     if (action === 'save_upload') {
+      const callerId = await getCallerUserId();
+      if (!callerId) return res.status(401).json({ error: 'Authentication required' });
+      const uploadPayload = payload || {};
+      // Force user_id to be the caller's — prevents uploading on behalf of others
+      const safeUpload = { ...uploadPayload, user_id: callerId };
       const r = await fetch(`${url}/rest/v1/resources`, {
         method: 'POST',
         headers: { ...sbaHeaders(svcKey), Prefer: 'return=representation' },
-        body: JSON.stringify(payload || {}),
+        body: JSON.stringify(safeUpload),
       });
       const data = await r.json();
       return res.status(200).json(data);
     }
 
     if (action === 'get_uploads') {
-      const userId = body.userId || payload?.userId;
-      if (!userId) return res.status(400).json({ error: 'userId is required' });
-      const r = await fetch(`${url}/rest/v1/resources?user_id=eq.${userId}`, {
+      const callerId = await getCallerUserId();
+      if (!callerId) return res.status(401).json({ error: 'Authentication required' });
+      // Only return the caller's uploads (plus global resources)
+      const r = await fetch(`${url}/rest/v1/resources?user_id=eq.${callerId}`, {
         headers: sbaHeaders(svcKey),
       });
       const data = await r.json();

@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { applyHeaders, isRateLimited, getIp } from './_lib.js';
+import { timingSafeEqual } from 'crypto';
 
 let supabase = null;
 if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
@@ -33,8 +34,15 @@ export default async function handler(req, res) {
     return res.status(429).json({ error: 'Too many requests' });
   }
 
-  const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== process.env.ADMIN_SECRET_KEY) {
+  const adminKey = req.headers['x-admin-key'] || '';
+  const expectedKey = process.env.ADMIN_SECRET_KEY || '';
+  let isAuthorized = false;
+  if (adminKey.length > 0 && adminKey.length === expectedKey.length) {
+    try {
+      isAuthorized = timingSafeEqual(Buffer.from(adminKey), Buffer.from(expectedKey));
+    } catch (_) {}
+  }
+  if (!isAuthorized) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 
@@ -107,17 +115,25 @@ export default async function handler(req, res) {
   }
 
   if (action === 'reset_users') {
-    const { data: { users }, error: listErr } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-    if (listErr) return res.status(500).json({ error: listErr.message });
-    let deleted = 0;
     const tables = ['activity_log', 'notes', 'progress', 'chat_history', 'flashcards', 'mistakes'];
-    for (const user of (users || [])) {
-      for (const table of tables) {
-        await supabase.from(table).delete().eq('user_id', user.id);
+    let deleted = 0;
+    let page = 1;
+    const perPage = 100;
+    while (true) {
+      const { data: listData, error: listErr } = await supabase.auth.admin.listUsers({ page, perPage });
+      if (listErr) return res.status(500).json({ error: listErr.message });
+      const users = listData?.users || [];
+      if (users.length === 0) break;
+      for (const user of users) {
+        for (const table of tables) {
+          await supabase.from(table).delete().eq('user_id', user.id);
+        }
+        await supabase.from('profiles').delete().eq('id', user.id);
+        await supabase.auth.admin.deleteUser(user.id);
+        deleted++;
       }
-      await supabase.from('profiles').delete().eq('id', user.id);
-      await supabase.auth.admin.deleteUser(user.id);
-      deleted++;
+      if (users.length < perPage) break;
+      page++;
     }
     logAdminAction(supabase, 'reset_users', ip, { deleted });
     return res.status(200).json({ ok: true, deleted, message: `Deleted ${deleted} account(s)` });

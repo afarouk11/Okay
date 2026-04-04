@@ -2,6 +2,7 @@ import { applyHeaders, isRateLimited, getIp, fetchWithRetry } from './_lib.js';
 import { createClient } from '@supabase/supabase-js';
 
 const TRIAL_DAILY_LIMIT = 20;
+const ALLOWED_MODELS = new Set(['claude-haiku-4-5-20251001', 'claude-sonnet-4-6', 'claude-opus-4-5']);
 
 // Supabase client (service role) — used only for per-user rate limit checks
 let supabase = null;
@@ -168,11 +169,25 @@ export default async function handler(req, res) {
     }
   }
 
+  // When Supabase is configured, require a valid authenticated session.
+  // Demo tokens are not accepted in production.
+  if (supabase && !userId) {
+    return res.status(401).json({ error: 'Authentication required. Please log in to use the AI tutor.' });
+  }
+
   // ── Validate request body ─────────────────────────────────────────────────
   const { model, messages, max_tokens, system } = req.body;
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'Invalid request: messages array required' });
   }
+
+  // Server-side model allowlist — prevents cost abuse from caller-controlled model names
+  const requestedModel = model || 'claude-sonnet-4-6';
+  if (!ALLOWED_MODELS.has(requestedModel)) {
+    return res.status(400).json({ error: 'Unsupported model.' });
+  }
+  // Cap max_tokens server-side regardless of what the caller sends
+  const safeMaxTokens = Math.min(max_tokens || 1500, 2000);
   if (messages.length > 50) {
     return res.status(400).json({ error: 'Too many messages. Please start a new conversation.' });
   }
@@ -189,7 +204,7 @@ export default async function handler(req, res) {
 
   // ── Call Anthropic ────────────────────────────────────────────────────────
   try {
-    const body = { model: model || 'claude-sonnet-4-6', messages, max_tokens: max_tokens || 1500 };
+    const body = { model: requestedModel, messages, max_tokens: safeMaxTokens };
     if (effectiveSystem) body.system = effectiveSystem;
 
     const r = await fetchWithRetry('https://api.anthropic.com/v1/messages', {
