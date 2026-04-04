@@ -1,11 +1,13 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { HelpCircle, RefreshCw, ChevronDown, Check, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'
 import Link from 'next/link'
+import { useAuth } from '@/lib/useAuth'
 
 const TOPICS = [
   'Algebra & Functions',
@@ -33,6 +35,8 @@ type Question = {
 }
 
 export default function QuestionsClient() {
+  const router = useRouter()
+  const { user, token, loading: authLoading } = useAuth()
   const [topic, setTopic] = useState(TOPICS[0])
   const [difficulty, setDifficulty] = useState('Standard')
   const [question, setQuestion] = useState<Question | null>(null)
@@ -40,7 +44,13 @@ export default function QuestionsClient() {
   const [showHint, setShowHint] = useState(false)
   const [answered, setAnswered] = useState<'correct' | 'incorrect' | null>(null)
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) router.replace('/login')
+  }, [authLoading, user, router])
+
   const generateQuestion = useCallback(async () => {
+    if (!token) return
     setLoading(true)
     setQuestion(null)
     setShowHint(false)
@@ -49,7 +59,10 @@ export default function QuestionsClient() {
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           messages: [
             {
@@ -79,7 +92,17 @@ No other text.`,
     } finally {
       setLoading(false)
     }
-  }, [topic, difficulty])
+  }, [topic, difficulty, token])
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center" style={{ background: '#0B0F14' }}>
+        <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+
+  if (!user) return null
 
   return (
     <div className="flex min-h-screen" style={{ background: '#0B0F14' }}>

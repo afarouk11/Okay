@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   LayoutDashboard,
@@ -11,8 +11,12 @@ import {
   HelpCircle,
   Settings,
   Zap,
+  LogOut,
 } from 'lucide-react'
 import clsx from 'clsx'
+import { useAuth } from '@/lib/useAuth'
+import { createBrowserClient } from '@/lib/supabase'
+import { useEffect, useState } from 'react'
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -28,6 +32,33 @@ const bottomItems = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const { user, token } = useAuth()
+  const [profileName, setProfileName] = useState<string | null>(null)
+  const [profilePlan, setProfilePlan] = useState<string | null>(null)
+
+  // Fetch profile name and plan
+  useEffect(() => {
+    if (!token) return
+    fetch('/api/profile', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.profile) {
+          setProfileName(data.profile.name)
+          setProfilePlan(data.profile.plan)
+        }
+      })
+      .catch(() => {})
+  }, [token])
+
+  const displayName = profileName ?? user?.email?.split('@')[0] ?? 'Student'
+  const planLabel = profilePlan === 'homeschool' ? 'Student Plan' : 'Free Plan'
+
+  async function handleLogout() {
+    const supabase = createBrowserClient()
+    if (supabase) await supabase.auth.signOut()
+    router.replace('/login')
+  }
 
   return (
     <motion.aside
@@ -116,10 +147,17 @@ export default function Sidebar() {
           >
             <Zap className="w-3.5 h-3.5" />
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-medium text-foreground truncate">Student</p>
-            <p className="text-[10px] text-muted truncate">Free Plan</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-medium text-foreground truncate">{displayName}</p>
+            <p className="text-[10px] text-muted truncate">{planLabel}</p>
           </div>
+          <button
+            onClick={handleLogout}
+            title="Sign out"
+            className="text-muted hover:text-foreground transition-colors flex-shrink-0"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
     </motion.aside>

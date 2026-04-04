@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServiceClient } from '@/lib/supabase'
 import { isRateLimited, getIp, fetchWithRetry } from '@/lib/rateLimit'
 
 const VOICE_IDS: Record<string, string> = {
@@ -15,12 +16,25 @@ const VOICE_SETTINGS: Record<string, object> = {
   default: { stability: 0.50, similarity_boost: 0.75 },
 }
 
+async function getUser(request: NextRequest) {
+  const supabase = createServiceClient()
+  if (!supabase) return { user: null, supabase: null }
+  const token = request.headers.get('authorization')?.replace('Bearer ', '')
+  if (!token) return { user: null, supabase }
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+  if (error || !user) return { user: null, supabase }
+  return { user, supabase }
+}
+
 // GET — return ElevenLabs agent config / conversation token
 export async function GET(request: NextRequest) {
   const ip = getIp(request)
   if (isRateLimited(`${ip}:jarvis-config`, 10, 60_000)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
+
+  const { user } = await getUser(request)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const agentId = process.env.ELEVEN_AGENT_ID || 'agent_4101kn5cm6t2efwsasfhx8cgh1r3'
   const apiKey = process.env.ELEVENLABS_API_KEY
@@ -48,6 +62,9 @@ export async function POST(request: NextRequest) {
   if (isRateLimited(`${ip}:tts`, 60, 60_000)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
+
+  const { user } = await getUser(request)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let body: { text?: string; voice?: string }
   try {
