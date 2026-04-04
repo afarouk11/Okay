@@ -21,15 +21,38 @@ export async function POST(request: NextRequest) {
   if (action === 'register') {
     if (!email || !EMAIL_RE.test(email)) return NextResponse.json({ error: 'Valid email required' }, { status: 400 })
     if (!password || password.length < 8) return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
+    if (!name || !name.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 })
+
+    const normalisedEmail = email.toLowerCase().trim()
+    const trimmedName = name.trim()
+    const chosenPlan = plan || 'student'
 
     const { data, error } = await supabase.auth.admin.createUser({
-      email,
+      email: normalisedEmail,
       password,
-      email_confirm: false,
-      user_metadata: { name: name || '', plan: plan || 'student' },
+      email_confirm: true,
+      user_metadata: { name: trimmedName, plan: chosenPlan },
     })
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+    if (error) {
+      if (error.message.toLowerCase().includes('already') || error.message.toLowerCase().includes('duplicate')) {
+        return NextResponse.json({ error: 'An account with this email already exists. Try signing in instead.' }, { status: 400 })
+      }
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+
+    // Create matching profile row so the app can load user data
+    await supabase.from('profiles').upsert({
+      id: data.user.id,
+      email: normalisedEmail,
+      name: trimmedName,
+      plan: chosenPlan,
+      xp: 0,
+      level: 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'id' })
+
     return NextResponse.json({ user: data.user })
   }
 
