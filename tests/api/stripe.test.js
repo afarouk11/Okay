@@ -338,8 +338,8 @@ describe('raw-body parsing (bodyParser disabled)', () => {
   });
 
   it('treats an empty body stream as an empty object and proceeds', async () => {
-    // Empty raw body falls back to '{}' → parses OK → missing Stripe key triggers 500
-    // (STRIPE_SECRET_KEY is set in beforeEach, so we'll get a fetch-based 500 or 200)
+    // Empty raw body falls back to '{}' via `raw.toString() || '{}'` → parses OK
+    // → handler proceeds with an empty body (no plan/email) and calls Stripe API.
     global.fetch = vi.fn().mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve({ id: 'cs_empty', url: 'https://stripe.com/empty' }),
