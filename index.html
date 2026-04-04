@@ -20377,6 +20377,9 @@ function voSetState(s) {
 }
 
 async function voOpen(mode, context) {
+  // Don't start a new session while one is already connecting
+  if (VO.state === 'thinking') return;
+
   VO.mode    = mode    || 'tutor';
   VO.context = context || state?.topic || 'A-Level Maths';
   VO.history = [];
@@ -20453,7 +20456,10 @@ async function voOpen(mode, context) {
       });
     } catch(e) {
       VO.conversation = null;
-      voClose();
+      // Keep overlay open so the user can see the error and tap Speak to retry
+      voSetState('idle');
+      const voStatus = document.getElementById('vo-status');
+      if (voStatus) voStatus.textContent = '⚠️ Connection failed — tap Speak to retry';
       showToast('⚠️ ' + (e.message || 'Could not start Jarvis'));
     }
   } else {
@@ -20516,8 +20522,12 @@ async function voStartListening() {
 }
 
 function voTapMic() {
-  // In ElevenLabs (Jarvis) mode the session handles turn detection automatically
-  if (VO.conversation) return;
+  // In ElevenLabs (Jarvis) tutor mode: turn detection is automatic when connected.
+  // If not connected (e.g. after a failed attempt), retry the connection.
+  if (VO.mode === 'tutor') {
+    if (!VO.conversation) voOpen(VO.mode, VO.context);
+    return;
+  }
 
   if (VO.state === 'listening') {
     VO.recog?.stop();
