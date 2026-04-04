@@ -9,7 +9,8 @@ export function createServiceClient() {
     return createClient(url, key, {
       auth: { autoRefreshToken: false, persistSession: false },
     })
-  } catch {
+  } catch (err) {
+    console.error('Failed to create Supabase service client:', err)
     return null
   }
 }
@@ -21,7 +22,8 @@ export function createBrowserClient() {
   if (!url || !key) return null
   try {
     return createClient(url, key)
-  } catch {
+  } catch (err) {
+    console.error('Failed to create Supabase browser client:', err)
     return null
   }
 }
