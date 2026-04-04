@@ -1,5 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createServiceClient } from '@/lib/supabase'
 import { isRateLimited, getIp, fetchWithRetry } from '@/lib/rateLimit'
+
+async function getUser(request: NextRequest) {
+  const supabase = createServiceClient()
+  if (!supabase) return { user: null }
+  const token = request.headers.get('authorization')?.replace('Bearer ', '')
+  if (!token) return { user: null }
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+  if (error || !user) return { user: null }
+  return { user }
+}
 
 export async function POST(request: NextRequest) {
   const apiKey = process.env.DEEPGRAM_API_KEY
@@ -9,6 +20,9 @@ export async function POST(request: NextRequest) {
   if (isRateLimited(`${ip}:transcribe`, 30, 60_000)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
+
+  const { user } = await getUser(request)
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   let body: ArrayBuffer
   try {

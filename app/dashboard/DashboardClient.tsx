@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
   MessageSquare,
@@ -12,16 +13,23 @@ import {
   CalendarDays,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'
 import StatsCard from '@/components/StatsCard'
+import { useAuth } from '@/lib/useAuth'
 
-const stats = [
-  { icon: Zap,           label: 'XP Earned',      value: '0', color: 'blue'   as const, delay: 0.1 },
-  { icon: MessageSquare, label: 'Messages Sent',   value: '0', color: 'green'  as const, delay: 0.2 },
-  { icon: Target,        label: 'Topics Covered',  value: '0', color: 'purple' as const, delay: 0.3 },
-  { icon: Flame,         label: 'Day Streak',      value: '0', color: 'orange' as const, delay: 0.4 },
-]
+type ProgressData = {
+  profile: {
+    name: string | null
+    xp: number
+    level: number
+    plan: string
+  } | null
+  progress: Array<{ topic: string }>
+  mistakes: Array<{ topic: string }>
+  activity: Array<{ date: string; questions_done: number; xp_earned: number }>
+}
 
 const quickActions = [
   { href: '/chat',    icon: MessageSquare, label: 'Ask Jarvis',     sub: 'Start a tutoring session', color: '#4F8CFF' },
@@ -29,7 +37,81 @@ const quickActions = [
   { href: '/lessons', icon: BookOpen,      label: 'Browse Lessons', sub: 'Explore topics',           color: '#8B5CF6' },
 ]
 
+function calcStreak(activity: ProgressData['activity']): number {
+  if (!activity.length) return 0
+  const today = new Date().toISOString().split('T')[0]
+  const dates = new Set(activity.map(a => a.date))
+  let streak = 0
+  const cur = new Date()
+  // Start from today; if today has no activity, start from yesterday
+  if (!dates.has(today)) cur.setDate(cur.getDate() - 1)
+  while (dates.has(cur.toISOString().split('T')[0])) {
+    streak++
+    cur.setDate(cur.getDate() - 1)
+  }
+  return streak
+}
+
 export default function DashboardClient() {
+  const router = useRouter()
+  const { user, token, loading: authLoading } = useAuth()
+  const [data, setData] = useState<ProgressData | null>(null)
+  const [statsLoading, setStatsLoading] = useState(true)
+
+  useEffect(() => {
+    if (!authLoading && !user) router.replace('/login')
+  }, [authLoading, user, router])
+
+  const fetchStats = useCallback(async () => {
+    if (!token) return
+    setStatsLoading(true)
+    try {
+      const res = await fetch('/api/progress', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) {
+        const json = await res.json()
+        setData(json)
+      }
+    } catch {
+      // no-op
+    } finally {
+      setStatsLoading(false)
+    }
+  }, [token])
+
+  useEffect(() => {
+    if (token) fetchStats()
+  }, [token, fetchStats])
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center" style={{ background: '#0B0F14' }}>
+        <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+
+  if (!user) return null
+
+  const profile = data?.profile
+  const xp = profile?.xp ?? 0
+  const topicsCovered = data ? new Set([
+    ...data.progress.map(p => p.topic),
+    ...data.mistakes.map(m => m.topic),
+  ]).size : 0
+  const streak = data ? calcStreak(data.activity) : 0
+  const totalMessages = data?.activity.reduce((sum, a) => sum + (a.questions_done ?? 0), 0) ?? 0
+
+  const stats = [
+    { icon: Zap,           label: 'XP Earned',      value: statsLoading ? '…' : String(xp),           color: 'blue'   as const, delay: 0.1 },
+    { icon: MessageSquare, label: 'Questions Done',  value: statsLoading ? '…' : String(totalMessages), color: 'green'  as const, delay: 0.2 },
+    { icon: Target,        label: 'Topics Covered',  value: statsLoading ? '…' : String(topicsCovered), color: 'purple' as const, delay: 0.3 },
+    { icon: Flame,         label: 'Day Streak',      value: statsLoading ? '…' : String(streak),        color: 'orange' as const, delay: 0.4 },
+  ]
+
+  const firstName = profile?.name?.split(' ')[0] ?? 'there'
+
   return (
     <div className="flex min-h-screen" style={{ background: '#0B0F14' }}>
       <Sidebar />
@@ -55,7 +137,7 @@ export default function DashboardClient() {
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-primary mb-1">Welcome back 👋</p>
+                <p className="text-sm font-medium text-primary mb-1">Welcome back, {firstName} 👋</p>
                 <h2 className="text-2xl font-semibold text-foreground tracking-tight">
                   Ready to learn something today?
                 </h2>
@@ -126,7 +208,7 @@ export default function DashboardClient() {
             </div>
           </section>
 
-          {/* Recent Activity (placeholder) */}
+          {/* Recent Activity */}
           <section>
             <h3 className="text-sm font-medium text-muted uppercase tracking-widest mb-4">Recent Activity</h3>
             <motion.div
@@ -140,17 +222,33 @@ export default function DashboardClient() {
                 minHeight: '140px',
               }}
             >
-              <TrendingUp className="w-8 h-8 text-muted/40 mb-3" />
-              <p className="text-sm text-muted">No activity yet. Start a chat with Jarvis!</p>
-              <Link href="/chat">
-                <motion.button
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  className="mt-4 px-4 py-2 rounded-lg text-xs font-medium text-primary border border-primary/20 hover:bg-primary/10 transition-colors"
-                >
-                  Begin learning →
-                </motion.button>
-              </Link>
+              {data?.activity && data.activity.length > 0 ? (
+                <div className="w-full text-left space-y-2">
+                  {data.activity.slice(0, 5).map(a => (
+                    <div key={a.date} className="flex items-center justify-between text-sm">
+                      <span className="text-muted">{new Date(a.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                      <div className="flex items-center gap-4">
+                        <span className="text-foreground">{a.questions_done} questions</span>
+                        <span className="text-primary">+{a.xp_earned} XP</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  <TrendingUp className="w-8 h-8 text-muted/40 mb-3" />
+                  <p className="text-sm text-muted">No activity yet. Start a chat with Jarvis!</p>
+                  <Link href="/chat">
+                    <motion.button
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="mt-4 px-4 py-2 rounded-lg text-xs font-medium text-primary border border-primary/20 hover:bg-primary/10 transition-colors"
+                    >
+                      Begin learning →
+                    </motion.button>
+                  </Link>
+                </>
+              )}
             </motion.div>
           </section>
         </main>

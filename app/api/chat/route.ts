@@ -5,25 +5,39 @@ import { isRateLimited, getIp } from '@/lib/rateLimit'
 
 const TRIAL_DAILY_LIMIT = 20
 
+async function getUser(request: NextRequest) {
+  const supabase = createServiceClient()
+  if (!supabase) return { user: null, supabase: null }
+  const token = request.headers.get('authorization')?.replace('Bearer ', '')
+  if (!token) return { user: null, supabase }
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+  if (error || !user) return { user: null, supabase }
+  return { user, supabase }
+}
+
 export async function POST(request: NextRequest) {
   const ip = getIp(request)
   if (isRateLimited(`${ip}:chat`, 30, 60_000)) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
   }
 
-  let body: { messages?: Message[]; userId?: string; systemPrompt?: string }
+  const { user, supabase } = await getUser(request)
+  if (!supabase) return NextResponse.json({ error: 'Service unavailable' }, { status: 503 })
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  let body: { messages?: Message[]; systemPrompt?: string }
   try {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { messages, userId, systemPrompt } = body
+  const { messages, systemPrompt } = body
   if (!Array.isArray(messages) || messages.length === 0) {
     return NextResponse.json({ error: 'messages array is required' }, { status: 400 })
   }
 
-  // Validate messages
+  // Validate and sanitise messages
   const sanitised: Message[] = messages
     .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
     .map(m => ({ role: m.role, content: m.content.slice(0, 8000) }))
@@ -32,20 +46,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'No valid messages' }, { status: 400 })
   }
 
-  // Check trial limits (non-blocking auth check)
-  const supabase = createServiceClient()
-  let profile: { plan: string; trial_messages_today: number; trial_messages_reset_date: string | null } | null = null
+  // Check trial limits
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('plan, trial_messages_today, trial_messages_reset_date')
+    .eq('id', user.id)
+    .single()
 
-  if (supabase && userId) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('plan, trial_messages_today, trial_messages_reset_date')
-      .eq('id', userId)
-      .single()
-    profile = data
-  }
-
-  if (profile && profile.plan === 'student') {
+  // 'homeschool' is the paid plan value in the DB (displayed as "Student Plan" in the UI).
+  // Only free-plan users ('student' or null) are subject to the daily message limit.
+  if (profile && profile.plan !== 'homeschool') {
     const today = new Date().toISOString().split('T')[0]
     const needsReset = !profile.trial_messages_reset_date || profile.trial_messages_reset_date !== today
     const todayCount = needsReset ? 0 : (profile.trial_messages_today ?? 0)
@@ -57,15 +67,13 @@ export async function POST(request: NextRequest) {
       }, { status: 429 })
     }
 
-    // Fire-and-forget increment (log errors, never crash the main request)
-    if (supabase && userId) {
-      supabase.from('profiles').update({
-        trial_messages_today: needsReset ? 1 : todayCount + 1,
-        trial_messages_reset_date: today,
-      }).eq('id', userId).then(({ error }) => {
-        if (error) console.error('trial increment failed:', error.message)
-      })
-    }
+    // Fire-and-forget increment
+    supabase.from('profiles').update({
+      trial_messages_today: needsReset ? 1 : todayCount + 1,
+      trial_messages_reset_date: today,
+    }).eq('id', user.id).then(({ error: err }) => {
+      if (err) console.error('trial increment failed:', err.message)
+    })
   }
 
   // Call Claude
@@ -79,14 +87,12 @@ export async function POST(request: NextRequest) {
   }
 
   // Save to DB (fire-and-forget)
-  if (supabase && userId) {
-    const lastUserMsg = [...sanitised].reverse().find(m => m.role === 'user')
-    if (lastUserMsg) {
-      supabase.from('chat_history').insert([
-        { user_id: userId, role: 'user', content: lastUserMsg.content },
-        { user_id: userId, role: 'assistant', content: response },
-      ]).then(() => {})
-    }
+  const lastUserMsg = [...sanitised].reverse().find(m => m.role === 'user')
+  if (lastUserMsg) {
+    supabase.from('chat_history').insert([
+      { user_id: user.id, role: 'user', content: lastUserMsg.content },
+      { user_id: user.id, role: 'assistant', content: response },
+    ]).then(() => {})
   }
 
   return NextResponse.json({ response })

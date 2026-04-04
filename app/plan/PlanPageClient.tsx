@@ -3,9 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CalendarDays, RefreshCw, Sparkles, Trophy } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'
 import PlanCard, { type PlanTask } from '@/components/PlanCard'
+import { useAuth } from '@/lib/useAuth'
 
 type DailyPlan = {
   id: string
@@ -14,6 +16,8 @@ type DailyPlan = {
 }
 
 export default function PlanPageClient() {
+  const router = useRouter()
+  const { user, token, loading: authLoading } = useAuth()
   const [plan, setPlan] = useState<DailyPlan | null>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
@@ -25,9 +29,12 @@ export default function PlanPageClient() {
   })
 
   const fetchPlan = useCallback(async () => {
+    if (!token) return
     setLoading(true)
     try {
-      const res = await fetch('/api/plan')
+      const res = await fetch('/api/plan', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       const data = await res.json()
       setPlan(data.plan ?? null)
     } catch {
@@ -38,11 +45,15 @@ export default function PlanPageClient() {
   }, [])
 
   const generatePlan = useCallback(async () => {
+    if (!token) return
     setGenerating(true)
     try {
       const res = await fetch('/api/plan', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
       })
       const data = await res.json()
       setPlan(data.plan ?? null)
@@ -67,7 +78,10 @@ export default function PlanPageClient() {
       try {
         await fetch('/api/plan', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({ taskId, done }),
         })
       } catch {
@@ -79,17 +93,33 @@ export default function PlanPageClient() {
         )
       }
     },
-    [plan],
+    [plan, token],
   )
 
+  // Redirect if not authenticated
   useEffect(() => {
-    fetchPlan()
-  }, [fetchPlan])
+    if (!authLoading && !user) router.replace('/login')
+  }, [authLoading, user, router])
+
+  // Fetch plan once token is available
+  useEffect(() => {
+    if (token) fetchPlan()
+  }, [token, fetchPlan])
 
   const completedCount = plan?.tasks.filter(t => t.done).length ?? 0
   const totalCount = plan?.tasks.length ?? 0
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
   const allDone = totalCount > 0 && completedCount === totalCount
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center" style={{ background: '#0B0F14' }}>
+        <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+
+  if (!user) return null
 
   return (
     <div className="flex min-h-screen" style={{ background: '#0B0F14' }}>

@@ -3,13 +3,14 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { RefreshCw, Mic } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'
 import MessageBubble from '@/components/MessageBubble'
 import InputBox from '@/components/InputBox'
 import TypingIndicator from '@/components/TypingIndicator'
 import { stripNavCommand, extractNavCommand } from '@/lib/jarvis'
-import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/useAuth'
 
 type ChatMsg = {
   id: string
@@ -28,12 +29,25 @@ const INITIAL_MESSAGE: ChatMsg = {
 
 export default function ChatPageClient() {
   const router = useRouter()
+  const { user, token, loading: authLoading } = useAuth()
   const [messages, setMessages] = useState<ChatMsg[]>([INITIAL_MESSAGE])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) router.replace('/login')
+  }, [authLoading, user, router])
+
+  // Pre-fill from query param (e.g. from questions page "Ask Jarvis" button)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const q = new URLSearchParams(window.location.search).get('q')
+    if (q) setInput(decodeURIComponent(q))
+  }, [])
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -45,7 +59,7 @@ export default function ChatPageClient() {
 
   const sendMessage = useCallback(async () => {
     const text = input.trim()
-    if (!text || loading) return
+    if (!text || loading || !token) return
 
     const userMsg: ChatMsg = {
       id: Date.now().toString(),
@@ -66,7 +80,10 @@ export default function ChatPageClient() {
 
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ messages: history }),
       })
 
@@ -74,7 +91,6 @@ export default function ChatPageClient() {
       const data = await res.json()
       const rawContent: string = data.response ?? 'Sorry, something went wrong.'
 
-      // Phase 7 — Navigation control
       const navCmd = extractNavCommand(rawContent)
       const displayContent = stripNavCommand(rawContent)
 
@@ -102,9 +118,8 @@ export default function ChatPageClient() {
     } finally {
       setLoading(false)
     }
-  }, [input, loading, messages, router])
+  }, [input, loading, messages, router, token])
 
-  // Phase 8 — Voice input (Deepgram)
   const handleVoice = useCallback(async () => {
     if (isRecording) {
       mediaRecorderRef.current?.stop()
@@ -128,7 +143,10 @@ export default function ChatPageClient() {
         try {
           const res = await fetch('/api/transcribe', {
             method: 'POST',
-            headers: { 'Content-Type': mimeType },
+            headers: {
+              'Content-Type': mimeType,
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
             body: blob,
           })
           const { transcript } = await res.json()
@@ -144,11 +162,22 @@ export default function ChatPageClient() {
     } catch {
       // microphone access denied — silent fail
     }
-  }, [isRecording])
+  }, [isRecording, token])
 
   const clearChat = useCallback(() => {
     setMessages([{ ...INITIAL_MESSAGE, timestamp: new Date() }])
   }, [])
+
+  // Show loading skeleton while checking auth
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center" style={{ background: '#0B0F14' }}>
+        <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+
+  if (!user) return null
 
   return (
     <div className="flex min-h-screen" style={{ background: '#0B0F14' }}>
