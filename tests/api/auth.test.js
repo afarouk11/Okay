@@ -57,7 +57,7 @@ function res() {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   mocks.supabase.from.mockReturnValue(makeBuilder());
   process.env.SITE_URL = 'https://synaptiq.test';
 });
@@ -350,38 +350,17 @@ describe('unknown action', () => {
 
 // ─── Login — email-not-confirmed auto-retry ───────────────────────────────────
 
-describe('login — email not confirmed auto-retry', () => {
-  it('confirms email and retries login when "email not confirmed" error occurs', async () => {
-    const today = new Date().toISOString().split('T')[0];
-
-    // First sign-in attempt fails with "email not confirmed"
-    mocks.supabase.auth.signInWithPassword
-      .mockResolvedValueOnce({ data: null, error: { message: 'Email not confirmed' } })
-      // Retry after auto-confirm succeeds
-      .mockResolvedValueOnce({
-        data: {
-          session: { access_token: 'tok-retry' },
-          user: { id: 'u-confirm', email: 'confirm@b.com', user_metadata: { name: 'Confirmed' } },
-        },
-        error: null,
-      });
-
-    // listUsers for auto-confirm lookup
-    mocks.supabase.auth.admin.listUsers = vi.fn().mockResolvedValueOnce({
-      data: { users: [{ id: 'u-confirm', email: 'confirm@b.com' }] },
+describe('login — email not confirmed', () => {
+  it('returns 401 with a verification prompt when email is not confirmed', async () => {
+    mocks.supabase.auth.signInWithPassword.mockResolvedValueOnce({
+      data: null,
+      error: { message: 'Email not confirmed' },
     });
-    mocks.supabase.auth.admin.updateUserById = vi.fn().mockResolvedValueOnce({ error: null });
-
-    // profile fetch returns existing profile (today's last_active → no streak update)
-    mocks.supabase.from.mockReturnValueOnce(
-      makeBuilder({ data: { id: 'u-confirm', name: 'Confirmed', last_active: today, streak: 1, longest_streak: 1 }, error: null })
-    );
 
     const r = res();
     await handler(req({ action: 'login', email: 'confirm@b.com', password: 'pass1234' }), r);
-    expect(r.statusCode).toBe(200);
-    expect(r.body.token).toBe('tok-retry');
-    expect(mocks.supabase.auth.admin.updateUserById).toHaveBeenCalledWith('u-confirm', { email_confirm: true });
+    expect(r.statusCode).toBe(401);
+    expect(r.body.error).toMatch(/verify your email/i);
   });
 });
 
@@ -467,11 +446,11 @@ describe('login — streak update', () => {
 // ─── Verify — demo token shortcut ────────────────────────────────────────────
 
 describe('verify — demo token', () => {
-  it('returns a demo user without calling Supabase for a demo_token_', async () => {
+  it('returns 401 for demo_token_ when Supabase is configured', async () => {
     const r = res();
     await handler(req({ action: 'verify' }, 'POST', { authorization: 'Bearer demo_token_xyz' }), r);
-    expect(r.statusCode).toBe(200);
-    expect(r.body.user.id).toBe('demo');
+    expect(r.statusCode).toBe(401);
+    // Supabase.getUser should NOT have been called for a demo token
     expect(mocks.supabase.auth.getUser).not.toHaveBeenCalled();
   });
 });
