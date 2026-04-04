@@ -917,8 +917,9 @@ async function showWelcome() {
         }
 
         if (review_queue?.length) {
-          const due = review_queue.slice(0, 2).map(t => `**${t.topic}**`).join(' and ');
-          parts.push(`${due} ${review_queue.length > 1 ? 'are' : 'is'} due for revision — let's keep those sharp.`);
+          const dueSlice = review_queue.slice(0, 2);
+          const due = dueSlice.map(t => `**${t.topic}**`).join(' and ');
+          parts.push(`${due} ${dueSlice.length > 1 ? 'are' : 'is'} due for revision — let's keep those sharp.`);
         }
 
         if (parts.length) {
