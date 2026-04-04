@@ -16045,15 +16045,10 @@ SOLUTION:
 [full worked solution with every mark-worthy step clearly shown]`;
 
   try {
-    const res = await fetch('/api/chat', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6', max_tokens: 1200,
-        system: sys,
-        messages: [{ role: 'user', content: `Generate a ${tier} tier GCSE Maths question on ${topicLabel}, worth ${marksLabel} marks.` }]
-      })
-    });
-    const data = await res.json();
+    const data = await callClaude(
+      [{ role: 'user', content: `Generate a ${tier} tier GCSE Maths question on ${topicLabel}, worth ${marksLabel} marks.` }],
+      sys, 1200
+    );
     const raw = data.content?.[0]?.text || '';
     const qMatch = raw.match(/QUESTION:\s*([\s\S]+?)(?=SOLUTION:|$)/i);
     const sMatch = raw.match(/SOLUTION:\s*([\s\S]+)/i);
@@ -16072,7 +16067,7 @@ SOLUTION:
     document.getElementById('gcse-q-count').textContent = _gcseQCount;
     scoreBox.style.display = 'block';
   } catch(e) {
-    showToast('⚠️ Could not generate question — check connection');
+    showToast('⚠️ ' + (e.message || 'Could not generate question — check connection'));
   }
   loading.style.display = 'none';
   btn.disabled = false; btn.textContent = 'Generate Question ✦';
@@ -16224,21 +16219,16 @@ Return a JSON array of exactly 8 objects, each with:
 Return ONLY the JSON array, no other text.`;
 
   try {
-    const r = await fetch('/api/chat', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6', max_tokens: 3000,
-        system: sys,
-        messages: [{ role: 'user', content: 'Generate the IQ training session JSON now.' }]
-      })
-    });
-    const d = await r.json();
+    const d = await callClaude(
+      [{ role: 'user', content: 'Generate the IQ training session JSON now.' }],
+      sys, 3000
+    );
     const raw = d.content?.[0]?.text || '[]';
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
     _iqQuestions = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
     if (!_iqQuestions.length) throw new Error('empty');
   } catch(e) {
-    showToast('⚠️ Could not generate session — try again');
+    showToast('⚠️ ' + (e.message || 'Could not generate session — try again'));
     load.style.display = 'none'; btn.disabled = false; btn.textContent = 'Start Daily Session ▶';
     intro.style.display = 'grid'; return;
   }
