@@ -344,7 +344,12 @@ async function startConversation(config) {
       conversation = null;
       setOrbState('idle');
       setStatus('SYSTEMS ONLINE', 'online');
-      await armWakeWord();
+      // Hands-free: auto-restart a new session instead of waiting for wake word
+      if (window.jarvisHandsFreeMode) {
+        setTimeout(() => handleWakeWord(), 800);
+      } else {
+        await armWakeWord();
+      }
     },
 
     // Volume-reactive orb: start rAF loop when AI speaks, stop when it stops
@@ -354,6 +359,8 @@ async function startConversation(config) {
         startVolumeTracking();
       } else {
         stopVolumeTracking();
+        // Hands-free: show a listening cue after Jarvis finishes speaking
+        if (window.jarvisHandsFreeMode) showTranscript('👂 Listening…');
       }
     },
 
@@ -392,8 +399,9 @@ function createRecognition() {
   r.onresult = (event) => {
     for (let resultIdx = event.resultIndex; resultIdx < event.results.length; resultIdx++) {
       for (let altIdx = 0; altIdx < event.results[resultIdx].length; altIdx++) {
-        const transcript = event.results[resultIdx][altIdx].transcript.trim().toLowerCase();
-        if (transcript.includes('jarvis')) {
+        const transcript  = event.results[resultIdx][altIdx].transcript.trim().toLowerCase();
+        const firstFive   = transcript.split(/\s+/).slice(0, 5).join(' ');
+        if (firstFive.includes('jarvis')) {
           handleWakeWord();
           return;
         }
