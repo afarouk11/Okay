@@ -53,6 +53,8 @@ export async function POST(request: NextRequest) {
     .eq('id', user.id)
     .single()
 
+  // 'homeschool' is the paid plan value in the DB (displayed as "Student Plan" in the UI).
+  // Only free-plan users ('student' or null) are subject to the daily message limit.
   if (profile && profile.plan !== 'homeschool') {
     const today = new Date().toISOString().split('T')[0]
     const needsReset = !profile.trial_messages_reset_date || profile.trial_messages_reset_date !== today

@@ -177,7 +177,7 @@ export default function SettingsClient() {
                 value={name}
                 onChange={e => setName(e.target.value)}
                 onBlur={() => patchProfile({ name }, 'name')}
-                className="bg-transparent text-sm text-right text-foreground outline-none w-40 text-right"
+                className="bg-transparent text-sm text-right text-foreground outline-none w-40"
                 placeholder="Your name"
               />
               <SaveIndicator show={savedField === 'name'} saving={saving} />
