@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>J.A.R.V.I.S. — AI Maths Tutor | Synaptiq</title>
-<meta name="description" content="Talk or type with J.A.R.V.I.S., your personal A-Level Maths AI tutor. Voice and text chat powered by ElevenLabs and Claude.">
+<title>J.A.R.V.I.S. — AI Maths Assistant | Synaptiq</title>
+<meta name="description" content="Talk or type with J.A.R.V.I.S., your A-Level Maths AI assistant. Voice and text chat powered by ElevenLabs and Claude.">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=Space+Mono&display=swap" rel="stylesheet">
@@ -406,7 +406,7 @@ body::before{content:'';position:fixed;inset:0;background:
     <span class="nav-brand-text">Synap<em>tiq</em></span>
   </a>
   <div style="display:flex;align-items:center;gap:.75rem">
-    <span class="nav-badge">AI Teacher</span>
+    <span class="nav-badge">AI Maths Assistant</span>
     <a href="/" class="nav-back">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
       Back to App
@@ -416,8 +416,8 @@ body::before{content:'';position:fixed;inset:0;background:
 
 <!-- PAGE HERO -->
 <div class="page-hero">
-  <div class="page-hero-label">🤖 AI Teacher</div>
-  <h1>J.A.R.V.I.S. — Your <span>Personal Maths Tutor</span></h1>
+  <div class="page-hero-label">🤖 AI Maths Assistant</div>
+  <h1>J.A.R.V.I.S. — Your <span>AI Maths Assistant</span></h1>
   <p>Ask any A-Level Maths question by voice or text. Step-by-step explanations, worked examples, and instant feedback.</p>
 </div>
 
@@ -667,10 +667,10 @@ const toast         = document.getElementById('toast');
 let   toastTimer    = null;
 let   isLoading     = false;
 
-const SYSTEM_PROMPT = `You are J.A.R.V.I.S. (Just A Rather Very Intelligent System), an expert A-Level Mathematics tutor for UK students studying AQA, Edexcel, OCR, or WJEC.
+const SYSTEM_PROMPT = `You are J.A.R.V.I.S. (Just A Rather Very Intelligent System), an expert A-Level Mathematics assistant for UK students studying AQA, Edexcel, OCR, or WJEC.
 
 Your role:
-- Explain mathematical concepts clearly, step-by-step, as a patient and encouraging tutor would.
+- Explain mathematical concepts clearly, step-by-step, in a patient and encouraging way.
 - Use correct A-Level terminology and notation.
 - When writing mathematical expressions, wrap inline maths in $...$ and display maths in $$...$$. For example: "The derivative of $x^2$ is $2x$" or "$$\\int x^2\\,dx = \\frac{x^3}{3} + C$$"
 - Break down complex problems into numbered steps.
@@ -823,7 +823,7 @@ function hideQuickPrompts() {
 /* ── Welcome message ────────────────────────────────────────── */
 function showWelcome() {
   appendMessage('assistant',
-    "Hi! I'm **J.A.R.V.I.S.**, your A-Level Maths AI tutor. 👋\n\n" +
+    "Hi! I'm **J.A.R.V.I.S.**, your A-Level Maths AI assistant. 👋\n\n" +
     "I can help you with:\n" +
     "- **Pure Maths** — Calculus, Algebra, Trigonometry, Proof\n" +
     "- **Statistics** — Probability, Distributions, Hypothesis Testing\n" +

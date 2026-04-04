@@ -4947,7 +4947,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
         <div class="tutor-chat">
           <div class="tutor-header">
             <div>
-              <h3 id="tutor-subject-title">A-Level Maths Tutor</h3>
+              <h3 id="tutor-subject-title">A-Level Maths Assistant</h3>
               <p id="tutor-topic-sub">Ask me anything — I'll show full working step by step</p>
             </div>
             <div style="display:flex;gap:.5rem">
@@ -4977,7 +4977,7 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
             <div style="text-align:center;margin-bottom:2rem">
               <div style="width:48px;height:48px;background:linear-gradient(135deg,#00D4FF,#7B40FF);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin:0 auto .9rem;box-shadow:0 0 24px rgba(0,212,255,0.3)">✦</div>
               <div style="font-family:var(--font-head);font-size:1.6rem;font-weight:900;margin-bottom:.4rem;background:linear-gradient(135deg,#E8F0FF,#00D4FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">How can I help you?</div>
-              <div style="font-size:.875rem;color:var(--muted)">Your Jarvis-powered A-Level Maths tutor</div>
+              <div style="font-size:.875rem;color:var(--muted)">Your Jarvis-powered A-Level Maths assistant</div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
               <button onclick="useTutorStarter(this)" class="tutor-starter-chip">📐 Integration by parts</button>
@@ -8547,7 +8547,7 @@ function _buildTutorGreeting() {
 
   if (sessions === 0 || !lastTopics.length) {
     // First session — onboarding
-    return `${hi} I'm Synaptiq — your personal AI teacher for A-Level Maths ✦\n\nI'm not just here to answer questions. I remember what you tell me, I'll build a study plan for you, and I'll keep track of what we work on together — so every session builds on the last.\n\n**Quick question first:** how do you like to learn?\n- **Fast and direct** — just the key steps, no fluff\n- **Full explanation** — take me through it properly\n- **Chat it through** — let's think together\n\nOr just ask me anything and we'll figure it out as we go!`;
+    return `${hi} I'm Synaptiq — your personal AI maths assistant for A-Level ✦\n\nI'm not just here to answer questions. I remember what you tell me, I'll build a study plan for you, and I'll keep track of what we work on together — so every session builds on the last.\n\n**Quick question first:** how do you like to learn?\n- **Fast and direct** — just the key steps, no fluff\n- **Full explanation** — take me through it properly\n- **Chat it through** — let's think together\n\nOr just ask me anything and we'll figure it out as we go!`;
   }
 
   // Returning student — build a contextual greeting
@@ -9303,7 +9303,7 @@ async function dashSend() {
   typing.innerHTML = '<span></span><span></span><span></span>';
   document.getElementById('dash-chat').appendChild(typing);
   document.getElementById('dash-chat').scrollTop = 99999;
-  const sys = 'You are Synaptiq, an expert A-Level Maths AI tutor. Answer questions concisely and helpfully for UK A-Level students. Keep answers short (2-3 paragraphs max) for the dashboard widget. Always show key working steps even in brief answers. ' + getA11yInstructions();
+  const sys = 'You are Synaptiq, an expert A-Level Maths AI assistant. Answer questions concisely and helpfully for UK A-Level students. Keep answers short (2-3 paragraphs max) for the dashboard widget. Always show key working steps even in brief answers. ' + getA11yInstructions();
   try {
     const data = await callClaude(state.dashHistory, sys);
     const reply = getReply(data);
@@ -20898,6 +20898,9 @@ function voSetState(s) {
 }
 
 async function voOpen(mode, context) {
+  // Don't start a new session while one is already connecting
+  if (VO.state === 'thinking') return;
+
   VO.mode    = mode    || 'tutor';
   VO.context = context || state?.topic || 'A-Level Maths';
   VO.history = [];
@@ -20907,8 +20910,8 @@ async function voOpen(mode, context) {
   const title     = document.getElementById('vo-title');
   if (!overlay) return;
 
-  if (modeLabel) modeLabel.textContent = mode === 'teacher' ? 'AI Teacher' : 'AI Tutor';
-  if (title)     title.textContent     = mode === 'teacher' ? '🎓 TEACHER' : '✦ JARVIS';
+  if (modeLabel) modeLabel.textContent = 'AI Maths Assistant';
+  if (title)     title.textContent     = '✦ JARVIS';
 
   overlay.classList.add('open');
 
@@ -20974,7 +20977,10 @@ async function voOpen(mode, context) {
       });
     } catch(e) {
       VO.conversation = null;
-      voClose();
+      // Keep overlay open so the user can see the error and tap Speak to retry
+      voSetState('idle');
+      const voStatus = document.getElementById('vo-status');
+      if (voStatus) voStatus.textContent = '⚠️ Connection failed — tap Speak to retry';
       showToast('⚠️ ' + (e.message || 'Could not start Jarvis'));
     }
   } else {
@@ -21037,8 +21043,12 @@ async function voStartListening() {
 }
 
 function voTapMic() {
-  // In ElevenLabs (Jarvis) mode the session handles turn detection automatically
-  if (VO.conversation) return;
+  // In ElevenLabs (Jarvis) tutor mode: turn detection is automatic when connected.
+  // If not connected (e.g. after a failed attempt), retry the connection.
+  if (VO.mode === 'tutor') {
+    if (!VO.conversation) voOpen(VO.mode, VO.context);
+    return;
+  }
 
   if (VO.state === 'listening') {
     VO.recog?.stop();
