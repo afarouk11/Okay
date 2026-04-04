@@ -55,6 +55,8 @@ export default async function handler(req, res) {
   if (!topic || typeof topic !== 'string' || !topic.trim()) {
     return res.status(400).json({ error: 'topic is required.' });
   }
+  // Cap topic length to prevent prompt-stuffing via the user-controlled field
+  const safeTopic = topic.trim().slice(0, 120);
 
   if (!exam_board || !ALLOWED_EXAM_BOARDS.has(exam_board)) {
     return res.status(400).json({
