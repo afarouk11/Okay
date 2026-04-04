@@ -126,7 +126,12 @@ export default async function handler(req, res) {
   // Non-webhook: parse JSON body if not already an object (bodyParser is disabled)
   if (req.body === undefined || typeof req.body !== 'object' || req.body === null) {
     const raw = await getRawBody(req);
-    try { req.body = JSON.parse(raw.toString() || '{}'); } catch (e) { console.error('JSON parse error:', e.message); req.body = {}; }
+    try {
+      req.body = JSON.parse(raw.toString() || '{}');
+    } catch (e) {
+      console.error('JSON parse error:', e.message);
+      return res.status(400).json({ error: 'Invalid JSON body' });
+    }
   }
 
   const ip = getIp(req);
