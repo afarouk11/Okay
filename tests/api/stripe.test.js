@@ -5,6 +5,7 @@
  */
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { EventEmitter } from 'events';
 
 import handler from '../../api/stripe.js';
 
@@ -21,6 +22,21 @@ function res() {
   r.json = (d) => { r.body = d; return r; };
   r.end = () => r;
   return r;
+}
+
+// Simulate a non-webhook POST request with bodyParser disabled (raw body stream).
+function makeStreamReq(rawBody = '{}') {
+  const emitter = new EventEmitter();
+  const request = Object.assign(emitter, {
+    method: 'POST',
+    headers: {},   // no stripe-signature → non-webhook path
+    body: undefined,
+  });
+  setImmediate(() => {
+    emitter.emit('data', Buffer.from(rawBody));
+    emitter.emit('end');
+  });
+  return request;
 }
 
 beforeEach(() => {
@@ -286,5 +302,51 @@ describe('homeschool plan', () => {
     await handler(req({ plan: 'homeschool', email: 'parent@test.com' }), r);
     expect(r.statusCode).toBe(200);
     expect(capturedBody).toContain('price_homeschool_test');
+  });
+});
+
+// ─── Raw-body / streamed request (bodyParser disabled) ───────────────────────
+// These tests simulate the production path where Next.js/Vercel does NOT parse
+// the request body because `export const config = { api: { bodyParser: false } }`
+// is set.  The handler must read the raw stream and parse JSON itself.
+
+describe('raw-body parsing (bodyParser disabled)', () => {
+  beforeEach(() => {
+    process.env.STRIPE_SECRET_KEY = 'sk_test_123';
+  });
+
+  it('parses a valid JSON stream and proceeds to the checkout handler', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ id: 'cs_stream_ok', url: 'https://checkout.stripe.com/stream' }),
+    });
+
+    const r = res();
+    await handler(
+      makeStreamReq(JSON.stringify({ plan: 'student', email: 'stream@test.com' })),
+      r,
+    );
+    expect(r.statusCode).toBe(200);
+    expect(r.body.url).toBe('https://checkout.stripe.com/stream');
+  });
+
+  it('returns 400 when the streamed body is invalid JSON', async () => {
+    const r = res();
+    await handler(makeStreamReq('not-valid-json{{{'), r);
+    expect(r.statusCode).toBe(400);
+    expect(r.body.error).toMatch(/invalid json/i);
+  });
+
+  it('treats an empty body stream as an empty object and proceeds', async () => {
+    // Empty raw body falls back to '{}' via `raw.toString() || '{}'` → parses OK
+    // → handler proceeds with an empty body (no plan/email) and calls Stripe API.
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ id: 'cs_empty', url: 'https://stripe.com/empty' }),
+    });
+    const r = res();
+    await handler(makeStreamReq(''), r);
+    // Should NOT return 400 (no JSON parse error); handler proceeds with {}
+    expect(r.statusCode).not.toBe(400);
   });
 });
