@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { applyHeaders, isRateLimited, getIp } from './_lib.js';
-import { timingSafeEqual } from 'crypto';
+import { timingSafeEqual, createHash } from 'crypto';
 
 let supabase = null;
 if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
@@ -37,11 +37,14 @@ export default async function handler(req, res) {
   const adminKey = req.headers['x-admin-key'] || '';
   const expectedKey = process.env.ADMIN_SECRET_KEY || '';
   let isAuthorized = false;
-  if (adminKey.length > 0 && adminKey.length === expectedKey.length) {
-    try {
-      isAuthorized = timingSafeEqual(Buffer.from(adminKey), Buffer.from(expectedKey));
-    } catch (_) {}
-  }
+  try {
+    if (expectedKey.length > 0) {
+      // Hash both to equal-length digests so timingSafeEqual can't leak key length
+      const a = createHash('sha256').update(adminKey).digest();
+      const b = createHash('sha256').update(expectedKey).digest();
+      isAuthorized = timingSafeEqual(a, b);
+    }
+  } catch (_) {}
   if (!isAuthorized) {
     return res.status(403).json({ error: 'Forbidden' });
   }
