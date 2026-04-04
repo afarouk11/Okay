@@ -57,12 +57,14 @@ export async function POST(request: NextRequest) {
       }, { status: 429 })
     }
 
-    // Fire-and-forget increment
+    // Fire-and-forget increment (log errors, never crash the main request)
     if (supabase && userId) {
       supabase.from('profiles').update({
         trial_messages_today: needsReset ? 1 : todayCount + 1,
         trial_messages_reset_date: today,
-      }).eq('id', userId).then(() => {})
+      }).eq('id', userId).then(({ error }) => {
+        if (error) console.error('trial increment failed:', error.message)
+      })
     }
   }
 

@@ -85,7 +85,7 @@ Example format:
 
 Return ONLY the JSON array, no other text.`
 
-  let tasks: PlanTask[]
+  let tasks: PlanTask[] = []
   try {
     const raw = await sendToClaude(
       [{ role: 'user', content: prompt }],
