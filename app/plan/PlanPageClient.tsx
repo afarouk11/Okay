@@ -56,7 +56,8 @@ export default function PlanPageClient() {
         headers,
         body: JSON.stringify({ time_available: timeAvailable, focus: focus || undefined, save_tasks: saveTasks }),
       });
-      const data = await r.json() as { plan?: Plan; error?: string };
+      let data: { plan?: Plan; error?: string } = {};
+      try { data = await r.json(); } catch (_) {}
       if (!r.ok) { setError(data.error ?? 'Failed to generate plan'); return; }
       if (data.plan) setPlan(data.plan);
     } catch (_) {
