@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import ChatWindow from '@/components/ChatWindow'
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar'
-import Link from 'next/link'
+import ConditionalSiteFooter from '@/components/ConditionalSiteFooter'
 
 export const metadata: Metadata = {
   title: {
@@ -47,38 +47,9 @@ export default function RootLayout({
         {children}
         <ChatWindow />
         <ServiceWorkerRegistrar />
-        <SiteFooter />
+        <ConditionalSiteFooter />
       </body>
     </html>
   )
 }
 
-function SiteFooter() {
-  return (
-    <footer
-      className="border-t py-5"
-      style={{ borderColor: 'rgba(255,255,255,0.05)', background: 'rgba(11,15,20,0.6)' }}
-    >
-      <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-3">
-        <span className="text-xs" style={{ color: '#6B7394' }}>© {new Date().getFullYear()} Synaptiq Ltd</span>
-        <nav className="flex flex-wrap gap-4">
-          {[
-            { href: '/privacy',  label: 'Privacy'  },
-            { href: '/terms',    label: 'Terms'    },
-            { href: '/cookies',  label: 'Cookies'  },
-            { href: '/contact',  label: 'Contact'  },
-          ].map(({ href, label }) => (
-            <Link
-              key={href}
-              href={href}
-              className="text-xs transition-colors hover:text-white"
-              style={{ color: '#6B7394' }}
-            >
-              {label}
-            </Link>
-          ))}
-        </nav>
-      </div>
-    </footer>
-  )
-}

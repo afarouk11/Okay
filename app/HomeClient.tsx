@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { FAQ_ITEMS } from './home-data'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -47,18 +48,6 @@ const SUBJECTS = [
   { icon: '🔧', name: 'Mechanics Y2', level: 'Year 13' },
   { icon: '📄', name: 'Past Papers', level: 'All Boards' },
   { icon: '✅', name: 'Mark Schemes', level: 'AI Aligned' },
-]
-
-const FAQ_ITEMS = [
-  { q: 'Is there actually a free trial? Do I need a card?', a: 'Yes — 7 days completely free. Your card is stored securely via Stripe but not charged until the trial ends. Cancel any time with one click. No questions asked.' },
-  { q: 'How is Synaptiq different from ChatGPT?', a: "ChatGPT is a general assistant. Synaptiq is trained specifically on A-Level Maths curricula — it knows AQA, Edexcel, OCR and WJEC mark schemes, shows working exactly how examiners expect it, tracks your progress over time, and won't hallucinate a GCSE answer when you ask an A-Level question." },
-  { q: 'Which exam boards does Synaptiq cover?', a: 'AQA, Edexcel, OCR, and WJEC — all fully supported. You set your exam board during signup and every answer is aligned to that board\'s mark scheme style.' },
-  { q: 'Can I use Synaptiq for both Year 12 and Year 13?', a: 'Yes. The full content library covers Pure 1 & 2, Statistics Y1 & Y2, and Mechanics Y1 & Y2 — so whether you\'re starting AS or finishing A2, every topic is covered.' },
-  { q: 'What if I get the same question wrong repeatedly?', a: 'Synaptiq tracks your weak spots and surfaces them through the spaced-repetition flashcard system. The more you practice, the smarter your personalised revision plan becomes.' },
-  { q: 'Is Synaptiq suitable if I have ADHD, dyslexia, or dyscalculia?', a: 'Yes — these are first-class features, not afterthoughts. ADHD mode breaks responses into shorter, focused steps. Dyslexia mode uses Lexend font with increased spacing. Dyscalculia mode adds colour-coded working and visual number lines.' },
-  { q: 'How much does it cost after the trial?', a: '£35/month (about £1.17/day), or £276/year (£23/month, saving 34%). For context, the average A-Level Maths tutor on Tutorful charges £41.59/hour — Synaptiq gives you unlimited 24/7 access for less than the cost of a single tutoring session per month.' },
-  { q: 'Can parents see how their child is progressing?', a: 'Yes. Students can open the Parent View from their dashboard at any time and email a progress report directly to a parent or guardian. The report includes study streak, questions answered, XP earned, and the specific topics needing most attention — no account needed for the parent.' },
-  { q: 'Can my school or college get Synaptiq?', a: 'Yes. We offer custom pricing for schools, sixth forms, and tuition centres with whole-class accounts, teacher dashboards, and invoice billing. Email schools@synaptiqai.co.uk or click "Book a Demo" on the pricing section.' },
 ]
 
 const EXAM_CHIPS = ['📐 Product rule', '∫ Integration by parts', '🔢 Binomial expansion', '📊 Hypothesis testing']
@@ -140,43 +129,14 @@ export default function HomeClient() {
     setChatMessages(prev => [...prev, { role: 'user', content: q }])
     setDemoLoading(true)
 
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: q }],
-          systemPrompt: 'You are an expert A-Level Maths tutor. Show full working step by step, exactly as a UK mark scheme expects. Keep responses focused and clear.',
-        }),
-      })
-
-      if (res.status === 401 || res.status === 403) {
-        setChatMessages(prev => [...prev, {
-          role: 'assistant',
-          content: '👋 Great question! To see the full step-by-step working, sign up for a free 7-day trial. No card charged for 7 days — cancel any time.',
-        }])
-      } else if (!res.ok) {
-        const data = await res.json().catch(() => ({})) as { error?: string }
-        setChatMessages(prev => [...prev, {
-          role: 'assistant',
-          content: data.error ?? 'Sorry, I couldn\'t process that right now. Sign up to get full access.',
-        }])
-      } else {
-        const data = await res.json() as { response?: string }
-        setChatMessages(prev => [...prev, {
-          role: 'assistant',
-          content: data.response ?? 'Sign up for the full answer!',
-        }])
-        setDemoCount(c => c + 1)
-      }
-    } catch {
-      setChatMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'Hmm, couldn\'t reach the AI right now. Sign up for guaranteed full access — 7-day free trial.',
-      }])
-    } finally {
-      setDemoLoading(false)
-    }
+    // The chat API requires authentication. Show a sign-up prompt directly.
+    await new Promise<void>(resolve => setTimeout(resolve, 700))
+    setChatMessages(prev => [...prev, {
+      role: 'assistant',
+      content: '👋 Thanks for your question! Full step-by-step AI answers are available after sign up so we can use the secure chat service. Start your free 7-day trial to see the complete working.',
+    }])
+    setDemoCount(c => c + 1)
+    setDemoLoading(false)
   }, [demoCount, demoLoading])
 
   return (
@@ -564,6 +524,7 @@ export default function HomeClient() {
               value={demoInput}
               onChange={e => setDemoInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendDemo(demoInput)}
+              aria-label="Type your own A-Level Maths question"
               placeholder="Or type your own A-Level Maths question…"
               style={{
                 flex: 1, background: 'rgba(255,255,255,0.04)',
@@ -1072,7 +1033,7 @@ export default function HomeClient() {
           {/* Bottom bar */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <p style={{ color: MUTED, fontSize: '.75rem' }}>© 2025 Synaptiq Ltd. All rights reserved.</p>
+              <p style={{ color: MUTED, fontSize: '.75rem' }}>© {new Date().getFullYear()} Synaptiq Ltd. All rights reserved.</p>
               <p style={{ color: MUTED, fontSize: '.7rem', marginTop: '.2rem' }}>Registered in England &amp; Wales · hello@synaptiqai.co.uk</p>
             </div>
             <div style={{ display: 'flex', gap: '.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
