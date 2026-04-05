@@ -24143,7 +24143,33 @@ function escHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
+// Handle ?nav= parameter — allows other pages to deep-link into a dashboard section
+(function _handleNavParam() {
+  try {
+    const params = new URLSearchParams(location.search);
+    const nav = params.get('nav');
+    if (!nav) return;
+    history.replaceState({}, '', location.pathname);
+    // Wait for dashboard to be ready then navigate
+    const attempt = (tries) => {
+      if (typeof showDash === 'function') {
+        showDash(nav);
+      } else if (tries > 0) {
+        setTimeout(() => attempt(tries - 1), 150);
+      }
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => attempt(10));
+    } else {
+      attempt(10);
+    }
+  } catch(_) {}
+})();
+
 </script>
+
+<!-- Jarvis floating widget -->
+<script src="/src/components/jarvis-widget.js"></script>
 
 
 </body>

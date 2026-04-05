@@ -16,10 +16,10 @@ interface ChatMessage {
   time: string;
 }
 
-interface Session {
+interface Memory {
+  type?: string;
+  content?: string;
   topic?: string;
-  mastery_score?: number;
-  specific_errors?: string[];
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -112,7 +112,7 @@ export default function JarvisPageClient() {
   const [isLoading, setIsLoading] = useState(false);
   const [teachMode, setTeachMode] = useState<TeachMode>('standard');
   const [showQuickPrompts, setShowQuickPrompts] = useState(true);
-  const [lastSession, setLastSession] = useState<Session | null>(null);
+  const [lastSession, setLastSession] = useState<Memory | null>(null);
   const [toast, setToast] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -127,60 +127,33 @@ export default function JarvisPageClient() {
     if (loading) return;
 
     async function init() {
+      let lastMemory: Memory | null = null;
+
       if (token) {
         try {
-          const r = await fetch('/api/memory?limit=1', {
+          const r = await fetch('/api/memory', {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (r.ok) {
-            const { sessions } = await r.json() as { sessions: Array<{ topic?: string; mastery_score?: number; specific_errors?: string[] }> };
-            if (sessions?.length) setLastSession(sessions[0]);
-          }
-        } catch (_) {}
-      }
-
-      let welcomeText = '';
-      if (token) {
-        try {
-          const r = await fetch('/api/adaptive', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ action: 'get_learning_insights' }),
-          });
-          if (r.ok) {
-            const { stats, weak_topics, review_queue } = await r.json() as {
-              stats?: { streak?: number };
-              weak_topics?: Array<{ topic: string; accuracy: number }>;
-              review_queue?: Array<{ topic: string }>;
-            };
-            const parts: string[] = [];
-            if (stats?.streak && stats.streak > 1) parts.push(`🔥 You're on a **${stats.streak}-day streak** — keep it going!`);
-            if (weak_topics?.length) {
-              const top = weak_topics.slice(0, 2).map(t => `**${t.topic}** (${t.accuracy}% accuracy)`).join(' and ');
-              parts.push(`I've noticed you've been struggling with ${top} — want to work on that today?`);
-            }
-            if (review_queue?.length) {
-              const dueSlice = review_queue.slice(0, 2);
-              const due = dueSlice.map(t => `**${t.topic}**`).join(' and ');
-              parts.push(`${due} ${dueSlice.length > 1 ? 'are' : 'is'} due for revision.`);
-            }
-            if (parts.length) {
-              welcomeText = "Hi! I'm **J.A.R.V.I.S.**, your A-Level Maths AI assistant. 👋\n\n" +
-                parts.join('\n\n') +
-                '\n\nAsk me anything below! 🚀';
+            const { memories } = await r.json() as { memories: Memory[] };
+            if (memories?.length) {
+              lastMemory = memories[0];
+              setLastSession(memories[0]);
             }
           }
         } catch (_) {}
       }
 
-      if (!welcomeText) {
-        welcomeText = "Hi! I'm **J.A.R.V.I.S.**, your A-Level Maths AI assistant. 👋\n\n" +
-          "I can help you with:\n" +
-          "- **Pure Maths** — Calculus, Algebra, Trigonometry, Proof\n" +
-          "- **Statistics** — Probability, Distributions, Hypothesis Testing\n" +
-          "- **Mechanics** — Forces, Kinematics, Moments\n\n" +
-          "Ask me anything or pick a suggestion below! 🚀";
+      let welcomeText = "Hi! I'm **J.A.R.V.I.S.**, your A-Level Maths AI assistant. 👋\n\n";
+      if (lastMemory?.topic) {
+        welcomeText += `Last time we worked on **${sanitize(lastMemory.topic)}**. Ready to continue?\n\n`;
       }
+      welcomeText +=
+        "I can help you with:\n" +
+        "- **Pure Maths** — Calculus, Algebra, Trigonometry, Proof\n" +
+        "- **Statistics** — Probability, Distributions, Hypothesis Testing\n" +
+        "- **Mechanics** — Forces, Kinematics, Moments\n\n" +
+        "Ask me anything or pick a suggestion below! 🚀";
 
       setMessages([{ id: makeId(), role: 'assistant', content: welcomeText, time: formatTime() }]);
     }
@@ -226,14 +199,13 @@ export default function JarvisPageClient() {
         headers,
         body: JSON.stringify({
           messages: historyRef.current,
-          system: effectiveSystem,
-          max_tokens: 2000,
+          systemPrompt: effectiveSystem,
         }),
       });
-      const data = await r.json() as { content?: Array<{ text: string }>; error?: string; code?: string };
+      const data = await r.json() as { response?: string; error?: string; code?: string };
 
       if (!r.ok) {
-        if (data.code === 'daily_limit_exceeded') {
+        if (data.code === 'TRIAL_LIMIT') {
           setMessages(m => [...m, { id: makeId(), role: 'assistant', content: "⚠️ You've reached your daily message limit. Upgrade to **Pro** to continue!", time: formatTime() }]);
         } else {
           showToast(data.error ?? 'Something went wrong — please try again.');
@@ -242,7 +214,7 @@ export default function JarvisPageClient() {
         return;
       }
 
-      const reply = data.content?.[0]?.text ?? '';
+      const reply = data.response ?? '';
       setMessages(m => [...m, { id: makeId(), role: 'assistant', content: reply, time: formatTime() }]);
       historyRef.current.push({ role: 'assistant', content: reply });
     } catch (_) {
@@ -400,8 +372,8 @@ export default function JarvisPageClient() {
             <div className="glass-card" style={{ marginTop: '1rem' }}>
               <div className="section-label">📚 Last session</div>
               <div className="memory-card">
-                {lastSession.topic && <span><strong>Topic:</strong> {sanitize(lastSession.topic)} · </span>}
-                {lastSession.mastery_score != null && <span><strong>Mastery:</strong> {Math.round(lastSession.mastery_score * 100)}%</span>}
+                {lastSession.topic && <span><strong>Topic:</strong> {sanitize(lastSession.topic)}</span>}
+                {lastSession.content && !lastSession.topic && <span>{sanitize(lastSession.content.slice(0, 80))}</span>}
               </div>
             </div>
           )}

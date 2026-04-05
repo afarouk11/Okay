@@ -1,16 +1,15 @@
-'use client';
+'use client'
 
-import { useEffect, useRef, useState } from 'react';
-import { createBrowserSupabase } from './supabase';
+import { useState, useEffect, useRef, useCallback } from 'react'
+import type { User, Session } from '@supabase/supabase-js'
+import { createBrowserClient } from '@/lib/supabase'
 
-export interface AuthState {
-  user: { id: string; email?: string } | null;
-  session: { access_token: string } | null;
-  token: string | null;
-  loading: boolean;
+export type AuthState = {
+  user: User | null
+  session: Session | null
+  token: string | null
+  loading: boolean
 }
-
-const REFRESH_MARGIN_MS = 5 * 60 * 1000; // refresh 5 min before expiry
 
 export function useAuth(): AuthState {
   const [state, setState] = useState<AuthState>({
@@ -18,70 +17,71 @@ export function useAuth(): AuthState {
     session: null,
     token: null,
     loading: true,
-  });
-  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  })
+
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const supabaseRef = useRef(createBrowserClient())
+
+  const scheduleRefresh = useCallback((session: Session | null) => {
+    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+    const supabase = supabaseRef.current
+    if (!session?.expires_at || !supabase) return
+
+    // Refresh 5 minutes before expiry
+    const expiresMs = session.expires_at * 1000
+    const refreshAt = expiresMs - 5 * 60 * 1000
+    const delay = refreshAt - Date.now()
+
+    if (delay > 0) {
+      refreshTimerRef.current = setTimeout(async () => {
+        const { data } = await supabase.auth.refreshSession()
+        if (data.session) {
+          setState({
+            user: data.session.user,
+            session: data.session,
+            token: data.session.access_token,
+            loading: false,
+          })
+          scheduleRefresh(data.session)
+        }
+      }, delay)
+    }
+  }, [])
 
   useEffect(() => {
-    const supabase = createBrowserSupabase();
+    const supabase = supabaseRef.current
     if (!supabase) {
-      // Demo mode — try localStorage fallback
-      try {
-        const token = localStorage.getItem('synaptiq_token');
-        const saved = localStorage.getItem('synaptiq_user');
-        if (token) {
-          const user = saved ? JSON.parse(saved) : { id: 'demo' };
-          setState({ user, session: { access_token: token }, token, loading: false });
-          return;
-        }
-      } catch (_) {}
-      setState(s => ({ ...s, loading: false }));
-      return;
-    }
-
-    function scheduleRefresh(expiresAt: number) {
-      if (refreshTimer.current) clearTimeout(refreshTimer.current);
-      const msLeft = expiresAt * 1000 - Date.now() - REFRESH_MARGIN_MS;
-      if (msLeft > 0) {
-        refreshTimer.current = setTimeout(async () => {
-          const { data } = await supabase!.auth.refreshSession();
-          if (data.session) {
-            setState({
-              user: data.session.user,
-              session: data.session,
-              token: data.session.access_token,
-              loading: false,
-            });
-            scheduleRefresh(data.session.expires_at ?? 0);
-          }
-        }, msLeft);
-      }
+      setState({ user: null, session: null, token: null, loading: false })
+      return
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setState({
         user: session?.user ?? null,
-        session: session ?? null,
+        session,
         token: session?.access_token ?? null,
         loading: false,
-      });
-      if (session?.expires_at) scheduleRefresh(session.expires_at);
-    });
+      })
+      scheduleRefresh(session ?? null)
+    }).catch(() => {
+      setState({ user: null, session: null, token: null, loading: false })
+    })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setState({
         user: session?.user ?? null,
-        session: session ?? null,
+        session,
         token: session?.access_token ?? null,
         loading: false,
-      });
-      if (session?.expires_at) scheduleRefresh(session.expires_at);
-    });
+      })
+      scheduleRefresh(session ?? null)
+    })
 
     return () => {
-      subscription.unsubscribe();
-      if (refreshTimer.current) clearTimeout(refreshTimer.current);
-    };
-  }, []);
+      subscription.unsubscribe()
+      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current)
+    }
+  }, [scheduleRefresh])
 
-  return state;
+  return state
 }

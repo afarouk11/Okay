@@ -1,217 +1,278 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useAuth } from '@/lib/useAuth';
+import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { CalendarDays, RefreshCw, Sparkles, Trophy } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import Sidebar from '@/components/Sidebar'
+import Header from '@/components/Header'
+import PlanCard, { type PlanTask } from '@/components/PlanCard'
+import { useAuth } from '@/lib/useAuth'
 
-interface PlanSession {
-  topic: string;
-  duration_min: number;
-  type: 'Study' | 'Practice' | 'Revision' | 'Break';
-  why: string;
+type DailyPlan = {
+  id: string
+  date: string
+  tasks: PlanTask[]
 }
-
-interface Plan {
-  date: string;
-  time_available: number;
-  sessions: PlanSession[];
-}
-
-const TYPE_COLORS: Record<string, string> = {
-  Study:    'rgba(0,212,255,0.15)',
-  Practice: 'rgba(176,96,255,0.15)',
-  Revision: 'rgba(201,168,76,0.15)',
-  Break:    'rgba(0,255,157,0.10)',
-};
-const TYPE_BORDERS: Record<string, string> = {
-  Study:    'rgba(0,212,255,0.35)',
-  Practice: 'rgba(176,96,255,0.35)',
-  Revision: 'rgba(201,168,76,0.35)',
-  Break:    'rgba(0,255,157,0.25)',
-};
-const TYPE_ICONS: Record<string, string> = {
-  Study: '📖', Practice: '✏️', Revision: '🔄', Break: '☕',
-};
 
 export default function PlanPageClient() {
-  const { token, loading } = useAuth();
-  const [timeAvailable, setTimeAvailable] = useState(60);
-  const [focus, setFocus] = useState('');
-  const [saveTasks, setSaveTasks] = useState(false);
-  const [plan, setPlan] = useState<Plan | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState('');
+  const router = useRouter()
+  const { user, token, loading: authLoading } = useAuth()
+  const [plan, setPlan] = useState<DailyPlan | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [generating, setGenerating] = useState(false)
+  const [today, setToday] = useState('')
 
-  async function generatePlan() {
-    setIsGenerating(true);
-    setError('');
-    setPlan(null);
+  useEffect(() => {
+    setToday(new Date().toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    }))
+  }, [])
 
+  const fetchPlan = useCallback(async () => {
+    if (!token) return
+    setLoading(true)
     try {
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const r = await fetch('/api/plan', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ time_available: timeAvailable, focus: focus || undefined, save_tasks: saveTasks }),
-      });
-      let data: { plan?: Plan; error?: string } = {};
-      try { data = await r.json(); } catch (_) {}
-      if (!r.ok) { setError(data.error ?? 'Failed to generate plan'); return; }
-      if (data.plan) setPlan(data.plan);
-    } catch (_) {
-      setError('Connection error — please try again.');
+      const res = await fetch('/api/plan', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const data = await res.json()
+      setPlan(data.plan ?? null)
+    } catch {
+      // no-op
     } finally {
-      setIsGenerating(false);
+      setLoading(false)
     }
+  }, [token])
+
+  const generatePlan = useCallback(async () => {
+    if (!token) return
+    setGenerating(true)
+    try {
+      const res = await fetch('/api/plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      const data = await res.json()
+      setPlan(data.plan ?? null)
+    } catch {
+      // no-op
+    } finally {
+      setGenerating(false)
+    }
+  }, [token])
+
+  const toggleTask = useCallback(
+    async (taskId: string, done: boolean) => {
+      if (!plan) return
+
+      // Optimistic update
+      setPlan(prev =>
+        prev
+          ? { ...prev, tasks: prev.tasks.map(t => (t.id === taskId ? { ...t, done } : t)) }
+          : null,
+      )
+
+      try {
+        await fetch('/api/plan', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ taskId, done }),
+        })
+      } catch {
+        // revert on error
+        setPlan(prev =>
+          prev
+            ? { ...prev, tasks: prev.tasks.map(t => (t.id === taskId ? { ...t, done: !done } : t)) }
+            : null,
+        )
+      }
+    },
+    [plan, token],
+  )
+
+  // Redirect if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) router.replace('/login')
+  }, [authLoading, user, router])
+
+  // Fetch plan once token is available
+  useEffect(() => {
+    if (token) fetchPlan()
+  }, [token, fetchPlan])
+
+  const completedCount = plan?.tasks.filter(t => t.done).length ?? 0
+  const totalCount = plan?.tasks.length ?? 0
+  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
+  const allDone = totalCount > 0 && completedCount === totalCount
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center" style={{ background: '#0B0F14' }}>
+        <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+      </div>
+    )
   }
 
-  if (loading) {
-    return <div style={{ display: 'flex', justifyContent: 'center', paddingTop: '4rem' }}><div className="spin" /></div>;
-  }
+  if (!user) return null
 
   return (
-    <>
-      <style>{`
-        .spin { width:32px;height:32px;border:2px solid rgba(0,212,255,0.15);border-top-color:#00D4FF;border-radius:50%;animation:spin .8s linear infinite }
-        @keyframes spin { to { transform: rotate(360deg) } }
-        #plan-nav { position:sticky;top:0;z-index:200;background:rgba(3,5,13,0.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,212,255,0.10);padding:0 2rem;height:64px;display:flex;align-items:center;justify-content:space-between }
-        .nav-brand { display:flex;align-items:center;gap:.6rem;font-family:'Playfair Display',serif;font-weight:700;font-size:1.15rem;text-decoration:none;color:#E8F0FF }
-        .nav-brand-icon { width:30px;height:30px;background:linear-gradient(135deg,#00D4FF,#B060FF);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem }
-        .nav-brand-text em { font-style:normal;background:linear-gradient(135deg,#00D4FF,#B060FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text }
-        .nav-back { display:inline-flex;align-items:center;gap:.5rem;color:#5A7499;font-size:.85rem;text-decoration:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:20px;padding:.3rem .85rem }
-        .nav-back:hover { color:#E8F0FF }
-        .page-wrap { max-width:820px;margin:0 auto;padding:2rem }
-        .hero-label { display:inline-flex;align-items:center;gap:.5rem;background:rgba(201,168,76,0.07);border:1px solid rgba(201,168,76,0.2);border-radius:20px;padding:.3rem .85rem;font-size:.75rem;font-weight:700;color:#C9A84C;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.8rem }
-        .hero h1 { font-family:'Playfair Display',serif;font-size:clamp(1.6rem,3vw,2.2rem);font-weight:900;margin-bottom:.5rem }
-        .hero h1 span { background:linear-gradient(135deg,#C9A84C,#F0D080);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text }
-        .hero p { color:#5A7499;font-size:.9rem;margin-bottom:2rem }
-        .glass-card { background:rgba(13,17,32,0.72);backdrop-filter:blur(20px);border:1px solid rgba(0,212,255,0.10);border-radius:14px;padding:1.5rem;box-shadow:0 8px 32px rgba(0,0,0,0.6);margin-bottom:1.5rem }
-        .form-label { font-size:.82rem;font-weight:600;color:#E8F0FF;margin-bottom:.5rem;display:block }
-        .form-hint { font-size:.75rem;color:#5A7499;margin-top:.2rem }
-        .time-slider { width:100%;accent-color:#C9A84C;margin:.5rem 0 }
-        .time-display { font-size:1.4rem;font-weight:700;color:#C9A84C;font-family:'Space Mono',monospace }
-        .form-input { width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);border-radius:10px;color:#E8F0FF;font-size:.88rem;padding:.6rem .85rem;outline:none;transition:border-color .2s;font-family:inherit }
-        .form-input:focus { border-color:rgba(201,168,76,0.4) }
-        .form-input::placeholder { color:#5A7499 }
-        .checkbox-row { display:flex;align-items:center;gap:.6rem;cursor:pointer;font-size:.85rem;color:#5A7499 }
-        .checkbox-row input { accent-color:#C9A84C;width:16px;height:16px }
-        .generate-btn { width:100%;padding:.85rem;background:linear-gradient(135deg,#C9A84C,#A07830);border:none;border-radius:12px;color:#08090E;font-size:1rem;font-weight:700;cursor:pointer;transition:opacity .2s;display:flex;align-items:center;justify-content:center;gap:.5rem }
-        .generate-btn:hover:not(:disabled) { opacity:.9 }
-        .generate-btn:disabled { opacity:.5;cursor:not-allowed }
-        .error-msg { background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);border-radius:10px;padding:.75rem 1rem;color:#fca5a5;font-size:.85rem;margin-bottom:1rem }
-        .plan-header { display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem }
-        .plan-title { font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700 }
-        .plan-meta { font-size:.78rem;color:#5A7499 }
-        .sessions { display:flex;flex-direction:column;gap:.75rem }
-        .session-card { border-radius:10px;padding:1rem 1.2rem;display:flex;align-items:flex-start;gap:.85rem }
-        .session-icon { font-size:1.3rem;flex-shrink:0;margin-top:.1rem }
-        .session-topic { font-weight:700;font-size:.95rem;margin-bottom:.2rem }
-        .session-meta { font-size:.78rem;color:#5A7499;margin-bottom:.3rem }
-        .session-why { font-size:.8rem;color:rgba(232,240,255,0.6);line-height:1.5 }
-        .session-badge { display:inline-block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-radius:20px;padding:.1rem .55rem;margin-left:.4rem }
-        .jarvis-link { display:inline-flex;align-items:center;gap:.4rem;padding:.5rem 1.1rem;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:20px;color:#00D4FF;font-size:.82rem;font-weight:600;text-decoration:none;transition:all .2s }
-        .jarvis-link:hover { background:rgba(0,212,255,0.15) }
-      `}</style>
+    <div className="flex min-h-screen" style={{ background: '#0B0F14' }}>
+      <Sidebar />
 
-      <nav id="plan-nav">
-        <Link href="/" className="nav-brand">
-          <span className="nav-brand-icon">⚡</span>
-          <span className="nav-brand-text">Synap<em>tiq</em></span>
-        </Link>
-        <Link href="/jarvis" className="nav-back">← Back to Jarvis</Link>
-      </nav>
+      <div className="flex-1 flex flex-col ml-60">
+        <Header title="Daily Plan" subtitle={today} />
 
-      <div className="page-wrap">
-        <div className="hero">
-          <div className="hero-label">📅 AI Study Planner</div>
-          <h1>Your <span>Daily Study Plan</span></h1>
-          <p>Tell Jarvis how much time you have and your focus area. It will create a personalised, time-boxed plan based on your weak topics and spaced-repetition schedule.</p>
-        </div>
-
-        <div className="glass-card">
-          <div style={{ marginBottom: '1.25rem' }}>
-            <label className="form-label">⏱ Time available today</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <input
-                type="range" className="time-slider"
-                min={15} max={180} step={15}
-                value={timeAvailable}
-                onChange={e => setTimeAvailable(Number(e.target.value))}
-              />
-              <span className="time-display">{timeAvailable}m</span>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '1.25rem' }}>
-            <label className="form-label">🎯 Focus area (optional)</label>
-            <input
-              type="text" className="form-input"
-              placeholder="e.g. Trigonometry, Integration, Statistics…"
-              value={focus} onChange={e => setFocus(e.target.value)}
-              maxLength={120}
-            />
-            <p className="form-hint">Leave blank to let Jarvis decide based on your weak topics.</p>
-          </div>
-
-          <div style={{ marginBottom: '1.5rem' }}>
-            <label className="checkbox-row">
-              <input type="checkbox" checked={saveTasks} onChange={e => setSaveTasks(e.target.checked)} />
-              Save plan sessions as tasks in my task list
-            </label>
-          </div>
-
-          {error && <div className="error-msg">⚠️ {error}</div>}
-
-          <button
-            className="generate-btn"
-            onClick={generatePlan}
-            disabled={isGenerating}
+        <main className="flex-1 px-8 py-6 max-w-2xl">
+          {/* Hero card */}
+          <motion.div
+            initial={{ y: 16, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="rounded-card p-6 mb-6"
+            style={{
+              background: 'linear-gradient(135deg, rgba(79,140,255,0.08), rgba(34,197,94,0.05))',
+              border: '1px solid rgba(79,140,255,0.15)',
+            }}
           >
-            {isGenerating ? <><div className="spin" style={{ width: 20, height: 20, borderWidth: 2 }} /> Generating…</> : '✨ Generate My Study Plan'}
-          </button>
-        </div>
-
-        {plan && (
-          <div className="glass-card">
-            <div className="plan-header">
-              <div>
-                <p className="plan-title">📅 Today&apos;s Study Plan</p>
-                <p className="plan-meta">{plan.date} · {plan.time_available} minutes total</p>
-              </div>
-              <Link href="/jarvis" className="jarvis-link">🤖 Ask Jarvis for help</Link>
-            </div>
-            <div className="sessions">
-              {plan.sessions.map((s, i) => (
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
                 <div
-                  key={i}
-                  className="session-card"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{
-                    background: TYPE_COLORS[s.type] ?? 'rgba(255,255,255,0.03)',
-                    border: `1px solid ${TYPE_BORDERS[s.type] ?? 'rgba(255,255,255,0.1)'}`,
+                    background: 'rgba(79,140,255,0.12)',
+                    border: '1px solid rgba(79,140,255,0.25)',
                   }}
                 >
-                  <div className="session-icon">{TYPE_ICONS[s.type] ?? '📚'}</div>
-                  <div style={{ flex: 1 }}>
-                    <div className="session-topic">
-                      {s.topic}
-                      <span
-                        className="session-badge"
-                        style={{ background: TYPE_COLORS[s.type], border: `1px solid ${TYPE_BORDERS[s.type]}`, color: TYPE_BORDERS[s.type].replace('0.35', '1') }}
-                      >
-                        {s.type}
-                      </span>
-                    </div>
-                    <div className="session-meta">⏱ {s.duration_min} minutes</div>
-                    <div className="session-why">{s.why}</div>
-                  </div>
+                  <CalendarDays className="w-5 h-5 text-primary" />
                 </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-foreground tracking-tight">
+                    Your Plan Today
+                  </h2>
+                  <p className="text-sm text-muted mt-0.5">
+                    {plan
+                      ? `${completedCount} of ${totalCount} tasks complete`
+                      : 'Generate your personalised study plan'}
+                  </p>
+                </div>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={generatePlan}
+                disabled={generating}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-[10px] text-sm font-medium text-white flex-shrink-0 disabled:opacity-60"
+                style={{ background: '#4F8CFF' }}
+              >
+                {generating ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4" />
+                )}
+                {plan ? 'Regenerate' : 'Generate Plan'}
+              </motion.button>
+            </div>
+
+            {/* Progress bar */}
+            {plan && totalCount > 0 && (
+              <div className="mt-5">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs text-muted font-medium">Progress</span>
+                  <span className="text-xs text-muted">{Math.round(progress)}%</span>
+                </div>
+                <div
+                  className="h-1.5 rounded-full overflow-hidden"
+                  style={{ background: 'rgba(255,255,255,0.07)' }}
+                >
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ background: allDone ? '#22C55E' : '#4F8CFF' }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                  />
+                </div>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Task list */}
+          <AnimatePresence mode="wait">
+            {loading ? (
+              <motion.div
+                key="loading"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="space-y-3"
+              >
+                {[1, 2, 3, 4].map(i => (
+                  <div
+                    key={i}
+                    className="h-[76px] rounded-card animate-pulse"
+                    style={{
+                      background: 'rgba(18,24,33,0.6)',
+                      border: '1px solid rgba(255,255,255,0.04)',
+                    }}
+                  />
+                ))}
+              </motion.div>
+            ) : !plan ? (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="rounded-card p-10 flex flex-col items-center justify-center text-center"
+                style={{
+                  background: 'rgba(18,24,33,0.5)',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                }}
+              >
+                <CalendarDays className="w-10 h-10 mb-4" style={{ color: 'rgba(154,164,175,0.3)' }} />
+                <h3 className="text-base font-semibold text-foreground mb-2">No plan yet</h3>
+                <p className="text-sm text-muted max-w-xs">
+                  Jarvis will create a personalised study plan based on your weak areas and goals.
+                </p>
+              </motion.div>
+            ) : allDone ? (
+              <motion.div
+                key="all-done"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="rounded-card p-8 flex flex-col items-center text-center mb-4 space-y-3"
+                style={{
+                  background: 'rgba(34,197,94,0.05)',
+                  border: '1px solid rgba(34,197,94,0.2)',
+                }}
+              >
+                <Trophy className="w-10 h-10 text-accent" />
+                <h3 className="text-lg font-semibold text-foreground">Plan complete! 🎉</h3>
+                <p className="text-sm text-muted">Outstanding work. All tasks done for today.</p>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+
+          {/* Always render tasks even when allDone so user can uncheck */}
+          {plan && !loading && (
+            <div className="space-y-3 mt-3">
+              {plan.tasks.map((task, i) => (
+                <PlanCard key={task.id} task={task} index={i} onToggle={toggleTask} />
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </main>
       </div>
-    </>
-  );
+    </div>
+  )
 }

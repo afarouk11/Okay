@@ -1,6 +1,6 @@
 /**
- * Synaptiq post-deployment health check
- * Smoke-tests all 4 API endpoints and reports pass/fail.
+ * Jarvis post-deployment health check
+ * Smoke-tests all Next.js API endpoints and reports pass/fail.
  *
  * Usage:
  *   APP_URL=https://synaptiq.co.uk node scripts/health-check.mjs
@@ -33,59 +33,47 @@ async function post(path, body) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   });
-  return { r, data: await r.json() };
+  return { r, data: await r.json().catch(() => ({})) };
 }
 
-console.log(`\n🔍 Synaptiq Health Check — ${BASE}\n`);
+async function get(path) {
+  const r = await fetch(`${BASE}${path}`);
+  return { r, data: await r.json().catch(() => ({})) };
+}
+
+console.log(`\n🔍 Jarvis Health Check — ${BASE}\n`);
 
 // ── /api/chat ─────────────────────────────────────────────────────────────────
-await check('/api/chat — reachable and returns 400/401/200', async () => {
+await check('/api/chat — reachable and returns 400/401/429 on bad input', async () => {
   const { r } = await post('/api/chat', {});
-  if (r.status === 500 && (await r.clone().json().catch(() => ({}))).error?.includes('Missing API key')) {
-    throw new Error('ANTHROPIC_API_KEY not set');
-  }
-  if (![400, 401, 422, 200].includes(r.status)) throw new Error(`Unexpected status ${r.status}`);
+  if (r.status === 503) throw new Error('Claude/Supabase service not configured (503)');
+  if (![400, 401, 422, 429, 200].includes(r.status)) throw new Error(`Unexpected status ${r.status}`);
 });
 
-// ── /api/supabase-auth ────────────────────────────────────────────────────────
-await check('/api/supabase-auth — reachable and returns structured error on bad action', async () => {
-  const { r, data } = await post('/api/supabase-auth', { action: '__health_check__' });
-  if (r.status === 500 && data.error?.includes('Missing Supabase config')) {
-    throw new Error('SUPABASE_URL or SUPABASE_SERVICE_KEY not set');
-  }
+// ── /api/auth ─────────────────────────────────────────────────────────────────
+await check('/api/auth — reachable and returns 400 on unknown action', async () => {
+  const { r, data } = await post('/api/auth', { action: '__health_check__' });
+  if (r.status === 503) throw new Error('Auth service not configured — SUPABASE_URL/KEY not set');
   if (r.status !== 400) throw new Error(`Expected 400 for unknown action, got ${r.status}`);
   if (!data.error) throw new Error('Expected error field in response');
 });
 
-await check('/api/supabase-auth — verify_login returns 401 on bad credentials', async () => {
-  const { r, data } = await post('/api/supabase-auth', {
-    action: 'verify_login',
-    payload: { email: 'healthcheck-nonexistent@synaptiq.co.uk', password: 'wrong-password-12345' }
-  });
-  if (r.status === 500 && data.error?.includes('Missing SUPABASE_ANON_KEY')) {
-    throw new Error('SUPABASE_ANON_KEY not set');
-  }
-  if (r.status !== 401) throw new Error(`Expected 401, got ${r.status} — ${JSON.stringify(data)}`);
+await check('/api/auth — register returns 400 on missing email', async () => {
+  const { r, data } = await post('/api/auth', { action: 'register', password: 'pass' });
+  if (r.status === 503) throw new Error('Auth service not configured — SUPABASE_URL/KEY not set');
+  if (r.status !== 400) throw new Error(`Expected 400 for missing email, got ${r.status} — ${JSON.stringify(data)}`);
 });
 
-// ── /api/stripe ───────────────────────────────────────────────────────────────
-await check('/api/stripe — reachable and returns error without valid price ID', async () => {
-  const { r, data } = await post('/api/stripe', { plan: 'student', email: 'test@test.com' });
-  if (r.status === 500 && data.error?.includes('Missing Stripe key')) {
-    throw new Error('STRIPE_SECRET_KEY not set');
-  }
-  // 400 = invalid price ID (env var placeholder), 200 = real Stripe session — both OK
-  if (![200, 400].includes(r.status)) throw new Error(`Unexpected status ${r.status}: ${data.error}`);
+// ── /api/notes ────────────────────────────────────────────────────────────────
+await check('/api/notes — reachable (returns 401/400 without auth)', async () => {
+  const { r } = await get('/api/notes');
+  if (![400, 401, 403, 429].includes(r.status)) throw new Error(`Unexpected status ${r.status}`);
 });
 
-// ── /api/resend ───────────────────────────────────────────────────────────────
-await check('/api/resend — reachable (does not actually send email)', async () => {
-  const { r, data } = await post('/api/resend', {});
-  if (r.status === 500 && data.error?.includes('Missing Resend key')) {
-    throw new Error('RESEND_API_KEY not set');
-  }
-  // 400 = missing recipient (expected — we didn't pass an email)
-  if (r.status !== 400) throw new Error(`Unexpected status ${r.status}`);
+// ── /api/plan ─────────────────────────────────────────────────────────────────
+await check('/api/plan — reachable (returns 401/400 without auth)', async () => {
+  const { r } = await get('/api/plan');
+  if (![400, 401, 403, 429].includes(r.status)) throw new Error(`Unexpected status ${r.status}`);
 });
 
 // ── Summary ───────────────────────────────────────────────────────────────────

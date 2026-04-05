@@ -101,9 +101,7 @@ describe('successful checkout', () => {
   });
 
   it('uses student plan as default when plan is unrecognised', async () => {
-    let capturedBody;
-    global.fetch = vi.fn().mockImplementationOnce((_url, opts) => {
-      capturedBody = [...opts.body.entries ? opts.body.entries() : new URLSearchParams(opts.body).entries()];
+    global.fetch = vi.fn().mockImplementationOnce(() => {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ id: 'cs_x', url: 'https://stripe.com/x' }),

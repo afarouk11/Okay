@@ -1,151 +1,99 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabase } from '@/lib/supabase';
-import { isRateLimited, getIp } from '@/lib/rateLimit';
+import { NextRequest, NextResponse } from 'next/server'
+import { createServiceClient } from '@/lib/supabase'
+import { sendToClaude, type Message } from '@/lib/claude'
+import { isRateLimited, getIp } from '@/lib/rateLimit'
 
-const TRIAL_DAILY_LIMIT = 20;
+const TRIAL_DAILY_LIMIT = 20
 
-type Message = { role: 'user' | 'assistant'; content: string };
-
-async function buildAdaptiveSystemPrompt(
-  userId: string,
-  baseSystem: string | undefined,
-  profile: Record<string, unknown> | null
-): Promise<string> {
-  const supabase = createServerSupabase();
-  if (!supabase || !profile) return baseSystem ?? '';
-
-  const today = new Date().toISOString().split('T')[0];
-  try {
-    const [weakRes, reviewRes] = await Promise.all([
-      supabase.from('topic_mastery')
-        .select('topic, mastery_level, correct_attempts, total_attempts')
-        .eq('user_id', userId).lt('mastery_level', 3)
-        .order('mastery_level', { ascending: true }).limit(5),
-      supabase.from('topic_mastery')
-        .select('topic').eq('user_id', userId)
-        .lte('next_review_date', today).gt('repetitions', 0).limit(3),
-    ]);
-
-    const p = profile as {
-      year_group?: string; exam_board?: string; target_grade?: string;
-      adhd_mode?: boolean; dyslexia_mode?: boolean; dyscalculia_mode?: boolean;
-      learning_profile?: { explanation_depth?: string; needs_scaffolding?: boolean };
-    };
-    const lp = p.learning_profile ?? {};
-
-    const a11y: string[] = [];
-    if (p.adhd_mode) a11y.push('ADHD: keep responses focused and concise; use bullet points; chunk into short steps.');
-    if (p.dyslexia_mode) a11y.push('Dyslexia: use clear headings; short sentences; prefer numbered lists.');
-    if (p.dyscalculia_mode) a11y.push('Dyscalculia: colour-code each step; use visual analogies for numbers.');
-
-    const weakTopics = (weakRes.data ?? []).map(t => {
-      const acc = (t as { total_attempts: number; correct_attempts: number }).total_attempts > 0
-        ? Math.round(((t as { correct_attempts: number }).correct_attempts / (t as { total_attempts: number }).total_attempts) * 100) : 0;
-      return `${(t as { topic: string }).topic} (${acc}% accuracy, mastery ${(t as { mastery_level: number }).mastery_level}/5)`;
-    });
-    const dueTopics = (reviewRes.data ?? []).map(t => (t as { topic: string }).topic);
-
-    const depthNote = lp.explanation_depth === 'brief'
-      ? 'This student grasps concepts quickly — be concise.'
-      : lp.needs_scaffolding
-        ? 'This student needs careful scaffolding — break every solution into small labelled steps.'
-        : 'Provide clear, structured explanations with worked examples.';
-
-    const lines = [
-      '[STUDENT CONTEXT]',
-      p.year_group    ? `Year group: ${p.year_group}` : null,
-      p.exam_board    ? `Exam board: ${p.exam_board}` : null,
-      p.target_grade  ? `Target grade: ${p.target_grade}` : null,
-      a11y.length     ? `Accessibility:\n  • ${a11y.join('\n  • ')}` : null,
-      weakTopics.length ? `Weak topics: ${weakTopics.join(', ')}` : null,
-      dueTopics.length  ? `Due for review: ${dueTopics.join(', ')}` : null,
-      depthNote,
-      '[/STUDENT CONTEXT]',
-    ].filter(Boolean).join('\n');
-
-    return baseSystem ? `${lines}\n\n${baseSystem}` : lines;
-  } catch (_) {
-    return baseSystem ?? '';
-  }
+async function getUser(request: NextRequest) {
+  const supabase = createServiceClient()
+  if (!supabase) return { user: null, supabase: null }
+  const token = request.headers.get('authorization')?.replace('Bearer ', '')
+  if (!token) return { user: null, supabase }
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+  if (error || !user) return { user: null, supabase }
+  return { user, supabase }
 }
 
-export async function POST(req: NextRequest) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return NextResponse.json({ error: 'ANTHROPIC_API_KEY not configured' }, { status: 500 });
+export async function POST(request: NextRequest) {
+  const ip = getIp(request)
+  if (isRateLimited(`${ip}:chat`, 30, 60_000)) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 })
+  }
 
-  const ip = getIp(req);
-  if (isRateLimited(`${ip}:chat`, 30, 60_000))
-    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  const { user, supabase } = await getUser(request)
+  if (!supabase) return NextResponse.json({ error: 'Service unavailable' }, { status: 503 })
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await req.json().catch(() => ({}));
-  const { model, messages, max_tokens, system } = body as {
-    model?: string; messages?: Message[]; max_tokens?: number; system?: string;
-  };
+  let body: { messages?: Message[]; systemPrompt?: string }
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
 
-  if (!messages || !Array.isArray(messages))
-    return NextResponse.json({ error: 'messages array required' }, { status: 400 });
-  if (messages.length > 50)
-    return NextResponse.json({ error: 'Too many messages' }, { status: 400 });
-  if (JSON.stringify(messages).length > 100_000)
-    return NextResponse.json({ error: 'Message content too long' }, { status: 400 });
+  const { messages, systemPrompt } = body
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return NextResponse.json({ error: 'messages array is required' }, { status: 400 })
+  }
 
-  const supabase = createServerSupabase();
-  let userId: string | null = null;
-  let isPaid = false;
-  let cachedProfile: Record<string, unknown> | null = null;
+  // Validate and sanitise messages
+  const sanitised: Message[] = messages
+    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+    .map(m => ({ role: m.role, content: m.content.slice(0, 8000) }))
 
-  const token = req.headers.get('authorization')?.replace('Bearer ', '');
-  if (token && !token.startsWith('demo_token_') && supabase) {
-    const { data: { user } } = await supabase.auth.getUser(token).catch(() => ({ data: { user: null } }));
-    if (user) {
-      userId = user.id;
-      const { data: profile } = await supabase.from('profiles')
-        .select('subscription_status,trial_messages_today,trial_messages_reset_date,year_group,exam_board,target_grade,adhd_mode,dyslexia_mode,dyscalculia_mode,learning_profile')
-        .eq('id', user.id).single();
-      cachedProfile = profile;
-      isPaid = (profile as { subscription_status?: string } | null)?.subscription_status === 'active';
+  if (sanitised.length === 0) {
+    return NextResponse.json({ error: 'No valid messages' }, { status: 400 })
+  }
+
+  // Check trial limits
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('plan, trial_messages_today, trial_messages_reset_date')
+    .eq('id', user.id)
+    .single()
+
+  // 'homeschool' is the paid plan value in the DB (displayed as "Student Plan" in the UI).
+  // Only free-plan users ('student' or null) are subject to the daily message limit.
+  if (profile && profile.plan !== 'homeschool') {
+    const today = new Date().toISOString().split('T')[0]
+    const needsReset = !profile.trial_messages_reset_date || profile.trial_messages_reset_date !== today
+    const todayCount = needsReset ? 0 : (profile.trial_messages_today ?? 0)
+
+    if (todayCount >= TRIAL_DAILY_LIMIT) {
+      return NextResponse.json({
+        error: 'Daily message limit reached. Upgrade for unlimited access.',
+        code: 'TRIAL_LIMIT',
+      }, { status: 429 })
     }
+
+    // Fire-and-forget increment
+    supabase.from('profiles').update({
+      trial_messages_today: needsReset ? 1 : todayCount + 1,
+      trial_messages_reset_date: today,
+    }).eq('id', user.id).then(({ error: err }) => {
+      if (err) console.error('trial increment failed:', err.message)
+    })
   }
 
-  if (userId && !isPaid && cachedProfile && supabase) {
-    const today = new Date().toISOString().slice(0, 10);
-    const p = cachedProfile as { trial_messages_today?: number; trial_messages_reset_date?: string };
-    const resetDate = p.trial_messages_reset_date;
-    const count = resetDate === today ? (p.trial_messages_today ?? 0) : 0;
-    if (count >= TRIAL_DAILY_LIMIT)
-      return NextResponse.json({ error: `Daily limit of ${TRIAL_DAILY_LIMIT} reached. Upgrade to continue.`, code: 'daily_limit_exceeded' }, { status: 429 });
-    supabase.from('profiles').update({ trial_messages_today: count + 1, trial_messages_reset_date: today })
-      .eq('id', userId).then(null, () => {});
-  }
-
-  const effectiveSystem = userId
-    ? await buildAdaptiveSystemPrompt(userId, system, cachedProfile)
-    : system;
-
+  // Call Claude
+  let response: string
   try {
-    const anthropicBody: Record<string, unknown> = {
-      model: model ?? 'claude-sonnet-4-6',
-      messages,
-      max_tokens: max_tokens ?? 1500,
-    };
-    if (effectiveSystem) anthropicBody.system = effectiveSystem;
-
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify(anthropicBody),
-    });
-    const data = await r.json();
-    return NextResponse.json(data, { status: r.status });
-  } catch (_) {
-    return NextResponse.json({ error: 'Failed to connect to AI service' }, { status: 500 });
+    response = await sendToClaude(sanitised, systemPrompt)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error'
+    console.error('Claude error:', msg)
+    return NextResponse.json({ error: 'AI service unavailable' }, { status: 503 })
   }
-}
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 200 });
+  // Save to DB (fire-and-forget)
+  const lastUserMsg = [...sanitised].reverse().find(m => m.role === 'user')
+  if (lastUserMsg) {
+    supabase.from('chat_history').insert([
+      { user_id: user.id, role: 'user', content: lastUserMsg.content },
+      { user_id: user.id, role: 'assistant', content: response },
+    ]).then(() => {})
+  }
+
+  return NextResponse.json({ response })
 }
