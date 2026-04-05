@@ -63,6 +63,8 @@ export function useAuth(): AuthState {
         loading: false,
       })
       scheduleRefresh(session ?? null)
+    }).catch(() => {
+      setState({ user: null, session: null, token: null, loading: false })
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
