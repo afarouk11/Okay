@@ -15,6 +15,8 @@ const VOICE_SETTINGS: Record<string, Record<string, number | boolean>> = {
   default: { stability: 0.5,  similarity_boost: 0.75 },
 };
 
+// GET is intentionally unauthenticated: the voice widget initialises before auth completes
+// (guest/demo mode). Abuse is mitigated by the per-IP rate limiter below.
 export async function GET(req: NextRequest) {
   const ip = getIp(req);
   if (isRateLimited(`${ip}:jarvis-config`, 10, 60_000))
