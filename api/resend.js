@@ -96,12 +96,24 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  const ip = getIp(req);
   const { to, email, type, name, stats } = req.body;
   const siteUrl = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq.co.uk';
 
+  // Transactional sends (to / email field) are internal-only.
+  // They must include an x-internal-key header matching the INTERNAL_API_KEY env var.
+  // The contact form (type === 'contact') remains public for user-facing use.
+  if (type !== 'contact') {
+    const internalKey = process.env.INTERNAL_API_KEY;
+    const providedKey = req.headers['x-internal-key'];
+    if (internalKey && providedKey !== internalKey) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+  }
+
   // ── Contact form: `type === 'contact'` ────────────────────────────────────
   if (type === 'contact') {
-    if (isRateLimited(`${getIp(req)}:contact`, 5, 60 * 60_000)) {
+    if (isRateLimited(`${ip}:contact`, 5, 60 * 60_000)) {
       return res.status(429).json({ error: 'Too many requests — please try again later' });
     }
     const { category, message } = req.body || {};

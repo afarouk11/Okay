@@ -146,6 +146,15 @@ export default async function handler(req, res) {
 
   // ── Customer Portal ─────────────────────────────────────────────────────────
   if (action === 'portal') {
+    // Require the caller to be authenticated — only the account owner may access their billing portal
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (supabase && (!token || token.startsWith('demo_token_'))) {
+      return res.status(401).json({ error: 'Authentication required to access billing portal' });
+    }
+    if (supabase && token) {
+      const { error: authErr } = await supabase.auth.getUser(token);
+      if (authErr) return res.status(401).json({ error: 'Invalid or expired session' });
+    }
     if (!email) return res.status(400).json({ error: 'email is required' });
     try {
       // Look up customer by email

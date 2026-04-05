@@ -11,6 +11,8 @@ import {
   ArrowRight,
   Flame,
   CalendarDays,
+  Users,
+  FileText,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -25,6 +27,7 @@ type ProgressData = {
     xp: number
     level: number
     plan: string
+    exam_date?: string | null
   } | null
   progress: Array<{ topic: string }> | null
   mistakes: Array<{ topic: string }> | null
@@ -43,9 +46,10 @@ function safeFormatDate(dateStr: string | null | undefined, opts: Intl.DateTimeF
 }
 
 const quickActions = [
-  { href: '/chat',    icon: MessageSquare, label: 'Ask Jarvis',     sub: 'Start a tutoring session', color: '#4F8CFF' },
-  { href: '/plan',    icon: CalendarDays,  label: "Today's Plan",   sub: 'See your daily tasks',     color: '#22C55E' },
-  { href: '/lessons', icon: BookOpen,      label: 'Browse Lessons', sub: 'Explore topics',           color: '#8B5CF6' },
+  { href: '/chat',      icon: MessageSquare, label: 'Ask Jarvis',        sub: 'Start a tutoring session', color: '#4F8CFF' },
+  { href: '/plan',      icon: CalendarDays,  label: "Today's Plan",      sub: 'See your daily tasks',     color: '#22C55E' },
+  { href: '/lessons',   icon: BookOpen,      label: 'Browse Lessons',    sub: 'Explore topics',           color: '#8B5CF6' },
+  { href: '/papers',    icon: FileText,      label: 'Past Paper Qs',     sub: 'AI exam-board questions',  color: '#F59E0B' },
 ]
 
 function calcStreak(activity: Array<{ date: string; questions_done: number; xp_earned: number }>): number {

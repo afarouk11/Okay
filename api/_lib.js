@@ -22,7 +22,16 @@ export function applyHeaders(res, methods = 'POST, OPTIONS') {
 // In-memory per-serverless-instance store. Each Vercel instance gets its own
 // counter, so limits are approximate across concurrent instances — but they
 // still protect against rapid single-source abuse within a window.
-// For production at scale, swap this out for Upstash Redis.
+//
+// To scale this to production-grade distributed rate limiting with Upstash Redis:
+//   1. npm install @upstash/redis
+//   2. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN env vars
+//   3. Replace the in-memory store with:
+//      import { Redis } from '@upstash/redis';
+//      const redis = new Redis({ url: process.env.UPSTASH_REDIS_REST_URL,
+//                                token: process.env.UPSTASH_REDIS_REST_TOKEN });
+//   4. In isRateLimited: use redis.incr(key) + redis.expire(key, windowSeconds)
+//      and compare the count against `max`.
 
 const store = new Map();
 

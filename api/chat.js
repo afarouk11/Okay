@@ -2,6 +2,7 @@ import { applyHeaders, isRateLimited, getIp, fetchWithRetry } from './_lib.js';
 import { createClient } from '@supabase/supabase-js';
 
 const TRIAL_DAILY_LIMIT = 20;
+const ALLOWED_MODELS = new Set(['claude-haiku-4-5-20251001', 'claude-sonnet-4-6', 'claude-opus-4-5']);
 
 // Supabase client (service role) — used only for per-user rate limit checks
 let supabase = null;
@@ -40,7 +41,7 @@ async function buildAdaptiveSystemPrompt(userId, baseSystem, cachedProfile) {
   const today = new Date().toISOString().split('T')[0];
 
   try {
-    const [weakRes, reviewRes] = await Promise.all([
+    const [weakRes, reviewRes, sessionsRes] = await Promise.all([
       supabase.from('topic_mastery')
         .select('topic, mastery_level, correct_attempts, total_attempts')
         .eq('user_id', userId)
@@ -52,7 +53,13 @@ async function buildAdaptiveSystemPrompt(userId, baseSystem, cachedProfile) {
         .eq('user_id', userId)
         .lte('next_review_date', today)
         .gt('repetitions', 0)
-        .limit(3)
+        .limit(3),
+      // Fetch recent Jarvis sessions to surface persistent error patterns
+      supabase.from('jarvis_sessions')
+        .select('topic, mastery_score, specific_errors')
+        .eq('user_id', userId)
+        .order('session_date', { ascending: false })
+        .limit(5)
     ]);
 
     const p = cachedProfile;
@@ -77,6 +84,26 @@ async function buildAdaptiveSystemPrompt(userId, baseSystem, cachedProfile) {
     // ── Review queue ──
     const dueTopics = (reviewRes.data || []).map(t => t.topic);
 
+    // ── Persistent error patterns from Jarvis session history ──
+    // Aggregate specific_errors across recent sessions; surface the most-repeated ones
+    const errorFreq = {};
+    for (const s of (sessionsRes.data || [])) {
+      for (const e of (s.specific_errors || [])) {
+        errorFreq[e] = (errorFreq[e] || 0) + 1;
+      }
+    }
+    const persistentErrors = Object.entries(errorFreq)
+      .filter(([, count]) => count >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([err, count]) => `${err} (seen in ${count} sessions)`);
+
+    // Low-mastery topics from recent sessions (mastery_score < 0.5)
+    const recentLowMastery = (sessionsRes.data || [])
+      .filter(s => s.topic && s.mastery_score != null && s.mastery_score < 0.5)
+      .map(s => `${s.topic} (${Math.round(s.mastery_score * 100)}% session mastery)`)
+      .slice(0, 3);
+
     // ── Learning pace / depth ──
     const depthNote = lp.explanation_depth === 'brief'
       ? 'This student grasps concepts quickly — be concise and skip over-explanation.'
@@ -84,15 +111,27 @@ async function buildAdaptiveSystemPrompt(userId, baseSystem, cachedProfile) {
         ? 'This student needs careful scaffolding — break every solution into small, labelled steps before moving on.'
         : 'Provide clear, structured explanations with worked examples.';
 
+    // ── Exam countdown ──
+    let examCountdown = null;
+    if (p.exam_date) {
+      const daysToExam = Math.ceil((new Date(p.exam_date) - new Date()) / 86400000);
+      if (daysToExam > 0 && daysToExam <= 180) {
+        examCountdown = `Exam in ${daysToExam} day${daysToExam !== 1 ? 's' : ''} — prioritise exam-technique and past-paper practice where relevant.`;
+      }
+    }
+
     // ── Assemble context block ──
     const lines = [
       '[STUDENT CONTEXT — use this to personalise your response]',
       p.year_group   ? `Year group: ${p.year_group}` : null,
       p.exam_board   ? `Exam board: ${p.exam_board}` : null,
       p.target_grade ? `Target grade: ${p.target_grade}` : null,
+      examCountdown,
       a11y.length    ? `Accessibility needs:\n  • ${a11y.join('\n  • ')}` : null,
       weakTopics.length ? `Topics needing extra support: ${weakTopics.join(', ')}` : null,
       dueTopics.length  ? `Topics due for review today (mention if relevant): ${dueTopics.join(', ')}` : null,
+      persistentErrors.length ? `Persistent error patterns (address proactively): ${persistentErrors.join('; ')}` : null,
+      recentLowMastery.length ? `Recent low-mastery topics from tutoring sessions: ${recentLowMastery.join(', ')}` : null,
       depthNote,
       '[/STUDENT CONTEXT]'
     ].filter(Boolean).join('\n');
@@ -134,7 +173,7 @@ export default async function handler(req, res) {
           // and adaptive system prompt — one round-trip instead of two.
           const { data: profile } = await supabase
             .from('profiles')
-            .select('subscription_status, trial_messages_today, trial_messages_reset_date, year_group, exam_board, target_grade, adhd_mode, dyslexia_mode, dyscalculia_mode, learning_profile')
+            .select('subscription_status, trial_messages_today, trial_messages_reset_date, year_group, exam_board, target_grade, exam_date, adhd_mode, dyslexia_mode, dyscalculia_mode, learning_profile')
             .eq('id', user.id)
             .single();
           isPaidUser = profile?.subscription_status === 'active';
@@ -168,11 +207,25 @@ export default async function handler(req, res) {
     }
   }
 
+  // When Supabase is configured, require a valid authenticated session.
+  // Demo tokens are not accepted in production.
+  if (supabase && !userId) {
+    return res.status(401).json({ error: 'Authentication required. Please log in to use the AI tutor.' });
+  }
+
   // ── Validate request body ─────────────────────────────────────────────────
   const { model, messages, max_tokens, system } = req.body;
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'Invalid request: messages array required' });
   }
+
+  // Server-side model allowlist — prevents cost abuse from caller-controlled model names
+  const requestedModel = model || 'claude-sonnet-4-6';
+  if (!ALLOWED_MODELS.has(requestedModel)) {
+    return res.status(400).json({ error: 'Unsupported model.' });
+  }
+  // Cap max_tokens server-side regardless of what the caller sends
+  const safeMaxTokens = Math.min(max_tokens || 1500, 2000);
   if (messages.length > 50) {
     return res.status(400).json({ error: 'Too many messages. Please start a new conversation.' });
   }
@@ -189,7 +242,7 @@ export default async function handler(req, res) {
 
   // ── Call Anthropic ────────────────────────────────────────────────────────
   try {
-    const body = { model: model || 'claude-sonnet-4-6', messages, max_tokens: max_tokens || 1500 };
+    const body = { model: requestedModel, messages, max_tokens: safeMaxTokens };
     if (effectiveSystem) body.system = effectiveSystem;
 
     const r = await fetchWithRetry('https://api.anthropic.com/v1/messages', {

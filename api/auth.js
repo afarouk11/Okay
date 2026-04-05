@@ -1,8 +1,18 @@
 import { createClient } from '@supabase/supabase-js';
 import { applyHeaders, isRateLimited, getIp } from './_lib.js';
+import { timingSafeEqual, createHash } from 'crypto';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const VALID_PLANS = ['student', 'home', 'homeschool'];
+const MS_PER_DAY = 86_400_000;
+
+/** Constant-time string comparison to prevent timing-based inference. */
+function safeStringEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const ha = createHash('sha256').update(a).digest();
+  const hb = createHash('sha256').update(b).digest();
+  return timingSafeEqual(ha, hb);
+}
 
 // ─── Supabase REST proxy helpers ──────────────────────────────────────────────
 
@@ -153,17 +163,9 @@ export default async function handler(req, res) {
         email: email.toLowerCase().trim(), password
       });
 
-      // If email isn't confirmed (e.g. created via Supabase dashboard), auto-confirm and retry
+      // If email isn't confirmed, return a clear message prompting verification.
       if (error && /email not confirmed/i.test(error.message)) {
-        try {
-          const { data: { users } } = await supabase.auth.admin.listUsers({ perPage: 1000 });
-          const match = users.find(u => u.email === email.toLowerCase().trim());
-          if (match) {
-            await supabase.auth.admin.updateUserById(match.id, { email_confirm: true });
-            const retry = await supabase.auth.signInWithPassword({ email: email.toLowerCase().trim(), password });
-            if (!retry.error) { data = retry.data; error = null; }
-          }
-        } catch (_) { /* fall through to original error */ }
+        return res.status(401).json({ error: 'Please verify your email address before logging in. Check your inbox for a confirmation link.' });
       }
 
       if (error) return res.status(401).json({ error: 'Invalid email or password' });
@@ -218,7 +220,7 @@ export default async function handler(req, res) {
       const token = req.headers.authorization?.replace('Bearer ', '');
       if (!token) return res.status(401).json({ error: 'No token' });
       if (token.startsWith('demo_token_')) {
-        return res.status(200).json({ success: true, user: { id: 'demo', email: 'demo@synaptiq.app', name: 'Student', plan: 'student' } });
+        return res.status(401).json({ error: 'Session expired. Please log in again.' });
       }
       const { data, error } = await supabase.auth.getUser(token);
       if (error) return res.status(401).json({ error: 'Session expired. Please log in again.' });
@@ -231,11 +233,13 @@ export default async function handler(req, res) {
       if (!token) return res.status(401).json({ error: 'No token' });
       const { data: authData, error: authErr } = await supabase.auth.getUser(token);
       if (authErr) return res.status(401).json({ error: 'Invalid token' });
+      const { exam_date } = body;
       const updates = {};
       if (name) updates.name = name.trim();
       if (learning_difficulty) updates.learning_difficulty = learning_difficulty;
       if (year_group) updates.year_group = year_group;
       if (subjects) updates.subjects = subjects;
+      if (exam_date) updates.exam_date = exam_date;
       const { data: profile, error } = await supabase.from('profiles').update(updates).eq('id', authData.user.id).select().single();
       if (error) return res.status(400).json({ error: error.message });
       return res.status(200).json({ success: true, profile });
@@ -270,8 +274,15 @@ export default async function handler(req, res) {
     }
 
     if (action === 'patch_profile') {
+      const token = req.headers.authorization?.replace('Bearer ', '');
+      if (!token) return res.status(401).json({ error: 'Authentication required' });
+      const { data: authData, error: authErr } = await supabase.auth.getUser(token);
+      if (authErr) return res.status(401).json({ error: 'Invalid token' });
       const { id: profileId, ...fields } = body.payload || {};
       if (!profileId) return res.status(400).json({ error: 'id required' });
+      if (profileId !== authData.user.id) return res.status(403).json({ error: 'Forbidden' });
+      // Strip is_admin — cannot self-escalate
+      delete fields.is_admin;
       const { data: profile, error } = await supabase.from('profiles').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', profileId).select().single();
       if (error) return res.status(400).json({ error: error.message });
       return res.status(200).json(profile || {});
@@ -313,6 +324,94 @@ export default async function handler(req, res) {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.toLowerCase().trim(), { redirectTo: `${siteUrl}/reset-password` });
       if (error) return res.status(400).json({ error: error.message });
       return res.status(200).json({ ok: true });
+    }
+
+    if (action === 'peer_count') {
+      // Count users who were active today — used for the real-data peer-presence bar.
+      // Rate-limit this read-only action at the handler level (no auth required).
+      const today = new Date().toISOString().split('T')[0];
+      const { count } = await supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('last_active', today);
+      return res.status(200).json({ count: count || 0, date: today });
+    }
+
+    if (action === 'parent_view') {
+      const { child_email, parent_code } = body;
+      if (!child_email || !EMAIL_RE.test(child_email)) return res.status(400).json({ error: 'A valid child email is required' });
+      if (!parent_code || typeof parent_code !== 'string' || parent_code.trim().length !== 6) return res.status(400).json({ error: 'Parent access code must be exactly 6 characters' });
+
+      // Fetch child profile
+      const { data: profile, error: profErr } = await supabase
+        .from('profiles')
+        .select('id, name, plan, last_active, accuracy, streak, xp, level, exam_date, parent_code')
+        .eq('email', child_email.toLowerCase().trim())
+        .single();
+
+      if (profErr || !profile) return res.status(404).json({ error: 'No account found for that email address' });
+
+      // Validate parent_code — if no code is set on the profile, deny access
+      if (!profile.parent_code) return res.status(403).json({ error: 'Parent access has not been enabled for this account' });
+      if (!safeStringEqual(profile.parent_code.trim(), parent_code.trim())) return res.status(403).json({ error: 'Incorrect access code' });
+
+      const childId = profile.id;
+
+      // Weekly date range (last 7 days)
+      const now = new Date();
+      const weekAgo = new Date(now - 7 * MS_PER_DAY).toISOString().split('T')[0];
+      const today = now.toISOString().split('T')[0];
+
+      // Weekly XP and study time from activity_log
+      const { data: activityRows } = await supabase
+        .from('activity_log')
+        .select('date, xp_earned, questions_done')
+        .eq('user_id', childId)
+        .gte('date', weekAgo)
+        .lte('date', today)
+        .order('date', { ascending: true });
+
+      const activity = activityRows || [];
+      const weeklyXp = activity.reduce((s, r) => s + (r.xp_earned || 0), 0);
+      // Build a 7-day map for the chart (date → xp_earned)
+      const chartData = {};
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now - i * MS_PER_DAY).toISOString().split('T')[0];
+        chartData[d] = 0;
+      }
+      for (const r of activity) {
+        if (r.date in chartData) chartData[r.date] = (r.xp_earned || 0);
+      }
+
+      // Top 3 topics from progress this week
+      const { data: progressRows } = await supabase
+        .from('progress')
+        .select('topic, subject, questions_done, xp_earned')
+        .eq('user_id', childId)
+        .gte('last_practiced', new Date(now - 7 * MS_PER_DAY).toISOString())
+        .order('questions_done', { ascending: false })
+        .limit(3);
+
+      const topTopics = (progressRows || []).map(r => ({ topic: r.topic || r.subject || 'General', questions: r.questions_done || 0 }));
+
+      // Strip parent_code before returning
+      const safeProfile = {
+        name: profile.name,
+        plan: profile.plan,
+        last_active: profile.last_active,
+        accuracy: profile.accuracy,
+        streak: profile.streak,
+        xp: profile.xp,
+        level: profile.level,
+        exam_date: profile.exam_date || null,
+      };
+
+      return res.status(200).json({
+        success: true,
+        profile: safeProfile,
+        weekly: {
+          xp: weeklyXp,
+          chart: chartData,
+          top_topics: topTopics,
+        },
+      });
     }
 
     return res.status(400).json({ error: 'Unknown action' });
@@ -373,6 +472,7 @@ function handleDemoMode(res, { action, email, password, name, plan, year_group, 
   if (action === 'get_uploads') return res.status(200).json({ data: [] });
   if (action === 'leaderboard') return res.status(200).json({ top: [], userRank: null });
   if (action === 'forgot_password') return res.status(200).json({ ok: true });
+  if (action === 'peer_count') return res.status(200).json({ count: 0, date: new Date().toISOString().split('T')[0] });
   return res.status(400).json({ error: 'Unknown action' });
 }
 
@@ -389,6 +489,20 @@ async function handleProxyAction(req, res, action, body) {
   }
 
   const { payload } = body;
+
+  // Helper: extract and validate the caller's JWT, returning the user's ID or null.
+  // Only called for actions that require the caller to be the owner of the resource.
+  async function getCallerUserId() {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token || token.startsWith('demo_token_')) return null;
+    const anonKey = process.env.SUPABASE_ANON_KEY || svcKey;
+    const r = await fetch(`${url}/auth/v1/user`, {
+      headers: { ...sbaHeaders(anonKey), Authorization: `Bearer ${token}` }
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+    return data?.id || null;
+  }
 
   try {
     if (action === 'create_auth_user') {
@@ -443,10 +557,16 @@ async function handleProxyAction(req, res, action, body) {
     }
 
     if (action === 'upsert_profile') {
+      // Strip is_admin — callers cannot elevate their own privileges
+      const safePayload = { ...(payload || {}) };
+      delete safePayload.is_admin;
+      const callerId = await getCallerUserId();
+      if (!callerId) return res.status(401).json({ error: 'Authentication required' });
+      if (safePayload.id && safePayload.id !== callerId) return res.status(403).json({ error: 'Forbidden' });
       const r = await fetch(`${url}/rest/v1/profiles`, {
         method: 'POST',
         headers: { ...sbaHeaders(svcKey), Prefer: 'resolution=merge-duplicates,return=representation' },
-        body: JSON.stringify(payload || {}),
+        body: JSON.stringify(safePayload),
       });
       const data = await r.json();
       return res.status(200).json(Array.isArray(data) ? data[0] : data);
@@ -455,6 +575,11 @@ async function handleProxyAction(req, res, action, body) {
     if (action === 'patch_profile') {
       const { id, ...rest } = payload || {};
       if (!id) return res.status(400).json({ error: 'id is required' });
+      // Strip is_admin — callers cannot elevate their own privileges
+      delete rest.is_admin;
+      const callerId = await getCallerUserId();
+      if (!callerId) return res.status(401).json({ error: 'Authentication required' });
+      if (id !== callerId) return res.status(403).json({ error: 'Forbidden' });
       const r = await fetch(`${url}/rest/v1/profiles?id=eq.${id}`, {
         method: 'PATCH',
         headers: { ...sbaHeaders(svcKey), Prefer: 'return=representation' },
@@ -465,6 +590,8 @@ async function handleProxyAction(req, res, action, body) {
     }
 
     if (action === 'get_profile') {
+      const callerId = await getCallerUserId();
+      if (!callerId) return res.status(401).json({ error: 'Authentication required' });
       const { email } = payload || {};
       if (!email || !EMAIL_RE.test(email)) return res.status(400).json({ error: 'A valid email is required' });
       const r = await fetch(
@@ -476,19 +603,25 @@ async function handleProxyAction(req, res, action, body) {
     }
 
     if (action === 'save_upload') {
+      const callerId = await getCallerUserId();
+      if (!callerId) return res.status(401).json({ error: 'Authentication required' });
+      const uploadPayload = payload || {};
+      // Force user_id to be the caller's — prevents uploading on behalf of others
+      const safeUpload = { ...uploadPayload, user_id: callerId };
       const r = await fetch(`${url}/rest/v1/resources`, {
         method: 'POST',
         headers: { ...sbaHeaders(svcKey), Prefer: 'return=representation' },
-        body: JSON.stringify(payload || {}),
+        body: JSON.stringify(safeUpload),
       });
       const data = await r.json();
       return res.status(200).json(data);
     }
 
     if (action === 'get_uploads') {
-      const userId = body.userId || payload?.userId;
-      if (!userId) return res.status(400).json({ error: 'userId is required' });
-      const r = await fetch(`${url}/rest/v1/resources?user_id=eq.${userId}`, {
+      const callerId = await getCallerUserId();
+      if (!callerId) return res.status(401).json({ error: 'Authentication required' });
+      // Only return the caller's uploads (plus global resources)
+      const r = await fetch(`${url}/rest/v1/resources?user_id=eq.${callerId}`, {
         headers: sbaHeaders(svcKey),
       });
       const data = await r.json();

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { timingSafeEqual } from 'crypto'
 import { createServiceClient } from '@/lib/supabase'
 import { isRateLimited, getIp } from '@/lib/rateLimit'
 
@@ -72,6 +73,103 @@ export async function POST(request: NextRequest) {
     const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://synaptiq.co.uk'
     await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${siteUrl}/reset-password` })
     return NextResponse.json({ success: true })
+  }
+
+  if (action === 'peer_count') {
+    // Count users active today (last_active = today) — no auth required, read-only stat
+    const today = new Date().toISOString().split('T')[0]
+    const { count } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('last_active', today)
+    return NextResponse.json({ count: count ?? 0, date: today })
+  }
+
+  if (action === 'parent_view') {
+    const { child_email, parent_code } = body as { child_email?: string; parent_code?: string }
+
+    if (!child_email || !EMAIL_RE.test(child_email)) {
+      return NextResponse.json({ error: 'Valid child email required' }, { status: 400 })
+    }
+    if (!parent_code || typeof parent_code !== 'string' || parent_code.trim().length !== 6) {
+      return NextResponse.json({ error: 'Access code must be exactly 6 characters' }, { status: 400 })
+    }
+
+    if (isRateLimited(`${ip}:parent_view:${child_email.toLowerCase().trim()}`, 5, 60_000)) {
+      return NextResponse.json({ error: 'Too many attempts' }, { status: 429 })
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, name, plan, last_active, accuracy, streak, xp, level, exam_date, parent_code')
+      .eq('email', child_email.toLowerCase().trim())
+      .single()
+
+    if (profileError || !profile) {
+      return NextResponse.json({ error: 'Account not found' }, { status: 404 })
+    }
+
+    if (!profile.parent_code) {
+      return NextResponse.json({ error: 'Parent access not enabled for this account' }, { status: 403 })
+    }
+
+    const storedBuf = Buffer.from(profile.parent_code)
+    const inputBuf = Buffer.from(parent_code.trim())
+    const codesMatch =
+      storedBuf.length === inputBuf.length &&
+      timingSafeEqual(storedBuf, inputBuf)
+
+    if (!codesMatch) {
+      return NextResponse.json({ error: 'Incorrect access code' }, { status: 403 })
+    }
+
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+    const [{ data: activityRows }, { data: progressRows }] = await Promise.all([
+      supabase
+        .from('activity_log')
+        .select('date, questions_done, xp_earned')
+        .eq('user_id', profile.id)
+        .gte('date', sevenDaysAgo)
+        .order('date'),
+      supabase
+        .from('progress')
+        .select('topic, subject')
+        .eq('user_id', profile.id)
+        .gte('created_at', sevenDaysAgo)
+        .limit(10),
+    ])
+
+    const activity = activityRows ?? []
+    const totalXp = activity.reduce((s: number, r: { xp_earned?: number }) => s + (r.xp_earned ?? 0), 0)
+    const totalQuestions = activity.reduce((s: number, r: { questions_done?: number }) => s + (r.questions_done ?? 0), 0)
+    const daysActive = activity.filter((r: { questions_done?: number }) => (r.questions_done ?? 0) > 0).length
+
+    const topicCounts: Record<string, number> = {}
+    for (const row of (progressRows ?? [])) {
+      const key = row.topic || row.subject || 'Unknown'
+      topicCounts[key] = (topicCounts[key] ?? 0) + 1
+    }
+    const top3Topics = Object.entries(topicCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([topic, count]) => ({ topic, count }))
+
+    return NextResponse.json({
+      profile: {
+        name: profile.name,
+        plan: profile.plan,
+        last_active: profile.last_active,
+        accuracy: profile.accuracy,
+        streak: profile.streak,
+        xp: profile.xp,
+        level: profile.level,
+        exam_date: profile.exam_date,
+      },
+      weekly: { xp: totalXp, questions: totalQuestions, days_active: daysActive },
+      topics: top3Topics,
+      activity,
+    })
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 })

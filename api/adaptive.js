@@ -63,6 +63,8 @@ export default async function handler(req, res) {
         return handleGetLearningInsights(res, user.id);
       case 'update_mastery':
         return handleUpdateMastery(res, user.id, req.body);
+      case 'get_session_driven_topics':
+        return handleGetSessionDrivenTopics(res, user.id);
       default:
         return res.status(400).json({ error: `Unknown action: ${action}` });
     }
@@ -231,4 +233,49 @@ async function handleUpdateMastery(res, userId, body) {
   if (error) return res.status(500).json({ error: error.message });
 
   return res.status(200).json({ success: true });
+}
+
+// ─── get_session_driven_topics ────────────────────────────────────────────────
+// Uses jarvis_sessions.specific_errors to surface the topics a student
+// most needs to review — closing the loop between AI tutoring and practice.
+
+async function handleGetSessionDrivenTopics(res, userId) {
+  const { data: sessions, error } = await supabase
+    .from('jarvis_sessions')
+    .select('topic, mastery_score, specific_errors, session_date')
+    .eq('user_id', userId)
+    .order('session_date', { ascending: false })
+    .limit(10);
+
+  if (error) return res.status(500).json({ error: error.message });
+
+  // Aggregate error frequency across sessions
+  const errorFreq = {};
+  const topicLowMastery = {};
+
+  for (const s of (sessions || [])) {
+    // Track topics with low mastery
+    if (s.topic && s.mastery_score != null && s.mastery_score < 0.6) {
+      topicLowMastery[s.topic] = (topicLowMastery[s.topic] || 0) + 1;
+    }
+    // Aggregate specific errors
+    for (const e of (s.specific_errors || [])) {
+      errorFreq[e] = (errorFreq[e] || 0) + 1;
+    }
+  }
+
+  // Persistent errors: appeared in 2+ sessions
+  const persistentErrors = Object.entries(errorFreq)
+    .filter(([, count]) => count >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([error, frequency]) => ({ error, frequency }));
+
+  // Topics with repeated low mastery scores
+  const weakTopics = Object.entries(topicLowMastery)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([topic, sessions_below_threshold]) => ({ topic, sessions_below_threshold }));
+
+  return res.status(200).json({ persistent_errors: persistentErrors, weak_topics: weakTopics });
 }
