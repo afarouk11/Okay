@@ -14,6 +14,7 @@ type ProfileData = {
   year: string | null
   board: string
   target: string | null
+  exam_date: string | null
   plan: string
   adhd_mode: boolean
   dyslexia_mode: boolean
@@ -57,6 +58,7 @@ export default function SettingsClient() {
   const [year, setYear] = useState('')
   const [board, setBoard] = useState('')
   const [target, setTarget] = useState('')
+  const [examDate, setExamDate] = useState('')
 
   // Accessibility toggles (DB-backed)
   const [adhdMode, setAdhdMode] = useState(false)
@@ -95,6 +97,7 @@ export default function SettingsClient() {
       setYear(p.year ?? '')
       setBoard(p.board ?? '')
       setTarget(p.target ?? '')
+      setExamDate(p.exam_date ?? '')
       setAdhdMode(p.adhd_mode)
       setDyslexiaMode(p.dyslexia_mode)
       setDyscalculiaMode(p.dyscalculia_mode)
@@ -217,6 +220,15 @@ export default function SettingsClient() {
                 {TARGET_GRADES.map(g => <option key={g} value={g} style={{ background: '#121821' }}>{g}</option>)}
               </select>
               <SaveIndicator show={savedField === 'target'} saving={saving} />
+            </SettingRow>
+            <SettingRow label="Exam date">
+              <input
+                type="date"
+                value={examDate}
+                onChange={e => { setExamDate(e.target.value); patchProfile({ exam_date: e.target.value }, 'exam_date') }}
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+              />
+              <SaveIndicator show={savedField === 'exam_date'} saving={saving} />
             </SettingRow>
           </SettingCard>
 

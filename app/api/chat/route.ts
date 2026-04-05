@@ -76,10 +76,13 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  // Build adaptive system prompt from jarvis_sessions history
+  const adaptiveSystem = await buildAdaptiveSystemPrompt(user.id, systemPrompt, supabase)
+
   // Call Claude
   let response: string
   try {
-    response = await sendToClaude(sanitised, systemPrompt)
+    response = await sendToClaude(sanitised, adaptiveSystem)
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
     console.error('Claude error:', msg)
@@ -96,4 +99,103 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ response })
+}
+
+// ─── Adaptive system prompt ───────────────────────────────────────────────────
+// Prepends a [STUDENT CONTEXT] block to the system prompt based on:
+//   - Recent jarvis_sessions: mastery_score + specific_errors
+//   - topic_mastery: weak topics due for review
+//   - profiles: exam_date, year, board, target
+// This makes Jarvis feel like it actually knows the student.
+
+type SupabaseClient = NonNullable<Awaited<ReturnType<typeof import('@/lib/supabase').createServiceClient>>>
+
+async function buildAdaptiveSystemPrompt(
+  userId: string,
+  callerSystem: string | undefined,
+  supabase: SupabaseClient,
+): Promise<string> {
+  const today = new Date().toISOString().split('T')[0]
+
+  const [profileRes, sessionsRes, weakRes, reviewRes] = await Promise.all([
+    supabase.from('profiles')
+      .select('name, year, board, target, exam_date, adhd_mode, dyslexia_mode, dyscalculia_mode')
+      .eq('id', userId)
+      .single(),
+    supabase.from('jarvis_sessions')
+      .select('topic, mastery_score, specific_errors')
+      .eq('user_id', userId)
+      .order('session_date', { ascending: false })
+      .limit(5),
+    supabase.from('topic_mastery')
+      .select('topic, mastery_level, correct_attempts, total_attempts')
+      .eq('user_id', userId)
+      .lt('mastery_level', 3)
+      .order('mastery_level', { ascending: true })
+      .limit(5),
+    supabase.from('topic_mastery')
+      .select('topic')
+      .eq('user_id', userId)
+      .lte('next_review_date', today)
+      .limit(3),
+  ])
+
+  const p = profileRes.data
+  const sessions = sessionsRes.data ?? []
+  const weakTopics = (weakRes.data ?? []).map(t => {
+    const acc = t.total_attempts > 0 ? Math.round((t.correct_attempts / t.total_attempts) * 100) : 0
+    return `${t.topic} (${acc}% accuracy, mastery ${t.mastery_level}/5)`
+  })
+  const dueTopics = (reviewRes.data ?? []).map(t => t.topic)
+
+  // Aggregate specific_errors across sessions
+  const errorFreq: Record<string, number> = {}
+  const lowMastery: string[] = []
+  for (const s of sessions) {
+    if (s.topic && typeof s.mastery_score === 'number' && s.mastery_score < 0.5) {
+      lowMastery.push(`${s.topic} (${Math.round(s.mastery_score * 100)}% session mastery)`)
+    }
+    for (const e of (Array.isArray(s.specific_errors) ? s.specific_errors : [])) {
+      errorFreq[String(e)] = (errorFreq[String(e)] ?? 0) + 1
+    }
+  }
+  const persistentErrors = Object.entries(errorFreq)
+    .filter(([, c]) => c >= 2)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([err, c]) => `${err} (seen in ${c} sessions)`)
+
+  // Accessibility notes
+  const a11y: string[] = []
+  if (p?.adhd_mode) a11y.push('ADHD: keep responses focused; use bullet points; chunk into short steps.')
+  if (p?.dyslexia_mode) a11y.push('Dyslexia: clear headings; short sentences; prefer numbered lists.')
+  if (p?.dyscalculia_mode) a11y.push('Dyscalculia: colour-code steps; use visual analogies; number every calculation step.')
+
+  // Exam countdown
+  let examNote: string | null = null
+  if (p?.exam_date) {
+    const daysLeft = Math.ceil((new Date(p.exam_date).getTime() - Date.now()) / 86400000)
+    if (daysLeft > 0 && daysLeft <= 180) {
+      examNote = `Exam in ${daysLeft} day${daysLeft !== 1 ? 's' : ''} — prioritise exam technique and past-paper practice.`
+    }
+  }
+
+  const contextLines = [
+    '[STUDENT CONTEXT — personalise your response with this]',
+    p?.year    ? `Year group: ${p.year}` : null,
+    p?.board   ? `Exam board: ${p.board}` : null,
+    p?.target  ? `Target grade: ${p.target}` : null,
+    examNote,
+    a11y.length         ? `Accessibility: ${a11y.join(' ')}` : null,
+    weakTopics.length   ? `Topics needing support: ${weakTopics.join(', ')}` : null,
+    dueTopics.length    ? `Due for review today: ${dueTopics.join(', ')}` : null,
+    persistentErrors.length ? `Persistent errors (address proactively): ${persistentErrors.join('; ')}` : null,
+    lowMastery.length   ? `Recent low-mastery topics: ${lowMastery.slice(0, 3).join(', ')}` : null,
+    '[/STUDENT CONTEXT]',
+  ].filter(Boolean).join('\n')
+
+  const base = callerSystem ?? ''
+  // If no context was gathered (new user), fall back to base system prompt only
+  const hasContext = weakTopics.length > 0 || persistentErrors.length > 0 || dueTopics.length > 0 || examNote
+  return hasContext ? `${contextLines}\n\n${base}` : base
 }
