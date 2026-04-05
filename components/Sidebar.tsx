@@ -9,6 +9,7 @@ import {
   CalendarDays,
   BookOpen,
   HelpCircle,
+  FileText,
   Settings,
   Zap,
   LogOut,
@@ -24,6 +25,7 @@ const navItems = [
   { href: '/plan',      label: 'Daily Plan', icon: CalendarDays   },
   { href: '/lessons',   label: 'Lessons',   icon: BookOpen        },
   { href: '/questions', label: 'Questions', icon: HelpCircle      },
+  { href: '/papers',    label: 'Past Papers', icon: FileText      },
 ]
 
 const bottomItems = [
