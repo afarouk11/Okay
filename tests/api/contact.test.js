@@ -1,10 +1,10 @@
 /**
- * Tests for api/contact.js — contact form handler.
+ * Tests for the contact form handler — now served by api/resend.js (type: 'contact').
  */
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
-import handler from '../../api/contact.js';
+import handler from '../../api/resend.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -27,6 +27,7 @@ function res() {
 }
 
 const VALID_BODY = {
+  type: 'contact',
   name: 'Alice',
   email: 'alice@test.com',
   category: 'General support',

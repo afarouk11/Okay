@@ -13,14 +13,31 @@
  *                    unknown type returns 400, sends from hello@synaptiq.co.uk.
  */
 
-import { applyHeaders } from './_lib.js';
+import { applyHeaders, isRateLimited, getIp } from './_lib.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const FROM_RESEND = 'Synaptiq <hello@synaptiq.co.uk>';
 const FROM_EMAIL  = 'Synaptiq <hello@synaptiq.co.uk>';
-const SITE        = process.env.APP_URL || process.env.SITE_URL || 'https://synaptiq.co.uk';
 const EMAIL_RE    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const CONTACT_CATEGORIES = [
+  'General support',
+  'Billing issue',
+  'School / bulk licensing',
+  'Privacy / data request',
+  'Bug report',
+  'Feature request',
+  'Other',
+];
+
+function htmlEscape(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 // ─── Shared template builder ───────────────────────────────────────────────────
 
@@ -81,6 +98,55 @@ export default async function handler(req, res) {
 
   const { to, email, type, name, stats } = req.body;
   const siteUrl = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq.co.uk';
+
+  // ── Contact form: `type === 'contact'` ────────────────────────────────────
+  if (type === 'contact') {
+    if (isRateLimited(`${getIp(req)}:contact`, 5, 60 * 60_000)) {
+      return res.status(429).json({ error: 'Too many requests — please try again later' });
+    }
+    const { category, message } = req.body || {};
+    if (!name || !name.trim()) return res.status(400).json({ error: 'Name is required' });
+    if (!email || !EMAIL_RE.test(email)) return res.status(400).json({ error: 'Valid email is required' });
+    if (!message || message.trim().length < 10) return res.status(400).json({ error: 'Message must be at least 10 characters' });
+    if (message.length > 5000) return res.status(400).json({ error: 'Message must be under 5000 characters' });
+    if (category && !CONTACT_CATEGORIES.includes(category)) return res.status(400).json({ error: 'Invalid category' });
+    const safeCategory = category || 'General support';
+    const resendKey = process.env.RESEND_API_KEY;
+    if (!resendKey) {
+      console.log('[contact] RESEND_API_KEY not set. Would have sent:', { name, email, safeCategory, message });
+      return res.status(200).json({ success: true, note: 'RESEND_API_KEY not configured — email not sent' });
+    }
+    try {
+      const html = `
+        <h2>New Contact Form Submission</h2>
+        <table>
+          <tr><td><strong>Name:</strong></td><td>${htmlEscape(name)}</td></tr>
+          <tr><td><strong>Email:</strong></td><td>${htmlEscape(email)}</td></tr>
+          <tr><td><strong>Category:</strong></td><td>${htmlEscape(safeCategory)}</td></tr>
+        </table>
+        <h3>Message</h3>
+        <p style="white-space:pre-wrap">${htmlEscape(message)}</p>
+        <hr>
+        <p style="color:#888;font-size:12px">Sent from Synaptiq contact form</p>
+      `;
+      const r = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: 'Synaptiq <hello@synaptiq.co.uk>',
+          to: 'support@synaptiq.co.uk',
+          reply_to: email,
+          subject: `[${safeCategory}] Message from ${name}`,
+          html,
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok) return res.status(500).json({ error: data?.message || 'Failed to send email' });
+      return res.status(200).json({ success: true });
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
 
   // ── "resend" style: `to` field ────────────────────────────────────────────
   if (to !== undefined) {

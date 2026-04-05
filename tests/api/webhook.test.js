@@ -28,7 +28,7 @@ vi.mock('@supabase/supabase-js', () => ({
   createClient: () => mocks.supabase,
 }));
 
-import handler from '../../api/webhook.js';
+import handler from '../../api/stripe.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -76,10 +76,6 @@ beforeEach(() => {
 describe('non-POST method', () => {
   it('returns 405 for GET requests', async () => {
     const req = { method: 'GET', headers: {} };
-    // No raw body stream needed since it returns before getRawBody
-    const stripeStub = mocks.stripe;
-    const supabaseStub = mocks.supabase;
-    // Handler checks stripe && supabase first
     const r = res();
     await handler(req, r);
     expect(r.statusCode).toBe(405);
@@ -220,5 +216,61 @@ describe('duplicate event', () => {
     await handler(makeRawBodyReq('{}'), r);
     expect(r.statusCode).toBe(200);
     expect(r.body.duplicate).toBe(true);
+  });
+});
+
+// ─── invoice.payment_failed — no profile email ───────────────────────────────
+
+describe('invoice.payment_failed — no profile email', () => {
+  it('skips sending email when profile has no email', async () => {
+    mocks.stripe.webhooks.constructEvent.mockReturnValueOnce({
+      id: 'evt_noemail',
+      type: 'invoice.payment_failed',
+      data: { object: { customer: 'cus_noemail' } },
+    });
+    // profile fetch returns null (no email)
+    mocks.supabase.from
+      .mockReturnValueOnce(makeBuilder({ data: null, error: null }))  // idempotency select
+      .mockReturnValueOnce(makeBuilder({ data: null, error: null }))  // profiles select (no email)
+      .mockReturnValueOnce(makeBuilder({ data: null, error: null }))  // profiles update
+      .mockReturnValueOnce(makeBuilder({ data: null, error: null })); // idempotency insert
+
+    global.fetch = vi.fn();
+
+    const r = res();
+    await handler(makeRawBodyReq('{}'), r);
+    expect(r.statusCode).toBe(200);
+    // fetch should NOT have been called for the email since profile had no email
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+});
+
+// ─── Webhook processing error recovery ───────────────────────────────────────
+
+describe('webhook processing error recovery', () => {
+  it('still returns 200 even when event processing throws', async () => {
+    mocks.stripe.webhooks.constructEvent.mockReturnValueOnce({
+      id: 'evt_err',
+      type: 'checkout.session.completed',
+      data: { object: { customer_email: 'buyer@test.com', customer: 'cus_123', subscription: 'sub_456', metadata: { plan: 'student' } } },
+    });
+    // idempotency check — not a duplicate
+    mocks.supabase.from
+      .mockReturnValueOnce(makeBuilder({ data: null, error: null }))   // processed_webhooks select
+      .mockReturnValueOnce(makeBuilder({ data: null, error: null }));  // profiles update throws
+
+    // Force an error inside the switch block
+    mocks.supabase.from.mockImplementationOnce(() => {
+      throw new Error('DB error during processing');
+    });
+    // idempotency insert after error
+    mocks.supabase.from.mockReturnValueOnce(makeBuilder({ data: null, error: null }));
+
+    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) });
+
+    const r = res();
+    await handler(makeRawBodyReq('{}'), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.received).toBe(true);
   });
 });

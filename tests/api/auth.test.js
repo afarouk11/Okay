@@ -347,3 +347,153 @@ describe('unknown action', () => {
     expect(r.body.error).toMatch(/unknown action/i);
   });
 });
+
+// ─── Login — email-not-confirmed auto-retry ───────────────────────────────────
+
+describe('login — email not confirmed auto-retry', () => {
+  it('confirms email and retries login when "email not confirmed" error occurs', async () => {
+    const today = new Date().toISOString().split('T')[0];
+
+    // First sign-in attempt fails with "email not confirmed"
+    mocks.supabase.auth.signInWithPassword
+      .mockResolvedValueOnce({ data: null, error: { message: 'Email not confirmed' } })
+      // Retry after auto-confirm succeeds
+      .mockResolvedValueOnce({
+        data: {
+          session: { access_token: 'tok-retry' },
+          user: { id: 'u-confirm', email: 'confirm@b.com', user_metadata: { name: 'Confirmed' } },
+        },
+        error: null,
+      });
+
+    // listUsers for auto-confirm lookup
+    mocks.supabase.auth.admin.listUsers = vi.fn().mockResolvedValueOnce({
+      data: { users: [{ id: 'u-confirm', email: 'confirm@b.com' }] },
+    });
+    mocks.supabase.auth.admin.updateUserById = vi.fn().mockResolvedValueOnce({ error: null });
+
+    // profile fetch returns existing profile (today's last_active → no streak update)
+    mocks.supabase.from.mockReturnValueOnce(
+      makeBuilder({ data: { id: 'u-confirm', name: 'Confirmed', last_active: today, streak: 1, longest_streak: 1 }, error: null })
+    );
+
+    const r = res();
+    await handler(req({ action: 'login', email: 'confirm@b.com', password: 'pass1234' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.token).toBe('tok-retry');
+    expect(mocks.supabase.auth.admin.updateUserById).toHaveBeenCalledWith('u-confirm', { email_confirm: true });
+  });
+});
+
+// ─── Login — missing profile created on the fly ───────────────────────────────
+
+describe('login — profile auto-created when missing', () => {
+  it('creates a profile when none exists and returns 200', async () => {
+    mocks.supabase.auth.signInWithPassword.mockResolvedValueOnce({
+      data: {
+        session: { access_token: 'tok-noprofile' },
+        user: { id: 'u-new', email: 'new@b.com', user_metadata: { name: 'Newbie' } },
+      },
+      error: null,
+    });
+
+    // profile fetch returns null → triggers creation
+    mocks.supabase.from
+      .mockReturnValueOnce(makeBuilder({ data: null, error: null }))   // profiles select
+      .mockReturnValueOnce(makeBuilder({ data: null, error: null }));  // profiles upsert
+
+    const r = res();
+    await handler(req({ action: 'login', email: 'new@b.com', password: 'pass1234' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.token).toBe('tok-noprofile');
+  });
+});
+
+// ─── Login — streak update when last_active is yesterday ─────────────────────
+
+describe('login — streak update', () => {
+  it('increments streak when last_active is yesterday', async () => {
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
+
+    mocks.supabase.auth.signInWithPassword.mockResolvedValueOnce({
+      data: {
+        session: { access_token: 'tok-streak' },
+        user: { id: 'u-streak', email: 'streak@b.com', user_metadata: { name: 'Streaky' } },
+      },
+      error: null,
+    });
+
+    // Profile with last_active = yesterday → triggers streak increment
+    mocks.supabase.from
+      .mockReturnValueOnce(
+        makeBuilder({ data: { id: 'u-streak', name: 'Streaky', last_active: yesterday, streak: 5, longest_streak: 7 }, error: null })
+      )
+      .mockReturnValueOnce(makeBuilder({ data: null, error: null })); // streak update
+
+    const r = res();
+    await handler(req({ action: 'login', email: 'streak@b.com', password: 'pass1234' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.user.streak).toBe(6);
+    expect(r.body.user.last_active).toBe(today);
+  });
+
+  it('resets streak to 1 when last_active is older than yesterday', async () => {
+    const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString().split('T')[0];
+
+    mocks.supabase.auth.signInWithPassword.mockResolvedValueOnce({
+      data: {
+        session: { access_token: 'tok-reset-streak' },
+        user: { id: 'u-reset', email: 'reset@b.com', user_metadata: {} },
+      },
+      error: null,
+    });
+
+    mocks.supabase.from
+      .mockReturnValueOnce(
+        makeBuilder({ data: { id: 'u-reset', name: 'Reset', last_active: twoDaysAgo, streak: 10, longest_streak: 10 }, error: null })
+      )
+      .mockReturnValueOnce(makeBuilder({ data: null, error: null }));
+
+    const r = res();
+    await handler(req({ action: 'login', email: 'reset@b.com', password: 'pass1234' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.user.streak).toBe(1);
+  });
+});
+
+// ─── Verify — demo token shortcut ────────────────────────────────────────────
+
+describe('verify — demo token', () => {
+  it('returns a demo user without calling Supabase for a demo_token_', async () => {
+    const r = res();
+    await handler(req({ action: 'verify' }, 'POST', { authorization: 'Bearer demo_token_xyz' }), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.user.id).toBe('demo');
+    expect(mocks.supabase.auth.getUser).not.toHaveBeenCalled();
+  });
+});
+
+// ─── Network / unexpected error ───────────────────────────────────────────────
+
+describe('network error handling', () => {
+  it('returns a friendly message for network-related errors', async () => {
+    mocks.supabase.auth.signInWithPassword.mockRejectedValueOnce(
+      new Error('fetch failed: ECONNREFUSED')
+    );
+    const r = res();
+    await handler(req({ action: 'login', email: 'a@b.com', password: 'pass1234' }), r);
+    expect(r.statusCode).toBe(500);
+    expect(r.body.error).toMatch(/Unable to reach the database/i);
+  });
+
+  it('returns the raw error message for non-network errors', async () => {
+    mocks.supabase.auth.signInWithPassword.mockRejectedValueOnce(
+      new Error('Something unexpected went wrong')
+    );
+    const r = res();
+    await handler(req({ action: 'login', email: 'a@b.com', password: 'pass1234' }), r);
+    expect(r.statusCode).toBe(500);
+    expect(r.body.error).toMatch(/Something unexpected/i);
+  });
+});

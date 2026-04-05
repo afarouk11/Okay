@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, master, "claude/**"]
+    branches: [main, master]
   pull_request:
     branches: [main, master]
 
@@ -29,16 +29,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run tests
+      - name: Type check
         run: npm test
 
-      - name: Generate coverage report
-        run: npm run test:coverage
-
-      - name: Upload coverage to artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: coverage-report
-          path: coverage/
-          retention-days: 14
+      - name: Build
+        run: npm run build

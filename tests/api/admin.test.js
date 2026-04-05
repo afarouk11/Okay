@@ -10,7 +10,15 @@ const mocks = vi.hoisted(() => {
   process.env.SUPABASE_URL = 'https://test.supabase.co';
   process.env.SUPABASE_SERVICE_KEY = 'test-service-key';
   process.env.ADMIN_SECRET_KEY = 'admin-secret-test';
-  const supabase = { from: vi.fn() };
+  const supabase = {
+    from: vi.fn(),
+    auth: {
+      admin: {
+        listUsers: vi.fn(),
+        deleteUser: vi.fn(),
+      },
+    },
+  };
   return { supabase };
 });
 
@@ -27,7 +35,7 @@ function makeBuilder(resolution = { data: null, error: null, count: null }) {
     _r: resolution,
     then(res, rej) { return Promise.resolve(b._r).then(res, rej); },
   };
-  ['select', 'update', 'insert', 'eq', 'in', 'gte', 'order', 'range', 'single'].forEach(m => {
+  ['select', 'update', 'insert', 'delete', 'eq', 'in', 'gte', 'order', 'range', 'single'].forEach(m => {
     b[m] = vi.fn().mockReturnValue(b);
   });
   return b;
@@ -154,6 +162,23 @@ describe('send_weekly_emails', () => {
     expect(r.body.sent).toBe(2);
   });
 
+  it('calls the /api/resend endpoint (not /api/email)', async () => {
+    const activeUsers = [
+      { email: 'a@b.com', name: 'Alice', xp: 100, accuracy: 80, streak: 3, questions_answered: 20 },
+    ];
+    mocks.supabase.from.mockReturnValueOnce(makeBuilder({ data: activeUsers, error: null }));
+    process.env.SITE_URL = 'https://synaptiq.test';
+    const calledUrls = [];
+    global.fetch = vi.fn().mockImplementation((url) => {
+      calledUrls.push(url);
+      return Promise.resolve({ ok: true, json: () => Promise.resolve({ success: true }) });
+    });
+
+    await handler(req('POST', { action: 'send_weekly_emails' }, ADMIN_HEADERS), res());
+    expect(calledUrls[0]).toContain('/api/resend');
+    expect(calledUrls[0]).not.toContain('/api/email');
+  });
+
   it('returns 0 sent when there are no active subscribers', async () => {
     mocks.supabase.from.mockReturnValueOnce(makeBuilder({ data: [], error: null }));
     const r = res();
@@ -170,5 +195,78 @@ describe('unknown action', () => {
     const r = res();
     await handler(req('POST', { action: 'fly_to_moon' }, ADMIN_HEADERS), r);
     expect(r.statusCode).toBe(400);
+  });
+});
+
+// ─── reset_users action ───────────────────────────────────────────────────────
+
+describe('reset_users', () => {
+  beforeEach(() => {
+    mocks.supabase.auth.admin.listUsers.mockReset();
+    mocks.supabase.auth.admin.deleteUser.mockReset();
+    mocks.supabase.auth.admin.deleteUser.mockResolvedValue({ error: null });
+  });
+
+  it('deletes all users and returns count', async () => {
+    mocks.supabase.auth.admin.listUsers.mockResolvedValueOnce({
+      data: { users: [{ id: 'u1' }, { id: 'u2' }] },
+      error: null,
+    });
+    mocks.supabase.from.mockReturnValue(makeBuilder({ data: null, error: null }));
+
+    const r = res();
+    await handler(req('POST', { action: 'reset_users' }, ADMIN_HEADERS), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.ok).toBe(true);
+    expect(r.body.deleted).toBe(2);
+  });
+
+  it('returns 500 when listUsers fails', async () => {
+    // Supabase admin listUsers returns error — data must be non-null for destructuring to work
+    mocks.supabase.auth.admin.listUsers.mockResolvedValueOnce({
+      data: { users: [] },
+      error: { message: 'admin error' },
+    });
+
+    const r = res();
+    await handler(req('POST', { action: 'reset_users' }, ADMIN_HEADERS), r);
+    expect(r.statusCode).toBe(500);
+    expect(r.body.error).toMatch(/admin error/i);
+  });
+
+  it('handles empty user list gracefully', async () => {
+    mocks.supabase.auth.admin.listUsers.mockResolvedValueOnce({
+      data: { users: [] },
+      error: null,
+    });
+
+    const r = res();
+    await handler(req('POST', { action: 'reset_users' }, ADMIN_HEADERS), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.deleted).toBe(0);
+  });
+});
+
+// ─── send_weekly_emails — fetch failure counting ─────────────────────────────
+
+describe('send_weekly_emails — partial failures', () => {
+  it('counts failed emails when fetch throws', async () => {
+    const activeUsers = [
+      { email: 'a@b.com', name: 'Alice', xp: 100, accuracy: 80, streak: 3, questions_answered: 20 },
+      { email: 'c@d.com', name: 'Bob', xp: 200, accuracy: 90, streak: 7, questions_answered: 40 },
+    ];
+    mocks.supabase.from.mockReturnValueOnce(makeBuilder({ data: activeUsers, error: null }));
+    process.env.SITE_URL = 'https://synaptiq.test';
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ success: true }) })
+      .mockRejectedValueOnce(new Error('network failure'));
+
+    const r = res();
+    await handler(req('POST', { action: 'send_weekly_emails' }, ADMIN_HEADERS), r);
+    expect(r.statusCode).toBe(200);
+    expect(r.body.sent).toBe(1);
+    expect(r.body.failed).toBe(1);
+
+    delete global.fetch;
   });
 });
