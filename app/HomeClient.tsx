@@ -51,12 +51,12 @@ const SUBJECTS = [
 
 const FAQ_ITEMS = [
   { q: 'Is there actually a free trial? Do I need a card?', a: 'Yes — 7 days completely free. Your card is stored securely via Stripe but not charged until the trial ends. Cancel any time with one click. No questions asked.' },
-  { q: 'How is Synaptiq different from ChatGPT?', a: 'ChatGPT is a general assistant. Synaptiq is trained specifically on A-Level Maths curricula — it knows AQA, Edexcel, OCR and WJEC mark schemes, shows working exactly how examiners expect it, and tracks your progress over time. It won\'t hallucinate a GCSE answer when you ask an A-Level question.' },
+  { q: 'How is Synaptiq different from ChatGPT?', a: "ChatGPT is a general assistant. Synaptiq is trained specifically on A-Level Maths curricula — it knows AQA, Edexcel, OCR and WJEC mark schemes, shows working exactly how examiners expect it, tracks your progress over time, and won't hallucinate a GCSE answer when you ask an A-Level question." },
   { q: 'Which exam boards does Synaptiq cover?', a: 'AQA, Edexcel, OCR, and WJEC — all fully supported. You set your exam board during signup and every answer is aligned to that board\'s mark scheme style.' },
   { q: 'Can I use Synaptiq for both Year 12 and Year 13?', a: 'Yes. The full content library covers Pure 1 & 2, Statistics Y1 & Y2, and Mechanics Y1 & Y2 — so whether you\'re starting AS or finishing A2, every topic is covered.' },
   { q: 'What if I get the same question wrong repeatedly?', a: 'Synaptiq tracks your weak spots and surfaces them through the spaced-repetition flashcard system. The more you practice, the smarter your personalised revision plan becomes.' },
   { q: 'Is Synaptiq suitable if I have ADHD, dyslexia, or dyscalculia?', a: 'Yes — these are first-class features, not afterthoughts. ADHD mode breaks responses into shorter, focused steps. Dyslexia mode uses Lexend font with increased spacing. Dyscalculia mode adds colour-coded working and visual number lines.' },
-  { q: 'How much does it cost after the trial?', a: '£35/month (about £1.17/day), or £199/year (saving £221 — about £16.58/month). For context, the average A-Level Maths tutor on Tutorful charges £41.59/hour — Synaptiq gives you unlimited 24/7 access for less than the cost of a single tutoring session per month.' },
+  { q: 'How much does it cost after the trial?', a: '£35/month (about £1.17/day), or £276/year (£23/month, saving 34%). For context, the average A-Level Maths tutor on Tutorful charges £41.59/hour — Synaptiq gives you unlimited 24/7 access for less than the cost of a single tutoring session per month.' },
   { q: 'Can parents see how their child is progressing?', a: 'Yes. Students can open the Parent View from their dashboard at any time and email a progress report directly to a parent or guardian. The report includes study streak, questions answered, XP earned, and the specific topics needing most attention — no account needed for the parent.' },
   { q: 'Can my school or college get Synaptiq?', a: 'Yes. We offer custom pricing for schools, sixth forms, and tuition centres with whole-class accounts, teacher dashboards, and invoice billing. Email schools@synaptiqai.co.uk or click "Book a Demo" on the pricing section.' },
 ]
@@ -431,8 +431,8 @@ export default function HomeClient() {
                 background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.1)',
                 transition: 'border-color .3s',
               }}
-              onMouseOver={e => ((e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(201,168,76,0.25)')}
-              onMouseOut={e => ((e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(201,168,76,0.1)')}
+            onMouseOver={e => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.25)')}
+            onMouseOut={e => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.1)')}
             >
               <div style={{ fontSize: '2.2rem', fontWeight: 900, color: GOLD, marginBottom: '.25rem' }}>{num}</div>
               <div style={{ color: MUTED, fontSize: '.85rem' }}>{label}</div>
@@ -765,8 +765,7 @@ export default function HomeClient() {
             <div style={{ fontSize: '2.8rem', fontWeight: 900, marginBottom: '.25rem' }}>
               {isAnnual ? '£23' : '£35'}<span style={{ fontSize: '1rem', fontWeight: 400, color: MUTED }}>/month</span>
             </div>
-            {isAnnual && <div style={{ color: '#4ADE80', fontSize: '.78rem', fontWeight: 600, marginBottom: '.25rem' }}>Billed annually (£276/yr) — save 34%</div>}
-            <div style={{ color: MUTED, fontSize: '.82rem', marginBottom: '1.5rem' }}>7-day free trial · Cancel any time</div>
+            {isAnnual && <div style={{ color: '#4ADE80', fontSize: '.78rem', fontWeight: 600, marginBottom: '.25rem' }}>Billed annually (£276/yr) — save 34%</div>}            <div style={{ color: MUTED, fontSize: '.82rem', marginBottom: '1.5rem' }}>7-day free trial · Cancel any time</div>
             <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1.5rem', display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
               {[
                 'Full AI Maths Tutor — unlimited questions',
