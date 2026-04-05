@@ -170,7 +170,8 @@ export async function POST(request: NextRequest) {
     if (!to) return NextResponse.json({ error: 'recipient (to) is required' }, { status: 400 })
 
     const tmpl = buildTemplates(name || 'Student', stats || {}, siteUrl)
-    const tpl = (tmpl as Record<string, { subject: string; html: string }>)[type || ''] || tmpl.welcome
+    const tpl = (tmpl as Record<string, { subject: string; html: string }>)[type || '']
+    if (!tpl) return NextResponse.json({ error: 'Unknown email type' }, { status: 400 })
 
     try {
       const r = await fetch('https://api.resend.com/emails', {

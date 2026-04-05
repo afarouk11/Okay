@@ -72,14 +72,17 @@ export async function POST(request: NextRequest) {
   }
 
   // ── Checkout Session ──────────────────────────────────────────────────────
-  const prices: Record<string, string> = {
-    student:        process.env.STRIPE_PRICE_STUDENT        || 'price_student_monthly_placeholder',
-    student_annual: process.env.STRIPE_PRICE_STUDENT_ANNUAL || 'price_student_annual_placeholder',
-    homeschool:     process.env.STRIPE_PRICE_HOMESCHOOL      || 'price_homeschool_placeholder',
+  const prices: Record<string, string | undefined> = {
+    student:        process.env.STRIPE_PRICE_STUDENT,
+    student_annual: process.env.STRIPE_PRICE_STUDENT_ANNUAL,
+    homeschool:     process.env.STRIPE_PRICE_HOMESCHOOL,
   }
 
   const priceKey = plan === 'student' && annual ? 'student_annual' : (plan || 'student')
   const priceId = prices[priceKey] || prices.student
+  if (!priceId) {
+    return NextResponse.json({ error: 'Stripe price not configured for the selected plan' }, { status: 500 })
+  }
 
   try {
     const r = await fetch('https://api.stripe.com/v1/checkout/sessions', {

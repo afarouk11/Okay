@@ -64,16 +64,21 @@ export async function POST(request: NextRequest) {
 
     switch (event.type) {
       case 'checkout.session.completed': {
-        const emailAddr = data.customer_email as string
-        const plan = (data.metadata as Record<string, string> | null)?.plan || 'student'
-        const { error: updateErr } = await supabase.from('profiles').update({
-          plan,
-          subscription_status: 'active',
-          stripe_customer_id: data.customer,
-          subscription_id: data.subscription,
-        }).eq('email', emailAddr)
-        if (updateErr) console.error('Webhook profile update failed:', updateErr.message)
-        await sendEmail(emailAddr, 'payment_confirmed', { stats: { plan } })
+        const emailAddr = typeof data.customer_email === 'string' ? data.customer_email : null
+        const metadata = data.metadata && typeof data.metadata === 'object'
+          ? data.metadata as Record<string, string>
+          : {}
+        const plan = metadata.plan || 'student'
+        if (emailAddr) {
+          const { error: updateErr } = await supabase.from('profiles').update({
+            plan,
+            subscription_status: 'active',
+            stripe_customer_id: data.customer,
+            subscription_id: data.subscription,
+          }).eq('email', emailAddr)
+          if (updateErr) console.error('Webhook profile update failed:', updateErr.message)
+          await sendEmail(emailAddr, 'payment_confirmed', { stats: { plan } })
+        }
         break
       }
 
