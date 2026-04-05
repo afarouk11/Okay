@@ -19,7 +19,6 @@ import { applyHeaders, isRateLimited, getIp } from './_lib.js';
 
 const FROM_RESEND = 'Synaptiq <hello@synaptiq.co.uk>';
 const FROM_EMAIL  = 'Synaptiq <hello@synaptiq.co.uk>';
-const SITE        = process.env.APP_URL || process.env.SITE_URL || 'https://synaptiq.co.uk';
 const EMAIL_RE    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const CONTACT_CATEGORIES = [

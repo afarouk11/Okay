@@ -76,10 +76,6 @@ beforeEach(() => {
 describe('non-POST method', () => {
   it('returns 405 for GET requests', async () => {
     const req = { method: 'GET', headers: {} };
-    // No raw body stream needed since it returns before getRawBody
-    const stripeStub = mocks.stripe;
-    const supabaseStub = mocks.supabase;
-    // Handler checks stripe && supabase first
     const r = res();
     await handler(req, r);
     expect(r.statusCode).toBe(405);

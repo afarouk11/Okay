@@ -57,7 +57,7 @@ try {
       auth: { autoRefreshToken: false, persistSession: false }
     });
   }
-} catch (e) {
+} catch (_) {
   supabase = null;
 }
 

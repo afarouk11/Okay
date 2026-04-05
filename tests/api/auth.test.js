@@ -5,7 +5,7 @@
  * `createClient(...)` call in auth.js receives our stub.
  */
 
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // ─── Hoisted mock setup ───────────────────────────────────────────────────────
 
@@ -389,8 +389,6 @@ describe('login — email not confirmed auto-retry', () => {
 
 describe('login — profile auto-created when missing', () => {
   it('creates a profile when none exists and returns 200', async () => {
-    const today = new Date().toISOString().split('T')[0];
-
     mocks.supabase.auth.signInWithPassword.mockResolvedValueOnce({
       data: {
         session: { access_token: 'tok-noprofile' },

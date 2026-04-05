@@ -5,7 +5,7 @@
  * initialises with supabase = null and all requests hit handleDemoMode.
  */
 
-import { vi, describe, it, expect, beforeEach } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 
 // ─── Hoisted setup — no Supabase env vars ─────────────────────────────────────
 // vi.hoisted runs before module imports, so clearing the vars here ensures that
