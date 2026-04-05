@@ -88,7 +88,7 @@ export default function NotesClient() {
     } finally {
       setSaving(false)
     }
-  }y
+  }
 
   async function handleSaveEdit(id: string) {
     if (!token) return
