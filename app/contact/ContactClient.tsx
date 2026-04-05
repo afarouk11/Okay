@@ -1,7 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { Mail, Phone, Building2, Shield, CheckCircle, Loader2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react'
 import Link from 'next/link'
+import { Zap, ArrowLeft } from 'lucide-react'
 
 const CATEGORIES = [
   'General support',
@@ -13,175 +16,231 @@ const CATEGORIES = [
   'Other',
 ]
 
-const CONTACT_CARDS = [
-  { icon: '🎓', title: 'General Support', sub: 'Help with the platform, your account, or learning features.', href: 'mailto:hello@synaptiq.co.uk', label: 'hello@synaptiq.co.uk' },
-  { icon: '💳', title: 'Billing & Payments', sub: 'Questions about your subscription, invoices, or refunds.', href: 'mailto:billing@synaptiq.co.uk', label: 'billing@synaptiq.co.uk' },
-  { icon: '🏫', title: 'Schools & Licensing', sub: 'Site licences, teacher dashboards, and school partnerships.', href: '/schools', label: 'See school plans →' },
-  { icon: '🔒', title: 'Privacy & Data', sub: 'GDPR requests, data deletion, or privacy questions.', href: 'mailto:privacy@synaptiqai.co.uk', label: 'privacy@synaptiqai.co.uk' },
+const SUPPORT_CARDS = [
+  { icon: Mail,      label: 'General Support',          email: 'support@synaptiqai.co.uk',  color: '#4F8CFF' },
+  { icon: Phone,     label: 'Billing & Payments',        email: 'billing@synaptiqai.co.uk',  color: '#22C55E' },
+  { icon: Building2, label: 'Schools & Licensing',       email: 'schools@synaptiqai.co.uk',  color: '#A78BFA' },
+  { icon: Shield,    label: 'Privacy & Data',            email: 'privacy@synaptiqai.co.uk',  color: '#f59e0b' },
 ]
 
-const FAQ = [
-  {
-    q: 'Is Jarvis actually helpful for A-Level revision?',
-    a: 'Yes — Jarvis is trained on A-Level Maths across all major UK exam boards (AQA, Edexcel, OCR, WJEC) and uses a Socratic teaching style to guide you to answers rather than just giving them.',
-  },
-  {
-    q: 'How do I cancel my subscription?',
-    a: 'Go to Settings → Billing and click "Cancel subscription". Your access continues until the end of the billing period.',
-  },
-  {
-    q: 'Can my school or tutor get a bulk licence?',
-    a: 'Yes! Visit our Schools page or email hello@synaptiq.co.uk with your school name and number of students.',
-  },
-  {
-    q: 'I found an error in an AI response. What should I do?',
-    a: 'Please use the contact form below and select "Bug report". Include the topic and the incorrect response so we can improve.',
-  },
+const FAQS = [
+  { q: 'How do I cancel my subscription?', a: 'Go to Settings → Subscription and click "Cancel plan". Your access continues until the end of the current billing period.' },
+  { q: 'Can I get a refund?', a: 'We do not offer partial-month refunds, but if you have a problem please contact billing@synaptiqai.co.uk and we will do our best to help.' },
+  { q: 'My child is under 13 — is that okay?', a: 'We require verifiable parental consent for users under 13. Email privacy@synaptiqai.co.uk to set this up.' },
+  { q: 'Is the AI always accurate?', a: 'AI can make mistakes. Always verify important answers, especially for exams. Use Synaptiq as a study aid, not a replacement for your teacher.' },
+  { q: 'Can I use Synaptiq for my whole school?', a: 'Yes! We offer school licences from £200/month for up to 60 seats. Email schools@synaptiqai.co.uk for a quote.' },
+  { q: 'What subjects does Synaptiq cover?', a: 'Currently A-Level Maths (AQA, Edexcel, OCR, WJEC). More subjects coming soon.' },
+  { q: 'Does the AI do my homework for me?', a: "Synaptiq explains concepts and guides you step-by-step — it's a tutor, not a homework completion service. Submitting AI output as your own work violates your school's academic integrity policy." },
 ]
 
 export default function ContactClient() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [category, setCategory] = useState(CATEGORIES[0])
+  const [category, setCategory] = useState('')
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setErrorMsg(null)
     setStatus('loading')
-    setErrorMsg('')
-    try {
-      const res = await fetch('/api/resend', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, category, message }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        setStatus('error')
-        setErrorMsg(data.error ?? 'Something went wrong — please try again.')
-      } else {
-        setStatus('success')
-      }
-    } catch {
+
+    const res = await fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, category, message }),
+    })
+    const data = await res.json()
+
+    if (!res.ok) {
+      setErrorMsg(data.error || 'Something went wrong. Please try again.')
       setStatus('error')
-      setErrorMsg('Network error — please check your connection and try again.')
+    } else {
+      setStatus('success')
     }
   }
 
   return (
-    <div style={{ background: '#08090E', color: '#E8F0FF', minHeight: '100vh', fontFamily: '\'DM Sans\', system-ui, sans-serif' }}>
+    <div className="min-h-screen" style={{ background: '#0B0F14' }}>
       {/* Nav */}
-      <header style={{ padding: '1.5rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <Link href="/" style={{ fontFamily: '\'Syne\', sans-serif', fontSize: '1.4rem', fontWeight: 800, color: '#C9A84C', textDecoration: 'none' }}>Synaptiq</Link>
-        <nav style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-          <Link href="/pricing" style={{ color: '#6B7394', textDecoration: 'none', fontSize: '0.875rem' }}>Pricing</Link>
-          <Link href="/schools" style={{ color: '#6B7394', textDecoration: 'none', fontSize: '0.875rem' }}>For Schools</Link>
-          <Link href="/login" style={{ background: 'linear-gradient(135deg, #C9A84C, #A07830)', color: '#08090E', padding: '0.5rem 1.25rem', borderRadius: 10, fontSize: '0.875rem', fontWeight: 700, textDecoration: 'none' }}>Sign in</Link>
-        </nav>
-      </header>
-
-      {/* Hero */}
-      <div style={{ textAlign: 'center', padding: '4rem 1.5rem 3rem' }}>
-        <h1 style={{ fontFamily: '\'Syne\', sans-serif', fontSize: '2.5rem', fontWeight: 800, marginBottom: '1rem' }}>How can we help?</h1>
-        <p style={{ color: '#6B7394', maxWidth: 500, margin: '0 auto' }}>We&apos;re a small team — we read every message and reply within 24 hours on weekdays.</p>
-      </div>
-
-      {/* Contact cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', maxWidth: 900, margin: '0 auto', padding: '0 1.5rem 3rem' }}>
-        {CONTACT_CARDS.map(c => (
-          <div key={c.title} style={{ background: 'rgba(13,17,32,0.9)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: '2rem', textAlign: 'center', transition: 'border-color 0.2s' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>{c.icon}</div>
-            <h3 style={{ fontFamily: '\'Syne\', sans-serif', fontWeight: 700, marginBottom: '0.5rem' }}>{c.title}</h3>
-            <p style={{ color: '#6B7394', fontSize: '0.875rem', marginBottom: '1.25rem' }}>{c.sub}</p>
-            <a href={c.href} style={{ color: '#C9A84C', textDecoration: 'none', fontWeight: 600, fontSize: '0.875rem' }}>{c.label}</a>
+      <nav
+        className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b"
+        style={{ background: 'rgba(11,15,20,0.92)', backdropFilter: 'blur(12px)', borderColor: 'rgba(255,255,255,0.06)' }}
+      >
+        <Link href="/" className="flex items-center gap-2 no-underline">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#4F8CFF,#22C55E)' }}>
+            <Zap className="w-4 h-4 text-white" />
           </div>
-        ))}
-      </div>
+          <span className="font-bold text-sm text-white">Synaptiq</span>
+        </Link>
+        <Link href="/dashboard" className="flex items-center gap-1.5 text-sm no-underline" style={{ color: '#9AA4AF' }}>
+          <ArrowLeft className="w-4 h-4" />
+          Back to app
+        </Link>
+      </nav>
 
-      {/* FAQ */}
-      <div style={{ maxWidth: 700, margin: '0 auto', padding: '0 1.5rem 4rem' }}>
-        <h2 style={{ fontFamily: '\'Syne\', sans-serif', fontWeight: 700, fontSize: '1.4rem', marginBottom: '1.5rem' }}>Frequently Asked Questions</h2>
-        {FAQ.map(f => (
-          <details key={f.q} style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', paddingBottom: '1rem', marginBottom: '1rem' }}>
-            <summary style={{ cursor: 'pointer', fontWeight: 600, padding: '0.5rem 0', listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              {f.q}
-              <span style={{ color: '#C9A84C', marginLeft: '0.5rem', flexShrink: 0 }}>+</span>
-            </summary>
-            <p style={{ color: '#94A3B8', fontSize: '0.9rem', marginTop: '0.75rem', lineHeight: 1.6 }}>{f.a}</p>
-          </details>
-        ))}
-      </div>
-
-      {/* Contact form */}
-      <div style={{ maxWidth: 600, margin: '0 auto', padding: '0 1.5rem 6rem' }}>
-        <h2 style={{ fontFamily: '\'Syne\', sans-serif', fontWeight: 700, fontSize: '1.4rem', marginBottom: '1.5rem' }}>Send us a message</h2>
-
-        {status === 'success' ? (
-          <div style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)', borderRadius: 12, padding: '2rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>✅</div>
-            <h3 style={{ fontFamily: '\'Syne\', sans-serif', fontWeight: 700, marginBottom: '0.5rem' }}>Message sent!</h3>
-            <p style={{ color: '#6B7394', fontSize: '0.9rem' }}>We&apos;ll get back to you within 24 hours on weekdays.</p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            <label style={labelStyle}>Your name</label>
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Full name" required style={inputStyle} />
-
-            <label style={labelStyle}>Email address</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="your@email.com" required style={inputStyle} />
-
-            <label style={labelStyle}>Category</label>
-            <select value={category} onChange={e => setCategory(e.target.value)} style={inputStyle}>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-
-            <label style={labelStyle}>Message</label>
-            <textarea value={message} onChange={e => setMessage(e.target.value)} rows={5} placeholder="Tell us what&apos;s going on..." required style={{ ...inputStyle, resize: 'vertical' }} />
-
-            {status === 'error' && errorMsg && (
-              <p style={{ color: '#FB7185', fontSize: '0.85rem', marginBottom: '1rem' }}>{errorMsg}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={status === 'loading'}
-              style={{
-                width: '100%', background: 'linear-gradient(135deg, #C9A84C, #A07830)',
-                color: '#08090E', border: 'none', borderRadius: 12, padding: '0.875rem',
-                fontSize: '1rem', fontWeight: 700, cursor: status === 'loading' ? 'wait' : 'pointer',
-                opacity: status === 'loading' ? 0.7 : 1,
-              }}
-            >
-              {status === 'loading' ? 'Sending…' : 'Send message →'}
-            </button>
-          </form>
-        )}
-      </div>
-
-      <footer style={{ borderTop: '1px solid rgba(255,255,255,0.07)', padding: '2rem 1.5rem', textAlign: 'center', color: '#6B7394', fontSize: '0.875rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-          <Link href="/" style={{ color: '#6B7394', textDecoration: 'none' }}>Home</Link>
-          <Link href="/pricing" style={{ color: '#6B7394', textDecoration: 'none' }}>Pricing</Link>
-          <Link href="/schools" style={{ color: '#6B7394', textDecoration: 'none' }}>Schools</Link>
-          <Link href="/privacy" style={{ color: '#6B7394', textDecoration: 'none' }}>Privacy</Link>
-          <Link href="/terms" style={{ color: '#6B7394', textDecoration: 'none' }}>Terms</Link>
+      <main className="max-w-4xl mx-auto px-6 py-14">
+        {/* Hero */}
+        <div className="text-center mb-12">
+          <h1 className="text-3xl font-bold mb-3" style={{ color: '#F0EEF8' }}>How can we help?</h1>
+          <p className="text-sm" style={{ color: '#9AA4AF' }}>Our team typically replies within one business day.</p>
         </div>
-        <p>&copy; 2026 Synaptiq Ltd</p>
+
+        {/* Support cards */}
+        <div className="grid grid-cols-2 gap-4 mb-12 sm:grid-cols-4">
+          {SUPPORT_CARDS.map(({ icon: Icon, label, email: addr, color }) => (
+            <motion.a
+              key={addr}
+              href={`mailto:${addr}`}
+              whileHover={{ y: -2 }}
+              className="flex flex-col items-center gap-2 p-4 rounded-xl text-center no-underline transition-colors"
+              style={{ background: 'rgba(18,24,33,0.8)', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${color}18`, border: `1px solid ${color}30` }}>
+                <Icon className="w-4 h-4" style={{ color }} />
+              </div>
+              <p className="text-xs font-medium" style={{ color: '#F0EEF8' }}>{label}</p>
+              <p className="text-xs break-all" style={{ color: '#6B7394' }}>{addr}</p>
+            </motion.a>
+          ))}
+        </div>
+
+        <div className="grid gap-10 lg:grid-cols-2">
+          {/* Contact form */}
+          <div>
+            <h2 className="text-lg font-semibold mb-5" style={{ color: '#F0EEF8' }}>Send us a message</h2>
+
+            {status === 'success' ? (
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="flex flex-col items-center gap-3 py-12 text-center"
+              >
+                <CheckCircle className="w-10 h-10" style={{ color: '#22C55E' }} />
+                <p className="font-semibold" style={{ color: '#F0EEF8' }}>Message sent!</p>
+                <p className="text-sm" style={{ color: '#9AA4AF' }}>We&apos;ll get back to you within one business day.</p>
+              </motion.div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {status === 'error' && errorMsg && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg text-sm" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}>
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    {errorMsg}
+                  </div>
+                )}
+
+                <Field label="Your name">
+                  <input
+                    required
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    placeholder="Jane Smith"
+                    className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#F0EEF8' }}
+                  />
+                </Field>
+
+                <Field label="Email address">
+                  <input
+                    required
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    placeholder="jane@example.com"
+                    className="w-full px-3 py-2.5 rounded-lg text-sm outline-none"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#F0EEF8' }}
+                  />
+                </Field>
+
+                <Field label="Category">
+                  <select
+                    value={category}
+                    onChange={e => setCategory(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-lg text-sm outline-none cursor-pointer"
+                    style={{ background: 'rgba(18,24,33,0.95)', border: '1px solid rgba(255,255,255,0.1)', color: category ? '#F0EEF8' : '#6B7394' }}
+                  >
+                    <option value="" disabled style={{ background: '#121821' }}>Select a category…</option>
+                    {CATEGORIES.map(c => <option key={c} value={c} style={{ background: '#121821' }}>{c}</option>)}
+                  </select>
+                </Field>
+
+                <Field label="Message">
+                  <textarea
+                    required
+                    value={message}
+                    onChange={e => setMessage(e.target.value)}
+                    rows={5}
+                    placeholder="Describe your question or issue…"
+                    className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-none"
+                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#F0EEF8' }}
+                  />
+                </Field>
+
+                <motion.button
+                  type="submit"
+                  disabled={status === 'loading'}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
+                  style={{ background: 'linear-gradient(135deg,#4F8CFF,#22C55E)', color: '#fff', opacity: status === 'loading' ? 0.6 : 1 }}
+                >
+                  {status === 'loading' ? <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</> : 'Send message'}
+                </motion.button>
+              </form>
+            )}
+          </div>
+
+          {/* FAQ */}
+          <div>
+            <h2 className="text-lg font-semibold mb-5" style={{ color: '#F0EEF8' }}>Frequently asked questions</h2>
+            <div className="space-y-2">
+              {FAQS.map((faq, i) => (
+                <div
+                  key={i}
+                  className="rounded-xl overflow-hidden"
+                  style={{ background: 'rgba(18,24,33,0.8)', border: '1px solid rgba(255,255,255,0.06)' }}
+                >
+                  <button
+                    className="w-full flex items-center justify-between px-4 py-3.5 text-left"
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  >
+                    <span className="text-sm font-medium pr-3" style={{ color: '#F0EEF8' }}>{faq.q}</span>
+                    {openFaq === i
+                      ? <ChevronUp className="w-4 h-4 flex-shrink-0" style={{ color: '#6B7394' }} />
+                      : <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: '#6B7394' }} />
+                    }
+                  </button>
+                  {openFaq === i && (
+                    <div className="px-4 pb-4">
+                      <p className="text-sm leading-relaxed" style={{ color: '#9AA4AF' }}>{faq.a}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <footer className="border-t py-8 mt-4" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#6B7394' }}>
+        <div className="max-w-4xl mx-auto px-6 flex flex-wrap gap-4 text-xs">
+          <span>© {new Date().getFullYear()} Synaptiq Ltd</span>
+          <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+          <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+          <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
+        </div>
       </footer>
     </div>
   )
 }
 
-const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: '0.75rem', fontWeight: 600,
-  textTransform: 'uppercase', letterSpacing: '0.06em', color: '#6B7394', marginBottom: '0.4rem',
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%', background: 'rgba(13,17,32,0.9)', border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: 10, padding: '0.75rem 1rem', color: '#F0EEF8',
-  fontFamily: '\'DM Sans\', system-ui, sans-serif', fontSize: '0.9rem',
-  marginBottom: '1rem', outline: 'none', boxSizing: 'border-box',
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-xs font-medium mb-1.5" style={{ color: '#9AA4AF' }}>{label}</label>
+      {children}
+    </div>
+  )
 }

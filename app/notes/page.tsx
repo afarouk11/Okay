@@ -1,9 +1,9 @@
-import type { Metadata } from 'next'
+import { Metadata } from 'next'
 import NotesClient from './NotesClient'
 
 export const metadata: Metadata = {
-  title: 'My Notes',
-  description: 'Your personal study notes on Synaptiq.',
+  title: 'Notes',
+  description: 'Capture and revisit your study notes.',
 }
 
 export default function NotesPage() {

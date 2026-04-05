@@ -1,131 +1,133 @@
-import type { Metadata } from 'next'
+import { Metadata } from 'next'
 import Link from 'next/link'
+import { Zap, ArrowLeft } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Terms & Conditions',
-  description: 'The terms governing use of Synaptiq\'s A-Level Maths AI tutoring platform.',
-  robots: { index: true, follow: true },
-  openGraph: {
-    title: 'Terms & Conditions — Synaptiq',
-    description: 'The terms governing use of Synaptiq\'s A-Level Maths AI tutoring platform.',
-    type: 'website',
-  },
+  title: 'Terms of Service',
+  description: 'Synaptiq terms and conditions of use.',
 }
 
 export default function TermsPage() {
   return (
-    <div style={{ background: '#08090E', color: '#E8F0FF', minHeight: '100vh', fontFamily: '\'DM Sans\', system-ui, sans-serif', lineHeight: 1.7 }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '3rem 1.5rem 5rem' }}>
-        <Link href="/" style={{ display: 'inline-block', fontWeight: 800, fontSize: '1.3rem', color: '#C9A84C', textDecoration: 'none', marginBottom: '2.5rem' }}>
-          Synaptiq
+    <div className="min-h-screen" style={{ background: '#0B0F14', color: '#E2E8F0' }}>
+      <nav
+        className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b"
+        style={{ background: 'rgba(11,15,20,0.92)', backdropFilter: 'blur(12px)', borderColor: 'rgba(255,255,255,0.06)' }}
+      >
+        <Link href="/" className="flex items-center gap-2 no-underline">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#4F8CFF,#22C55E)' }}>
+            <Zap className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-bold text-sm text-white">Synaptiq</span>
         </Link>
-        <h1 style={{ fontFamily: '\'Syne\', sans-serif', fontSize: '2rem', fontWeight: 800, marginBottom: '0.4rem' }}>Terms &amp; Conditions</h1>
-        <p style={{ color: '#6B7394', fontSize: '0.85rem', marginBottom: '2rem' }}>Last updated: 1 March 2026 · Synaptiq Ltd</p>
+        <Link href="/dashboard" className="flex items-center gap-1.5 text-sm no-underline" style={{ color: '#9AA4AF' }}>
+          <ArrowLeft className="w-4 h-4" />
+          Back to app
+        </Link>
+      </nav>
 
-        <div style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 12, padding: '1.25rem 1.5rem', marginBottom: '2rem' }}>
-          <strong>Plain English:</strong> Use Synaptiq for learning. Don&apos;t abuse the platform or try to cheat. Pay your subscription. You own your content. We own the platform. We&apos;re not responsible if the AI gets something wrong — always verify important answers.
-        </div>
+      <main className="max-w-3xl mx-auto px-6 py-14">
+        <h1 className="text-3xl font-bold mb-2" style={{ color: '#F0EEF8' }}>Terms of Service</h1>
+        <p className="text-sm mb-10" style={{ color: '#6B7394' }}>Last updated: January 2025</p>
 
-        <Section title="1. Acceptance of Terms">
-          <p>By creating an account or using Synaptiq, you agree to these Terms and Conditions and our Privacy Policy. If you do not agree, do not use the platform. If you are under 18, a parent or guardian must agree on your behalf.</p>
+        <Section title="1. Acceptance">
+          <p>By accessing or using Synaptiq, you agree to these Terms. If you are under 18, you must have the consent of a parent or guardian. If you do not agree, please do not use the platform.</p>
         </Section>
 
         <Section title="2. The Service">
-          <p>Synaptiq provides an AI-powered educational platform including but not limited to: AI tutoring, practice question generation, essay marking, revision tools, and progress tracking. We reserve the right to modify, suspend, or discontinue any feature at any time with reasonable notice.</p>
+          <p>Synaptiq provides AI-powered tutoring, practice questions, essay marking, revision tools, and progress tracking. We reserve the right to modify or suspend features with reasonable notice.</p>
         </Section>
 
         <Section title="3. Account Registration">
           <ul>
             <li>You must provide accurate information when creating an account</li>
             <li>You are responsible for keeping your password secure</li>
-            <li>You must be 13 or older to create an account. Users under 13 require parental consent</li>
+            <li>Minimum age is 13; users under 13 require verifiable parental consent</li>
             <li>One account per person — sharing accounts is not permitted</li>
-            <li>We reserve the right to suspend or terminate accounts that violate these terms</li>
+            <li>We may suspend or terminate accounts that violate these Terms</li>
           </ul>
         </Section>
 
-        <Section title="4. Subscriptions and Payment">
+        <Section title="4. Subscriptions & Payment">
           <ul>
-            <li>Subscriptions are billed monthly in advance</li>
-            <li>Prices are in GBP and inclusive of VAT where applicable</li>
-            <li>You may cancel your subscription at any time — cancellation takes effect at the end of the current billing period</li>
-            <li>We do not offer refunds for partial months except where required by UK consumer law</li>
-            <li>We reserve the right to change prices with 30 days notice</li>
-            <li>Payment is processed by Stripe — we do not store card details</li>
+            <li>Subscriptions are billed monthly in advance in GBP (+ VAT where applicable)</li>
+            <li>You may cancel at any time; cancellation takes effect at the end of the current billing period</li>
+            <li>No partial-month refunds, except where required under UK consumer law</li>
+            <li>We will give 30 days&apos; notice of any price changes</li>
+            <li>Payments are processed securely by Stripe</li>
           </ul>
         </Section>
 
         <Section title="5. Acceptable Use">
-          <p>You agree not to use Synaptiq to:</p>
+          <p>You must not:</p>
           <ul>
-            <li>Submit work generated by the AI as your own in academic assessments without disclosure (academic dishonesty)</li>
-            <li>Upload or share illegal, harmful, or offensive content</li>
-            <li>Attempt to reverse engineer, scrape, or copy the platform</li>
-            <li>Share your login credentials with others</li>
-            <li>Use the platform in any way that violates applicable law</li>
-            <li>Harass, abuse, or harm other users</li>
+            <li>Submit AI-generated content as your own work (academic dishonesty)</li>
+            <li>Use the platform for illegal, harmful, or offensive purposes</li>
+            <li>Reverse-engineer, scrape, or copy the platform or its content</li>
+            <li>Share login credentials with others</li>
+            <li>Harass or abuse other users or our team</li>
           </ul>
         </Section>
 
         <Section title="6. AI-Generated Content">
-          <div style={{ background: 'rgba(251,113,133,0.08)', border: '1px solid rgba(251,113,133,0.2)', borderRadius: 12, padding: '1.25rem 1.5rem' }}>
-            <strong>Important:</strong> Synaptiq uses artificial intelligence to generate educational content. While we work hard to ensure accuracy:
-            <ul style={{ marginTop: '0.5rem' }}>
-              <li>AI responses may occasionally contain errors or inaccuracies</li>
-              <li>AI content should not replace professional advice (medical, legal, financial)</li>
-              <li>For high-stakes decisions, always verify information with authoritative sources</li>
-              <li>Exam preparation content is guidance only — always check your official specification</li>
-            </ul>
-          </div>
+          <p>AI responses may contain errors or inaccuracies. Synaptiq is a study aid — it is not a replacement for professional advice. Always verify AI output for high-stakes decisions. Exam content is guidance only.</p>
         </Section>
 
         <Section title="7. Intellectual Property">
-          <ul>
-            <li>Synaptiq owns all platform code, design, branding, and proprietary content</li>
-            <li>You retain ownership of content you create (your notes, essays, flashcards)</li>
-            <li>You grant us a limited licence to process your content to provide the service</li>
-            <li>AI-generated responses are provided to you for personal educational use only</li>
-          </ul>
+          <p>Synaptiq owns the platform, code, design, and branding. You own the content you create (notes, essays, flashcards). By using the platform you grant Synaptiq a limited licence to process your content to deliver the service. AI responses are provided for personal educational use only.</p>
         </Section>
 
         <Section title="8. Limitation of Liability">
-          <p>To the maximum extent permitted by UK law, Synaptiq shall not be liable for any indirect, incidental, or consequential damages arising from your use of the platform. Our total liability to you shall not exceed the amount you paid us in the 12 months preceding the claim.</p>
-          <p>Nothing in these terms excludes liability for death or personal injury caused by negligence, fraud, or any liability that cannot be excluded by law.</p>
+          <p>To the maximum extent permitted by law, Synaptiq is not liable for indirect or consequential damages. Our total liability in any 12-month period is limited to the amount you paid us in that period. Nothing in these Terms limits our liability for death, personal injury, negligence, or fraud.</p>
         </Section>
 
         <Section title="9. Consumer Rights">
-          <p>If you are a consumer in the UK, you have statutory rights that these terms do not affect. Under the Consumer Rights Act 2015, digital services must be of satisfactory quality and fit for purpose. If our service does not meet this standard, you may be entitled to a remedy.</p>
+          <p>Nothing in these Terms affects your statutory rights under the Consumer Rights Act 2015 or any other applicable UK consumer legislation.</p>
         </Section>
 
         <Section title="10. Termination">
-          <p>You may delete your account at any time via Settings. We may terminate your account if you breach these terms, with or without notice depending on severity. On termination, your access ends immediately and your data will be deleted in accordance with our Privacy Policy.</p>
+          <p>You can delete your account at any time via Settings. We may terminate your account for breach of these Terms. Data will be deleted in accordance with our <Link href="/privacy" className="text-blue-400 hover:underline">Privacy Policy</Link>.</p>
         </Section>
 
         <Section title="11. Governing Law">
-          <p>These terms are governed by the laws of England and Wales. Any disputes will be subject to the exclusive jurisdiction of the courts of England and Wales, except where consumer protection law provides otherwise.</p>
+          <p>These Terms are governed by the laws of England and Wales. Disputes shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
         </Section>
 
-        <Section title="12. Changes to Terms">
-          <p>We may update these terms from time to time. We will give you at least 30 days notice of material changes by email. Continued use after that period constitutes acceptance.</p>
+        <Section title="12. Updates">
+          <p>We will give 30 days&apos; notice of material changes to these Terms via email and an in-platform notice.</p>
         </Section>
 
-        <div style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', gap: '1.5rem', fontSize: '0.875rem' }}>
-          <Link href="/" style={{ color: '#C9A84C', textDecoration: 'none' }}>← Back</Link>
-          <Link href="/privacy" style={{ color: '#6B7394', textDecoration: 'none' }}>Privacy Policy</Link>
-          <Link href="/cookies" style={{ color: '#6B7394', textDecoration: 'none' }}>Cookie Policy</Link>
-        </div>
-      </div>
+        <Section title="13. Contact">
+          <p>For legal queries: <a href="mailto:legal@synaptiqai.co.uk" className="text-blue-400 hover:underline">legal@synaptiqai.co.uk</a></p>
+        </Section>
+      </main>
+
+      <Footer />
     </div>
   )
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: '2rem' }}>
-      <h2 style={{ fontFamily: '\'Syne\', sans-serif', fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.75rem', color: '#E8F0FF' }}>{title}</h2>
-      <div style={{ color: '#A8B8CC' }}>
+    <section className="mb-8">
+      <h2 className="text-lg font-semibold mb-3" style={{ color: '#F0EEF8' }}>{title}</h2>
+      <div className="space-y-3 text-sm leading-relaxed" style={{ color: '#9AA4AF' }}>
         {children}
       </div>
-    </div>
+    </section>
+  )
+}
+
+function Footer() {
+  return (
+    <footer className="border-t py-8 mt-4" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#6B7394' }}>
+      <div className="max-w-3xl mx-auto px-6 flex flex-wrap gap-4 text-xs">
+        <span>© {new Date().getFullYear()} Synaptiq Ltd</span>
+        <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+        <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+        <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
+        <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+      </div>
+    </footer>
   )
 }

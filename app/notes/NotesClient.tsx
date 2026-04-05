@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Plus, Trash2, Pencil, Check, X, Loader2, StickyNote, Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/useAuth'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'
+import { useAuth } from '@/lib/useAuth'
 
 type Note = {
   id: string
@@ -13,56 +15,50 @@ type Note = {
   subject: string
   tags: string[]
   created_at: string
-  text: string
-  tag: string | undefined
+  text?: string
+  tag?: string
 }
 
-type DraftNote = {
-  id: string | null
-  text: string
-  subject: string
-  tag: string
-}
-
-const EMPTY_DRAFT: DraftNote = { id: null, text: '', subject: '', tag: '' }
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-GB', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  })
-}
+const SUBJECTS = ['Pure Maths', 'Statistics', 'Mechanics', 'General', 'Other']
 
 export default function NotesClient() {
   const router = useRouter()
   const { user, token, loading: authLoading } = useAuth()
 
   const [notes, setNotes] = useState<Note[]>([])
-  const [fetching, setFetching] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [filter, setFilter] = useState('All')
-  const [draft, setDraft] = useState<DraftNote>(EMPTY_DRAFT)
-  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
 
+  // New note form
+  const [showForm, setShowForm] = useState(false)
+  const [newContent, setNewContent] = useState('')
+  const [newSubject, setNewSubject] = useState('General')
+  const [newTag, setNewTag] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // Edit state
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editContent, setEditContent] = useState('')
+  const [editSubject, setEditSubject] = useState('')
+
+  // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !user) router.replace('/login')
   }, [authLoading, user, router])
 
   const fetchNotes = useCallback(async () => {
     if (!token) return
-    setFetching(true)
+    setLoading(true)
     try {
-      const res = await fetch('/api/notes', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await fetch('/api/notes', { headers: { Authorization: `Bearer ${token}` } })
       if (res.ok) {
-        const json = await res.json()
-        setNotes(json.notes ?? [])
+        const data = await res.json()
+        setNotes(data.notes ?? [])
       }
     } catch {
       // no-op
     } finally {
-      setFetching(false)
+      setLoading(false)
     }
   }, [token])
 
@@ -70,89 +66,87 @@ export default function NotesClient() {
     if (token) fetchNotes()
   }, [token, fetchNotes])
 
-  const subjects = ['All', ...Array.from(new Set(notes.map(n => n.subject).filter(Boolean)))]
-
-  const filtered = notes
-    .filter(n => filter === 'All' || n.subject === filter)
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-
-  function selectNote(note: Note) {
-    setDraft({ id: note.id, text: note.text ?? note.content, subject: note.subject, tag: note.tag ?? '' })
-    setError(null)
-  }
-
-  function newNote() {
-    setDraft(EMPTY_DRAFT)
-    setError(null)
-  }
-
-  async function handleSave() {
-    if (!token) return
-    if (!draft.text.trim()) { setError('Note content is required.'); return }
-    if (!draft.subject.trim()) { setError('Subject is required.'); return }
-    setError(null)
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault()
+    if (!token || !newContent.trim()) return
     setSaving(true)
     try {
-      const isNew = draft.id === null
       const res = await fetch('/api/notes', {
-        method: isNew ? 'POST' : 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(
-          isNew
-            ? { text: draft.text, subject: draft.subject, tag: draft.tag || undefined }
-            : { id: draft.id, text: draft.text, subject: draft.subject, tag: draft.tag || undefined }
-        ),
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ text: newContent, subject: newSubject, tag: newTag || undefined }),
       })
-      const json = await res.json()
-      if (!res.ok) { setError(json.error ?? 'Failed to save note.'); return }
-      const saved: Note = json.note
-      if (isNew) {
-        setNotes(prev => [saved, ...prev])
-      } else {
-        setNotes(prev => prev.map(n => n.id === saved.id ? saved : n))
+      if (res.ok) {
+        const data = await res.json()
+        if (data.note) setNotes(prev => [data.note, ...prev])
+        setNewContent('')
+        setNewTag('')
+        setShowForm(false)
       }
-      setDraft({ id: saved.id, text: saved.text ?? saved.content, subject: saved.subject, tag: saved.tag ?? '' })
     } catch {
-      setError('Network error. Please try again.')
+      // no-op
     } finally {
       setSaving(false)
     }
-  }
+  }y
 
-  async function handleDelete() {
-    if (!token || !draft.id) return
-    setDeleting(true)
+  async function handleSaveEdit(id: string) {
+    if (!token) return
+    setSaving(true)
     try {
       const res = await fetch('/api/notes', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ id: draft.id }),
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id, text: editContent, subject: editSubject }),
       })
       if (res.ok) {
-        setNotes(prev => prev.filter(n => n.id !== draft.id))
-        setDraft(EMPTY_DRAFT)
-        setError(null)
-      } else {
-        const json = await res.json()
-        setError(json.error ?? 'Failed to delete note.')
+        const data = await res.json()
+        if (data.note) {
+          setNotes(prev => prev.map(n => n.id === id ? data.note : n))
+        }
       }
     } catch {
-      setError('Network error. Please try again.')
+      // no-op
     } finally {
-      setDeleting(false)
+      setSaving(false)
+      setEditId(null)
     }
   }
 
-  if (authLoading) {
+  async function handleDelete(id: string) {
+    if (!token || !window.confirm('Delete this note?')) return
+    try {
+      await fetch('/api/notes', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id }),
+      })
+      setNotes(prev => prev.filter(n => n.id !== id))
+    } catch {
+      // no-op
+    }
+  }
+
+  function startEdit(note: Note) {
+    setEditId(note.id)
+    setEditContent(note.content ?? note.text ?? '')
+    setEditSubject(note.subject ?? 'General')
+  }
+
+  const filtered = notes.filter(n => {
+    if (!search) return true
+    const q = search.toLowerCase()
+    return (
+      (n.content ?? n.text ?? '').toLowerCase().includes(q) ||
+      n.subject?.toLowerCase().includes(q) ||
+      (n.tags ?? []).some(t => t.toLowerCase().includes(q))
+    )
+  })
+
+  if (authLoading || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center" style={{ background: '#0B0F14' }}>
-        <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: '#4F8CFF', borderTopColor: 'transparent' }} />
+        <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
     )
   }
@@ -160,200 +154,210 @@ export default function NotesClient() {
   if (!user) return null
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#0B0F14' }}>
+    <div className="flex min-h-screen" style={{ background: '#0B0F14' }}>
       <Sidebar />
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+
+      <div className="flex-1 flex flex-col ml-60">
         <Header
-          title="My Notes"
-          subtitle="Study notes across all subjects"
-          userName={user.email?.split('@')[0] ?? 'Student'}
+          title="Notes"
+          subtitle="Capture and revisit your study notes"
+          action={
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => setShowForm(v => !v)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium"
+              style={{ background: 'linear-gradient(135deg,#4F8CFF,#22C55E)', color: '#fff' }}
+            >
+              <Plus className="w-4 h-4" />
+              New note
+            </motion.button>
+          }
         />
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Left panel: note list */}
-          <div className="flex flex-col w-72 shrink-0 border-r border-white/5 overflow-hidden">
-            {/* Filter bar */}
-            <div className="flex items-center gap-1 px-3 py-3 flex-wrap border-b border-white/5">
-              {subjects.map(s => (
-                <button
-                  key={s}
-                  onClick={() => setFilter(s)}
-                  className="px-2.5 py-1 rounded-full text-xs font-medium transition-colors"
-                  style={
-                    filter === s
-                      ? { background: '#4F8CFF22', color: '#4F8CFF', border: '1px solid #4F8CFF55' }
-                      : { background: 'transparent', color: '#8B9CB5', border: '1px solid #ffffff10' }
-                  }
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+        <main className="flex-1 px-8 py-6 max-w-4xl">
 
-            {/* New note button */}
-            <div className="px-3 py-2 border-b border-white/5">
-              <button
-                onClick={newNote}
-                className="w-full py-2 rounded-lg text-sm font-medium transition-colors"
-                style={{ background: '#4F8CFF', color: '#fff' }}
+          {/* New note form */}
+          <AnimatePresence>
+            {showForm && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="overflow-hidden mb-6"
               >
-                + New Note
-              </button>
-            </div>
-
-            {/* Notes list */}
-            <div className="flex-1 overflow-y-auto">
-              {fetching ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: '#4F8CFF', borderTopColor: 'transparent' }} />
-                </div>
-              ) : filtered.length === 0 ? (
-                <p className="text-center text-sm py-12 px-4" style={{ color: '#8B9CB5' }}>
-                  {notes.length === 0
-                    ? "No notes yet — click 'New Note' to get started"
-                    : 'No notes for this subject.'}
-                </p>
-              ) : (
-                filtered.map(note => {
-                  const isActive = draft.id === note.id
-                  return (
-                    <button
-                      key={note.id}
-                      onClick={() => selectNote(note)}
-                      className="w-full text-left px-4 py-3 border-b transition-colors"
-                      style={{
-                        borderColor: '#ffffff08',
-                        background: isActive ? '#4F8CFF14' : 'transparent',
-                        borderLeft: isActive ? '2px solid #4F8CFF' : '2px solid transparent',
-                      }}
+                <form
+                  onSubmit={handleCreate}
+                  className="rounded-xl p-5 space-y-3"
+                  style={{ background: 'rgba(79,140,255,0.06)', border: '1px solid rgba(79,140,255,0.2)' }}
+                >
+                  <textarea
+                    required
+                    autoFocus
+                    value={newContent}
+                    onChange={e => setNewContent(e.target.value)}
+                    rows={4}
+                    placeholder="Write your note here…"
+                    className="w-full bg-transparent text-sm outline-none resize-none"
+                    style={{ color: '#F0EEF8' }}
+                  />
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <select
+                      value={newSubject}
+                      onChange={e => setNewSubject(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg text-xs outline-none cursor-pointer"
+                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#F0EEF8' }}
                     >
-                      <p className="text-sm font-medium truncate" style={{ color: isActive ? '#4F8CFF' : '#E2E8F0' }}>
-                        {note.title || '(untitled)'}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        {note.subject && (
-                          <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: '#C9A84C22', color: '#C9A84C' }}>
-                            {note.subject}
-                          </span>
-                        )}
-                        <span className="text-xs" style={{ color: '#8B9CB5' }}>
-                          {formatDate(note.created_at)}
-                        </span>
-                      </div>
-                    </button>
-                  )
-                })
-              )}
-            </div>
-          </div>
-
-          {/* Right panel: edit area */}
-          <div className="flex flex-col flex-1 overflow-hidden">
-            <div className="flex-1 overflow-y-auto px-6 py-6">
-              <div className="max-w-2xl w-full mx-auto flex flex-col gap-4">
-                {draft.id === null && draft.text === '' && draft.subject === '' ? (
-                  <div className="flex flex-col items-center justify-center h-48 gap-3">
-                    <p className="text-sm" style={{ color: '#8B9CB5' }}>
-                      Select a note or create a new one.
-                    </p>
-                    <button
-                      onClick={newNote}
-                      className="px-4 py-2 rounded-lg text-sm font-medium"
-                      style={{ background: '#4F8CFF', color: '#fff' }}
-                    >
-                      + New Note
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs font-medium uppercase tracking-wide" style={{ color: '#8B9CB5' }}>Subject *</label>
-                      <input
-                        type="text"
-                        value={draft.subject}
-                        onChange={e => setDraft(d => ({ ...d, subject: e.target.value }))}
-                        placeholder="e.g. Mathematics, Biology…"
-                        className="w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors"
-                        style={{
-                          background: '#12181F',
-                          border: '1px solid #ffffff15',
-                          color: '#E2E8F0',
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs font-medium uppercase tracking-wide" style={{ color: '#8B9CB5' }}>Tag (optional)</label>
-                      <input
-                        type="text"
-                        value={draft.tag}
-                        onChange={e => setDraft(d => ({ ...d, tag: e.target.value }))}
-                        placeholder="e.g. revision, exam"
-                        className="w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors"
-                        style={{
-                          background: '#12181F',
-                          border: '1px solid #ffffff15',
-                          color: '#E2E8F0',
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1 flex-1">
-                      <label className="text-xs font-medium uppercase tracking-wide" style={{ color: '#8B9CB5' }}>Content *</label>
-                      <textarea
-                        value={draft.text}
-                        onChange={e => setDraft(d => ({ ...d, text: e.target.value }))}
-                        placeholder="Write your note here…"
-                        rows={14}
-                        className="w-full rounded-lg px-3 py-2 text-sm outline-none resize-y transition-colors"
-                        style={{
-                          background: '#12181F',
-                          border: '1px solid #ffffff15',
-                          color: '#E2E8F0',
-                          lineHeight: '1.7',
-                        }}
-                      />
-                    </div>
-
-                    {error && (
-                      <p className="text-sm" style={{ color: '#F87171' }}>{error}</p>
-                    )}
-
-                    <div className="flex items-center gap-3">
+                      {SUBJECTS.map(s => <option key={s} value={s} style={{ background: '#121821' }}>{s}</option>)}
+                    </select>
+                    <input
+                      value={newTag}
+                      onChange={e => setNewTag(e.target.value)}
+                      placeholder="Tag (optional)"
+                      className="px-3 py-1.5 rounded-lg text-xs outline-none"
+                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#F0EEF8' }}
+                    />
+                    <div className="flex items-center gap-2 ml-auto">
                       <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="px-5 py-2 rounded-lg text-sm font-medium transition-opacity disabled:opacity-50"
-                        style={{ background: '#4F8CFF', color: '#fff' }}
-                      >
-                        {saving ? 'Saving…' : 'Save Note'}
-                      </button>
-
-                      {draft.id !== null && (
-                        <button
-                          onClick={handleDelete}
-                          disabled={deleting}
-                          className="px-5 py-2 rounded-lg text-sm font-medium transition-opacity disabled:opacity-50"
-                          style={{ background: '#F8717122', color: '#F87171', border: '1px solid #F8717133' }}
-                        >
-                          {deleting ? 'Deleting…' : 'Delete'}
-                        </button>
-                      )}
-
-                      <button
-                        onClick={newNote}
-                        className="px-4 py-2 rounded-lg text-sm transition-colors"
-                        style={{ color: '#8B9CB5', border: '1px solid #ffffff10' }}
+                        type="button"
+                        onClick={() => setShowForm(false)}
+                        className="px-3 py-1.5 rounded-lg text-xs"
+                        style={{ color: '#9AA4AF' }}
                       >
                         Cancel
                       </button>
+                      <button
+                        type="submit"
+                        disabled={saving}
+                        className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium"
+                        style={{ background: '#4F8CFF', color: '#fff' }}
+                      >
+                        {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                        Save
+                      </button>
                     </div>
-                  </>
-                )}
-              </div>
+                  </div>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Search bar */}
+          {notes.length > 0 && (
+            <div className="relative mb-6">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#6B7394' }} />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search notes…"
+                className="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm outline-none"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#F0EEF8' }}
+              />
             </div>
-          </div>
-        </div>
+          )}
+
+          {/* Empty state */}
+          {notes.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <StickyNote className="w-10 h-10 mb-4" style={{ color: '#4F8CFF', opacity: 0.4 }} />
+              <p className="font-medium mb-1" style={{ color: '#F0EEF8' }}>No notes yet</p>
+              <p className="text-sm mb-5" style={{ color: '#9AA4AF' }}>Capture key ideas, formulas, and reminders.</p>
+              <button
+                onClick={() => setShowForm(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium"
+                style={{ background: 'rgba(79,140,255,0.12)', border: '1px solid rgba(79,140,255,0.25)', color: '#4F8CFF' }}
+              >
+                <Plus className="w-4 h-4" />
+                Create your first note
+              </button>
+            </div>
+          )}
+
+          {/* Notes grid */}
+          {filtered.length > 0 && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {filtered.map((note, i) => (
+                <motion.div
+                  key={note.id}
+                  initial={{ y: 12, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: i * 0.04, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                  className="rounded-xl p-4 flex flex-col gap-2"
+                  style={{ background: 'rgba(18,24,33,0.8)', border: '1px solid rgba(255,255,255,0.06)' }}
+                >
+                  {editId === note.id ? (
+                    /* Edit mode */
+                    <div className="space-y-2">
+                      <textarea
+                        autoFocus
+                        value={editContent}
+                        onChange={e => setEditContent(e.target.value)}
+                        rows={4}
+                        className="w-full bg-transparent text-sm outline-none resize-none"
+                        style={{ color: '#F0EEF8' }}
+                      />
+                      <select
+                        value={editSubject}
+                        onChange={e => setEditSubject(e.target.value)}
+                        className="px-2 py-1 rounded-lg text-xs outline-none"
+                        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#F0EEF8' }}
+                      >
+                        {SUBJECTS.map(s => <option key={s} value={s} style={{ background: '#121821' }}>{s}</option>)}
+                      </select>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleSaveEdit(note.id)} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium" style={{ background: '#22C55E20', color: '#22C55E' }}>
+                          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />} Save
+                        </button>
+                        <button onClick={() => setEditId(null)} className="px-3 py-1 rounded-lg text-xs" style={{ color: '#9AA4AF' }}>
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* View mode */
+                    <>
+                      <p className="text-sm whitespace-pre-wrap flex-1" style={{ color: '#E2E8F0' }}>
+                        {(note.content ?? note.text ?? '').length > 300
+                          ? `${(note.content ?? note.text ?? '').slice(0, 300)}…`
+                          : (note.content ?? note.text ?? '')}
+                      </p>
+                      <div className="flex items-center justify-between gap-2 mt-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {note.subject && (
+                            <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'rgba(79,140,255,0.12)', color: '#4F8CFF', border: '1px solid rgba(79,140,255,0.2)' }}>
+                              {note.subject}
+                            </span>
+                          )}
+                          {(note.tags?.[0] ?? note.tag) && (
+                            <span className="text-xs" style={{ color: '#6B7394' }}>#{note.tags?.[0] ?? note.tag}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          <button onClick={() => startEdit(note)} className="p-1.5 rounded-lg transition-colors hover:bg-white/5" style={{ color: '#9AA4AF' }}>
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => handleDelete(note.id)} className="p-1.5 rounded-lg transition-colors hover:bg-red-500/10" style={{ color: '#9AA4AF' }}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      {note.created_at && (
+                        <p className="text-xs" style={{ color: '#6B7394' }}>
+                          {new Date(note.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          {search && filtered.length === 0 && (
+            <p className="text-center py-10 text-sm" style={{ color: '#6B7394' }}>No notes match &ldquo;{search}&rdquo;</p>
+          )}
+        </main>
       </div>
     </div>
   )

@@ -1,146 +1,196 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { motion } from 'framer-motion'
+import { Zap, Eye, EyeOff, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import Link from 'next/link'
 import { createBrowserClient } from '@/lib/supabase'
+
+type Status = 'idle' | 'loading' | 'success' | 'error' | 'invalid'
 
 export default function ResetPasswordClient() {
   const router = useRouter()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
-  const [message, setMessage] = useState('')
-  const [hasToken, setHasToken] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [status, setStatus] = useState<Status>('idle')
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [sessionReady, setSessionReady] = useState(false)
 
-  // Supabase embeds the recovery token in the URL hash. We must exchange it
-  // via onAuthStateChange before we can call updateUser.
+  // Exchange the recovery token from the URL hash for a session
   useEffect(() => {
     const supabase = createBrowserClient()
-    if (!supabase) return
+    if (!supabase) { setStatus('invalid'); return }
 
+    // Supabase sets the session automatically from the URL hash on load
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setHasToken(true)
+      if (event === 'PASSWORD_RECOVERY') {
+        setSessionReady(true)
+      }
     })
+
+    // Also check if there's already a session (e.g., page reload)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setSessionReady(true)
+    })
+
     return () => subscription.unsubscribe()
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setErrorMsg(null)
+
     if (password.length < 8) {
-      setStatus('error')
-      setMessage('Password must be at least 8 characters.')
+      setErrorMsg('Password must be at least 8 characters.')
       return
     }
     if (password !== confirm) {
-      setStatus('error')
-      setMessage('Passwords do not match.')
+      setErrorMsg('Passwords do not match.')
       return
     }
-
-    setStatus('loading')
-    setMessage('')
 
     const supabase = createBrowserClient()
-    if (!supabase) {
-      setStatus('error')
-      setMessage('Password reset is unavailable. Please contact support.')
-      return
-    }
+    if (!supabase) { setStatus('invalid'); return }
 
+    setStatus('loading')
     const { error } = await supabase.auth.updateUser({ password })
     if (error) {
+      setErrorMsg(error.message)
       setStatus('error')
-      setMessage(error.message)
     } else {
       setStatus('success')
-      setMessage('Password updated! Redirecting to login…')
-      setTimeout(() => router.replace('/login'), 2500)
+      setTimeout(() => router.replace('/dashboard'), 2500)
     }
   }
 
+  if (status === 'success') {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0B0F14' }}>
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="text-center space-y-4"
+        >
+          <CheckCircle className="w-12 h-12 mx-auto" style={{ color: '#22C55E' }} />
+          <h2 className="text-xl font-bold" style={{ color: '#F0EEF8' }}>Password updated!</h2>
+          <p className="text-sm" style={{ color: '#9AA4AF' }}>Redirecting you to your dashboard…</p>
+        </motion.div>
+      </div>
+    )
+  }
+
   return (
-    <div style={{
-      background: '#03050D', color: '#F0EEF8', minHeight: '100vh',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
-      fontFamily: '\'DM Sans\', system-ui, sans-serif',
-    }}>
-      <div style={{
-        background: 'rgba(10,12,18,0.97)', border: '1px solid rgba(201,168,76,0.3)',
-        borderRadius: 20, padding: '2.5rem 2rem', width: '100%', maxWidth: 420,
-        boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
-      }}>
-        <Link href="/" style={{ display: 'block', textAlign: 'center', fontSize: '1.6rem', fontWeight: 900, color: '#C9A84C', textDecoration: 'none', marginBottom: '1.5rem', letterSpacing: '-0.02em' }}>
-          Synaptiq
-        </Link>
-
-        {!hasToken ? (
-          <div style={{ textAlign: 'center' }}>
-            <h1 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.5rem' }}>Check your email</h1>
-            <p style={{ color: '#6B7394', fontSize: '0.88rem', marginBottom: '1.5rem' }}>
-              Open the password reset link in your email to continue. This page will update automatically.
-            </p>
-            <Link href="/login" style={{ color: '#C9A84C', fontSize: '0.875rem', textDecoration: 'none' }}>
-              ← Back to login
-            </Link>
+    <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ background: '#0B0F14' }}>
+      <motion.div
+        initial={{ y: 16, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full max-w-sm"
+      >
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4" style={{ background: 'linear-gradient(135deg,#4F8CFF,#22C55E)' }}>
+            <Zap className="w-6 h-6 text-white" />
           </div>
-        ) : (
-          <>
-            <h1 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.4rem' }}>Set new password</h1>
-            <p style={{ color: '#6B7394', fontSize: '0.88rem', marginBottom: '1.5rem' }}>Choose a strong password for your account.</p>
+          <h1 className="text-xl font-bold" style={{ color: '#F0EEF8' }}>Set a new password</h1>
+          <p className="text-sm mt-1.5 text-center" style={{ color: '#9AA4AF' }}>
+            Enter your new password below. It must be at least 8 characters.
+          </p>
+        </div>
 
-            <form onSubmit={handleSubmit}>
-              <label style={{ display: 'block', fontSize: '0.82rem', color: '#94A3B8', marginBottom: '0.35rem' }}>New password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="At least 8 characters"
-                autoComplete="new-password"
-                required
-                style={inputStyle}
-              />
+        {/* Card */}
+        <div className="rounded-2xl p-6 space-y-4" style={{ background: 'rgba(18,24,33,0.8)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          {!sessionReady && (
+            <div className="flex items-center gap-2 p-3 rounded-lg text-sm" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)', color: '#f59e0b' }}>
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>Waiting for password-reset link… If you came here directly, please use the reset link from your email.</span>
+            </div>
+          )}
 
-              <label style={{ display: 'block', fontSize: '0.82rem', color: '#94A3B8', marginBottom: '0.35rem' }}>Confirm password</label>
+          {(status === 'error' || errorMsg) && (
+            <div className="flex items-center gap-2 p-3 rounded-lg text-sm" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}>
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{errorMsg || 'An error occurred. Please try again.'}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* New password */}
+            <div>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: '#9AA4AF' }}>New password</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  minLength={8}
+                  placeholder="Min. 8 characters"
+                  className="w-full px-3 py-2.5 pr-10 rounded-lg text-sm outline-none transition-colors"
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#F0EEF8',
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  style={{ color: '#9AA4AF' }}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm password */}
+            <div>
+              <label className="block text-xs font-medium mb-1.5" style={{ color: '#9AA4AF' }}>Confirm password</label>
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={confirm}
                 onChange={e => setConfirm(e.target.value)}
-                placeholder="Repeat your password"
-                autoComplete="new-password"
                 required
-                style={inputStyle}
-              />
-
-              {message && (
-                <p style={{ fontSize: '0.85rem', marginBottom: '1rem', color: status === 'error' ? '#FB7185' : '#4ADE80' }}>
-                  {message}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                disabled={status === 'loading' || status === 'success'}
+                minLength={8}
+                placeholder="Repeat your new password"
+                className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
                 style={{
-                  width: '100%', background: 'linear-gradient(135deg, #C9A84C, #A07830)',
-                  color: '#08090E', border: 'none', borderRadius: 12, padding: '0.85rem',
-                  fontSize: '1rem', fontWeight: 700, cursor: status === 'loading' ? 'wait' : 'pointer',
-                  opacity: status === 'loading' ? 0.7 : 1,
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: '#F0EEF8',
                 }}
-              >
-                {status === 'loading' ? 'Updating…' : 'Update password'}
-              </button>
-            </form>
-          </>
-        )}
-      </div>
+              />
+            </div>
+
+            <motion.button
+              type="submit"
+              disabled={status === 'loading' || !sessionReady}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 transition-opacity"
+              style={{
+                background: 'linear-gradient(135deg,#4F8CFF,#22C55E)',
+                color: '#fff',
+                opacity: (status === 'loading' || !sessionReady) ? 0.6 : 1,
+              }}
+            >
+              {status === 'loading' ? (
+                <><Loader2 className="w-4 h-4 animate-spin" /> Updating…</>
+              ) : (
+                'Update password'
+              )}
+            </motion.button>
+          </form>
+        </div>
+
+        <p className="text-center mt-6 text-xs" style={{ color: '#6B7394' }}>
+          <Link href="/login" className="hover:text-white transition-colors">← Back to Synaptiq</Link>
+        </p>
+      </motion.div>
     </div>
   )
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%', background: 'rgba(255,255,255,0.05)',
-  border: '1px solid rgba(255,255,255,0.12)', borderRadius: 10,
-  padding: '0.75rem 1rem', color: '#F0EEF8', fontSize: '0.95rem',
-  outline: 'none', marginBottom: '1rem', boxSizing: 'border-box',
 }

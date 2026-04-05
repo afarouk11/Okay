@@ -29,9 +29,20 @@ type ProgressData = {
     plan: string
     exam_date?: string | null
   } | null
-  progress: Array<{ topic: string }>
-  mistakes: Array<{ topic: string }>
-  activity: Array<{ date: string; questions_done: number; xp_earned: number }>
+  progress: Array<{ topic: string }> | null
+  mistakes: Array<{ topic: string }> | null
+  activity: Array<{ date: string; questions_done: number; xp_earned: number }> | null
+}
+
+function safeFormatDate(dateStr: string | null | undefined, opts: Intl.DateTimeFormatOptions): string {
+  if (!dateStr) return ''
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return ''
+    return d.toLocaleDateString('en-GB', opts)
+  } catch {
+    return ''
+  }
 }
 
 const quickActions = [
@@ -41,7 +52,7 @@ const quickActions = [
   { href: '/papers',    icon: FileText,      label: 'Past Paper Qs',     sub: 'AI exam-board questions',  color: '#F59E0B' },
 ]
 
-function calcStreak(activity: ProgressData['activity']): number {
+function calcStreak(activity: Array<{ date: string; questions_done: number; xp_earned: number }>): number {
   if (!activity.length) return 0
   const today = new Date().toISOString().split('T')[0]
   const dates = new Set(activity.map(a => a.date))
@@ -61,6 +72,11 @@ export default function DashboardClient() {
   const { user, token, loading: authLoading } = useAuth()
   const [data, setData] = useState<ProgressData | null>(null)
   const [statsLoading, setStatsLoading] = useState(true)
+  const [todayLabel, setTodayLabel] = useState('')
+
+  useEffect(() => {
+    setTodayLabel(new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }))
+  }, [])
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/login')
@@ -101,11 +117,11 @@ export default function DashboardClient() {
   const profile = data?.profile
   const xp = profile?.xp ?? 0
   const topicsCovered = data ? new Set([
-    ...data.progress.map(p => p.topic),
-    ...data.mistakes.map(m => m.topic),
+    ...(data.progress ?? []).map(p => p.topic),
+    ...(data.mistakes ?? []).map(m => m.topic),
   ]).size : 0
-  const streak = data ? calcStreak(data.activity) : 0
-  const totalMessages = data?.activity.reduce((sum, a) => sum + (a.questions_done ?? 0), 0) ?? 0
+  const streak = data ? calcStreak(data.activity ?? []) : 0
+  const totalMessages = (data?.activity ?? []).reduce((sum, a) => sum + (a.questions_done ?? 0), 0)
 
   const stats = [
     { icon: Zap,           label: 'XP Earned',      value: statsLoading ? '…' : String(xp),           color: 'blue'   as const, delay: 0.1 },
@@ -124,7 +140,7 @@ export default function DashboardClient() {
       <div className="flex-1 flex flex-col ml-60">
         <Header
           title="Dashboard"
-          subtitle={new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+          subtitle={todayLabel}
         />
 
         <main className="flex-1 px-8 py-6 space-y-8">
@@ -228,9 +244,9 @@ export default function DashboardClient() {
             >
               {data?.activity && data.activity.length > 0 ? (
                 <div className="w-full text-left space-y-2">
-                  {data.activity.slice(0, 5).map(a => (
+                  {(data.activity ?? []).slice(0, 5).map(a => (
                     <div key={a.date} className="flex items-center justify-between text-sm">
-                      <span className="text-muted">{new Date(a.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                      <span className="text-muted">{safeFormatDate(a.date, { weekday: 'short', day: 'numeric', month: 'short' })}</span>
                       <div className="flex items-center gap-4">
                         <span className="text-foreground">{a.questions_done} questions</span>
                         <span className="text-primary">+{a.xp_earned} XP</span>

@@ -1,14 +1,9 @@
-import type { Metadata } from 'next'
+import { Metadata } from 'next'
 import ContactClient from './ContactClient'
 
 export const metadata: Metadata = {
-  title: 'Contact & Support',
-  description: 'Get in touch with the Synaptiq team. Support, school partnerships, and general enquiries for our A-Level Maths AI tutoring platform.',
-  openGraph: {
-    title: 'Contact & Support — Synaptiq',
-    description: 'Get in touch with the Synaptiq team.',
-    type: 'website',
-  },
+  title: 'Contact Us',
+  description: 'Get in touch with the Synaptiq team for support, billing, or school licensing.',
 }
 
 export default function ContactPage() {

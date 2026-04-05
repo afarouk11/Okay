@@ -1,1012 +1,482 @@
-'use client'
+'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { useAuth } from '@/lib/useAuth'
+import { useState, useRef, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { useAuth } from '@/lib/useAuth';
 
-/* ─── Types ─────────────────────────────────────────────────────────────── */
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-type ChatMsg = {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: Date
+type TeachMode = 'standard' | 'guided' | 'test' | 'eli5';
+type MessageRole = 'user' | 'assistant';
+
+interface ChatMessage {
+  id: string;
+  role: MessageRole;
+  content: string;
+  time: string;
 }
 
-type MemoryItem = {
-  type: string
-  content: string
-  topic?: string
-  created_at: string
+interface Memory {
+  type?: string;
+  content?: string;
+  topic?: string;
 }
 
-/* ─── Constants ─────────────────────────────────────────────────────────── */
+// ── Constants ─────────────────────────────────────────────────────────────────
 
-const JARVIS_SYSTEM_PROMPT = `You are J.A.R.V.I.S. (Just A Rather Very Intelligent System), an expert A-Level Mathematics assistant for UK students.
+const TEACH_MODES: Record<TeachMode, { label: string; desc: string; suffix: string }> = {
+  standard: {
+    label: 'Standard',
+    desc: 'Clear step-by-step explanations with worked examples.',
+    suffix: '',
+  },
+  guided: {
+    label: 'Guided',
+    desc: 'Jarvis breaks every solution into micro-steps and asks you to attempt each one.',
+    suffix: '\n\nGUIDED MODE: Break every problem into the smallest possible numbered steps. After each step, pause and ask the student to attempt the next one. Never give the complete solution at once.',
+  },
+  test: {
+    label: 'Test',
+    desc: 'No hints — Jarvis quizzes you to test your knowledge.',
+    suffix: '\n\nTEST MODE: Do NOT explain or hint unprompted. Ask the student a targeted question and evaluate their answer. Only explain after two failed attempts.',
+  },
+  eli5: {
+    label: 'ELI5',
+    desc: "Concepts explained simply — like you're 5 years old.",
+    suffix: "\n\nELI5 MODE: Use very simple everyday language and concrete analogies. Avoid all jargon. Use relatable real-world examples.",
+  },
+};
+
+const BASE_SYSTEM = `You are J.A.R.V.I.S. (Just A Rather Very Intelligent System), an expert A-Level Mathematics assistant for UK students studying AQA, Edexcel, OCR, or WJEC.
 
 Your role:
-- Explain mathematical concepts step-by-step with precision and clarity
-- Use $ for inline LaTeX notation (e.g. $x^2 + y^2 = r^2$) and $$...$$ for display/block equations
-- Cover all A-Level Maths topics: Pure Mathematics (algebra, calculus, trigonometry, vectors, proof, series), Statistics, and Mechanics
-- Adapt explanations to the student's current level and identify misconceptions
-- Provide fully worked examples and verify student understanding at each step
-- Use British English terminology and follow UK A-Level curriculum conventions (Edexcel, AQA, OCR)
-- Be encouraging and patient — build confidence alongside knowledge
-- Number your steps clearly when solving problems (Step 1:, Step 2:, etc.)
-- When a student makes an error, explain exactly where they went wrong and why
-- Suggest practice questions when appropriate`
+- Explain mathematical concepts clearly, step-by-step, in a patient and encouraging way.
+- Use correct A-Level terminology and notation.
+- When writing mathematical expressions, wrap inline maths in $...$ and display maths in $$...$$
+- Break down complex problems into numbered steps.
+- Point out common mistakes and exam tips where relevant.
+- Cover all A-Level topics: Algebra, Calculus, Trigonometry, Statistics, Mechanics, and Further Maths.`;
 
-const INITIAL_MESSAGE: ChatMsg = {
-  id: 'init',
-  role: 'assistant',
-  content:
-    "Good day. I'm J.A.R.V.I.S. — your A-Level Mathematics assistant. I can help with Pure Maths, Statistics, and Mechanics. What shall we work on today?",
-  timestamp: new Date(),
+const PAGE_MAP = [
+  { keywords: ['past paper', 'past papers', 'exam paper'], url: '/#past-papers', label: 'Past Papers' },
+  { keywords: ['flashcard', 'flashcards'], url: '/#flashcards', label: 'Flashcards' },
+  { keywords: ['lesson', 'lessons', 'topic list'], url: '/lessons.html', label: 'Lessons' },
+  { keywords: ['question', 'questions', 'practice question', 'quiz'], url: '/questions.html', label: 'Practice Questions' },
+  { keywords: ['pricing', 'price', 'upgrade', 'subscribe', 'plan', 'plans'], url: '/pricing.html', label: 'Pricing' },
+  { keywords: ['progress', 'analytics', 'my stats', 'dashboard'], url: '/', label: 'Dashboard' },
+  { keywords: ['contact', 'support', 'help'], url: '/contact.html', label: 'Contact & Support' },
+];
+
+const NAV_TRIGGER = /\b(take me|go to|navigate to|open|show me|bring me|switch to)\b/i;
+
+function detectNavIntent(text: string): { url: string; label: string } | null {
+  if (!NAV_TRIGGER.test(text)) return null;
+  const lower = text.toLowerCase();
+  for (const page of PAGE_MAP) {
+    if (page.keywords.some(kw => lower.includes(kw))) return page;
+  }
+  return null;
 }
 
-const TOPIC_CHIPS = [
-  'Differentiation',
-  'Integration',
-  'Mechanics',
-  'Statistics',
-  'Proof',
-  'Trigonometry',
-]
+const QUICK_PROMPTS = [
+  'Explain integration by parts with an example',
+  'How do I differentiate ln(x²+1)?',
+  'What is the chain rule?',
+  'Explain the binomial expansion',
+  'How do I find the area under a curve?',
+  'Explain normal distribution and z-scores',
+];
 
-/* ─── Helpers ───────────────────────────────────────────────────────────── */
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-function formatTimer(secs: number): string {
-  const m = Math.floor(secs / 60).toString().padStart(2, '0')
-  const s = (secs % 60).toString().padStart(2, '0')
-  return `${m}:${s}`
+function sanitize(str: string): string {
+  return String(str || '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/`/g, '&#x60;');
 }
 
-/**
- * Tokenises a single line into React inline nodes.
- * Handles: $$…$$, $…$, **bold**, `code` — all rendered as React elements (no innerHTML).
- */
-function renderInline(line: string, keyPrefix: string): React.ReactNode[] {
-  // Split on $$ display math first (though display math is handled at block level)
-  const parts = line.split(/(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$|\*\*[^*]+\*\*|`[^`\n]+`)/)
-  return parts.map((part, i) => {
-    const k = `${keyPrefix}-${i}`
-    if (part.startsWith('$$') && part.endsWith('$$')) {
-      return (
-        <code key={k} className="j-math-block">
-          {part.slice(2, -2)}
-        </code>
-      )
-    }
-    if (part.startsWith('$') && part.endsWith('$')) {
-      return (
-        <code key={k} className="j-math-inline">
-          {part.slice(1, -1)}
-        </code>
-      )
-    }
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={k}>{part.slice(2, -2)}</strong>
-    }
-    if (part.startsWith('`') && part.endsWith('`')) {
-      return <code key={k} className="j-code">{part.slice(1, -1)}</code>
-    }
-    return part
-  })
+function formatTime(): string {
+  return new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 }
 
-/**
- * Renders message content as React nodes (no dangerouslySetInnerHTML).
- * Handles: $$…$$ display math blocks, inline patterns, paragraphs, line breaks.
- */
-function MessageContent({ text }: { text: string }) {
-  // Split on display-math blocks first to handle them as block elements
-  const segments = text.split(/(\$\$[\s\S]+?\$\$)/)
-
-  const nodes: React.ReactNode[] = []
-  segments.forEach((seg, si) => {
-    if (seg.startsWith('$$') && seg.endsWith('$$')) {
-      nodes.push(
-        <pre key={`dm-${si}`} className="j-math-block">
-          <code>{seg.slice(2, -2)}</code>
-        </pre>,
-      )
-      return
-    }
-    // Split remaining text on double-newlines for paragraphs
-    const paras = seg.split(/\n\n+/)
-    paras.forEach((para, pi) => {
-      if (!para) return
-      const lines = para.split(/\n/)
-      const lineNodes: React.ReactNode[] = []
-      lines.forEach((line, li) => {
-        lineNodes.push(...renderInline(line, `${si}-${pi}-${li}`))
-        if (li < lines.length - 1) lineNodes.push(<br key={`br-${si}-${pi}-${li}`} />)
-      })
-      nodes.push(
-        <p key={`p-${si}-${pi}`} className="j-p">
-          {lineNodes}
-        </p>,
-      )
-    })
-  })
-
-  return <>{nodes}</>
+function makeId(): string {
+  return Math.random().toString(36).slice(2);
 }
 
-/** Strip markdown/LaTeX from text for TTS. */
-function stripForTTS(text: string): string {
-  return text
-    .replace(/\$\$[\s\S]+?\$\$/g, ', equation, ')
-    .replace(/\$[^$\n]+?\$/g, ', equation, ')
-    .replace(/\*\*(.+?)\*\*/g, '$1')
-    .replace(/`([^`]+)`/g, '$1')
-    .replace(/<[^>]+>/g, '')
-    .replace(/\n+/g, ' ')
-    .trim()
-    .substring(0, 500)
-}
-
-/* ─── Main component ─────────────────────────────────────────────────────── */
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function JarvisPageClient() {
-  const router = useRouter()
-  const { user, token, loading: authLoading } = useAuth()
+  const { token, loading } = useAuth();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [teachMode, setTeachMode] = useState<TeachMode>('standard');
+  const [showQuickPrompts, setShowQuickPrompts] = useState(true);
+  const [lastSession, setLastSession] = useState<Memory | null>(null);
+  const [toast, setToast] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const historyRef = useRef<Array<{ role: MessageRole; content: string }>>([]);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [activeTab, setActiveTab] = useState<'text' | 'voice'>('text')
-  const [messages, setMessages] = useState<ChatMsg[]>([INITIAL_MESSAGE])
-  const [input, setInput] = useState('')
-  const [chatLoading, setChatLoading] = useState(false)
-  const [memories, setMemories] = useState<MemoryItem[]>([])
-  const [handsFree, setHandsFree] = useState(false)
-  const [isSpeaking, setIsSpeaking] = useState(false)
-  const [sessionSeconds, setSessionSeconds] = useState(0)
-  const [copied, setCopied] = useState<string | null>(null)
-
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const sessionStartRef = useRef<number>(Date.now())
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const audioSourceRef = useRef<AudioBufferSourceNode | null>(null)
-
-  /* ── Auth guard ───────────────────────────────────────────────────────── */
   useEffect(() => {
-    if (!authLoading && !user) router.replace('/login')
-  }, [authLoading, user, router])
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-  /* ── Session timer ────────────────────────────────────────────────────── */
   useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setSessionSeconds(Math.floor((Date.now() - sessionStartRef.current) / 1000))
-    }, 1000)
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
+    if (loading) return;
+
+    async function init() {
+      let lastMemory: Memory | null = null;
+
+      if (token) {
+        try {
+          const r = await fetch('/api/memory', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (r.ok) {
+            const { memories } = await r.json() as { memories: Memory[] };
+            if (memories?.length) {
+              lastMemory = memories[0];
+              setLastSession(memories[0]);
+            }
+          }
+        } catch (_) {}
+      }
+
+      let welcomeText = "Hi! I'm **J.A.R.V.I.S.**, your A-Level Maths AI assistant. 👋\n\n";
+      if (lastMemory?.topic) {
+        welcomeText += `Last time we worked on **${sanitize(lastMemory.topic)}**. Ready to continue?\n\n`;
+      }
+      welcomeText +=
+        "I can help you with:\n" +
+        "- **Pure Maths** — Calculus, Algebra, Trigonometry, Proof\n" +
+        "- **Statistics** — Probability, Distributions, Hypothesis Testing\n" +
+        "- **Mechanics** — Forces, Kinematics, Moments\n\n" +
+        "Ask me anything or pick a suggestion below! 🚀";
+
+      setMessages([{ id: makeId(), role: 'assistant', content: welcomeText, time: formatTime() }]);
     }
-  }, [])
+    init();
+  }, [loading, token]);
 
-  /* ── Fetch session memory ─────────────────────────────────────────────── */
-  useEffect(() => {
-    if (!token) return
-    fetch('/api/memory?limit=1', {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => setMemories(d.memories ?? []))
-      .catch(() => {})
-  }, [token])
+  const showToast = useCallback((msg: string) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast(msg);
+    toastTimerRef.current = setTimeout(() => setToast(''), 5000);
+  }, []);
 
-  /* ── Auto-scroll ──────────────────────────────────────────────────────── */
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  const effectiveSystem = BASE_SYSTEM + TEACH_MODES[teachMode].suffix;
 
-  /* ── TTS via Web Audio API ────────────────────────────────────────────── */
-  const speakText = useCallback(
-    async (text: string) => {
-      if (!token) return
-      // Stop any currently playing audio
-      try {
-        audioSourceRef.current?.stop()
-      } catch {
-        // already stopped
+  const sendMessage = useCallback(async (text?: string) => {
+    const textToSend = (text ?? input).trim();
+    if (!textToSend || isLoading) return;
+
+    const navTarget = detectNavIntent(textToSend);
+    if (navTarget) {
+      const navMsg: ChatMessage = { id: makeId(), role: 'user', content: textToSend, time: formatTime() };
+      const replyMsg: ChatMessage = { id: makeId(), role: 'assistant', content: `Sure! Taking you to **${navTarget.label}** now… 🚀`, time: formatTime() };
+      setMessages(m => [...m, navMsg, replyMsg]);
+      setInput('');
+      setTimeout(() => { window.location.href = navTarget.url; }, 900);
+      return;
+    }
+
+    setIsLoading(true);
+    setInput('');
+    setShowQuickPrompts(false);
+
+    const userMsg: ChatMessage = { id: makeId(), role: 'user', content: textToSend, time: formatTime() };
+    setMessages(m => [...m, userMsg]);
+    historyRef.current.push({ role: 'user', content: textToSend });
+
+    try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      const r = await fetch('/api/chat', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          messages: historyRef.current,
+          systemPrompt: effectiveSystem,
+        }),
+      });
+      const data = await r.json() as { response?: string; error?: string; code?: string };
+
+      if (!r.ok) {
+        if (data.code === 'TRIAL_LIMIT') {
+          setMessages(m => [...m, { id: makeId(), role: 'assistant', content: "⚠️ You've reached your daily message limit. Upgrade to **Pro** to continue!", time: formatTime() }]);
+        } else {
+          showToast(data.error ?? 'Something went wrong — please try again.');
+          historyRef.current.pop();
+        }
+        return;
       }
 
-      const cleanText = stripForTTS(text)
-      if (!cleanText) return
+      const reply = data.response ?? '';
+      setMessages(m => [...m, { id: makeId(), role: 'assistant', content: reply, time: formatTime() }]);
+      historyRef.current.push({ role: 'assistant', content: reply });
+    } catch (_) {
+      showToast('Connection error — please try again.');
+      historyRef.current.pop();
+    } finally {
+      setIsLoading(false);
+      inputRef.current?.focus();
+    }
+  }, [input, isLoading, token, effectiveSystem, showToast]);
 
-      try {
-        setIsSpeaking(true)
-        const res = await fetch('/api/tts', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ text: cleanText, voice: 'jarvis' }),
-        })
-        if (!res.ok) {
-          setIsSpeaking(false)
-          return
-        }
-
-        const arrayBuf = await res.arrayBuffer()
-        const AudioCtx =
-          window.AudioContext ||
-          (
-            window as Window &
-              typeof globalThis & {
-                webkitAudioContext?: typeof AudioContext
-              }
-          ).webkitAudioContext
-        if (!AudioCtx) {
-          setIsSpeaking(false)
-          return
-        }
-        const ctx = new AudioCtx()
-        const decoded = await ctx.decodeAudioData(arrayBuf)
-        const source = ctx.createBufferSource()
-        source.buffer = decoded
-        source.connect(ctx.destination)
-        source.onended = () => setIsSpeaking(false)
-        source.start()
-        audioSourceRef.current = source
-      } catch {
-        setIsSpeaking(false)
-      }
-    },
-    [token],
-  )
-
-  /* ── Send message ─────────────────────────────────────────────────────── */
-  const sendMessage = useCallback(
-    async (overrideText?: string) => {
-      const msgText = (overrideText ?? input).trim()
-      if (!msgText || chatLoading || !token) return
-
-      const userMsg: ChatMsg = {
-        id: Date.now().toString(),
-        role: 'user',
-        content: msgText,
-        timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, userMsg])
-      setInput('')
-      setChatLoading(true)
-
-      try {
-        const history = [...messages, userMsg].slice(-20).map((m) => ({
-          role: m.role,
-          content: m.content,
-        }))
-
-        const res = await fetch('/api/chat', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            messages: history,
-            systemPrompt: JARVIS_SYSTEM_PROMPT,
-          }),
-        })
-
-        if (!res.ok) throw new Error('Chat API error')
-        const data = await res.json()
-        const content: string = data.response ?? 'I apologise, something went wrong.'
-
-        const assistantMsg: ChatMsg = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content,
-          timestamp: new Date(),
-        }
-        setMessages((prev) => [...prev, assistantMsg])
-
-        if (handsFree || activeTab === 'voice') {
-          speakText(content)
-        }
-      } catch {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString(),
-            role: 'assistant',
-            content: "I'm having trouble connecting right now. Please try again.",
-            timestamp: new Date(),
-          },
-        ])
-      } finally {
-        setChatLoading(false)
-      }
-    },
-    [input, chatLoading, messages, token, handsFree, activeTab, speakText],
-  )
-
-  /* ── Copy to clipboard ────────────────────────────────────────────────── */
-  const copyToClipboard = useCallback((id: string, text: string) => {
-    navigator.clipboard.writeText(text).catch(() => {})
-    setCopied(id)
-    setTimeout(() => setCopied(null), 2000)
-  }, [])
-
-  /* ── Clear chat ───────────────────────────────────────────────────────── */
-  const clearChat = useCallback(() => {
-    setMessages([{ ...INITIAL_MESSAGE, timestamp: new Date() }])
-  }, [])
-
-  /* ── Keyboard handler ─────────────────────────────────────────────────── */
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      sendMessage()
+      e.preventDefault();
+      sendMessage();
     }
   }
 
-  /* ── Session memory summary ───────────────────────────────────────────── */
-  const sessionMemory = memories.find(
-    (m) => m.type === 'session_summary' || m.type === 'topic_summary',
-  )
-  const lastTopic = sessionMemory?.topic ?? memories[0]?.topic
-
-  /* ── Loading / auth states ────────────────────────────────────────────── */
-  if (authLoading) {
-    return (
-      <div
-        className="flex min-h-screen items-center justify-center"
-        style={{ background: '#080B14' }}
-      >
-        <div
-          className="w-6 h-6 rounded-full border-2 animate-spin"
-          style={{ borderColor: '#C9A84C', borderTopColor: 'transparent' }}
-        />
-      </div>
-    )
+  function autoResize(el: HTMLTextAreaElement) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 160) + 'px';
   }
 
-  if (!user) return null
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--black)' }}>
+        <div className="spin" />
+      </div>
+    );
+  }
 
-  /* ── Render ───────────────────────────────────────────────────────────── */
   return (
     <>
-      {/* Global CSS for animations and message formatting */}
       <style>{`
-        @keyframes j-orb-pulse {
-          0%, 100% { transform: scale(1); opacity: 0.85; }
-          50% { transform: scale(1.06); opacity: 1; }
-        }
-        @keyframes j-orb-ring {
-          0% { transform: scale(1); opacity: 0.5; }
-          100% { transform: scale(1.5); opacity: 0; }
-        }
-        @keyframes j-avatar-glow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.4); }
-          50% { box-shadow: 0 0 0 8px rgba(201,168,76,0); }
-        }
-        @keyframes j-speak-pulse {
-          0%, 100% { transform: scale(1); box-shadow: 0 0 24px rgba(0,212,255,0.35); }
-          50% { transform: scale(1.07); box-shadow: 0 0 48px rgba(0,212,255,0.7); }
-        }
-        @keyframes j-fade-in {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes j-dot-bounce {
-          0%, 80%, 100% { transform: translateY(0); }
-          40%           { transform: translateY(-6px); }
-        }
-        .j-msg { animation: j-fade-in 0.3s ease forwards; }
-        .j-math-block {
-          background: rgba(201,168,76,0.06);
-          border: 1px solid rgba(201,168,76,0.2);
-          border-radius: 8px;
-          padding: 12px 16px;
-          overflow-x: auto;
-          margin: 10px 0;
-          font-family: 'Courier New', Courier, monospace;
-          font-size: 0.88em;
-          color: #C9A84C;
-          white-space: pre-wrap;
-        }
-        .j-math-inline {
-          background: rgba(0,212,255,0.07);
-          border: 1px solid rgba(0,212,255,0.18);
-          border-radius: 4px;
-          padding: 1px 5px;
-          font-family: 'Courier New', Courier, monospace;
-          font-size: 0.88em;
-          color: #00D4FF;
-        }
-        .j-code {
-          background: rgba(255,255,255,0.08);
-          border-radius: 4px;
-          padding: 1px 5px;
-          font-family: 'Courier New', Courier, monospace;
-          font-size: 0.88em;
-        }
-        .j-p { margin: 0 0 8px 0; line-height: 1.65; }
-        .j-p:last-child { margin-bottom: 0; }
-        .j-orb-speaking {
-          animation: j-speak-pulse 0.9s ease-in-out infinite !important;
-        }
+        .spin { width:32px;height:32px;border:2px solid rgba(0,212,255,0.15);border-top-color:#00D4FF;border-radius:50%;animation:spin .8s linear infinite }
+        @keyframes spin { to { transform: rotate(360deg) } }
+
+        #jarvis-nav { position:sticky;top:0;z-index:200;background:rgba(3,5,13,0.88);backdrop-filter:blur(20px);border-bottom:1px solid rgba(0,212,255,0.10);padding:0 2rem;height:64px;display:flex;align-items:center;justify-content:space-between;gap:1rem }
+        .nav-brand { display:flex;align-items:center;gap:.6rem;font-family:'Playfair Display',serif;font-weight:700;font-size:1.15rem;text-decoration:none;color:var(--white) }
+        .nav-brand-icon { width:30px;height:30px;background:linear-gradient(135deg,#00D4FF,#B060FF);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.9rem }
+        .nav-brand-text em { font-style:normal;background:linear-gradient(135deg,#00D4FF,#B060FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text }
+        .nav-badge { font-size:.72rem;font-weight:700;background:rgba(0,212,255,0.10);border:1px solid rgba(0,212,255,0.22);color:#00D4FF;border-radius:20px;padding:.2rem .65rem }
+        .nav-back { display:inline-flex;align-items:center;gap:.5rem;color:#5A7499;font-size:.85rem;text-decoration:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);border-radius:20px;padding:.3rem .85rem;transition:color .2s }
+        .nav-back:hover { color:var(--white) }
+
+        .page-layout { display:grid;grid-template-columns:320px 1fr;gap:1.5rem;max-width:1280px;margin:0 auto;padding:1.5rem 2rem 3rem;align-items:start }
+        @media(max-width:900px) { .page-layout { grid-template-columns:1fr } }
+
+        .glass-card { background:rgba(13,17,32,0.72);backdrop-filter:blur(20px);border:1px solid rgba(0,212,255,0.10);border-radius:14px;padding:1.4rem;box-shadow:0 8px 32px rgba(0,0,0,0.6) }
+        .glass-card+.glass-card { margin-top:1rem }
+        .section-label { font-size:.7rem;font-weight:700;color:#00D4FF;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.75rem }
+
+        .left-panel { position:sticky;top:80px }
+
+        .orb-wrap { display:flex;flex-direction:column;align-items:center;gap:1rem;padding:1.5rem }
+        .orb { width:100px;height:100px;border-radius:50%;background:radial-gradient(circle at 38% 36%,#55eeff 0%,#00D4FF 35%,#090979 100%);box-shadow:0 0 30px rgba(0,212,255,0.5),0 0 60px rgba(0,140,255,0.25);animation:orbPulse 3s ease-in-out infinite }
+        @keyframes orbPulse { 0%,100%{box-shadow:0 0 30px rgba(0,212,255,0.5),0 0 60px rgba(0,140,255,0.25)} 50%{box-shadow:0 0 50px rgba(0,212,255,0.8),0 0 90px rgba(0,140,255,0.4)} }
+        @media(prefers-reduced-motion:reduce){ .orb { animation:none } }
+        .orb-status { font-size:.8rem;font-weight:700;color:#00D4FF;text-transform:uppercase;letter-spacing:.08em }
+        .orb-sub { font-size:.75rem;color:#5A7499;text-align:center }
+
+        .teach-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem }
+        .teach-btn { padding:.45rem .3rem;border-radius:8px;font-size:.73rem;font-weight:600;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:#5A7499;cursor:pointer;transition:all .18s;white-space:nowrap }
+        .teach-btn:hover { color:var(--white);border-color:rgba(176,96,255,0.3) }
+        .teach-btn.active { background:rgba(176,96,255,0.10);border-color:rgba(176,96,255,0.35);color:#B060FF }
+        .teach-desc { font-size:.78rem;color:#5A7499;margin-top:.6rem;line-height:1.5 }
+
+        .memory-card { font-size:.8rem;color:rgba(232,240,255,0.7);line-height:1.6;padding:.5rem .65rem;background:rgba(0,212,255,0.04);border-left:2px solid rgba(0,212,255,0.25);border-radius:0 6px 6px 0 }
+
+        .right-panel { display:flex;flex-direction:column;gap:1rem }
+
+        .chat-box { display:flex;flex-direction:column;min-height:520px;max-height:72vh }
+        .chat-messages { flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:.85rem }
+        .chat-messages::-webkit-scrollbar { width:4px }
+        .chat-messages::-webkit-scrollbar-thumb { background:rgba(0,212,255,0.2);border-radius:2px }
+
+        .msg { display:flex;gap:.75rem;align-items:flex-start }
+        .msg-avatar { width:32px;height:32px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700 }
+        .msg.user-msg { flex-direction:row-reverse }
+        .msg.user-msg .msg-avatar { background:linear-gradient(135deg,rgba(201,168,76,0.2),rgba(201,168,76,0.1));border:1px solid rgba(201,168,76,0.3);color:#C9A84C }
+        .msg.ai-msg .msg-avatar { background:linear-gradient(135deg,rgba(0,212,255,0.2),rgba(176,96,255,0.1));border:1px solid rgba(0,212,255,0.3);color:#00D4FF }
+        .msg-body { max-width:78%;display:flex;flex-direction:column;gap:.3rem }
+        .msg.user-msg .msg-body { align-items:flex-end }
+        .msg-bubble { padding:.65rem .9rem;border-radius:12px;font-size:.88rem;line-height:1.65;word-break:break-word }
+        .user-msg .msg-bubble { background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.18);color:var(--white) }
+        .ai-msg .msg-bubble { background:rgba(13,17,32,0.9);border:1px solid rgba(0,212,255,0.14);color:var(--white) }
+        .ai-msg .msg-bubble strong { color:#E8F0FF }
+        .ai-msg .msg-bubble code { background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);border-radius:4px;padding:.1rem .3rem;font-family:'Space Mono',monospace;font-size:.82rem }
+        .msg-time { font-size:.7rem;color:#5A7499 }
+
+        .typing { display:flex;gap:4px;align-items:center;padding:.5rem .9rem }
+        .typing-dot { width:6px;height:6px;border-radius:50%;background:#00D4FF;animation:typingDot 1.2s ease-in-out infinite }
+        .typing-dot:nth-child(2) { animation-delay:.2s }
+        .typing-dot:nth-child(3) { animation-delay:.4s }
+        @keyframes typingDot { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-6px);opacity:1} }
+
+        .quick-prompts { padding:.75rem 1rem;border-top:1px solid rgba(0,212,255,0.07);display:flex;flex-wrap:wrap;gap:.4rem }
+        .qp-label { width:100%;font-size:.72rem;color:#5A7499;margin-bottom:.15rem }
+        .qp-btn { background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:.28rem .75rem;font-size:.77rem;cursor:pointer;color:#5A7499;white-space:nowrap;transition:all .18s }
+        .qp-btn:hover { color:var(--white);border-color:rgba(0,212,255,0.3);background:rgba(0,212,255,0.06) }
+
+        .chat-input-area { display:flex;gap:.75rem;align-items:flex-end;padding:1rem;border-top:1px solid rgba(0,212,255,0.07) }
+        .chat-input-area textarea { flex:1;resize:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.10);border-radius:10px;color:var(--white);font-family:var(--font);font-size:.88rem;padding:.6rem .85rem;line-height:1.55;min-height:40px;max-height:160px;outline:none;transition:border-color .2s }
+        .chat-input-area textarea:focus { border-color:rgba(0,212,255,0.35) }
+        .chat-input-area textarea::placeholder { color:#5A7499 }
+        .send-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.2rem;background:linear-gradient(135deg,#00D4FF,#7B40FF);border:none;border-radius:10px;color:#fff;font-size:.85rem;font-weight:600;cursor:pointer;transition:opacity .2s;white-space:nowrap }
+        .send-btn:hover { opacity:.9 }
+        .send-btn:disabled { opacity:.45;cursor:not-allowed }
+
+        .toast { position:fixed;bottom:5rem;left:50%;transform:translateX(-50%);background:rgba(13,17,32,0.95);border:1px solid rgba(248,113,113,0.3);color:#fca5a5;padding:.5rem 1.2rem;border-radius:20px;font-size:.82rem;pointer-events:none;z-index:9999;transition:opacity .3s }
+
+        .plan-link-card { padding:1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;gap:1rem }
+        .plan-link-card p { font-size:.82rem;color:#5A7499;margin:0 }
+        .plan-link-btn { display:inline-flex;align-items:center;gap:.4rem;padding:.45rem 1rem;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:20px;color:#C9A84C;font-size:.78rem;font-weight:600;text-decoration:none;white-space:nowrap;transition:all .2s }
+        .plan-link-btn:hover { background:rgba(201,168,76,0.2) }
       `}</style>
 
-      <div
-        className="flex flex-col min-h-screen"
-        style={{ background: '#080B14', color: '#E8F0FF' }}
-      >
-        {/* ── Header ──────────────────────────────────────────────────── */}
-        <header
-          style={{
-            borderBottom: '1px solid rgba(201,168,76,0.15)',
-            background: 'rgba(8,11,20,0.96)',
-            backdropFilter: 'blur(12px)',
-            position: 'sticky',
-            top: 0,
-            zIndex: 50,
-          }}
-        >
-          <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
-            {/* Logo */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm select-none"
-                style={{
-                  background: 'linear-gradient(135deg, #C9A84C 0%, #8B6914 100%)',
-                  color: '#080B14',
-                  animation: 'j-avatar-glow 2.5s ease-in-out infinite',
-                }}
-              >
-                J
-              </div>
-              <div>
-                <div className="font-semibold text-sm" style={{ color: '#C9A84C' }}>
-                  J.A.R.V.I.S.
-                </div>
-                <div className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>
-                  A-Level Maths Assistant
-                </div>
-              </div>
-            </div>
+      <nav id="jarvis-nav">
+        <Link href="/" className="nav-brand">
+          <span className="nav-brand-icon">⚡</span>
+          <span className="nav-brand-text">Synap<em>tiq</em></span>
+        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+          <span className="nav-badge">AI Maths Assistant</span>
+          <Link href="/" className="nav-back">← Back to App</Link>
+        </div>
+      </nav>
 
-            {/* Tabs */}
-            <div
-              className="flex items-center gap-1 rounded-lg p-1"
-              style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.08)',
-              }}
-            >
-              {(['text', 'voice'] as const).map((tab) => (
+      <div className="page-layout">
+        <aside className="left-panel">
+          <div className="glass-card orb-wrap">
+            <div className="orb" role="img" aria-label="J.A.R.V.I.S. avatar" />
+            <p className="orb-status">{isLoading ? 'THINKING…' : 'READY'}</p>
+            <p className="orb-sub">A-Level Mathematics Assistant</p>
+          </div>
+
+          <div className="glass-card" style={{ marginTop: '1rem' }}>
+            <div className="section-label">🎓 Teaching mode</div>
+            <div className="teach-grid">
+              {(Object.entries(TEACH_MODES) as [TeachMode, typeof TEACH_MODES.standard][]).map(([key, val]) => (
                 <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
-                  style={{
-                    background:
-                      activeTab === tab ? 'rgba(201,168,76,0.15)' : 'transparent',
-                    color: activeTab === tab ? '#C9A84C' : 'rgba(255,255,255,0.45)',
-                    border:
-                      activeTab === tab
-                        ? '1px solid rgba(201,168,76,0.3)'
-                        : '1px solid transparent',
-                  }}
+                  key={key}
+                  className={`teach-btn${teachMode === key ? ' active' : ''}`}
+                  onClick={() => setTeachMode(key)}
+                  aria-pressed={teachMode === key}
                 >
-                  {tab === 'text' ? '💬 Text' : '🎤 Voice'}
+                  {val.label}
                 </button>
               ))}
             </div>
-
-            {/* Timer + back */}
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <span
-                className="text-sm font-mono tabular-nums"
-                style={{ color: 'rgba(0,212,255,0.65)' }}
-                aria-label="Session duration"
-              >
-                {formatTimer(sessionSeconds)}
-              </span>
-              <button
-                onClick={() => router.back()}
-                className="text-xs px-3 py-1.5 rounded-lg transition-colors hover:opacity-80"
-                style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  color: 'rgba(255,255,255,0.45)',
-                }}
-              >
-                ← Back
-              </button>
-            </div>
+            <p className="teach-desc">{TEACH_MODES[teachMode].desc}</p>
           </div>
-        </header>
 
-        {/* ── Session Memory Panel ─────────────────────────────────────── */}
-        {(lastTopic || memories.length > 0) && (
-          <div className="max-w-4xl mx-auto w-full px-6 pt-3">
-            <div
-              className="rounded-lg px-4 py-2 flex items-center gap-2.5"
-              style={{
-                background: 'rgba(0,212,255,0.04)',
-                border: '1px solid rgba(0,212,255,0.1)',
-              }}
-            >
-              <div
-                className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                style={{ background: '#00D4FF' }}
-              />
-              <p className="text-xs" style={{ color: 'rgba(0,212,255,0.65)' }}>
-                <span style={{ color: 'rgba(255,255,255,0.35)' }}>Last session: </span>
-                {lastTopic && (
-                  <span style={{ color: '#00D4FF' }}>{lastTopic}</span>
-                )}
-                {sessionMemory?.content && (
-                  <span style={{ color: 'rgba(255,255,255,0.35)' }}>
-                    {' '}
-                    · {sessionMemory.content.substring(0, 90)}
-                    {sessionMemory.content.length > 90 ? '…' : ''}
-                  </span>
-                )}
-              </p>
+          {lastSession && (
+            <div className="glass-card" style={{ marginTop: '1rem' }}>
+              <div className="section-label">📚 Last session</div>
+              <div className="memory-card">
+                {lastSession.topic && <span><strong>Topic:</strong> {sanitize(lastSession.topic)}</span>}
+                {lastSession.content && !lastSession.topic && <span>{sanitize(lastSession.content.slice(0, 80))}</span>}
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* ── Main content ─────────────────────────────────────────────── */}
-        <main className="flex-1 flex flex-col max-w-4xl mx-auto w-full px-6 py-4">
-          {activeTab === 'text' ? (
-            <TextMode
-              messages={messages}
-              input={input}
-              chatLoading={chatLoading}
-              handsFree={handsFree}
-              copied={copied}
-              messagesEndRef={messagesEndRef}
-              textareaRef={textareaRef}
-              onInputChange={setInput}
-              onSend={sendMessage}
-              onKeyDown={handleKeyDown}
-              onTopicChip={(t) => sendMessage(t)}
-              onHandsFreeToggle={() => setHandsFree((f) => !f)}
-              onCopy={copyToClipboard}
-              onClear={clearChat}
-            />
-          ) : (
-            <VoiceMode
-              isSpeaking={isSpeaking}
-              messages={messages}
-              input={input}
-              chatLoading={chatLoading}
-              messagesEndRef={messagesEndRef}
-              textareaRef={textareaRef}
-              onInputChange={setInput}
-              onSend={sendMessage}
-              onKeyDown={handleKeyDown}
-            />
           )}
-        </main>
-      </div>
-    </>
-  )
-}
 
-/* ─── TextMode sub-component ─────────────────────────────────────────────── */
+          <div className="glass-card plan-link-card" style={{ marginTop: '1rem' }}>
+            <p>Need a structured study plan for today?</p>
+            <Link href="/plan" className="plan-link-btn">📅 Daily Plan</Link>
+          </div>
+        </aside>
 
-type TextModeProps = {
-  messages: ChatMsg[]
-  input: string
-  chatLoading: boolean
-  handsFree: boolean
-  copied: string | null
-  messagesEndRef: React.RefObject<HTMLDivElement>
-  textareaRef: React.RefObject<HTMLTextAreaElement>
-  onInputChange: (v: string) => void
-  onSend: (text?: string) => void
-  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
-  onTopicChip: (topic: string) => void
-  onHandsFreeToggle: () => void
-  onCopy: (id: string, text: string) => void
-  onClear: () => void
-}
+        <main className="right-panel">
+          <div className="glass-card chat-box">
+            <div className="chat-messages" aria-live="polite" aria-label="Conversation">
+              {messages.map(msg => (
+                <div key={msg.id} className={`msg ${msg.role === 'user' ? 'user-msg' : 'ai-msg'}`}>
+                  <div className="msg-avatar" aria-hidden="true">{msg.role === 'user' ? '🎓' : 'J'}</div>
+                  <div className="msg-body">
+                    <div
+                      className="msg-bubble"
+                      dangerouslySetInnerHTML={{
+                        __html: msg.role === 'user'
+                          ? sanitize(msg.content).replace(/\n/g, '<br>')
+                          : formatMessageContent(msg.content),
+                      }}
+                    />
+                    <span className="msg-time">{msg.time}</span>
+                  </div>
+                </div>
+              ))}
 
-function TextMode({
-  messages,
-  input,
-  chatLoading,
-  handsFree,
-  copied,
-  messagesEndRef,
-  textareaRef,
-  onInputChange,
-  onSend,
-  onKeyDown,
-  onTopicChip,
-  onHandsFreeToggle,
-  onCopy,
-  onClear,
-}: TextModeProps) {
-  return (
-    <div className="flex flex-col flex-1 gap-3">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div
-            className="w-2 h-2 rounded-full"
-            style={{
-              background: '#C9A84C',
-              animation: 'j-avatar-glow 2s ease-in-out infinite',
-            }}
-          />
-          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>
-            Jarvis is ready
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {/* Hands-free toggle */}
-          <button
-            onClick={onHandsFreeToggle}
-            title={handsFree ? 'Disable auto-read' : 'Enable auto-read (hands-free)'}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all"
-            style={{
-              background: handsFree
-                ? 'rgba(0,212,255,0.1)'
-                : 'rgba(255,255,255,0.03)',
-              border: handsFree
-                ? '1px solid rgba(0,212,255,0.3)'
-                : '1px solid rgba(255,255,255,0.07)',
-              color: handsFree ? '#00D4FF' : 'rgba(255,255,255,0.4)',
-            }}
-          >
-            <span>{handsFree ? '🔊' : '🔇'}</span>
-            <span>{handsFree ? 'Hands-free on' : 'Hands-free'}</span>
-          </button>
-          {/* Clear chat */}
-          <button
-            onClick={onClear}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors"
-            style={{
-              background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.07)',
-              color: 'rgba(255,255,255,0.4)',
-            }}
-          >
-            ↺ New chat
-          </button>
-        </div>
-      </div>
+              {isLoading && (
+                <div className="msg ai-msg">
+                  <div className="msg-avatar">J</div>
+                  <div className="msg-body">
+                    <div className="msg-bubble">
+                      <div className="typing" role="status" aria-label="Jarvis is thinking">
+                        <div className="typing-dot" /><div className="typing-dot" /><div className="typing-dot" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
 
-      {/* Messages */}
-      <div
-        className="flex-1 overflow-y-auto rounded-xl p-5 space-y-4"
-        style={{
-          background: 'rgba(13,17,32,0.6)',
-          border: '1px solid rgba(201,168,76,0.08)',
-          minHeight: '400px',
-        }}
-        aria-live="polite"
-        aria-label="Chat messages"
-      >
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className="j-msg flex gap-3"
-            style={{ justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start' }}
-          >
-            {/* Avatar for assistant */}
-            {msg.role === 'assistant' && (
-              <div
-                className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-xs mt-1"
-                style={{
-                  background: 'linear-gradient(135deg, #C9A84C, #8B6914)',
-                  color: '#080B14',
-                }}
-              >
-                J
+            {showQuickPrompts && (
+              <div className="quick-prompts">
+                <div className="qp-label">Try asking…</div>
+                {QUICK_PROMPTS.map(p => (
+                  <button key={p} className="qp-btn" onClick={() => sendMessage(p)}>{p}</button>
+                ))}
               </div>
             )}
 
-            <div
-              className="rounded-xl px-4 py-3 max-w-[82%]"
-              style={
-                msg.role === 'user'
-                  ? {
-                      background: 'rgba(201,168,76,0.12)',
-                      border: '1px solid rgba(201,168,76,0.2)',
-                    }
-                  : {
-                      background: 'rgba(255,255,255,0.04)',
-                      border: '1px solid rgba(255,255,255,0.07)',
-                    }
-              }
-            >
-              {msg.role === 'assistant' ? (
-                <>
-                  <div
-                    className="text-sm msg-content"
-                    style={{ color: '#E8F0FF', lineHeight: 1.65 }}
-                  >
-                    <MessageContent text={msg.content} />
-                  </div>
-                  {/* Copy button */}
-                  <button
-                    onClick={() => onCopy(msg.id, msg.content)}
-                    className="mt-2 text-xs transition-colors"
-                    style={{
-                      color: copied === msg.id ? '#00D4FF' : 'rgba(255,255,255,0.25)',
-                    }}
-                    title="Copy response"
-                  >
-                    {copied === msg.id ? '✓ Copied' : '⎘ Copy'}
-                  </button>
-                </>
-              ) : (
-                <p className="text-sm" style={{ color: '#E8F0FF' }}>
-                  {msg.content}
-                </p>
-              )}
+            <div className="chat-input-area">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={e => { setInput(e.target.value); autoResize(e.target); }}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask J.A.R.V.I.S. a maths question… (Enter to send)"
+                rows={1}
+                aria-label="Type your question"
+                maxLength={4000}
+              />
+              <button
+                className="send-btn"
+                onClick={() => sendMessage()}
+                disabled={isLoading || !input.trim()}
+                aria-label="Send message"
+              >
+                Send →
+              </button>
             </div>
           </div>
-        ))}
-
-        {/* Typing indicator */}
-        {chatLoading && (
-          <div className="j-msg flex gap-3">
-            <div
-              className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-xs"
-              style={{
-                background: 'linear-gradient(135deg, #C9A84C, #8B6914)',
-                color: '#080B14',
-              }}
-            >
-              J
-            </div>
-            <div
-              className="rounded-xl px-4 py-3 flex items-center gap-1.5"
-              style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.07)',
-              }}
-            >
-              {[0, 1, 2].map((i) => (
-                <span
-                  key={i}
-                  className="w-1.5 h-1.5 rounded-full inline-block"
-                  style={{
-                    background: '#C9A84C',
-                    animation: `j-dot-bounce 1.2s ease-in-out ${i * 0.2}s infinite`,
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
+        </main>
       </div>
 
-      {/* Topic chips */}
-      <div className="flex flex-wrap gap-2">
-        {TOPIC_CHIPS.map((t) => (
-          <button
-            key={t}
-            onClick={() => onTopicChip(t)}
-            disabled={chatLoading}
-            className="px-3 py-1 rounded-full text-xs transition-all disabled:opacity-40"
-            style={{
-              background: 'rgba(201,168,76,0.07)',
-              border: '1px solid rgba(201,168,76,0.2)',
-              color: '#C9A84C',
-            }}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-
-      {/* Input area */}
-      <div
-        className="rounded-xl p-3"
-        style={{
-          background: 'rgba(13,17,32,0.8)',
-          border: '1px solid rgba(201,168,76,0.15)',
-        }}
-      >
-        <textarea
-          ref={textareaRef}
-          value={input}
-          onChange={(e) => onInputChange(e.target.value)}
-          onKeyDown={onKeyDown}
-          disabled={chatLoading}
-          placeholder="Ask about any A-Level Maths topic… (Enter to send, Shift+Enter for new line)"
-          rows={3}
-          className="w-full bg-transparent text-sm resize-none outline-none disabled:opacity-60"
-          style={{ color: '#E8F0FF', caretColor: '#C9A84C' }}
-        />
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
-            {input.length > 0 ? `${input.length} chars` : 'Press Enter to send'}
-          </span>
-          <button
-            onClick={() => onSend()}
-            disabled={chatLoading || !input.trim()}
-            className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-40"
-            style={{
-              background: 'linear-gradient(135deg, #C9A84C, #8B6914)',
-              color: '#080B14',
-            }}
-          >
-            {chatLoading ? 'Thinking…' : 'Send →'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
+      {toast && <div className="toast" role="alert">{toast}</div>}
+    </>
+  );
 }
 
-/* ─── VoiceMode sub-component ────────────────────────────────────────────── */
-
-type VoiceModeProps = {
-  isSpeaking: boolean
-  messages: ChatMsg[]
-  input: string
-  chatLoading: boolean
-  messagesEndRef: React.RefObject<HTMLDivElement>
-  textareaRef: React.RefObject<HTMLTextAreaElement>
-  onInputChange: (v: string) => void
-  onSend: (text?: string) => void
-  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void
+function formatMessageContent(raw: string): string {
+  const blocks = raw.split(/\n{2,}/);
+  return blocks.map(block => {
+    const lines = block.split('\n');
+    if (lines.every(l => /^\d+\.\s/.test(l.trim()))) {
+      const items = lines.map(l => `<li>${inlineFmt(l.trim().replace(/^\d+\.\s+/, ''))}</li>`).join('');
+      return `<ol>${items}</ol>`;
+    }
+    if (lines.every(l => /^[-*]\s/.test(l.trim()))) {
+      const items = lines.map(l => `<li>${inlineFmt(l.trim().replace(/^[-*]\s+/, ''))}</li>`).join('');
+      return `<ul>${items}</ul>`;
+    }
+    return `<p>${lines.map(inlineFmt).join('<br>')}</p>`;
+  }).join('');
 }
 
-function VoiceMode({
-  isSpeaking,
-  messages,
-  input,
-  chatLoading,
-  messagesEndRef,
-  textareaRef,
-  onInputChange,
-  onSend,
-  onKeyDown,
-}: VoiceModeProps) {
-  const lastAssistant = [...messages].reverse().find((m) => m.role === 'assistant')
-
-  return (
-    <div className="flex flex-col items-center gap-6 flex-1 py-6">
-      {/* Animated orb */}
-      <div className="relative flex items-center justify-center" style={{ width: 200, height: 200 }}>
-        {/* Outer ring pulse (repeating) */}
-        <div
-          className="absolute rounded-full"
-          style={{
-            width: 200,
-            height: 200,
-            background: 'transparent',
-            border: `2px solid ${isSpeaking ? 'rgba(0,212,255,0.4)' : 'rgba(201,168,76,0.2)'}`,
-            animation: 'j-orb-ring 2s ease-out infinite',
-          }}
-        />
-        <div
-          className="absolute rounded-full"
-          style={{
-            width: 200,
-            height: 200,
-            background: 'transparent',
-            border: `2px solid ${isSpeaking ? 'rgba(0,212,255,0.3)' : 'rgba(201,168,76,0.15)'}`,
-            animation: 'j-orb-ring 2s ease-out 0.6s infinite',
-          }}
-        />
-        {/* Core orb */}
-        <div
-          className={isSpeaking ? 'j-orb-speaking' : ''}
-          style={{
-            width: 140,
-            height: 140,
-            borderRadius: '50%',
-            background: isSpeaking
-              ? 'radial-gradient(circle at 35% 35%, rgba(0,212,255,0.4), rgba(0,80,120,0.6) 50%, rgba(0,212,255,0.1) 100%)'
-              : 'radial-gradient(circle at 35% 35%, rgba(201,168,76,0.35), rgba(100,70,10,0.5) 50%, rgba(201,168,76,0.08) 100%)',
-            border: `2px solid ${isSpeaking ? 'rgba(0,212,255,0.5)' : 'rgba(201,168,76,0.4)'}`,
-            boxShadow: isSpeaking
-              ? '0 0 40px rgba(0,212,255,0.35), inset 0 0 30px rgba(0,212,255,0.1)'
-              : '0 0 30px rgba(201,168,76,0.2), inset 0 0 20px rgba(201,168,76,0.07)',
-            animation: isSpeaking ? undefined : 'j-orb-pulse 3s ease-in-out infinite',
-            transition: 'all 0.4s ease',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <span
-            className="font-bold text-4xl select-none"
-            style={{
-              color: isSpeaking ? '#00D4FF' : '#C9A84C',
-              textShadow: isSpeaking
-                ? '0 0 20px rgba(0,212,255,0.8)'
-                : '0 0 20px rgba(201,168,76,0.6)',
-              transition: 'color 0.4s ease',
-            }}
-          >
-            J
-          </span>
-        </div>
-      </div>
-
-      {/* Status */}
-      <div className="text-center">
-        <p
-          className="text-base font-medium"
-          style={{ color: isSpeaking ? '#00D4FF' : 'rgba(255,255,255,0.6)' }}
-        >
-          {chatLoading
-            ? 'Processing…'
-            : isSpeaking
-            ? 'Speaking…'
-            : 'Listening for your input'}
-        </p>
-        <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
-          {isSpeaking
-            ? 'J.A.R.V.I.S. is reading the response aloud'
-            : 'Type below — responses will be read aloud'}
-        </p>
-      </div>
-
-      {/* Last assistant message (condensed) */}
-      {lastAssistant && lastAssistant.id !== 'init' && (
-        <div
-          className="w-full max-w-lg rounded-xl px-5 py-4"
-          style={{
-            background: 'rgba(13,17,32,0.7)',
-            border: `1px solid ${isSpeaking ? 'rgba(0,212,255,0.2)' : 'rgba(201,168,76,0.12)'}`,
-          }}
-        >
-          <p className="text-xs mb-2" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            Last response
-          </p>
-          <p
-            className="text-sm"
-            style={{ color: '#E8F0FF', lineHeight: 1.6 }}
-            // Show plain text (no HTML) for conciseness
-          >
-            {lastAssistant.content.replace(/\$\$[\s\S]+?\$\$/g, '[equation]').replace(/\$[^$\n]+?\$/g, '[eq]').substring(0, 200)}
-            {lastAssistant.content.length > 200 ? '…' : ''}
-          </p>
-        </div>
-      )}
-
-      {/* Input (voice mode still uses text, TTS handles playback) */}
-      <div
-        className="w-full max-w-lg rounded-xl p-3"
-        style={{
-          background: 'rgba(13,17,32,0.8)',
-          border: '1px solid rgba(0,212,255,0.15)',
-        }}
-      >
-        <textarea
-          ref={textareaRef}
-          value={input}
-          onChange={(e) => onInputChange(e.target.value)}
-          onKeyDown={onKeyDown}
-          disabled={chatLoading || isSpeaking}
-          placeholder="Type your question — J.A.R.V.I.S. will respond and read it aloud…"
-          rows={2}
-          className="w-full bg-transparent text-sm resize-none outline-none disabled:opacity-50"
-          style={{ color: '#E8F0FF', caretColor: '#00D4FF' }}
-        />
-        <div className="flex justify-end mt-2">
-          <button
-            onClick={() => onSend()}
-            disabled={chatLoading || isSpeaking || !input.trim()}
-            className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-40"
-            style={{
-              background: 'linear-gradient(135deg, rgba(0,212,255,0.7), rgba(0,130,180,0.7))',
-              color: '#080B14',
-            }}
-          >
-            {chatLoading ? 'Thinking…' : 'Send →'}
-          </button>
-        </div>
-      </div>
-
-      <div ref={messagesEndRef} />
-    </div>
-  )
+function inlineFmt(text: string): string {
+  const s = sanitize(text);
+  return s
+    .replace(/&#x60;([^<]+?)&#x60;/g, (_, p) => `<code>${p}</code>`)
+    .replace(/\*\*([^*]+?)\*\*/g, (_, p) => `<strong>${p}</strong>`)
+    .replace(/\*([^*]+?)\*/g, (_, p) => `<em>${p}</em>`);
 }

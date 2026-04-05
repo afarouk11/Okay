@@ -15,6 +15,7 @@ import {
   Settings,
   Zap,
   LogOut,
+  StickyNote,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/lib/useAuth'
@@ -22,14 +23,12 @@ import { createBrowserClient } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard',   icon: LayoutDashboard },
-  { href: '/jarvis',    label: 'J.A.R.V.I.S.', icon: Sparkles       },
-  { href: '/chat',      label: 'Chat',         icon: MessageSquare   },
-  { href: '/plan',      label: 'Daily Plan',   icon: CalendarDays    },
-  { href: '/lessons',   label: 'Lessons',      icon: BookOpen        },
-  { href: '/questions', label: 'Questions',    icon: HelpCircle      },
-  { href: '/papers',    label: 'Past Papers',  icon: FileText        },
-  { href: '/notes',     label: 'Notes',        icon: StickyNote      },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/chat',      label: 'Chat',      icon: MessageSquare   },
+  { href: '/plan',      label: 'Daily Plan', icon: CalendarDays   },
+  { href: '/lessons',   label: 'Lessons',   icon: BookOpen        },
+  { href: '/questions', label: 'Questions', icon: HelpCircle      },
+  { href: '/notes',     label: 'Notes',     icon: StickyNote      },
 ]
 
 const bottomItems = [

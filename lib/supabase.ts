@@ -5,9 +5,14 @@ export function createServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_KEY
   if (!url || !key) return null
-  return createClient(url, key, {
-    auth: { autoRefreshToken: false, persistSession: false },
-  })
+  try {
+    return createClient(url, key, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+  } catch (err) {
+    console.error('Failed to create Supabase service client:', err)
+    return null
+  }
 }
 
 // Client-side Supabase (anon key) — safe for browser
@@ -15,7 +20,12 @@ export function createBrowserClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   if (!url || !key) return null
-  return createClient(url, key)
+  try {
+    return createClient(url, key)
+  } catch (err) {
+    console.error('Failed to create Supabase browser client:', err)
+    return null
+  }
 }
 
 export type Profile = {

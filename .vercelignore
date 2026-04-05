@@ -1,0 +1,4 @@
+# Kids Next.js app — built and deployed separately, not part of the main Vercel deployment
+kids/
+coverage/
+tests/

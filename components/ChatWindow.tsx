@@ -13,14 +13,13 @@ export type ChatMsg = {
   id: string
   role: 'user' | 'assistant'
   content: string
-  timestamp: Date
+  timestamp?: Date
 }
 
 const INITIAL_MESSAGE: ChatMsg = {
   id: 'init',
   role: 'assistant',
   content: "Good to see you. What are we working on today?",
-  timestamp: new Date(),
 }
 
 export default function ChatWindow() {

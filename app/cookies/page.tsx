@@ -1,105 +1,132 @@
-import type { Metadata } from 'next'
+import { Metadata } from 'next'
 import Link from 'next/link'
+import { Zap, ArrowLeft } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Cookie Policy',
-  description: 'Information about the cookies Synaptiq uses on our A-Level Maths AI tutoring platform.',
-  robots: { index: true, follow: true },
-  openGraph: {
-    title: 'Cookie Policy — Synaptiq',
-    description: 'Information about the cookies Synaptiq uses on our A-Level Maths AI tutoring platform.',
-    type: 'website',
-  },
+  description: 'How Synaptiq uses cookies and how to manage them.',
 }
 
 export default function CookiesPage() {
   return (
-    <div style={{ background: '#08090E', color: '#E8F0FF', minHeight: '100vh', fontFamily: '\'DM Sans\', system-ui, sans-serif', lineHeight: 1.7 }}>
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '3rem 1.5rem 5rem' }}>
-        <Link href="/" style={{ display: 'inline-block', fontWeight: 800, fontSize: '1.3rem', color: '#C9A84C', textDecoration: 'none', marginBottom: '2.5rem' }}>
-          Synaptiq
+    <div className="min-h-screen" style={{ background: '#0B0F14', color: '#E2E8F0' }}>
+      <nav
+        className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b"
+        style={{ background: 'rgba(11,15,20,0.92)', backdropFilter: 'blur(12px)', borderColor: 'rgba(255,255,255,0.06)' }}
+      >
+        <Link href="/" className="flex items-center gap-2 no-underline">
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#4F8CFF,#22C55E)' }}>
+            <Zap className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-bold text-sm text-white">Synaptiq</span>
         </Link>
-        <h1 style={{ fontFamily: '\'Syne\', sans-serif', fontSize: '2rem', fontWeight: 800, marginBottom: '0.4rem' }}>Cookie Policy</h1>
-        <p style={{ color: '#6B7394', fontSize: '0.85rem', marginBottom: '2rem' }}>Last updated: 1 March 2026</p>
+        <Link href="/dashboard" className="flex items-center gap-1.5 text-sm no-underline" style={{ color: '#9AA4AF' }}>
+          <ArrowLeft className="w-4 h-4" />
+          Back to app
+        </Link>
+      </nav>
 
-        <p style={{ color: '#A8B8CC', marginBottom: '2rem' }}>
-          This policy explains how Synaptiq uses cookies and similar technologies. We use the minimum number of cookies necessary to run the platform.
-        </p>
+      <main className="max-w-3xl mx-auto px-6 py-14">
+        <h1 className="text-3xl font-bold mb-2" style={{ color: '#F0EEF8' }}>Cookie Policy</h1>
+        <p className="text-sm mb-10" style={{ color: '#6B7394' }}>Last updated: January 2025</p>
 
-        <section style={{ marginBottom: '2rem' }}>
-          <h2 style={{ fontFamily: '\'Syne\', sans-serif', fontSize: '1.1rem', fontWeight: 700, marginBottom: '1rem', color: '#E8F0FF' }}>Essential Cookies (Always Active)</h2>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-            <thead>
-              <tr>
-                <Th>Cookie</Th>
-                <Th>Purpose</Th>
-                <Th>Duration</Th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <Td>sb-auth-token</Td>
-                <Td>Keeps you logged in (Supabase authentication)</Td>
-                <Td>Session / 1 week</Td>
-              </tr>
-              <tr>
-                <Td>synaptiq_prefs</Td>
-                <Td>Stores your preferences (dark mode, font size)</Td>
-                <Td>1 year</Td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
+        <Section title="What Are Cookies?">
+          <p>Cookies are small text files stored on your device when you visit a website. They help us remember your preferences and keep you logged in.</p>
+        </Section>
 
-        <section style={{ marginBottom: '2rem' }}>
-          <h2 style={{ fontFamily: '\'Syne\', sans-serif', fontSize: '1.1rem', fontWeight: 700, marginBottom: '1rem', color: '#E8F0FF' }}>Analytics Cookies (Optional)</h2>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-            <thead>
-              <tr>
-                <Th>Cookie</Th>
-                <Th>Purpose</Th>
-                <Th>Duration</Th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <Td>_synaptiq_session</Td>
-                <Td>Tracks page visits to help us improve the platform. No personal data.</Td>
-                <Td>30 days</Td>
-              </tr>
-            </tbody>
-          </table>
-        </section>
+        <Section title="Essential Cookies (Always Active)">
+          <p>These cookies are required for the platform to function. They cannot be disabled.</p>
+          <div className="mt-3 rounded-lg overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+            <table className="w-full text-xs">
+              <thead>
+                <tr style={{ background: 'rgba(255,255,255,0.04)' }}>
+                  <th className="text-left p-3 font-medium" style={{ color: '#F0EEF8' }}>Cookie</th>
+                  <th className="text-left p-3 font-medium" style={{ color: '#F0EEF8' }}>Purpose</th>
+                  <th className="text-left p-3 font-medium" style={{ color: '#F0EEF8' }}>Duration</th>
+                </tr>
+              </thead>
+              <tbody style={{ color: '#9AA4AF' }}>
+                <tr className="border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+                  <td className="p-3 font-mono">sb-auth-token</td>
+                  <td className="p-3">Supabase authentication session</td>
+                  <td className="p-3">1 week</td>
+                </tr>
+                <tr className="border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+                  <td className="p-3 font-mono">synaptiq_prefs</td>
+                  <td className="p-3">User preferences (theme, accessibility)</td>
+                  <td className="p-3">1 year</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </Section>
 
-        <section style={{ marginBottom: '2rem' }}>
-          <h2 style={{ fontFamily: '\'Syne\', sans-serif', fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.75rem', color: '#E8F0FF' }}>Managing Cookies</h2>
-          <p style={{ color: '#A8B8CC' }}>
-            You can manage cookie preferences when you first visit the site, or at any time via Settings &rarr; Privacy. You can also clear cookies through your browser settings. Note that disabling essential cookies will prevent you from logging in.
-          </p>
-        </section>
+        <Section title="Analytics Cookies (Optional)">
+          <p>These help us understand how users interact with the platform so we can improve it. All data is anonymised.</p>
+          <div className="mt-3 rounded-lg overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+            <table className="w-full text-xs">
+              <thead>
+                <tr style={{ background: 'rgba(255,255,255,0.04)' }}>
+                  <th className="text-left p-3 font-medium" style={{ color: '#F0EEF8' }}>Cookie</th>
+                  <th className="text-left p-3 font-medium" style={{ color: '#F0EEF8' }}>Purpose</th>
+                  <th className="text-left p-3 font-medium" style={{ color: '#F0EEF8' }}>Duration</th>
+                </tr>
+              </thead>
+              <tbody style={{ color: '#9AA4AF' }}>
+                <tr className="border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
+                  <td className="p-3 font-mono">_synaptiq_session</td>
+                  <td className="p-3">Anonymised page visit tracking</td>
+                  <td className="p-3">30 days</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </Section>
 
-        <div style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', gap: '1.5rem', fontSize: '0.875rem' }}>
-          <Link href="/" style={{ color: '#C9A84C', textDecoration: 'none' }}>← Back</Link>
-          <Link href="/privacy" style={{ color: '#6B7394', textDecoration: 'none' }}>Privacy Policy</Link>
-          <Link href="/terms" style={{ color: '#6B7394', textDecoration: 'none' }}>Terms &amp; Conditions</Link>
-        </div>
-      </div>
+        <Section title="Managing Your Cookies">
+          <p>You can manage your cookie preferences in three ways:</p>
+          <ul>
+            <li>On your first visit, a consent banner will appear</li>
+            <li>Via <strong>Settings → Privacy</strong> at any time</li>
+            <li>Through your browser settings (note: disabling essential cookies will break login)</li>
+          </ul>
+        </Section>
+
+        <Section title="Third-Party Cookies">
+          <p>We do not use advertising or social media tracking cookies. Third-party service providers (Supabase, Vercel) may set their own technical cookies as part of delivering the service.</p>
+        </Section>
+
+        <Section title="Contact">
+          <p>Questions about cookies? Email <a href="mailto:privacy@synaptiqai.co.uk" className="text-blue-400 hover:underline">privacy@synaptiqai.co.uk</a></p>
+        </Section>
+      </main>
+
+      <Footer />
     </div>
   )
 }
 
-function Th({ children }: { children: React.ReactNode }) {
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <th style={{ textAlign: 'left', padding: '0.6rem 0.75rem', color: '#6B7394', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-      {children}
-    </th>
+    <section className="mb-8">
+      <h2 className="text-lg font-semibold mb-3" style={{ color: '#F0EEF8' }}>{title}</h2>
+      <div className="space-y-3 text-sm leading-relaxed" style={{ color: '#9AA4AF' }}>
+        {children}
+      </div>
+    </section>
   )
 }
 
-function Td({ children }: { children: React.ReactNode }) {
+function Footer() {
   return (
-    <td style={{ padding: '0.6rem 0.75rem', color: '#A8B8CC', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-      {children}
-    </td>
+    <footer className="border-t py-8 mt-4" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#6B7394' }}>
+      <div className="max-w-3xl mx-auto px-6 flex flex-wrap gap-4 text-xs">
+        <span>© {new Date().getFullYear()} Synaptiq Ltd</span>
+        <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+        <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+        <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
+        <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
+      </div>
+    </footer>
   )
 }

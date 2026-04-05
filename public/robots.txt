@@ -1,0 +1,9 @@
+User-agent: *
+Disallow: /admin
+Disallow: /jarvis
+Disallow: /lessons
+Disallow: /questions
+Disallow: /reset-password
+Disallow: /test
+
+Sitemap: https://synaptiqai.co.uk/sitemap.xml
