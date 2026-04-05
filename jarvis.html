@@ -252,6 +252,15 @@ body::before{content:'';position:fixed;inset:0;background:
   background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
   border-radius:6px;padding:.12rem .45rem;font-size:.72rem;font-family:var(--font-mono)}
 
+/* ── TEACHING MODE TABS ─── */
+.teach-mode-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:.35rem}
+.teach-btn{padding:.45rem .3rem;border-radius:8px;font-size:.73rem;font-weight:600;
+  border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);
+  color:var(--muted);cursor:pointer;transition:all .18s;white-space:nowrap;text-align:center}
+.teach-btn:hover{color:var(--white);border-color:rgba(176,96,255,0.3)}
+.teach-btn.active{background:rgba(176,96,255,0.10);border-color:rgba(176,96,255,0.35);
+  color:var(--purple);box-shadow:0 0 10px rgba(176,96,255,0.10)}
+
 /* ── MEMORY PANEL ─── */
 .memory-card{padding:1rem 1.4rem}
 .memory-card.hidden{display:none}
@@ -469,6 +478,18 @@ body::before{content:'';position:fixed;inset:0;background:
       </div>
     </div>
 
+    <!-- Teaching mode selector -->
+    <div class="glass-card" style="padding:1.2rem 1.4rem">
+      <div class="section-label">🎓 Teaching mode</div>
+      <div class="teach-mode-tabs" role="radiogroup" aria-label="Choose teaching mode">
+        <button class="teach-btn active" data-teach="standard" aria-pressed="true">Standard</button>
+        <button class="teach-btn" data-teach="guided" aria-pressed="false">Guided</button>
+        <button class="teach-btn" data-teach="test" aria-pressed="false">Test</button>
+        <button class="teach-btn" data-teach="eli5" aria-pressed="false">ELI5</button>
+      </div>
+      <p id="teach-mode-desc" class="mode-info" style="margin-top:.6rem;font-size:.8rem;color:var(--muted)">Clear step-by-step explanations with worked examples.</p>
+    </div>
+
     <!-- Session memory -->
     <div id="memory-panel" class="glass-card memory-card hidden">
       <div class="section-label">📚 Last session</div>
@@ -565,6 +586,55 @@ Your role:
 - If a student seems confused, try a different explanation or a worked example.
 - Adapt your language to the student's level based on how they ask questions.
 - Cover all A-Level topics: Algebra, Calculus, Trigonometry, Statistics, Mechanics, and Further Maths.`;
+
+/* ── Teaching modes ───────────────────────────────────────────── */
+const TEACH_MODES = {
+  standard: {
+    desc: 'Clear step-by-step explanations with worked examples.',
+    suffix: ''
+  },
+  guided: {
+    desc: 'Jarvis breaks every solution into tiny steps and asks you to attempt each one.',
+    suffix: '\n\nGUIDED SOLVING MODE: Break every problem into the smallest possible numbered steps. After showing each step, pause and ask the student to attempt the next one before you reveal it. Praise correct attempts. Never give the complete solution all at once.'
+  },
+  test: {
+    desc: 'No hints — Jarvis tests your knowledge with questions.',
+    suffix: '\n\nTEST MODE: Do NOT explain or give hints unprompted. Instead, ask the student a targeted question on the topic they mention and evaluate their answer. If their answer is wrong, identify the exact error and ask them to try again. Only explain after two failed attempts.'
+  },
+  eli5: {
+    desc: 'Concepts explained simply — like you\'re 5 years old.',
+    suffix: '\n\nELI5 MODE: Explain everything using very simple everyday language and concrete analogies. Avoid all jargon. Imagine explaining to someone who has never studied maths before. Use relatable real-world examples.'
+  }
+};
+
+let currentTeachMode = 'standard';
+
+function getEffectiveSystemPrompt() {
+  return SYSTEM_PROMPT + (TEACH_MODES[currentTeachMode]?.suffix || '');
+}
+
+/* ── Smart navigation — page map ─────────────────────────────── */
+const PAGE_MAP = [
+  { keywords: ['past paper', 'past papers', 'exam paper', 'exam papers', 'past exam'], url: '/#past-papers', label: 'Past Papers' },
+  { keywords: ['flashcard', 'flashcards', 'flash card', 'flash cards'], url: '/#flashcards', label: 'Flashcards' },
+  { keywords: ['lesson', 'lessons', 'topic list', 'topics list'], url: '/lessons.html', label: 'Lessons' },
+  { keywords: ['question', 'questions', 'practice question', 'practice questions', 'quiz'], url: '/questions.html', label: 'Practice Questions' },
+  { keywords: ['pricing', 'price', 'upgrade', 'subscribe', 'subscription', 'plan', 'plans'], url: '/pricing.html', label: 'Pricing' },
+  { keywords: ['progress', 'analytics', 'my stats', 'my progress', 'dashboard'], url: '/', label: 'Dashboard' },
+  { keywords: ['home', 'main page', 'start page', 'go back'], url: '/', label: 'Dashboard' },
+  { keywords: ['contact', 'support', 'help'], url: '/contact.html', label: 'Contact & Support' }
+];
+
+const NAV_TRIGGER = /\b(take me|go to|navigate to|open|show me|bring me|switch to|load|head to)\b/i;
+
+function detectNavIntent(text) {
+  if (!NAV_TRIGGER.test(text)) return null;
+  const lower = text.toLowerCase();
+  for (const page of PAGE_MAP) {
+    if (page.keywords.some(kw => lower.includes(kw))) return page;
+  }
+  return null;
+}
 
 const history = [];  // { role: 'user'|'assistant', content: string }[]
 
@@ -706,8 +776,51 @@ function hideQuickPrompts() {
   if (promptsWrap) promptsWrap.style.display = 'none';
 }
 
-/* ── Welcome message ────────────────────────────────────────── */
-function showWelcome() {
+/* ── Proactive welcome ──────────────────────────────────────── */
+async function showWelcome() {
+  const token = localStorage.getItem('synaptiq_token');
+
+  if (token && !token.startsWith('demo_token_')) {
+    // Attempt to fetch adaptive insights and build a personalised greeting
+    try {
+      const res = await fetch('/api/adaptive', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ action: 'get_learning_insights' })
+      });
+      if (res.ok) {
+        const { stats, weak_topics, review_queue } = await res.json();
+        const parts = [];
+
+        if (stats?.streak > 1) parts.push(`🔥 You're on a **${stats.streak}-day streak** — keep it going!`);
+
+        if (weak_topics?.length) {
+          const top = weak_topics.slice(0, 2).map(t => `**${t.topic}** (${t.accuracy}% accuracy)`).join(' and ');
+          parts.push(`I've noticed you've been struggling with ${top} — want to work on that today?`);
+        }
+
+        if (review_queue?.length) {
+          const dueSlice = review_queue.slice(0, 2);
+          const due = dueSlice.map(t => `**${t.topic}**`).join(' and ');
+          parts.push(`${due} ${dueSlice.length > 1 ? 'are' : 'is'} due for revision — let's keep those sharp.`);
+        }
+
+        if (parts.length) {
+          appendMessage('assistant',
+            "Hi! I'm **J.A.R.V.I.S.**, your A-Level Maths AI assistant. 👋\n\n" +
+            parts.join('\n\n') +
+            "\n\nAsk me anything below, or say something like *\"Take me to past papers\"* to navigate. 🚀"
+          );
+          return;
+        }
+      }
+    } catch (_) { /* fall through to default */ }
+  }
+
+  // Default welcome (no auth or fetch failed)
   appendMessage('assistant',
     "Hi! I'm **J.A.R.V.I.S.**, your A-Level Maths AI assistant. 👋\n\n" +
     "I can help you with:\n" +
@@ -720,10 +833,36 @@ function showWelcome() {
 
 showWelcome();
 
+/* ── Teaching mode switching ─────────────────────────────────── */
+const teachDesc = document.getElementById('teach-mode-desc');
+document.querySelectorAll('.teach-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.teach-btn').forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
+    btn.classList.add('active');
+    btn.setAttribute('aria-pressed', 'true');
+    currentTeachMode = btn.dataset.teach;
+    if (teachDesc) teachDesc.textContent = TEACH_MODES[currentTeachMode]?.desc || '';
+  });
+});
+
 /* ── Send a message ─────────────────────────────────────────── */
 async function sendMessage() {
   const text = chatInput.value.trim();
   if (!text || isLoading) return;
+
+  // ── Smart navigation ──────────────────────────────────────────
+  const navTarget = detectNavIntent(text);
+  if (navTarget) {
+    appendMessage('user', text);
+    appendMessage('assistant', `Sure! Taking you to **${navTarget.label}** now… 🚀`);
+    setTimeout(() => { window.location.href = navTarget.url; }, 900);
+    chatInput.value = '';
+    autoResize(chatInput);
+    return;
+  }
 
   isLoading = true;
   sendBtn.disabled = true;
@@ -738,7 +877,7 @@ async function sendMessage() {
 
   try {
     const messages = history.map(m => ({ role: m.role, content: m.content }));
-    const data     = await callClaude(messages, SYSTEM_PROMPT, MAX_TOKENS_PER_MESSAGE);
+    const data     = await callClaude(messages, getEffectiveSystemPrompt(), MAX_TOKENS_PER_MESSAGE);
     const reply    = getReply(data);
 
     removeTypingIndicator();
