@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import ChatWindow from '@/components/ChatWindow'
+import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar'
 
 export const metadata: Metadata = {
   title: {
@@ -36,6 +37,7 @@ export default function RootLayout({
       <body className="bg-background text-foreground antialiased">
         {children}
         <ChatWindow />
+        <ServiceWorkerRegistrar />
       </body>
     </html>
   )
