@@ -1,24 +1,30 @@
 {
   "name": "synaptiq",
   "version": "7.0.0",
-  "type": "module",
-  "engines": {
-    "node": "24.x"
-  },
+  "private": true,
   "scripts": {
-    "build": "node scripts/build.mjs",
-    "health-check": "node scripts/health-check.mjs",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
+    "next": "15.3.9",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "resend": "^4.0.0",
     "stripe": "^16.0.0"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
     "@vitest/coverage-v8": "^2.1.9",
+    "typescript": "^5.7.0",
     "vitest": "^2.1.9"
   }
 }
