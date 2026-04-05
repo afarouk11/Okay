@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { isRateLimited, getIp } from '@/lib/rateLimit'
 
+const FROM_EMAIL = process.env.EMAIL_FROM || 'Synaptiq <hello@synaptiq.co.uk>'
+const SITE_URL = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq.co.uk'
+
 function logAdminAction(
   supabase: ReturnType<typeof createServiceClient>,
   action: string,
@@ -12,6 +15,57 @@ function logAdminAction(
   supabase.from('admin_audit_log')
     .insert({ action, ip, metadata })
     .then(null, () => {})
+}
+
+function weeklyEmailHtml(name: string, stats: { questions: number; accuracy: number; xp: number; streak: number }) {
+  const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+  return `<div style="font-family:'DM Sans',sans-serif;max-width:600px;margin:0 auto;background:#0D0F18;color:#F0EEF8;border-radius:16px;overflow:hidden">
+    <div style="background:linear-gradient(135deg,#4F8CFF,#22C55E);padding:2rem;text-align:center">
+      <h1 style="font-size:1.8rem;margin:0;color:#fff">Weekly Report</h1>
+      <p style="opacity:.8;margin:.5rem 0 0;color:#fff">Week ending ${dateStr}</p>
+    </div>
+    <div style="padding:2rem">
+      <h2 style="color:#4F8CFF">Hi ${name}!</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0">
+        <div style="background:#181C2A;border-radius:10px;padding:1rem;text-align:center">
+          <div style="font-size:2rem;font-weight:800;color:#4F8CFF">${stats.questions}</div>
+          <div style="font-size:.8rem;color:#6B7394">Questions answered</div>
+        </div>
+        <div style="background:#181C2A;border-radius:10px;padding:1rem;text-align:center">
+          <div style="font-size:2rem;font-weight:800;color:#22C55E">${stats.accuracy}%</div>
+          <div style="font-size:.8rem;color:#6B7394">Accuracy</div>
+        </div>
+        <div style="background:#181C2A;border-radius:10px;padding:1rem;text-align:center">
+          <div style="font-size:2rem;font-weight:800;color:#60A5FA">${stats.xp}</div>
+          <div style="font-size:.8rem;color:#6B7394">XP earned</div>
+        </div>
+        <div style="background:#181C2A;border-radius:10px;padding:1rem;text-align:center">
+          <div style="font-size:2rem;font-weight:800;color:#FB923C">${stats.streak}</div>
+          <div style="font-size:.8rem;color:#6B7394">Day streak</div>
+        </div>
+      </div>
+      <a href="${SITE_URL}/dashboard" style="display:inline-block;background:#4F8CFF;color:#fff;padding:.875rem 2rem;border-radius:10px;font-weight:700;text-decoration:none;margin-top:1rem">Keep Going</a>
+    </div>
+    <div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.07);font-size:.8rem;color:#6B7394;text-align:center">
+      Synaptiq &middot; <a href="${SITE_URL}/privacy" style="color:#6B7394">Privacy</a>
+    </div>
+  </div>`
+}
+
+async function sendWeeklyEmail(email: string, name: string, stats: { questions: number; accuracy: number; xp: number; streak: number }) {
+  const resendKey = process.env.RESEND_API_KEY
+  if (!resendKey) return false
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: FROM_EMAIL,
+      to: email,
+      subject: 'Your weekly Synaptiq progress report',
+      html: weeklyEmailHtml(name, stats),
+    }),
+  })
+  return r.ok
 }
 
 export async function GET(request: NextRequest) {
@@ -38,10 +92,11 @@ async function handleAdmin(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   let action = searchParams.get('action')
+  let body: Record<string, unknown> = {}
 
   if (request.method === 'POST') {
-    const body = await request.json().catch(() => ({}))
-    action = action ?? body.action
+    body = await request.json().catch(() => ({}))
+    action = action ?? (body.action as string | null)
   }
 
   if (action === 'stats') {
@@ -64,10 +119,7 @@ async function handleAdmin(request: NextRequest) {
   }
 
   if (action === 'users') {
-    const body = request.method === 'POST'
-      ? await request.json().catch(() => ({}))
-      : {}
-    const page = parseInt(searchParams.get('page') ?? body.page ?? '1', 10)
+    const page = parseInt((searchParams.get('page') ?? body.page as string ?? '1'), 10)
     const limit = 50
     const from = (page - 1) * limit
     const to = from + limit - 1
@@ -86,27 +138,23 @@ async function handleAdmin(request: NextRequest) {
       .eq('subscription_status', 'active')
     let sent = 0
     let failed = 0
-    const siteUrl = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq.co.uk'
     for (const u of users ?? []) {
-      try {
-        await fetch(`${siteUrl}/api/contact`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            type: 'weekly',
-            email: u.email,
-            name: u.name,
-            stats: { questions: u.questions_answered, accuracy: u.accuracy, xp: u.xp, streak: u.streak },
-          }),
-        })
-        sent++
-      } catch { failed++ }
+      const ok = await sendWeeklyEmail(
+        u.email,
+        u.name ?? 'Student',
+        { questions: u.questions_answered ?? 0, accuracy: u.accuracy ?? 0, xp: u.xp ?? 0, streak: u.streak ?? 0 },
+      ).catch(() => false)
+      if (ok) { sent++ } else { failed++ }
     }
     logAdminAction(supabase, 'send_weekly_emails', ip, { sent, failed })
     return NextResponse.json({ sent, failed })
   }
 
   if (action === 'reset_users') {
+    // Require a server-side confirmation string to prevent accidental data loss
+    if (body.confirm !== 'DELETE_ALL_USERS') {
+      return NextResponse.json({ error: 'Confirmation string required: set confirm="DELETE_ALL_USERS"' }, { status: 400 })
+    }
     const { data: { users }, error: listErr } = await supabase.auth.admin.listUsers({ perPage: 1000 })
     if (listErr) return NextResponse.json({ error: listErr.message }, { status: 500 })
     let deleted = 0

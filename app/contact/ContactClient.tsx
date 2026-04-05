@@ -30,7 +30,7 @@ const FAQS = [
   { q: 'Is the AI always accurate?', a: 'AI can make mistakes. Always verify important answers, especially for exams. Use Synaptiq as a study aid, not a replacement for your teacher.' },
   { q: 'Can I use Synaptiq for my whole school?', a: 'Yes! We offer school licences from £200/month for up to 60 seats. Email schools@synaptiqai.co.uk for a quote.' },
   { q: 'What subjects does Synaptiq cover?', a: 'Currently A-Level Maths (AQA, Edexcel, OCR, WJEC). More subjects coming soon.' },
-  { q: 'Does the AI do my homework for me?', a: 'Synaptiq explains concepts and guides you step-by-step — it\'s a tutor, not a homework completion service. Submitting AI output as your own work violates your school\'s academic integrity policy.' },
+  { q: 'Does the AI do my homework for me?', a: "Synaptiq explains concepts and guides you step-by-step — it's a tutor, not a homework completion service. Submitting AI output as your own work violates your school's academic integrity policy." },
 ]
 
 export default function ContactClient() {

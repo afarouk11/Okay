@@ -24,7 +24,7 @@ export default function ResetPasswordClient() {
     if (!supabase) { setStatus('invalid'); return }
 
     // Supabase sets the session automatically from the URL hash on load
-    supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setSessionReady(true)
       }
@@ -34,6 +34,8 @@ export default function ResetPasswordClient() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) setSessionReady(true)
     })
+
+    return () => subscription.unsubscribe()
   }, [])
 
   async function handleSubmit(e: React.FormEvent) {

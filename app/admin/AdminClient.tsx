@@ -91,9 +91,12 @@ export default function AdminClient() {
     setActionLoading(action)
     setActionMsg(null)
     try {
+      const body: Record<string, unknown> = {}
+      if (action === 'reset_users') body.confirm = 'DELETE_ALL_USERS'
       const res = await fetch(`/api/admin?action=${action}`, {
         method: 'POST',
         headers: authHeaders(),
+        body: JSON.stringify(body),
       })
       const data = await res.json()
       if (!res.ok) { setActionMsg(data.error || 'Action failed'); return }
