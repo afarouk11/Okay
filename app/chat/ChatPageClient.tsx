@@ -16,7 +16,7 @@ type ChatMsg = {
   id: string
   role: 'user' | 'assistant'
   content: string
-  timestamp: Date
+  timestamp?: Date
 }
 
 const INITIAL_MESSAGE: ChatMsg = {
@@ -24,7 +24,6 @@ const INITIAL_MESSAGE: ChatMsg = {
   role: 'assistant',
   content:
     "Good to see you. I'm Jarvis — your personal tutor. What are we working on today?",
-  timestamp: new Date(),
 }
 
 export default function ChatPageClient() {

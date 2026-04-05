@@ -21,12 +21,15 @@ export default function PlanPageClient() {
   const [plan, setPlan] = useState<DailyPlan | null>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
+  const [today, setToday] = useState('')
 
-  const today = new Date().toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  })
+  useEffect(() => {
+    setToday(new Date().toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    }))
+  }, [])
 
   const fetchPlan = useCallback(async () => {
     if (!token) return
