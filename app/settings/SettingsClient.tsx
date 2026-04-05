@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Settings, User, Bell, Shield, Palette, CreditCard, Check, Loader2 } from 'lucide-react'
+import { User, Bell, Shield, Palette, CreditCard, Check, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'

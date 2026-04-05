@@ -45,7 +45,7 @@ export default function PlanPageClient() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [token])
 
   const generatePlan = useCallback(async () => {
     if (!token) return
@@ -65,7 +65,7 @@ export default function PlanPageClient() {
     } finally {
       setGenerating(false)
     }
-  }, [])
+  }, [token])
 
   const toggleTask = useCallback(
     async (taskId: string, done: boolean) => {

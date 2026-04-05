@@ -203,7 +203,7 @@ export default async function handler(req, res) {
     });
     const data = await r.json();
     return res.status(r.status).json(data);
-  } catch (e) {
+  } catch (_) {
     return res.status(500).json({ error: 'Failed to connect to AI service. Please try again.' });
   }
 }
