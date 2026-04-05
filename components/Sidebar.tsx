@@ -12,6 +12,7 @@ import {
   Settings,
   Zap,
   LogOut,
+  StickyNote,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/lib/useAuth'
@@ -24,6 +25,7 @@ const navItems = [
   { href: '/plan',      label: 'Daily Plan', icon: CalendarDays   },
   { href: '/lessons',   label: 'Lessons',   icon: BookOpen        },
   { href: '/questions', label: 'Questions', icon: HelpCircle      },
+  { href: '/notes',     label: 'Notes',     icon: StickyNote      },
 ]
 
 const bottomItems = [
