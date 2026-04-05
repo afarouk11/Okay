@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, name, email, plan, year, board, target, exam_date, xp, level, adhd_mode, dyslexia_mode, dyscalculia_mode, created_at')
+    .select('id, name, email, plan, year, board, target, exam_date, parent_code, xp, level, adhd_mode, dyslexia_mode, dyscalculia_mode, created_at')
     .eq('id', user.id)
     .single()
 
@@ -47,7 +47,7 @@ export async function PATCH(request: NextRequest) {
   const body = await request.json().catch(() => ({}))
 
   // Only allow updates to safe fields; ignore everything else
-  const allowed = ['name', 'year', 'board', 'target', 'exam_date', 'adhd_mode', 'dyslexia_mode', 'dyscalculia_mode'] as const
+  const allowed = ['name', 'year', 'board', 'target', 'exam_date', 'parent_code', 'adhd_mode', 'dyslexia_mode', 'dyscalculia_mode'] as const
   type AllowedKey = typeof allowed[number]
   const updates: Partial<Record<AllowedKey, unknown>> = {}
 
@@ -56,6 +56,14 @@ export async function PATCH(request: NextRequest) {
       const val = body[key]
       if (key === 'adhd_mode' || key === 'dyslexia_mode' || key === 'dyscalculia_mode') {
         if (typeof val === 'boolean') updates[key] = val
+      } else if (key === 'parent_code') {
+        // parent_code must be null (disable) or exactly 6 alphanumeric chars
+        if (val === null) {
+          updates[key] = null
+        } else if (typeof val === 'string') {
+          const clean = val.trim().toUpperCase().slice(0, 6)
+          if (/^[A-Z0-9]{6}$/.test(clean)) updates[key] = clean
+        }
       } else {
         if (typeof val === 'string') updates[key] = val.slice(0, 200)
       }
@@ -70,7 +78,7 @@ export async function PATCH(request: NextRequest) {
     .from('profiles')
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', user.id)
-    .select('id, name, email, plan, year, board, target, exam_date, xp, level, adhd_mode, dyslexia_mode, dyscalculia_mode')
+    .select('id, name, email, plan, year, board, target, exam_date, parent_code, xp, level, adhd_mode, dyslexia_mode, dyscalculia_mode')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -4,15 +4,23 @@ import ChatWindow from '@/components/ChatWindow'
 
 export const metadata: Metadata = {
   title: {
-    default: 'Jarvis — AI Learning Platform',
-    template: '%s | Jarvis',
+    default: 'Synaptiq — AI Learning Platform',
+    template: '%s | Synaptiq',
   },
-  description: 'Your personal AI tutor. Jarvis teaches step-by-step, adapts to your level, and guides you to mastery.',
-  keywords: ['AI tutor', 'learning platform', 'A-Level Maths', 'personalised learning'],
+  description: 'Your personal AI tutor. Synaptiq teaches step-by-step, adapts to your level, and guides you to mastery in A-Level Maths.',
+  keywords: ['AI tutor', 'A-Level Maths', 'AQA', 'Edexcel', 'OCR', 'WJEC', 'personalised learning'],
   openGraph: {
-    title: 'Jarvis — AI Learning Platform',
-    description: 'Your personal AI tutor. Premium, intelligent, fast.',
+    title: 'Synaptiq — AI Learning Platform',
+    description: 'Your personal AI tutor. Premium, intelligent, personalised.',
     type: 'website',
+    url: 'https://synaptiq.co.uk',
+    images: [{ url: '/og-image.svg', width: 1200, height: 630, alt: 'Synaptiq — AI Learning Platform' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Synaptiq — AI Learning Platform',
+    description: 'Your personal AI tutor for A-Level Maths.',
+    images: ['/og-image.svg'],
   },
 }
 

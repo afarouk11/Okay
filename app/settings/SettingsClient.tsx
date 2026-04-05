@@ -15,6 +15,7 @@ type ProfileData = {
   board: string
   target: string | null
   exam_date: string | null
+  parent_code: string | null
   plan: string
   adhd_mode: boolean
   dyslexia_mode: boolean
@@ -59,6 +60,7 @@ export default function SettingsClient() {
   const [board, setBoard] = useState('')
   const [target, setTarget] = useState('')
   const [examDate, setExamDate] = useState('')
+  const [parentCode, setParentCode] = useState('')
 
   // Accessibility toggles (DB-backed)
   const [adhdMode, setAdhdMode] = useState(false)
@@ -98,6 +100,7 @@ export default function SettingsClient() {
       setBoard(p.board ?? '')
       setTarget(p.target ?? '')
       setExamDate(p.exam_date ?? '')
+      setParentCode(p.parent_code ?? '')
       setAdhdMode(p.adhd_mode)
       setDyslexiaMode(p.dyslexia_mode)
       setDyscalculiaMode(p.dyscalculia_mode)
@@ -229,6 +232,19 @@ export default function SettingsClient() {
                 className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
               />
               <SaveIndicator show={savedField === 'exam_date'} saving={saving} />
+            </SettingRow>
+            <SettingRow label="Parent access code">
+              <input
+                type="text"
+                value={parentCode}
+                maxLength={6}
+                placeholder="6-character code for parents"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white uppercase tracking-widest focus:border-primary focus:outline-none"
+                onChange={e => setParentCode(e.target.value.toUpperCase().slice(0, 6))}
+                onBlur={() => { if (parentCode.length === 6 || parentCode.length === 0) patchProfile({ parent_code: parentCode || null }, 'parent_code') }}
+              />
+              <SaveIndicator show={savedField === 'parent_code'} saving={saving} />
+              <p className="text-xs text-muted mt-1">Share this code with a parent so they can view your progress at /parent. Leave blank to disable.</p>
             </SettingRow>
           </SettingCard>
 
