@@ -57,6 +57,11 @@ export default function DashboardClient() {
   const { user, token, loading: authLoading } = useAuth()
   const [data, setData] = useState<ProgressData | null>(null)
   const [statsLoading, setStatsLoading] = useState(true)
+  const [todayLabel, setTodayLabel] = useState('')
+
+  useEffect(() => {
+    setTodayLabel(new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }))
+  }, [])
 
   useEffect(() => {
     if (!authLoading && !user) router.replace('/login')
@@ -120,7 +125,7 @@ export default function DashboardClient() {
       <div className="flex-1 flex flex-col ml-60">
         <Header
           title="Dashboard"
-          subtitle={new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+          subtitle={todayLabel}
         />
 
         <main className="flex-1 px-8 py-6 space-y-8">
