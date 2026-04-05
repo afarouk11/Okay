@@ -7,9 +7,10 @@ interface HeaderProps {
   title: string
   subtitle?: string
   userName?: string
+  action?: React.ReactNode
 }
 
-export default function Header({ title, subtitle, userName = 'Student' }: HeaderProps) {
+export default function Header({ title, subtitle, userName = 'Student', action }: HeaderProps) {
   return (
     <motion.header
       initial={{ y: -10, opacity: 0 }}
@@ -30,6 +31,9 @@ export default function Header({ title, subtitle, userName = 'Student' }: Header
 
       {/* Right: actions */}
       <div className="flex items-center gap-3">
+        {/* Custom action slot */}
+        {action && action}
+
         {/* Search */}
         <motion.button
           whileHover={{ scale: 1.05 }}
