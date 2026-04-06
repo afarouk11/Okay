@@ -1,4 +1,7 @@
-# Kids Next.js app — built and deployed separately, not part of the main Vercel deployment
-kids/
+# Test files — not needed in production
 coverage/
 tests/
+
+# Kids Next.js build artifacts — generated during build, not source
+kids/.next/
+kids/node_modules/
