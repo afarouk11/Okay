@@ -567,12 +567,18 @@ export default function JarvisPageClient() {
     try {
       discardRecordingRef.current = false;
       stopReasonRef.current = 'manual';
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : MediaRecorder.isTypeSupported('audio/webm')
-          ? 'audio/webm'
-          : 'audio/mp4';
-      const recorder = new MediaRecorder(stream, { mimeType });
+      const preferredMimeType = pickRecorderMimeType();
+      let recorder: MediaRecorder;
+
+      try {
+        recorder = preferredMimeType
+          ? new MediaRecorder(stream, { mimeType: preferredMimeType })
+          : new MediaRecorder(stream);
+      } catch {
+        recorder = new MediaRecorder(stream);
+      }
+
+      const requestContentType = normaliseAudioContentType(recorder.mimeType || preferredMimeType || 'audio/webm');
       const chunks: Blob[] = [];
 
       recorder.ondataavailable = event => {
@@ -597,7 +603,7 @@ export default function JarvisPageClient() {
           return;
         }
 
-        const blob = new Blob(chunks, { type: mimeType });
+        const blob = new Blob(chunks, { type: requestContentType });
         if (!blob.size) {
           setVoiceCaption('I did not catch that — try again.');
           setCallStatus(callModeRef.current ? 'ready' : 'idle');
@@ -611,7 +617,7 @@ export default function JarvisPageClient() {
           const res = await fetch('/api/transcribe', {
             method: 'POST',
             headers: {
-              'Content-Type': mimeType,
+              'Content-Type': requestContentType,
               Authorization: `Bearer ${token}`,
             },
             body: blob,
@@ -645,8 +651,11 @@ export default function JarvisPageClient() {
           if (recorder.state !== 'inactive') recorder.stop();
         });
       }
-    } catch {
-      showToast('Could not start recording.');
+    } catch (error) {
+      const message = error instanceof Error && /pattern|mime|format/i.test(error.message)
+        ? 'Your browser audio format is not supported here yet — please try Chrome or Edge.'
+        : 'Could not start recording.';
+      showToast(message);
       setCallStatus(callModeRef.current ? 'ready' : 'idle');
     }
   }, [callStatus, cleanupSilenceDetection, ensureMicrophone, handsFreeMode, isLoading, isRecording, sendMessage, showToast, startSilenceDetection, token]);
@@ -1042,4 +1051,35 @@ function stripForSpeech(text: string): string {
     .replace(/[#>*_~-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function pickRecorderMimeType(): string | undefined {
+  if (typeof window === 'undefined' || typeof MediaRecorder === 'undefined') return undefined;
+
+  const candidates = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4;codecs=mp4a.40.2',
+    'audio/mp4',
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      if (MediaRecorder.isTypeSupported(candidate)) return candidate;
+    } catch {}
+  }
+
+  return undefined;
+}
+
+function normaliseAudioContentType(value: string): string {
+  const raw = String(value || '').toLowerCase().trim();
+  const base = raw.split(';')[0]?.trim() || '';
+
+  if (!base) return 'audio/webm';
+  if (base.includes('webm')) return 'audio/webm';
+  if (base.includes('mp4') || base.includes('m4a') || base.includes('aac')) return 'audio/mp4';
+  if (base.includes('mpeg') || base.includes('mp3')) return 'audio/mpeg';
+  if (base.includes('ogg') || base.includes('opus')) return 'audio/ogg';
+  return 'audio/webm';
 }
