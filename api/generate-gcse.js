@@ -1,5 +1,7 @@
 import { applyHeaders, isRateLimited, getIp } from './_lib.js';
 
+const CLAUDE_HAIKU_MODEL = 'claude-haiku-4-5-20251001';
+
 export default async function handler(req, res) {
   applyHeaders(res, 'POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -28,7 +30,7 @@ SOLUTION:
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: CLAUDE_HAIKU_MODEL,
         max_tokens: 1024,
         system,
         messages: [{ role: 'user', content: `Generate a ${tier} tier GCSE Maths question on ${topic} worth ${marks} marks.` }]
