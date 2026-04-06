@@ -55,8 +55,8 @@ const FORMULAS = [
 ] as const
 
 const GLOSSARY = [
-  { term: 'Stationary point', meaning: 'A point where the gradient is zero.', example: 'Find by solving f\'(x)=0.' },
-  { term: 'Concavity', meaning: 'Whether a graph bends upwards or downwards.', example: 'Check the sign of f\''\''(x).' },
+  { term: 'Stationary point', meaning: 'A point where the gradient is zero.', example: "Find by solving f'(x)=0." },
+  { term: 'Concavity', meaning: 'Whether a graph bends upwards or downwards.', example: "Check the sign of f''(x)." },
   { term: 'Independent events', meaning: 'One event does not change the probability of the other.', example: 'P(A ∩ B)=P(A)P(B).' },
   { term: 'Resultant force', meaning: 'The single force equivalent to all forces acting together.', example: 'Sum horizontal and vertical components.' },
 ]

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Clock3, FileCheck2, PlayCircle } from 'lucide-react'
+import { FileCheck2, PlayCircle } from 'lucide-react'
 import AuthPageShell from '@/components/AuthPageShell'
 
 interface SimQuestion {

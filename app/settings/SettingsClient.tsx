@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { User, Bell, Shield, Palette, CreditCard, Check, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'
@@ -327,12 +328,12 @@ export default function SettingsClient() {
             </SettingRow>
             {profile?.plan !== 'homeschool' && (
               <SettingRow label="">
-                <a
+                <Link
                   href="/pricing"
                   className="text-xs font-medium text-primary hover:underline"
                 >
                   Upgrade to Student →
-                </a>
+                </Link>
               </SettingRow>
             )}
           </SettingCard>

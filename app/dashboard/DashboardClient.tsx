@@ -11,7 +11,6 @@ import {
   ArrowRight,
   Flame,
   CalendarDays,
-  Users,
   FileText,
 } from 'lucide-react'
 import Link from 'next/link'
