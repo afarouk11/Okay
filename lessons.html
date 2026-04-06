@@ -3,7 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script>
+if (!window.location.search.includes('legacy=1')) {
+  window.location.replace('/lessons' + window.location.search + window.location.hash)
+}
+</script>
 <title>AI Lessons — Synaptiq</title>
+<meta name="description" content="Interactive A-Level Maths lessons with AI. Step-by-step worked examples, topic walkthroughs and exam-board aligned content.">
+<link rel="canonical" href="https://synaptiq.co.uk/lessons">
+<meta property="og:title" content="AI Lessons — Synaptiq">
+<meta property="og:description" content="Interactive A-Level Maths lessons. Step-by-step worked examples and exam-board aligned content.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://synaptiq.co.uk/lessons">
+<meta property="og:image" content="/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="/og-image.svg">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=Space+Mono&display=swap" rel="stylesheet">

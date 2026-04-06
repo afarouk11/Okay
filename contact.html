@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+if (!window.location.search.includes('legacy=1')) {
+  window.location.replace('/contact' + window.location.search + window.location.hash)
+}
+</script>
 <title>Contact & Support — Synaptiq</title>
 <meta name="description" content="Get in touch with the Synaptiq team. Support, school partnerships, and general enquiries for our A-Level Maths AI tutoring platform.">
 <meta name="robots" content="index, follow">
@@ -118,7 +123,7 @@
   </details>
   <details>
     <summary>What subjects does Synaptiq cover?</summary>
-    <p>We cover all major GCSE and A-Level subjects including Mathematics, English Literature, Physics, Chemistry, Biology, History, Geography, Computer Science, and Economics. More subjects are added regularly.</p>
+    <p>Synaptiq currently covers <strong>A-Level Mathematics</strong> (AQA, Edexcel, OCR &amp; WJEC). This includes Pure Maths (Years 1 &amp; 2), Statistics, and Mechanics. Support for additional subjects is planned — sign up to be notified when they launch.</p>
   </details>
   <details>
     <summary>Does the AI do my homework for me?</summary>

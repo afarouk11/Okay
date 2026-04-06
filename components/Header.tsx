@@ -18,7 +18,7 @@ export default function Header({ title, subtitle, userName = 'Student', action }
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="flex items-center justify-between px-8 py-5 border-b border-white/5"
       style={{
-        background: 'linear-gradient(180deg, rgba(18,24,33,0.9) 0%, rgba(11,15,20,0) 100%)',
+        background: 'linear-gradient(180deg, rgba(13,18,32,0.94) 0%, rgba(3,5,13,0) 100%)',
       }}
     >
       {/* Left: title */}
@@ -59,7 +59,7 @@ export default function Header({ title, subtitle, userName = 'Student', action }
         <motion.div
           whileHover={{ scale: 1.05 }}
           className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white cursor-pointer"
-          style={{ background: 'linear-gradient(135deg, #4F8CFF, #6C3EF4)' }}
+          style={{ background: 'linear-gradient(135deg, #D4A820, #00D4FF)' }}
           title={userName}
         >
           {userName.charAt(0).toUpperCase()}

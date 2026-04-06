@@ -4,17 +4,34 @@ import ChatWindow from '@/components/ChatWindow'
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar'
 import Link from 'next/link'
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+  process.env.VERCEL_URL ||
+  'https://synaptiqai.co.uk'
+
+const resolvedSiteUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`
+
 export const metadata: Metadata = {
+  metadataBase: new URL(resolvedSiteUrl),
   title: {
-    default: 'Jarvis — AI Learning Platform',
-    template: '%s | Jarvis',
+    default: 'Synaptiq — AI Learning Platform',
+    template: '%s | Synaptiq',
   },
-  description: 'Your personal AI tutor. Jarvis teaches step-by-step, adapts to your level, and guides you to mastery.',
-  keywords: ['AI tutor', 'learning platform', 'A-Level Maths', 'personalised learning'],
+  description: 'Your personal AI tutor. Synaptiq teaches step-by-step, adapts to your level, and guides you to mastery in A-Level Maths.',
+  keywords: ['AI tutor', 'A-Level Maths', 'AQA', 'Edexcel', 'OCR', 'WJEC', 'personalised learning'],
   openGraph: {
-    title: 'Jarvis — AI Learning Platform',
-    description: 'Your personal AI tutor. Premium, intelligent, fast.',
+    title: 'Synaptiq — AI Learning Platform',
+    description: 'Your personal AI tutor. Premium, intelligent, personalised.',
     type: 'website',
+    url: 'https://synaptiq.co.uk',
+    images: [{ url: '/og-image.svg', width: 1200, height: 630, alt: 'Synaptiq — AI Learning Platform' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Synaptiq — AI Learning Platform',
+    description: 'Your personal AI tutor for A-Level Maths.',
+    images: ['/og-image.svg'],
   },
 }
 
@@ -49,10 +66,10 @@ function SiteFooter() {
   return (
     <footer
       className="border-t py-5"
-      style={{ borderColor: 'rgba(255,255,255,0.05)', background: 'rgba(11,15,20,0.6)' }}
+      style={{ borderColor: 'rgba(0,212,255,0.12)', background: 'rgba(3,5,13,0.72)', backdropFilter: 'blur(12px)' }}
     >
       <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-3">
-        <span className="text-xs" style={{ color: '#6B7394' }}>© {new Date().getFullYear()} Synaptiq Ltd</span>
+        <span className="text-xs" style={{ color: '#5A7499' }}>© {new Date().getFullYear()} Synaptiq Ltd</span>
         <nav className="flex flex-wrap gap-4">
           {[
             { href: '/privacy',  label: 'Privacy'  },
@@ -64,7 +81,7 @@ function SiteFooter() {
               key={href}
               href={href}
               className="text-xs transition-colors hover:text-white"
-              style={{ color: '#6B7394' }}
+              style={{ color: '#5A7499' }}
             >
               {label}
             </Link>

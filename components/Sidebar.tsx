@@ -9,13 +9,20 @@ import {
   CalendarDays,
   BookOpen,
   HelpCircle,
+  FileText,
+  StickyNote,
+  Sparkles,
   Settings,
   Zap,
   LogOut,
-  StickyNote,
-  GraduationCap,
-  Calculator,
+  Layers3,
   Brain,
+  Sigma,
+  LibraryBig,
+  FileCheck2,
+  Clock3,
+  Network,
+  HeartPulse,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/lib/useAuth'
@@ -23,12 +30,22 @@ import { createBrowserClient } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/chat',      label: 'Chat',      icon: MessageSquare   },
-  { href: '/plan',      label: 'Daily Plan', icon: CalendarDays   },
-  { href: '/lessons',   label: 'Lessons',   icon: BookOpen        },
-  { href: '/questions', label: 'Questions', icon: HelpCircle      },
-  { href: '/notes',     label: 'Notes',     icon: StickyNote      },
+  { href: '/dashboard',    label: 'Dashboard',      icon: LayoutDashboard },
+  { href: '/jarvis',       label: 'J.A.R.V.I.S.',   icon: Sparkles        },
+  { href: '/chat',         label: 'Chat',           icon: MessageSquare   },
+  { href: '/study',        label: 'Study Hub',      icon: Layers3         },
+  { href: '/predict',      label: 'Exam Insights',  icon: Brain           },
+  { href: '/formulas',     label: 'Reference',      icon: Sigma           },
+  { href: '/resources',    label: 'Resources',      icon: LibraryBig      },
+  { href: '/work-checker', label: 'Work Checker',   icon: FileCheck2      },
+  { href: '/exam-sim',     label: 'Exam Sim',       icon: Clock3          },
+  { href: '/mindmap',      label: 'Mind Map',       icon: Network         },
+  { href: '/wellbeing',    label: 'Wellbeing',      icon: HeartPulse      },
+  { href: '/plan',         label: 'Daily Plan',     icon: CalendarDays    },
+  { href: '/lessons',      label: 'Lessons',        icon: BookOpen        },
+  { href: '/questions',    label: 'Questions',      icon: HelpCircle      },
+  { href: '/papers',       label: 'Past Papers',    icon: FileText        },
+  { href: '/notes',        label: 'Notes',          icon: StickyNote      },
 ]
 
 const kidsItems = [
@@ -78,22 +95,22 @@ export default function Sidebar() {
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="fixed left-0 top-0 h-full w-60 flex flex-col z-30"
       style={{
-        background: 'rgba(18,24,33,0.92)',
+        background: 'rgba(8,12,24,0.92)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
+        borderRight: '1px solid rgba(0,212,255,0.12)',
       }}
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-6 border-b border-white/5">
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-          style={{ background: 'linear-gradient(135deg, #4F8CFF, #22C55E)' }}
+          style={{ background: 'linear-gradient(135deg, #00D4FF, #00FF9D)' }}
         >
-          J
+          S
         </div>
         <div>
-          <span className="font-semibold text-[15px] text-foreground tracking-tight">Jarvis</span>
+          <span className="font-semibold text-[15px] text-foreground tracking-tight">Synaptiq</span>
           <div className="flex items-center gap-1 mt-0.5">
             <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse-slow" />
             <span className="text-[10px] text-muted uppercase tracking-widest">Online</span>
@@ -191,7 +208,7 @@ export default function Sidebar() {
         <div className="mt-3 px-3 py-2.5 rounded-[10px] bg-white/[0.03] border border-white/5 flex items-center gap-2.5">
           <div
             className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #4F8CFF, #6C3EF4)' }}
+            style={{ background: 'linear-gradient(135deg, #D4A820, #00D4FF)' }}
           >
             <Zap className="w-3.5 h-3.5" />
           </div>

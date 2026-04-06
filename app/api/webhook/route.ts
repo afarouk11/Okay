@@ -7,9 +7,13 @@ const siteUrl = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq
 async function sendEmail(to: string, type: string, params: { name?: string; stats?: Record<string, unknown> } = {}) {
   if (!process.env.RESEND_API_KEY) return
   const payload = { type, email: to, name: params.name || '', stats: params.stats || {} }
+  const headers: HeadersInit = { 'Content-Type': 'application/json' }
+  if (process.env.INTERNAL_API_KEY) {
+    headers['x-internal-key'] = process.env.INTERNAL_API_KEY
+  }
   await fetch(`${siteUrl}/api/resend`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(payload),
   }).catch(() => {})
 }

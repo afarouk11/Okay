@@ -11,6 +11,7 @@ import {
   ArrowRight,
   Flame,
   CalendarDays,
+  FileText,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -25,6 +26,7 @@ type ProgressData = {
     xp: number
     level: number
     plan: string
+    exam_date?: string | null
   } | null
   progress: Array<{ topic: string }> | null
   mistakes: Array<{ topic: string }> | null
@@ -43,9 +45,10 @@ function safeFormatDate(dateStr: string | null | undefined, opts: Intl.DateTimeF
 }
 
 const quickActions = [
-  { href: '/chat',    icon: MessageSquare, label: 'Ask Jarvis',     sub: 'Start a tutoring session', color: '#4F8CFF' },
-  { href: '/plan',    icon: CalendarDays,  label: "Today's Plan",   sub: 'See your daily tasks',     color: '#22C55E' },
-  { href: '/lessons', icon: BookOpen,      label: 'Browse Lessons', sub: 'Explore topics',           color: '#8B5CF6' },
+  { href: '/chat',      icon: MessageSquare, label: 'Ask Jarvis',        sub: 'Start a tutoring session', color: '#00D4FF' },
+  { href: '/plan',      icon: CalendarDays,  label: "Today's Plan",      sub: 'See your daily tasks',     color: '#00FF9D' },
+  { href: '/lessons',   icon: BookOpen,      label: 'Browse Lessons',    sub: 'Explore topics',           color: '#B060FF' },
+  { href: '/papers',    icon: FileText,      label: 'Past Paper Qs',     sub: 'AI exam-board questions',  color: '#FF8C00' },
 ]
 
 function calcStreak(activity: Array<{ date: string; questions_done: number; xp_earned: number }>): number {
@@ -102,7 +105,7 @@ export default function DashboardClient() {
 
   if (authLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center" style={{ background: '#0B0F14' }}>
+      <div className="flex min-h-screen items-center justify-center" style={{ background: '#03050D' }}>
         <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       </div>
     )
@@ -129,7 +132,7 @@ export default function DashboardClient() {
   const firstName = profile?.name?.split(' ')[0] ?? 'there'
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#0B0F14' }}>
+    <div className="flex min-h-screen" style={{ background: '#03050D' }}>
       <Sidebar />
 
       {/* Main */}
@@ -147,8 +150,8 @@ export default function DashboardClient() {
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="rounded-card p-6"
             style={{
-              background: 'linear-gradient(135deg, rgba(79,140,255,0.08) 0%, rgba(34,197,94,0.05) 100%)',
-              border: '1px solid rgba(79,140,255,0.15)',
+              background: 'linear-gradient(135deg, rgba(201,168,76,0.12) 0%, rgba(0,212,255,0.08) 100%)',
+              border: '1px solid rgba(201,168,76,0.22)',
             }}
           >
             <div className="flex items-start justify-between gap-4">
@@ -166,7 +169,7 @@ export default function DashboardClient() {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-[10px] text-sm font-medium text-white transition-all"
-                  style={{ background: '#4F8CFF' }}
+                  style={{ background: 'linear-gradient(135deg, #D4A820, #C9A84C)', color: '#03050D' }}
                 >
                   Talk to Jarvis
                   <ArrowRight className="w-4 h-4" />
@@ -200,8 +203,8 @@ export default function DashboardClient() {
                       whileHover={{ y: -2, transition: { duration: 0.2 } }}
                       className="rounded-card p-5 flex items-center gap-4 cursor-pointer group"
                       style={{
-                        background: 'rgba(18,24,33,0.8)',
-                        border: '1px solid rgba(255,255,255,0.06)',
+                        background: 'rgba(13,18,32,0.82)',
+                        border: '1px solid rgba(0,212,255,0.12)',
                       }}
                     >
                       <div
@@ -233,8 +236,8 @@ export default function DashboardClient() {
               transition={{ duration: 0.5, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
               className="rounded-card p-8 flex flex-col items-center justify-center text-center"
               style={{
-                background: 'rgba(18,24,33,0.5)',
-                border: '1px solid rgba(255,255,255,0.05)',
+                background: 'rgba(13,18,32,0.62)',
+                border: '1px solid rgba(0,212,255,0.10)',
                 minHeight: '140px',
               }}
             >

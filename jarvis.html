@@ -3,8 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script>
+if (!window.location.search.includes('legacy=1')) {
+  window.location.replace('/jarvis' + window.location.search + window.location.hash)
+}
+</script>
 <title>J.A.R.V.I.S. — AI Maths Assistant | Synaptiq</title>
 <meta name="description" content="Talk or type with J.A.R.V.I.S., your A-Level Maths AI assistant. Voice and text chat powered by ElevenLabs and Claude.">
+<link rel="canonical" href="https://synaptiq.co.uk/jarvis">
+<meta property="og:title" content="J.A.R.V.I.S. — AI Maths Assistant | Synaptiq">
+<meta property="og:description" content="Talk or type with your personal A-Level Maths AI tutor. Voice and text chat powered by Claude AI.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://synaptiq.co.uk/jarvis">
+<meta property="og:image" content="/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="/og-image.svg">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&family=Space+Mono&display=swap" rel="stylesheet">
@@ -394,6 +407,37 @@ body::before{content:'';position:fixed;inset:0;background:
   max-width:380px;text-align:center;z-index:500}
 .toast.visible{opacity:1}
 
+/* ── SESSION TIMER ─── */
+.session-timer{font-family:var(--font-mono);font-size:.72rem;color:var(--muted);
+  letter-spacing:.08em;opacity:.75;margin-top:.1rem}
+
+/* ── HANDS-FREE BUTTON ─── */
+.hands-free-btn{display:inline-flex;align-items:center;gap:.4rem;
+  padding:.45rem 1.1rem;background:transparent;
+  border:1px solid rgba(255,255,255,0.12);border-radius:999px;
+  color:var(--muted);font-family:var(--font-mono);font-size:.68rem;
+  letter-spacing:.07em;cursor:pointer;transition:all .22s;width:100%;
+  justify-content:center;margin-top:.5rem}
+.hands-free-btn:hover{border-color:rgba(201,168,76,0.4);color:var(--gold2)}
+.hands-free-btn.active{background:rgba(201,168,76,0.10);
+  border-color:rgba(201,168,76,0.55);color:var(--gold);
+  box-shadow:0 0 12px rgba(201,168,76,0.15)}
+.hands-free-btn.active .hf-dot{background:var(--gold);
+  box-shadow:0 0 6px rgba(201,168,76,.8);animation:dot-pulse .8s ease-in-out infinite alternate}
+.hf-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);
+  flex-shrink:0;transition:background .3s}
+
+/* ── TOPIC STARTERS (text chat) ─── */
+.topic-starters{display:flex;flex-wrap:wrap;gap:.4rem;padding:.55rem 1.4rem;
+  border-top:1px solid rgba(255,255,255,0.05)}
+.topic-starters-label{width:100%;font-size:.69rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--muted);margin-bottom:.1rem}
+.topic-starter-btn{background:rgba(201,168,76,0.04);border:1px solid rgba(201,168,76,0.14);
+  border-radius:20px;padding:.28rem .8rem;font-size:.77rem;cursor:pointer;
+  color:var(--muted);transition:all .18s;font-family:var(--font);white-space:nowrap}
+.topic-starter-btn:hover{background:rgba(201,168,76,0.10);
+  border-color:rgba(201,168,76,0.35);color:var(--gold)}
+
 /* ── REDUCED MOTION ─── */
 @media(prefers-reduced-motion:reduce){
   .ring,.core-orb,.scan-line,.typing-dot{animation:none!important}
@@ -458,6 +502,8 @@ body::before{content:'';position:fixed;inset:0;background:
         </div>
         <p id="status-title" class="status-title">J.A.R.V.I.S.</p>
         <p class="status-sub">A-Level Mathematics Assistant</p>
+        <p id="session-timer" class="session-timer" aria-live="off">00:00</p>
+        <p id="status-hint" class="status-hint">Click to begin voice session</p>
         <p id="status-hint" class="status-hint">Ready to answer your questions</p>
       </div>
 
@@ -467,6 +513,10 @@ body::before{content:'';position:fixed;inset:0;background:
         <button id="mic-btn" class="mic-btn hidden"></button>
         <button id="end-btn" class="end-btn hidden"></button>
       </div>
+      <button id="hands-free-btn" class="hands-free-btn" aria-pressed="false" title="Automatically re-listens after each session">
+        <span class="hf-dot" aria-hidden="true"></span>
+        🎙️ Hands-Free Mode
+      </button>
     </div>
 
     <!-- Chat info -->
@@ -526,6 +576,17 @@ body::before{content:'';position:fixed;inset:0;background:
           <button class="prompt-btn">Explain normal distribution and z-scores</button>
         </div>
 
+        <!-- Topic starters — always-visible shortcuts that populate the input -->
+        <div class="topic-starters" id="topic-starters">
+          <div class="topic-starters-label">Quick topics</div>
+          <button class="topic-starter-btn" data-prompt="Explain integration by parts">Explain integration by parts</button>
+          <button class="topic-starter-btn" data-prompt="Help me with vectors">Help me with vectors</button>
+          <button class="topic-starter-btn" data-prompt="Differentiation practice">Differentiation practice</button>
+          <button class="topic-starter-btn" data-prompt="Statistics question">Statistics question</button>
+          <button class="topic-starter-btn" data-prompt="Mechanics problem">Mechanics problem</button>
+          <button class="topic-starter-btn" data-prompt="Exam technique tips">Exam technique tips</button>
+        </div>
+
         <!-- Input area -->
         <div class="chat-input-area">
           <div class="chat-input-wrap">
@@ -561,6 +622,39 @@ body::before{content:'';position:fixed;inset:0;background:
 <!-- Text chat -->
 <script type="module">
 import { initAuth, callClaude, getReply } from '/src/tutor-common.js';
+
+/* ── Session timer ───────────────────────────────────────────── */
+const sessionTimerEl = document.getElementById('session-timer');
+const _pageStartMs   = Date.now();
+
+setInterval(() => {
+  const elapsed = Math.floor((Date.now() - _pageStartMs) / 1000);
+  const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+  const ss = String(elapsed % 60).padStart(2, '0');
+  sessionTimerEl.textContent = `${mm}:${ss}`;
+}, 1000);
+
+/* ── Hands-free mode toggle ──────────────────────────────────── */
+window.jarvisHandsFreeMode = false;
+const handsFreeBtn = document.getElementById('hands-free-btn');
+
+handsFreeBtn.addEventListener('click', () => {
+  window.jarvisHandsFreeMode = !window.jarvisHandsFreeMode;
+  handsFreeBtn.classList.toggle('active', window.jarvisHandsFreeMode);
+  handsFreeBtn.setAttribute('aria-pressed', String(window.jarvisHandsFreeMode));
+});
+
+/* ── Topic starter buttons → populate input field ───────────── */
+document.getElementById('topic-starters').addEventListener('click', e => {
+  const btn = e.target.closest('.topic-starter-btn');
+  if (!btn) return;
+  // Switch to text mode if not already
+  const textTab = document.querySelector('[data-mode="text"]');
+  if (textTab && !textTab.classList.contains('active')) textTab.click();
+  chatInput.value = btn.dataset.prompt;
+  autoResize(chatInput);
+  chatInput.focus();
+});
 
 /* ── Auth ─────────────────────────────────────────────────────── */
 const currentUser = await initAuth();

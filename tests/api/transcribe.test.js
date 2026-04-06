@@ -167,6 +167,16 @@ describe('successful transcription', () => {
     expect(capturedHeaders['Content-Type']).toBe('audio/mp4');
   });
 
+  it('normalises codec-based content types before calling Deepgram', async () => {
+    let capturedHeaders;
+    global.fetch = vi.fn().mockImplementationOnce((_url, opts) => {
+      capturedHeaders = opts.headers;
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(deepgramResponse('hi')) });
+    });
+    await handler(makeReq(Buffer.from([1, 2, 3]), 'POST', 'audio/webm;codecs=opus'), res());
+    expect(capturedHeaders['Content-Type']).toBe('audio/webm');
+  });
+
   it('calls the nova-2 model endpoint', async () => {
     let capturedUrl;
     global.fetch = vi.fn().mockImplementationOnce((url) => {
@@ -221,6 +231,18 @@ describe('Deepgram API error', () => {
     const r = res();
     await handler(makeReq(), r);
     expect(r.statusCode).toBe(400);
+  });
+
+  it('returns a friendly message for the Deepgram pattern error', async () => {
+    global.fetch = vi.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      text: () => Promise.resolve('The string did not match the expected pattern.'),
+    });
+    const r = res();
+    await handler(makeReq(), r);
+    expect(r.statusCode).toBe(400);
+    expect(r.body.error).toMatch(/audio format|browser/i);
   });
 
   it('returns 503 on network error', async () => {

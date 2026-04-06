@@ -3,10 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+if (!window.location.search.includes('legacy=1')) {
+  window.location.replace('/terms' + window.location.search + window.location.hash)
+}
+</script>
 <title>Terms &amp; Conditions — Synaptiq</title>
 <meta name="description" content="Read Synaptiq's Terms &amp; Conditions. The terms governing use of our A-Level Maths AI tutoring platform for students and schools.">
 <meta name="robots" content="index, follow">
-<link rel="canonical" href="https://synaptiqai.co.uk/terms">
+<link rel="canonical" href="https://synaptiq.co.uk/terms">
+<meta property="og:title" content="Terms &amp; Conditions — Synaptiq">
+<meta property="og:description" content="The terms governing use of Synaptiq's A-Level Maths AI tutoring platform.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://synaptiq.co.uk/terms">
+<meta property="og:image" content="/og-image.svg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="/og-image.svg">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/src/styles/legal.css">
 </head>

@@ -36,10 +36,14 @@ export async function POST(request: NextRequest) {
 
   // ── Customer Portal ───────────────────────────────────────────────────────
   if (action === 'portal') {
-    if (!email) return NextResponse.json({ error: 'email is required' }, { status: 400 })
+    const portalEmail = user.email?.toLowerCase().trim()
+    if (!portalEmail) {
+      return NextResponse.json({ error: 'No email found for the authenticated user' }, { status: 400 })
+    }
+
     try {
       const searchRes = await fetch(
-        `https://api.stripe.com/v1/customers?email=${encodeURIComponent(email)}&limit=1`,
+        `https://api.stripe.com/v1/customers?email=${encodeURIComponent(portalEmail)}&limit=1`,
         { headers: { Authorization: `Bearer ${stripeKey}` } },
       )
       const searchData = await searchRes.json() as { data?: { id: string }[] }

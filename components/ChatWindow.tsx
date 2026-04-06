@@ -152,10 +152,10 @@ export default function ChatWindow() {
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
         style={{
           background: open
-            ? 'rgba(79,140,255,0.2)'
-            : 'linear-gradient(135deg, #4F8CFF, #22C55E)',
-          border: open ? '1px solid rgba(79,140,255,0.4)' : 'none',
-          boxShadow: '0 8px 32px rgba(79,140,255,0.35)',
+            ? 'rgba(0,212,255,0.14)'
+            : 'linear-gradient(135deg, #00D4FF, #00FF9D)',
+          border: open ? '1px solid rgba(0,212,255,0.28)' : 'none',
+          boxShadow: '0 8px 32px rgba(0,212,255,0.28)',
         }}
         aria-label={open ? 'Close Jarvis' : 'Open Jarvis'}
         aria-expanded={open}
@@ -197,11 +197,11 @@ export default function ChatWindow() {
             className="fixed bottom-24 right-6 z-50 w-[380px] flex flex-col rounded-2xl overflow-hidden"
             style={{
               height: '520px',
-              background: 'rgba(13,17,26,0.96)',
+              background: 'rgba(8,12,24,0.96)',
               backdropFilter: 'blur(24px)',
               WebkitBackdropFilter: 'blur(24px)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(79,140,255,0.08)',
+              border: '1px solid rgba(0,212,255,0.12)',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,212,255,0.08)',
             }}
             role="dialog"
             aria-label="Jarvis AI assistant"
@@ -209,11 +209,11 @@ export default function ChatWindow() {
             {/* Header */}
             <div
               className="flex items-center gap-3 px-4 py-3.5 border-b border-white/6 flex-shrink-0"
-              style={{ background: 'rgba(18,24,33,0.6)' }}
+              style={{ background: 'rgba(13,18,32,0.68)' }}
             >
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                style={{ background: 'linear-gradient(135deg, #4F8CFF, #22C55E)' }}
+                style={{ background: 'linear-gradient(135deg, #00D4FF, #00FF9D)' }}
               >
                 J
               </div>

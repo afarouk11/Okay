@@ -58,9 +58,10 @@ function res() {
 const VALID_MESSAGES = [{ role: 'user', content: 'Explain differentiation.' }];
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   process.env.ANTHROPIC_API_KEY = 'sk-ant-test';
-  mocks.supabase.auth.getUser.mockResolvedValue({ data: { user: null }, error: { message: 'No user' } });
+  // Default: auth passes as a valid user so tests that don't care about auth work unchanged
+  mocks.supabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'user-default' } }, error: null });
   mocks.supabase.from.mockReturnValue(makeBuilder());
 });
 
@@ -95,7 +96,7 @@ describe('missing ANTHROPIC_API_KEY', () => {
   it('returns 500 when the env var is absent', async () => {
     delete process.env.ANTHROPIC_API_KEY;
     const r = res();
-    await handler(req({ messages: VALID_MESSAGES }), r);
+    await handler(req({ messages: VALID_MESSAGES }, 'POST', { authorization: 'Bearer valid-token' }), r);
     expect(r.statusCode).toBe(500);
     expect(r.body.error).toMatch(/ANTHROPIC_API_KEY/i);
   });
@@ -106,14 +107,14 @@ describe('missing ANTHROPIC_API_KEY', () => {
 describe('request body validation', () => {
   it('returns 400 when messages is absent', async () => {
     const r = res();
-    await handler(req({}), r);
+    await handler(req({}, 'POST', { authorization: 'Bearer valid-token' }), r);
     expect(r.statusCode).toBe(400);
     expect(r.body.error).toMatch(/messages/i);
   });
 
   it('returns 400 when messages is not an array', async () => {
     const r = res();
-    await handler(req({ messages: 'not-an-array' }), r);
+    await handler(req({ messages: 'not-an-array' }, 'POST', { authorization: 'Bearer valid-token' }), r);
     expect(r.statusCode).toBe(400);
     expect(r.body.error).toMatch(/messages/i);
   });
@@ -121,7 +122,7 @@ describe('request body validation', () => {
   it('returns 400 when messages has more than 50 items', async () => {
     const messages = Array.from({ length: 51 }, (_, i) => ({ role: 'user', content: `msg ${i}` }));
     const r = res();
-    await handler(req({ messages }), r);
+    await handler(req({ messages }, 'POST', { authorization: 'Bearer valid-token' }), r);
     expect(r.statusCode).toBe(400);
     expect(r.body.error).toMatch(/too many messages/i);
   });
@@ -129,9 +130,16 @@ describe('request body validation', () => {
   it('returns 400 when the serialised payload exceeds 100 KB', async () => {
     const messages = [{ role: 'user', content: 'x'.repeat(101_000) }];
     const r = res();
-    await handler(req({ messages }), r);
+    await handler(req({ messages }, 'POST', { authorization: 'Bearer valid-token' }), r);
     expect(r.statusCode).toBe(400);
     expect(r.body.error).toMatch(/too long/i);
+  });
+
+  it('returns 400 when an unsupported model is requested', async () => {
+    const r = res();
+    await handler(req({ messages: VALID_MESSAGES, model: 'gpt-4' }, 'POST', { authorization: 'Bearer valid-token' }), r);
+    expect(r.statusCode).toBe(400);
+    expect(r.body.error).toMatch(/unsupported model/i);
   });
 });
 
@@ -150,7 +158,7 @@ describe('successful Anthropic call', () => {
     });
 
     const r = res();
-    await handler(req({ messages: VALID_MESSAGES }), r);
+    await handler(req({ messages: VALID_MESSAGES }, 'POST', { authorization: 'Bearer valid-token' }), r);
     expect(r.statusCode).toBe(200);
     expect(r.body).toEqual(anthropicReply);
   });
@@ -162,8 +170,8 @@ describe('successful Anthropic call', () => {
       return Promise.resolve({ status: 200, json: () => Promise.resolve({}) });
     });
 
-    await handler(req({ messages: VALID_MESSAGES, model: 'claude-3-haiku-20240307' }), res());
-    expect(capturedBody.model).toBe('claude-3-haiku-20240307');
+    await handler(req({ messages: VALID_MESSAGES, model: 'claude-sonnet-4-6' }, 'POST', { authorization: 'Bearer valid-token' }), res());
+    expect(capturedBody.model).toBe('claude-sonnet-4-6');
   });
 
   it('defaults to claude-sonnet-4-6 when no model is specified', async () => {
@@ -173,7 +181,7 @@ describe('successful Anthropic call', () => {
       return Promise.resolve({ status: 200, json: () => Promise.resolve({}) });
     });
 
-    await handler(req({ messages: VALID_MESSAGES }), res());
+    await handler(req({ messages: VALID_MESSAGES }, 'POST', { authorization: 'Bearer valid-token' }), res());
     expect(capturedBody.model).toBe('claude-sonnet-4-6');
   });
 
@@ -184,8 +192,8 @@ describe('successful Anthropic call', () => {
       return Promise.resolve({ status: 200, json: () => Promise.resolve({}) });
     });
 
-    await handler(req({ messages: VALID_MESSAGES, system: 'You are a maths tutor.' }), res());
-    expect(capturedBody.system).toBe('You are a maths tutor.');
+    await handler(req({ messages: VALID_MESSAGES, system: 'You are a maths tutor.' }, 'POST', { authorization: 'Bearer valid-token' }), res());
+    expect(capturedBody.system).toMatch(/You are a maths tutor/);
   });
 
   it('omits system from the request when not provided', async () => {
@@ -195,7 +203,7 @@ describe('successful Anthropic call', () => {
       return Promise.resolve({ status: 200, json: () => Promise.resolve({}) });
     });
 
-    await handler(req({ messages: VALID_MESSAGES }), res());
+    await handler(req({ messages: VALID_MESSAGES }, 'POST', { authorization: 'Bearer valid-token' }), res());
     expect(capturedBody).not.toHaveProperty('system');
   });
 });
@@ -210,7 +218,7 @@ describe('Anthropic API error responses', () => {
     });
 
     const r = res();
-    await handler(req({ messages: VALID_MESSAGES }), r);
+    await handler(req({ messages: VALID_MESSAGES }, 'POST', { authorization: 'Bearer valid-token' }), r);
     expect(r.statusCode).toBe(529);
   });
 });
@@ -221,7 +229,7 @@ describe('network error', () => {
   it('returns 500 when fetch throws', async () => {
     global.fetch = vi.fn().mockRejectedValueOnce(new Error('ECONNREFUSED'));
     const r = res();
-    await handler(req({ messages: VALID_MESSAGES }), r);
+    await handler(req({ messages: VALID_MESSAGES }, 'POST', { authorization: 'Bearer valid-token' }), r);
     expect(r.statusCode).toBe(500);
     expect(r.body.error).toMatch(/failed to connect/i);
   });
@@ -252,22 +260,17 @@ describe('authenticated free user', () => {
   });
 });
 
-// ─── Demo token — skips Supabase user lookup ─────────────────────────────────
+// ─── Demo token — rejected in production ─────────────────────────────────────
 
 describe('demo token', () => {
-  it('skips user lookup for demo tokens and still calls Anthropic', async () => {
-    global.fetch = vi.fn().mockResolvedValueOnce({
-      status: 200,
-      json: () => Promise.resolve({ content: [{ text: 'Demo response' }] }),
-    });
-
+  it('returns 401 for demo_token_ when Supabase is configured', async () => {
     const r = res();
     await handler(
       req({ messages: VALID_MESSAGES }, 'POST', { authorization: 'Bearer demo_token_abc123' }),
       r
     );
-    expect(r.statusCode).toBe(200);
-    // Supabase auth should NOT have been called for demo tokens
+    expect(r.statusCode).toBe(401);
+    // Supabase auth should NOT have been called (rejected before that)
     expect(mocks.supabase.auth.getUser).not.toHaveBeenCalled();
   });
 });

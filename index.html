@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+if (window.location.pathname.endsWith('/index.html') && !window.location.search.includes('legacy=1')) {
+  window.location.replace('/' + window.location.search + window.location.hash);
+}
+</script>
 <!-- Set GA4_MEASUREMENT_ID env var in Vercel; build pipeline replaces the content value below -->
 <meta name="ga4-id" content="G-XXXXXXXX">
 <title>Synaptiq — UK A-Level Maths AI Tutor | AQA, Edexcel, OCR &amp; WJEC</title>
@@ -1774,12 +1779,6 @@ body {
   background: rgba(0,212,255,0.06);
   border-color: rgba(0,212,255,0.3);
   color: #00D4FF;
-}
-
-  /* (old tutor-starter-chip rules removed — replaced above) */
-  font-family: var(--font-body); font-size: .925rem;
-  resize: none; min-height: 52px; max-height: 150px;
-  transition: border .2s; line-height: 1.5;
 }
 
 .tts-btn:hover { border-color: var(--gold); color: var(--gold); }
@@ -4343,8 +4342,8 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
           <h4 style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:1.25rem">Company</h4>
           <div style="display:flex;flex-direction:column;gap:.75rem">
             <a onclick="nav('privacy')" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Privacy Policy</a>
-            <a href="/terms.html" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Terms of Service</a>
-            <a href="/cookies.html" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Cookie Policy</a>
+            <a href="/terms" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Terms of Service</a>
+            <a href="/cookies" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Cookie Policy</a>
             <a href="mailto:hello@synaptiqai.co.uk" style="color:var(--muted);font-size:.875rem;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Contact Us</a>
           </div>
         </div>
@@ -4830,24 +4829,27 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
         </div>
       </div>
       <!-- Exam Countdown -->
-      <div id="exam-countdown-card" style="background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.03));border:1px solid rgba(201,168,76,0.28);border-radius:16px;padding:1.35rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 32px rgba(0,0,0,0.25),0 0 0 1px rgba(201,168,76,0.05)">
-        <div style="display:flex;align-items:center;gap:1rem">
-          <div style="font-size:2rem">🎯</div>
-          <div>
-            <div style="font-weight:700;font-size:1rem;color:var(--white)" id="countdown-title">A-Level Maths Exam Countdown</div>
-            <div style="font-size:.85rem;color:var(--muted)" id="countdown-subtitle">Set your exam date to track your preparation</div>
+      <div id="exam-countdown-card" style="background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.03));border:1px solid rgba(201,168,76,0.28);border-radius:16px;padding:1.35rem 1.5rem;margin-bottom:1.5rem;display:flex;flex-direction:column;gap:.75rem;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 4px 32px rgba(0,0,0,0.25),0 0 0 1px rgba(201,168,76,0.05)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+          <div style="display:flex;align-items:center;gap:1rem">
+            <div style="font-size:2rem">🎯</div>
+            <div>
+              <div style="font-weight:700;font-size:1rem;color:var(--white)" id="countdown-title">A-Level Maths Exam Countdown</div>
+              <div style="font-size:.85rem;color:var(--muted)" id="countdown-subtitle">Set your exam date to track your preparation</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+            <div id="countdown-display" style="display:none;text-align:center">
+              <div style="font-size:2.5rem;font-weight:900;color:var(--gold);line-height:1" id="countdown-days">—</div>
+              <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">days to go</div>
+            </div>
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <input type="date" id="exam-date-input" style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(201,168,76,0.25);border-radius:10px;padding:.5rem .75rem;color:var(--white);font-size:.85rem;transition:border .2s;outline:none" onchange="saveExamDate(this.value)" onfocus="this.style.borderColor='rgba(201,168,76,0.5)'" onblur="this.style.borderColor='rgba(201,168,76,0.25)'"  >
+              <button class="btn btn-outline" style="font-size:.8rem;padding:.5rem .9rem;white-space:nowrap" onclick="showDash('questions')">Practice Now →</button>
+            </div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-          <div id="countdown-display" style="display:none;text-align:center">
-            <div style="font-size:2.5rem;font-weight:900;color:var(--gold);line-height:1" id="countdown-days">—</div>
-            <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">days to go</div>
-          </div>
-          <div style="display:flex;gap:.5rem;align-items:center">
-            <input type="date" id="exam-date-input" style="background:rgba(255,255,255,0.05);border:1.5px solid rgba(201,168,76,0.25);border-radius:10px;padding:.5rem .75rem;color:var(--white);font-size:.85rem;transition:border .2s;outline:none" onchange="saveExamDate(this.value)" onfocus="this.style.borderColor='rgba(201,168,76,0.5)'" onblur="this.style.borderColor='rgba(201,168,76,0.25)'"  >
-            <button class="btn btn-outline" style="font-size:.8rem;padding:.5rem .9rem;white-space:nowrap" onclick="showDash('questions')">Practice Now →</button>
-          </div>
-        </div>
+        <div id="study-plan-output"></div>
       </div>
       <div class="dash-grid">
         <div>
@@ -8063,6 +8065,10 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch(e) {}
   buildNumberLine(0);
   initExitIntent();
+  // Sync exam date from profile to local state if available
+  if (state.user?.exam_date) {
+    localStorage.setItem('synaptiq_exam_date', state.user.exam_date);
+  }
   updateExamCountdown();
   // Handle browser back/forward
   window.addEventListener('popstate', (e) => {
@@ -9992,9 +9998,77 @@ function renderFeedback(text) {
     .replace(/\*(.*?)\*/g,'<em>$1</em>');
 }
 
+const LEGACY_DASH_REDIRECTS = {
+  home: '/dashboard',
+  dashboard: '/dashboard',
+  tutor: '/chat',
+  chat: '/chat',
+  jarvis: '/jarvis',
+  content: '/lessons',
+  lessons: '/lessons',
+  video: '/lessons',
+  examples: '/lessons',
+  questions: '/questions',
+  papers: '/papers',
+  progress: '/dashboard',
+  photo: '/chat',
+  flashcards: '/study?tab=flashcards',
+  blitz: '/study?tab=blitz',
+  checklist: '/study?tab=checklist',
+  goals: '/plan',
+  plan: '/plan',
+  timetable: '/plan',
+  strengths: '/predict',
+  exams: '/predict',
+  predict: '/predict',
+  grade: '/predict',
+  diagnostic: '/predict',
+  notes: '/notes',
+  bookmarks: '/notes',
+  mistakes: '/notes',
+  mood: '/wellbeing',
+  wellbeing: '/wellbeing',
+  pomodoro: '/wellbeing?tab=pomodoro',
+  assignments: '/plan',
+  leaderboard: '/dashboard',
+  achievements: '/dashboard',
+  a11y: '/settings',
+  settings: '/settings',
+  admin: '/admin',
+  parent: '/parent',
+  schools: '/schools',
+  pricing: '/pricing',
+  contact: '/contact',
+  privacy: '/privacy',
+  'privacy-policy': '/privacy',
+  terms: '/terms',
+  cookies: '/cookies',
+  'reset-password': '/reset-password',
+  resources: '/resources',
+  formulas: '/formulas',
+  glossary: '/formulas?tab=glossary',
+  calculator: '/formulas?tab=calculator',
+  mindmap: '/mindmap',
+  'integration-by-parts': '/integration-by-parts',
+  markscheme: '/resources?tab=markscheme',
+  cmdwords: '/formulas?tab=command-words',
+  'command-words': '/formulas?tab=command-words',
+  essay: '/work-checker',
+  'work-checker': '/work-checker',
+  'exam-sim': '/exam-sim',
+  'kids-gcse': '/parent',
+  'kids-arithmetic': '/parent',
+  'kids-iq': '/parent'
+};
 
-// showDash: navigate to a dashboard subpage and trigger side effects
+// showDash: redirect migrated pages to Next.js, otherwise fall back to the legacy dashboard view.
 function showDash(sub) {
+  const migratedTarget = LEGACY_DASH_REDIRECTS[String(sub || '').trim().toLowerCase()];
+  if (migratedTarget) {
+    window.location.href = migratedTarget;
+    return;
+  }
+
   _showDashCore(sub);
   if (sub === 'flashcards') loadFcDue();
   if (sub === 'content') initTeacher();
@@ -10059,18 +10133,31 @@ function _renderPeerPresence() {
   const avatarsEl = document.getElementById('peer-avatars');
   const labelEl = document.getElementById('peer-label');
   if (!bar || !avatarsEl || !labelEl) return;
-  // Deterministic but time-varying count: 12–47, shifts every ~8 min
-  const seed = Math.floor(Date.now() / 480000);
-  const count = 12 + ((seed * 1103515245 + 12345) & 0x7fffffff) % 36;
+
   const emojis = ['🦁','🦋','🐺','🌟','🦊','🐬','🦅','🌺','🎯','⭐','🔥','💎'];
-  const avatarCount = Math.min(5, Math.floor(count / 6));
-  avatarsEl.innerHTML = Array.from({length: avatarCount}, (_, i) => {
-    const e = emojis[(seed + i) % emojis.length];
-    return `<span style="width:22px;height:22px;border-radius:50%;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;margin-right:-4px">${e}</span>`;
-  }).join('');
   const topics = ['Integration','Trigonometry','Differentiation','Vectors','Statistics','Mechanics','Binomial Expansion','Logarithms'];
-  const hotTopic = topics[(seed * 7 + 3) % topics.length];
-  labelEl.innerHTML = `<strong style="color:var(--white)">${count}</strong> students studying right now · Hot topic: <span style="color:var(--gold)">${hotTopic}</span>`;
+
+  function _applyCount(count) {
+    const seed = Math.floor(Date.now() / 480000);
+    const avatarCount = Math.min(5, Math.max(1, Math.floor(count / 8)));
+    avatarsEl.innerHTML = Array.from({length: avatarCount}, (_, i) => {
+      const e = emojis[(seed + i) % emojis.length];
+      return `<span style="width:22px;height:22px;border-radius:50%;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;margin-right:-4px">${e}</span>`;
+    }).join('');
+    const hotTopic = topics[seed % topics.length];
+    labelEl.innerHTML = `<strong style="color:var(--white)">${count}</strong> student${count !== 1 ? 's' : ''} studying today · Hot topic: <span style="color:var(--gold)">${hotTopic}</span>`;
+  }
+
+  // Show a placeholder immediately, then replace with real data
+  _applyCount(1);
+
+  fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'peer_count' })
+  }).then(r => r.json()).then(data => {
+    if (typeof data.count === 'number') _applyCount(data.count);
+  }).catch(() => {});
 }
 
 function _renderPredictedGradeCard() {
@@ -10869,7 +10956,7 @@ Use UK marking conventions. Award partial marks where appropriate.`;
     showToast(`${totalMarks}/${totalPossible} marks — ${pct}% correct`);
 
     // Save progress to backend
-    const token = localStorage.getItem('synaptiq_token');
+    const token = await getAuthToken();
     if (token && state.user?.id) {
       saveProgressDB(sub, 'practice', correct, results.length, correct * 5);
     }
@@ -11095,7 +11182,7 @@ async function downloadMyData() {
   const btn = document.getElementById('download-data-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Preparing…'; }
   try {
-    const token = localStorage.getItem('synaptiq_token');
+    const token = await getAuthToken();
     if (!token) { showToast('⚠️ Please log in first'); return; }
     const res = await fetch('/api/notes?action=export', { headers: { Authorization: 'Bearer ' + token } });
     if (!res.ok) { const d = await res.json(); showToast('⚠️ ' + (d.error || 'Export failed')); return; }
@@ -11123,7 +11210,7 @@ async function deleteMyAccount() {
   const btn = document.getElementById('delete-account-btn');
   if (btn) { btn.disabled = true; btn.textContent = 'Deleting…'; }
   try {
-    const token = localStorage.getItem('synaptiq_token');
+    const token = await getAuthToken();
     if (!token) { showToast('⚠️ Please log in first'); return; }
     const res = await fetch('/api/auth', {
       method: 'POST',
@@ -13162,7 +13249,7 @@ async function saveNote() {
   addActivity('📓', 'Note saved', selectedNoteTag || 'Mathematics', 'now');
   showToast('✅ Note saved to your notebook!');
   // Sync to backend
-  const token = localStorage.getItem('synaptiq_token');
+  const token = await getAuthToken();
   if (token) {
     try {
       const res = await fetch('/api/notes', {
@@ -13218,7 +13305,7 @@ async function aiSummariseNoteById(id, btn) {
     renderNotes();
     showToast('✦ Note summarised!');
     // Also sync updated text to backend
-    const token = localStorage.getItem('synaptiq_token');
+    const token = await getAuthToken();
     if (token && note.backendId) {
       try {
         await fetch('/api/notes', {
@@ -13241,7 +13328,7 @@ async function deleteNote(id) {
   renderNotes();
   showToast('🗑️ Note deleted');
   // Sync to backend
-  const token = localStorage.getItem('synaptiq_token');
+  const token = await getAuthToken();
   if (token && note?.backendId) {
     try {
       await fetch('/api/notes', {
@@ -13314,7 +13401,7 @@ async function loadNotesFromStorage() {
     if (saved) { notes = JSON.parse(saved); renderNotes(); }
   } catch(e) {}
   // Try to load from backend
-  const token = localStorage.getItem('synaptiq_token');
+  const token = await getAuthToken();
   if (token) {
     try {
       const res = await fetch('/api/notes', {
@@ -15667,12 +15754,18 @@ function checkWeeklyEmail() {
     streak: state.user.streak || 0
   };
 
+  const token = localStorage.getItem('synaptiq_token');
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
   fetch('/api/resend', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ type: 'weekly', email: state.user.email, name: state.user.name, stats })
-  }).then(() => {
-    localStorage.setItem('synaptiq_last_weekly_email', now.toDateString());
+  }).then((res) => {
+    if (res.ok) {
+      localStorage.setItem('synaptiq_last_weekly_email', now.toDateString());
+    }
   }).catch(() => {});
 }
 
@@ -15926,6 +16019,27 @@ const SUPABASE_URL = window.SUPABASE_URL || '';
 const SUPABASE_ANON = window.SUPABASE_ANON_KEY || '';
 let supabaseClient = null;
 
+/**
+ * Returns the current JWT, auto-refreshing it via the Supabase client when
+ * possible. Falls back to the cached localStorage token for non-Supabase
+ * deployments. Using this instead of localStorage.getItem('synaptiq_token')
+ * directly prevents sessions from silently breaking after the 1-hour JWT expiry.
+ */
+async function getAuthToken() {
+  if (supabaseClient) {
+    try {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session?.access_token) {
+        // Keep localStorage in sync with the freshest token
+        try { localStorage.setItem('synaptiq_token', session.access_token); } catch(_) {}
+        return session.access_token;
+      }
+    } catch(_) {}
+  }
+  return localStorage.getItem('synaptiq_token');
+}
+
+
 async function initSupabase() {
   if (!SUPABASE_URL || !SUPABASE_ANON) return;
   // Lazy-load SDK only when we need it
@@ -15972,8 +16086,15 @@ async function realSignup(name, email, password, plan) {
   if (error) { showAuthError(error.message); showAuthLoading(false); return; }
   // Create profile
   await supabaseClient.from('profiles').insert({ id: data.user.id, name, email, plan: plan||'student', xp:0, level:1, streak:0, questions_answered:0, accuracy:0 });
-  // Welcome email
-  await fetch('/api/resend', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ type:'welcome', email, name }) }).catch(()=>{});
+  // Welcome email (only send when the signup flow returns a usable session token)
+  const signupToken = data.session?.access_token || null;
+  if (signupToken) {
+    await fetch('/api/resend', {
+      method:'POST',
+      headers:{'Content-Type':'application/json', 'Authorization': `Bearer ${signupToken}`},
+      body: JSON.stringify({ type:'welcome', email, name })
+    }).catch(()=>{});
+  }
   showAuthSuccess('Account created! Check your email to verify your account.');
   showAuthLoading(false);
 }
@@ -16026,7 +16147,7 @@ function showAuthSuccess(msg) { const el = document.querySelector('.auth-success
 // ─── SAVE PROGRESS TO SUPABASE ───────────────────────
 async function saveProgressDB(subject, topic, correct, total, xpEarned) {
   if (!supabaseClient || !state.user?.id) return;
-  const token = localStorage.getItem('synaptiq_token');
+  const token = await getAuthToken();
   await fetch('/api/progress', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
@@ -16929,7 +17050,7 @@ window.enterDashboard = function() {
 window.addEventListener('DOMContentLoaded', () => {
   // If there's a stored token, show a loading overlay to prevent flash of login screen
   try {
-    const hasToken = localStorage.getItem('synaptiq_token');
+    const hasToken = await getAuthToken();
     if (hasToken) {
       const overlay = document.createElement('div');
       overlay.id = 'auth-loading-overlay';
@@ -17622,7 +17743,7 @@ window.enterDashboard = function() {
     const footer = document.createElement('div');
     footer.id = 'app-footer';
     footer.style.cssText = 'padding:1rem 2rem;border-top:1px solid var(--border);display:flex;gap:1.5rem;flex-wrap:wrap;font-size:.75rem';
-    footer.innerHTML = '<a href="/privacy-policy.html" style="color:var(--muted);text-decoration:none">Privacy Policy</a><a href="/terms.html" style="color:var(--muted);text-decoration:none">Terms & Conditions</a><a href="/contact.html" style="color:var(--muted);text-decoration:none">Support</a><a href="/admin.html" style="color:var(--muted);text-decoration:none">Admin</a>';
+    footer.innerHTML = '<a href="/privacy" style="color:var(--muted);text-decoration:none">Privacy Policy</a><a href="/terms" style="color:var(--muted);text-decoration:none">Terms & Conditions</a><a href="/contact" style="color:var(--muted);text-decoration:none">Support</a><a href="/admin" style="color:var(--muted);text-decoration:none">Admin</a>';
     document.querySelector('.main-content')?.appendChild(footer);
   }
 };
@@ -18349,9 +18470,13 @@ function _maybeSendWeeklyDigest() {
     const last = localStorage.getItem('synaptiq_last_weekly_email');
     if (last && Date.now() - new Date(last).getTime() < 7 * 86400_000) return;
     const s = JSON.parse(localStorage.getItem('synaptiq_stats') || '{}');
+    const token = localStorage.getItem('synaptiq_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
     fetch('/api/resend', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         to: state.user.email,
         name: (state.user.user_metadata?.name || state.user.user_metadata?.full_name || 'Student'),
@@ -19395,11 +19520,24 @@ async function adminConfirmUpload() {
 function saveExamDate(val) {
   if (!val) return;
   localStorage.setItem('synaptiq_exam_date', val);
+  // Persist to the user's profile so the AI tutor can use it for context
+  if (state.user?.id) {
+    const token = localStorage.getItem('synaptiq_token');
+    if (token) {
+      fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ action: 'update_profile', exam_date: val })
+      }).catch(() => {});
+    }
+    if (state.user) state.user.exam_date = val;
+  }
   updateExamCountdown();
+  generateStudyPlan(val);
 }
 
 function updateExamCountdown() {
-  const stored = localStorage.getItem('synaptiq_exam_date');
+  const stored = state.user?.exam_date || localStorage.getItem('synaptiq_exam_date');
   const inp = document.getElementById('exam-date-input');
   const settingsInp = document.getElementById('settings-exam-date');
   const display = document.getElementById('countdown-display');
@@ -19417,6 +19555,33 @@ function updateExamCountdown() {
   if (title) title.textContent = diff > 0 ? 'Days Until Your A-Level Maths Exam' : 'Good luck in your exam! 🎓';
   if (subtitle) subtitle.textContent = diff > 30 ? 'Plenty of time — build a strong foundation now.' : diff > 14 ? 'Final stretch — focus on weak areas and past papers.' : diff > 0 ? 'Last push — revise formulas and exam technique!' : examDate.toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'});
 }
+
+async function generateStudyPlan(examDate) {
+  const planEl = document.getElementById('study-plan-output');
+  if (!planEl) return;
+  planEl.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:.5rem">⏳ Generating your personalised study plan…</div>';
+  try {
+    const daysToExam = Math.ceil((new Date(examDate) - new Date()) / 86400000);
+    if (daysToExam <= 0) { planEl.innerHTML = ''; return; }
+    const token = await getAuthToken();
+    const messages = [{
+      role: 'user',
+      content: `I have ${daysToExam} days until my A-Level Maths exam. Please create a concise week-by-week study plan. Focus on: Pure Maths (integration, differentiation, functions), Statistics, Mechanics. Format as a short numbered list of weekly priorities. Be specific and actionable. Maximum 200 words.`
+    }];
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': 'Bearer ' + token } : {}) },
+      body: JSON.stringify({ messages, max_tokens: 300 })
+    });
+    if (!r.ok) { planEl.innerHTML = ''; return; }
+    const data = await r.json();
+    const text = data.content?.[0]?.text || '';
+    if (text) {
+      planEl.innerHTML = `<div style="margin-top:.75rem;padding:.75rem;background:rgba(201,168,76,0.05);border-radius:10px;border:1px solid rgba(201,168,76,0.15)"><div style="font-size:.75rem;color:var(--gold);font-weight:600;margin-bottom:.5rem">📅 YOUR STUDY PLAN</div><div style="font-size:.82rem;color:var(--text-secondary);line-height:1.6;white-space:pre-wrap">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div></div>`;
+    }
+  } catch(_) { planEl.innerHTML = ''; }
+}
+
 
 // ═══════════════════════════════════════
 // FORMULA SHEET
@@ -19901,9 +20066,13 @@ async function emailParentReport() {
   const raw = localStorage.getItem('synaptiq_stats');
   const s = raw ? JSON.parse(raw) : {};
   try {
-    await fetch('/api/resend', {
+    const token = localStorage.getItem('synaptiq_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    const response = await fetch('/api/resend', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         type: 'parent_report',
         email: state.user.email,
@@ -19911,6 +20080,10 @@ async function emailParentReport() {
         stats: { streak: s.streak || 1, questions: s.questionsAnswered || 0, topics: (s.topicsExplored || []).length, xp: state.xp || 0 }
       })
     });
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || 'Email send failed');
+    }
     showToast('✅ Report emailed!');
   } catch(e) {
     showToast('⚠️ Could not send email — ' + e.message.slice(0, 50));
@@ -23529,7 +23702,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * Falls back silently on any error.
  */
 async function fetchAdaptiveInsights() {
-  const token = localStorage.getItem('synaptiq_token');
+  const token = await getAuthToken();
   if (!token || token.startsWith('demo_token_')) return;
 
   try {

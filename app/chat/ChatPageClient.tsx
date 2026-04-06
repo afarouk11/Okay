@@ -19,11 +19,77 @@ type ChatMsg = {
   timestamp?: Date
 }
 
+type BrowserSpeechRecognition = {
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  maxAlternatives: number
+  onresult: ((event: { resultIndex?: number; results: ArrayLike<ArrayLike<{ transcript?: string }>> }) => void) | null
+  onerror: ((event: { error?: string }) => void) | null
+  onend: (() => void) | null
+  start: () => void
+  stop: () => void
+  abort: () => void
+}
+
 const INITIAL_MESSAGE: ChatMsg = {
   id: 'init',
   role: 'assistant',
   content:
     "Good to see you. I'm Jarvis — your personal tutor. What are we working on today?",
+}
+
+function pickRecorderMimeType(): string | undefined {
+  if (typeof window === 'undefined' || typeof MediaRecorder === 'undefined') return undefined
+
+  const candidates = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4;codecs=mp4a.40.2',
+    'audio/mp4',
+  ]
+
+  for (const candidate of candidates) {
+    try {
+      if (MediaRecorder.isTypeSupported(candidate)) return candidate
+    } catch {}
+  }
+
+  return undefined
+}
+
+function normaliseAudioContentType(value: string): string {
+  const raw = String(value || '').toLowerCase().trim()
+  const base = raw.split(';')[0]?.trim() || ''
+
+  if (!base) return 'audio/webm'
+  if (base.includes('webm')) return 'audio/webm'
+  if (base.includes('mp4') || base.includes('m4a') || base.includes('aac')) return 'audio/mp4'
+  if (base.includes('mpeg') || base.includes('mp3')) return 'audio/mpeg'
+  if (base.includes('ogg') || base.includes('opus')) return 'audio/ogg'
+  return 'audio/webm'
+}
+
+function getVoiceErrorMessage(error: unknown, fallback = 'Voice transcription failed.'): string {
+  const message = error instanceof Error ? error.message : String(error || '')
+  if (/did not match the expected pattern|pattern|mime|format|unsupported/i.test(message)) {
+    return 'Browser audio upload was rejected — switching to in-browser speech recognition should help.'
+  }
+  return message || fallback
+}
+
+function shouldUseBrowserSpeechFallback(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error || '')
+  return /did not match the expected pattern|pattern|mime|format|unsupported/i.test(message)
+}
+
+function getBrowserSpeechRecognitionCtor(): (new () => BrowserSpeechRecognition) | null {
+  if (typeof window === 'undefined') return null
+  const speechWindow = window as Window & typeof globalThis & {
+    SpeechRecognition?: new () => BrowserSpeechRecognition
+    webkitSpeechRecognition?: new () => BrowserSpeechRecognition
+  }
+  return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition ?? null
 }
 
 export default function ChatPageClient() {
@@ -35,6 +101,7 @@ export default function ChatPageClient() {
   const [isRecording, setIsRecording] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const speechRecognitionRef = useRef<BrowserSpeechRecognition | null>(null)
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -46,6 +113,14 @@ export default function ChatPageClient() {
     if (typeof window === 'undefined') return
     const q = new URLSearchParams(window.location.search).get('q')
     if (q) setInput(decodeURIComponent(q))
+  }, [])
+
+  const stopBrowserRecognition = useCallback(() => {
+    if (!speechRecognitionRef.current) return
+    try {
+      speechRecognitionRef.current.abort()
+    } catch {}
+    speechRecognitionRef.current = null
   }, [])
 
   const scrollToBottom = useCallback(() => {
@@ -119,6 +194,61 @@ export default function ChatPageClient() {
     }
   }, [input, loading, messages, router, token])
 
+  const captureBrowserSpeechTranscript = useCallback(async (): Promise<string | null> => {
+    const RecognitionCtor = getBrowserSpeechRecognitionCtor()
+    if (!RecognitionCtor) return null
+
+    stopBrowserRecognition()
+
+    return new Promise<string | null>((resolve, reject) => {
+      let settled = false
+      const recognition = new RecognitionCtor()
+      speechRecognitionRef.current = recognition
+      recognition.continuous = false
+      recognition.interimResults = false
+      recognition.lang = 'en-GB'
+      recognition.maxAlternatives = 1
+
+      recognition.onresult = event => {
+        if (settled) return
+        const start = event.resultIndex ?? 0
+        const parts: string[] = []
+        for (let i = start; i < event.results.length; i += 1) {
+          const alt = event.results[i]?.[0]
+          const transcript = typeof alt?.transcript === 'string' ? alt.transcript.trim() : ''
+          if (transcript) parts.push(transcript)
+        }
+        settled = true
+        speechRecognitionRef.current = null
+        try { recognition.stop() } catch {}
+        resolve(parts.join(' ').trim() || null)
+      }
+
+      recognition.onerror = event => {
+        if (settled) return
+        settled = true
+        speechRecognitionRef.current = null
+        reject(new Error(event?.error || 'Voice recognition failed.'))
+      }
+
+      recognition.onend = () => {
+        if (settled) return
+        settled = true
+        speechRecognitionRef.current = null
+        resolve(null)
+      }
+
+      try {
+        recognition.start()
+      } catch (error) {
+        if (settled) return
+        settled = true
+        speechRecognitionRef.current = null
+        reject(error)
+      }
+    })
+  }, [stopBrowserRecognition])
+
   const handleVoice = useCallback(async () => {
     if (isRecording) {
       mediaRecorderRef.current?.stop()
@@ -126,10 +256,69 @@ export default function ChatPageClient() {
       return
     }
 
+    const startBrowserSpeechFallback = async () => {
+      try {
+        setIsRecording(true)
+        const transcript = await captureBrowserSpeechTranscript()
+        setIsRecording(false)
+
+        if (transcript?.trim()) {
+          setInput(transcript.trim())
+          return true
+        }
+
+        setMessages(prev => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: 'I did not catch that. Please try again.',
+            timestamp: new Date(),
+          },
+        ])
+        return true
+      } catch (error) {
+        setIsRecording(false)
+        setMessages(prev => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: getVoiceErrorMessage(error),
+            timestamp: new Date(),
+          },
+        ])
+        return false
+      }
+    }
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
-      const recorder = new MediaRecorder(stream, { mimeType })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      })
+
+      const preferredMimeType = pickRecorderMimeType()
+      if (!preferredMimeType && getBrowserSpeechRecognitionCtor()) {
+        stream.getTracks().forEach(t => t.stop())
+        await startBrowserSpeechFallback()
+        return
+      }
+
+      let recorder: MediaRecorder
+
+      try {
+        recorder = preferredMimeType
+          ? new MediaRecorder(stream, { mimeType: preferredMimeType })
+          : new MediaRecorder(stream)
+      } catch {
+        recorder = new MediaRecorder(stream)
+      }
+
+      const requestContentType = normaliseAudioContentType(recorder.mimeType || preferredMimeType || 'audio/webm')
       const chunks: Blob[] = []
 
       recorder.ondataavailable = e => {
@@ -138,30 +327,59 @@ export default function ChatPageClient() {
 
       recorder.onstop = async () => {
         stream.getTracks().forEach(t => t.stop())
-        const blob = new Blob(chunks, { type: mimeType })
+        const blob = new Blob(chunks, { type: requestContentType })
         try {
           const res = await fetch('/api/transcribe', {
             method: 'POST',
             headers: {
-              'Content-Type': mimeType,
+              'Content-Type': requestContentType,
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
             body: blob,
           })
-          const { transcript } = await res.json()
-          if (transcript) setInput(transcript)
-        } catch {
-          // voice transcription failed silently
+          const data = await res.json() as { transcript?: string; error?: string }
+          if (!res.ok) throw new Error(data.error ?? 'Voice transcription failed.')
+          if (data.transcript) setInput(data.transcript)
+        } catch (error) {
+          const usedFallback = shouldUseBrowserSpeechFallback(error)
+            ? await startBrowserSpeechFallback()
+            : false
+
+          if (!usedFallback) {
+            setMessages(prev => [
+              ...prev,
+              {
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: getVoiceErrorMessage(error),
+                timestamp: new Date(),
+              },
+            ])
+          }
         }
       }
 
       recorder.start()
       mediaRecorderRef.current = recorder
       setIsRecording(true)
-    } catch {
-      // microphone access denied — silent fail
+    } catch (error) {
+      const usedFallback = shouldUseBrowserSpeechFallback(error)
+        ? await startBrowserSpeechFallback()
+        : false
+
+      if (!usedFallback) {
+        setMessages(prev => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: getVoiceErrorMessage(error, 'I could not access your microphone. Please try again.'),
+            timestamp: new Date(),
+          },
+        ])
+      }
     }
-  }, [isRecording, token])
+  }, [captureBrowserSpeechTranscript, isRecording, token])
 
   const clearChat = useCallback(() => {
     setMessages([{ ...INITIAL_MESSAGE, timestamp: new Date() }])

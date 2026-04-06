@@ -125,5 +125,41 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  if (action === 'get_session_driven_topics') {
+    // Surface topics from jarvis_sessions.specific_errors that recur across sessions,
+    // closing the loop between AI tutoring and spaced-repetition practice.
+    const { data: sessions } = await supabase
+      .from('jarvis_sessions')
+      .select('topic, mastery_score, specific_errors, session_date')
+      .eq('user_id', user.id)
+      .order('session_date', { ascending: false })
+      .limit(10)
+
+    const errorFreq: Record<string, number> = {}
+    const topicLowMastery: Record<string, number> = {}
+
+    for (const s of (sessions ?? [])) {
+      if (s.topic && typeof s.mastery_score === 'number' && s.mastery_score < 0.6) {
+        topicLowMastery[s.topic] = (topicLowMastery[s.topic] ?? 0) + 1
+      }
+      for (const e of (Array.isArray(s.specific_errors) ? s.specific_errors : [])) {
+        errorFreq[String(e)] = (errorFreq[String(e)] ?? 0) + 1
+      }
+    }
+
+    const persistentErrors = Object.entries(errorFreq)
+      .filter(([, count]) => count >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([error, frequency]) => ({ error, frequency }))
+
+    const weakTopics = Object.entries(topicLowMastery)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([topic, sessions_below_threshold]) => ({ topic, sessions_below_threshold }))
+
+    return NextResponse.json({ persistent_errors: persistentErrors, weak_topics: weakTopics })
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
 }
