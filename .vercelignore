@@ -1,4 +1,3 @@
-# Kids Next.js app — built and deployed separately, not part of the main Vercel deployment
-kids/
+# Shared kids source is now used by the main `/kids` route, so keep it in the Vercel upload.
 coverage/
 tests/
