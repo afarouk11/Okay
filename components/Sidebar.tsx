@@ -13,6 +13,9 @@ import {
   Zap,
   LogOut,
   StickyNote,
+  GraduationCap,
+  Calculator,
+  Brain,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/lib/useAuth'
@@ -26,6 +29,12 @@ const navItems = [
   { href: '/lessons',   label: 'Lessons',   icon: BookOpen        },
   { href: '/questions', label: 'Questions', icon: HelpCircle      },
   { href: '/notes',     label: 'Notes',     icon: StickyNote      },
+]
+
+const kidsItems = [
+  { href: '/kids/gcse',       label: 'GCSE Maths',       icon: GraduationCap },
+  { href: '/kids/arithmetic', label: 'Arithmetic & SATs', icon: Calculator    },
+  { href: '/kids/neuro',      label: 'Neuroplasticity',   icon: Brain         },
 ]
 
 const bottomItems = [
@@ -122,6 +131,43 @@ export default function Sidebar() {
           )
         })}
       </nav>
+
+      {/* Kids & Family divider */}
+        <div className="mt-3 mb-1 px-3">
+          <div className="border-t border-white/[0.06]" />
+        </div>
+        <p className="px-4 py-1 text-[9px] font-bold tracking-[0.12em] uppercase"
+           style={{ color: 'rgba(0,212,255,0.6)' }}>Kids</p>
+        {kidsItems.map((item) => {
+          const active = pathname === item.href || pathname.startsWith(item.href + '/')
+          const Icon = item.icon
+          return (
+            <Link key={item.href} href={item.href}>
+              <motion.div
+                whileHover={{ x: 2 }}
+                transition={{ duration: 0.15 }}
+                className={clsx(
+                  'flex items-center gap-3 px-3 py-2.5 rounded-[10px] text-sm font-medium transition-all duration-150 cursor-pointer',
+                  active
+                    ? 'bg-primary/10 text-primary border border-primary/20'
+                    : 'text-muted hover:text-foreground hover:bg-white/5',
+                )}
+              >
+                <Icon className="w-[17px] h-[17px] flex-shrink-0" />
+                {item.label}
+                {active && (
+                  <motion.div
+                    layoutId="sidebar-kids-indicator"
+                    className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
+                  />
+                )}
+              </motion.div>
+            </Link>
+          )
+        })}
+        <div className="mt-2 mb-1 px-3">
+          <div className="border-t border-white/[0.06]" />
+        </div>
 
       {/* Bottom */}
       <div className="px-3 pb-4 pt-2 border-t border-white/5 space-y-0.5">
