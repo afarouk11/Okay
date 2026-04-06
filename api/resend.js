@@ -3,16 +3,18 @@
  *
  * Two call styles are supported, detected by which recipient field is present:
  *
- *  A) `to` field   → "resend" style: requires RESEND_API_KEY (500 if absent),
- *                    `name` optional (defaults to 'Student'), unknown type
- *                    falls back to the welcome template, sends from
- *                    hello@synaptiqai.co.uk.
+ *  A) `to` field   → "resend" style: requires RESEND_API_KEY plus either a
+ *                    valid `x-internal-key` or an authenticated user sending
+ *                    to their own email address. Unknown types fall back to
+ *                    the welcome template.
  *
- *  B) `email` field → "email" style: validates email format + name, supports a
- *                    preview-HTML response when RESEND_API_KEY is absent,
- *                    unknown type returns 400, sends from hello@synaptiq.co.uk.
+ *  B) `email` field → "email" style: validates email format + name and has the
+ *                    same auth/internal-key requirement for non-contact mail.
+ *                    Unknown types return 400.
  */
 
+import { createHash, timingSafeEqual } from 'crypto';
+import { createClient } from '@supabase/supabase-js';
 import { applyHeaders, isRateLimited, getIp } from './_lib.js';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -30,6 +32,46 @@ const CONTACT_CATEGORIES = [
   'Feature request',
   'Other',
 ];
+
+function getSupabase() {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) return null;
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+}
+
+function hasValidInternalKey(headers = {}) {
+  const expectedKey = process.env.INTERNAL_API_KEY || '';
+  const providedKey = headers['x-internal-key'] || headers['x-internal-secret'] || '';
+  if (!expectedKey || !providedKey) return false;
+
+  try {
+    const providedHash = createHash('sha256').update(String(providedKey)).digest();
+    const expectedHash = createHash('sha256').update(String(expectedKey)).digest();
+    return timingSafeEqual(providedHash, expectedHash);
+  } catch {
+    return false;
+  }
+}
+
+async function getAuthenticatedUser(req) {
+  const supabase = getSupabase();
+  if (!supabase) return { user: null, supabase: null };
+
+  const token = req.headers.authorization?.replace('Bearer ', '').trim();
+  if (!token || token.startsWith('demo_token_')) {
+    return { user: null, supabase };
+  }
+
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return { user: null, supabase };
+  return { user, supabase };
+}
+
+function getRequestedRecipients(to, email) {
+  const recipients = Array.isArray(to) ? to : [to ?? email].filter(Boolean);
+  return recipients
+    .filter((value) => typeof value === 'string')
+    .map((value) => value.toLowerCase().trim());
+}
 
 function htmlEscape(str) {
   return String(str)
@@ -100,15 +142,25 @@ export default async function handler(req, res) {
   const { to, email, type, name, stats } = req.body;
   const siteUrl = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq.co.uk';
 
-  // Transactional sends (to / email field) are internal-only.
-  // They must include an x-internal-key header matching the INTERNAL_API_KEY env var.
-  // The contact form (type === 'contact') remains public for user-facing use.
-  if (type !== 'contact') {
-    const internalKey = process.env.INTERNAL_API_KEY;
-    const providedKey = req.headers['x-internal-key'];
-    if (internalKey && providedKey !== internalKey) {
-      return res.status(403).json({ error: 'Forbidden' });
+  // Contact submissions remain public, but all other email sends require
+  // either a trusted internal key or an authenticated user sending only to
+  // their own email address.
+  const internalAccess = hasValidInternalKey(req.headers);
+  if (type !== 'contact' && !internalAccess) {
+    const { user } = await getAuthenticatedUser(req);
+    if (!user?.email) {
+      return res.status(401).json({ error: 'Authentication required' });
     }
+
+    const normalisedUserEmail = user.email.toLowerCase().trim();
+    const requestedRecipients = getRequestedRecipients(to, email);
+    if (requestedRecipients.some((recipient) => recipient !== normalisedUserEmail)) {
+      return res.status(403).json({ error: 'Authenticated users can only send emails to their own email address' });
+    }
+  }
+
+  if (type !== 'contact' && isRateLimited(`${ip}:transactional-email`, 10, 60_000)) {
+    return res.status(429).json({ error: 'Too many email requests — please try again later' });
   }
 
   // ── Contact form: `type === 'contact'` ────────────────────────────────────

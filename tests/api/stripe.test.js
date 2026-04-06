@@ -11,8 +11,17 @@ import handler from '../../api/stripe.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function req(body = {}, method = 'POST') {
-  return { method, body, headers: {} };
+function req(body = {}, method = 'POST', headers = {}) {
+  return { method, body, headers };
+}
+
+async function importHandlerWithSupabase(fakeSupabase) {
+  vi.resetModules();
+  vi.doMock('@supabase/supabase-js', () => ({
+    createClient: () => fakeSupabase,
+  }));
+  const mod = await import('../../api/stripe.js');
+  return mod.default;
 }
 
 function res() {
@@ -43,10 +52,15 @@ beforeEach(() => {
   vi.clearAllMocks();
   delete process.env.STRIPE_SECRET_KEY;
   delete process.env.APP_URL;
+  delete process.env.SUPABASE_URL;
+  delete process.env.SUPABASE_SERVICE_KEY;
 });
 
 afterEach(() => {
   delete process.env.STRIPE_SECRET_KEY;
+  delete process.env.SUPABASE_URL;
+  delete process.env.SUPABASE_SERVICE_KEY;
+  vi.doUnmock('@supabase/supabase-js');
 });
 
 // ─── OPTIONS ─────────────────────────────────────────────────────────────────
@@ -228,6 +242,46 @@ describe('portal action', () => {
     const r = res();
     await handler(req({ action: 'portal', email: 'user@test.com' }), r);
     expect(r.statusCode).toBe(500);
+  });
+
+  it('uses the authenticated user email for portal lookup instead of a caller-supplied email', async () => {
+    process.env.SUPABASE_URL = 'https://supabase.test';
+    process.env.SUPABASE_SERVICE_KEY = 'service-key';
+
+    const fakeSupabase = {
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { id: 'user-123', email: 'owner@test.com' } },
+          error: null,
+        }),
+      },
+      from: vi.fn(),
+    };
+
+    const authedHandler = await importHandlerWithSupabase(fakeSupabase);
+    global.fetch = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ data: [{ id: 'cus_abc123' }] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ url: 'https://billing.stripe.com/session/abc' }),
+      });
+
+    const r = res();
+    await authedHandler(
+      req(
+        { action: 'portal', email: 'attacker@test.com' },
+        'POST',
+        { authorization: 'Bearer valid-token' },
+      ),
+      r,
+    );
+
+    expect(r.statusCode).toBe(200);
+    expect(global.fetch.mock.calls[0][0]).toContain(encodeURIComponent('owner@test.com'));
+    expect(global.fetch.mock.calls[0][0]).not.toContain(encodeURIComponent('attacker@test.com'));
   });
 });
 

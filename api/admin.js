@@ -93,9 +93,13 @@ export default async function handler(req, res) {
     let failed = 0;
     for (const user of (users || [])) {
       try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (process.env.INTERNAL_API_KEY) {
+          headers['x-internal-key'] = process.env.INTERNAL_API_KEY;
+        }
         await fetch(`${process.env.SITE_URL}/api/resend`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
             type: 'weekly',
             email: user.email,

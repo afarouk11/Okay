@@ -1,5 +1,7 @@
+import { createHash, timingSafeEqual } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { isRateLimited, getIp } from '@/lib/rateLimit'
+import { createServiceClient } from '@/lib/supabase'
 
 const FROM_ADDRESS = 'Synaptiq <hello@synaptiq.co.uk>'
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -13,6 +15,41 @@ const CONTACT_CATEGORIES = [
   'Feature request',
   'Other',
 ]
+
+function hasValidInternalKey(request: NextRequest) {
+  const expectedKey = process.env.INTERNAL_API_KEY || ''
+  const providedKey = request.headers.get('x-internal-key') || request.headers.get('x-internal-secret') || ''
+  if (!expectedKey || !providedKey) return false
+
+  try {
+    const providedHash = createHash('sha256').update(providedKey).digest()
+    const expectedHash = createHash('sha256').update(expectedKey).digest()
+    return timingSafeEqual(providedHash, expectedHash)
+  } catch {
+    return false
+  }
+}
+
+async function getAuthenticatedUser(request: NextRequest) {
+  const supabase = createServiceClient()
+  if (!supabase) return { user: null, supabase: null }
+
+  const token = request.headers.get('authorization')?.replace('Bearer ', '').trim()
+  if (!token || token.startsWith('demo_token_')) {
+    return { user: null, supabase }
+  }
+
+  const { data: { user }, error } = await supabase.auth.getUser(token)
+  if (error || !user) return { user: null, supabase }
+  return { user, supabase }
+}
+
+function getRequestedRecipients(to?: string | string[], email?: string) {
+  const recipients = Array.isArray(to) ? to : [to ?? email].filter(Boolean)
+  return recipients
+    .filter((value): value is string => typeof value === 'string')
+    .map(value => value.toLowerCase().trim())
+}
 
 function htmlEscape(str: string) {
   return String(str)
@@ -110,6 +147,27 @@ export async function POST(request: NextRequest) {
     message?: string
   }
   const { to, email, type, name, stats, category, message } = body
+
+  const internalAccess = hasValidInternalKey(request)
+  if (type !== 'contact' && !internalAccess) {
+    const { user } = await getAuthenticatedUser(request)
+    if (!user?.email) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+    }
+
+    const normalisedUserEmail = user.email.toLowerCase().trim()
+    const requestedRecipients = getRequestedRecipients(to, email)
+    if (requestedRecipients.some(recipient => recipient !== normalisedUserEmail)) {
+      return NextResponse.json(
+        { error: 'Authenticated users can only send emails to their own email address' },
+        { status: 403 },
+      )
+    }
+  }
+
+  if (type !== 'contact' && isRateLimited(`${ip}:transactional-email`, 10, 60_000)) {
+    return NextResponse.json({ error: 'Too many email requests — please try again later' }, { status: 429 })
+  }
 
   // ── Contact form ──────────────────────────────────────────────────────────
   if (type === 'contact') {

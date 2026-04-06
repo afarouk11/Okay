@@ -4,9 +4,10 @@ import { createClient } from '@supabase/supabase-js';
 import { applyHeaders, isRateLimited, getIp } from './_lib.js';
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
-let supabase = null;
-if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
-  supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+function getSupabase() {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) return null;
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 }
 
 // Disable the built-in body parser so we can read the raw bytes needed for
@@ -26,14 +27,19 @@ async function getRawBody(req) {
 async function sendEmail(to, type, { name, stats } = {}) {
   if (!process.env.RESEND_API_KEY) return;
   const payload = { type, email: to, name: name || '', stats: stats || {} };
+  const headers = { 'Content-Type': 'application/json' };
+  if (process.env.INTERNAL_API_KEY) {
+    headers['x-internal-key'] = process.env.INTERNAL_API_KEY;
+  }
   await fetch(`${process.env.SITE_URL}/api/resend`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(payload),
   }).catch(() => {});
 }
 
 async function handleWebhook(req, res) {
+  const supabase = getSupabase();
   if (!stripe || !supabase) return res.status(503).json({ error: 'Payments not configured' });
   if (req.method !== 'POST') return res.status(405).end();
 
@@ -146,19 +152,29 @@ export default async function handler(req, res) {
 
   // ── Customer Portal ─────────────────────────────────────────────────────────
   if (action === 'portal') {
-    // Require the caller to be authenticated — only the account owner may access their billing portal
-    const token = req.headers.authorization?.replace('Bearer ', '');
-    if (supabase && (!token || token.startsWith('demo_token_'))) {
-      return res.status(401).json({ error: 'Authentication required to access billing portal' });
+    const supabase = getSupabase();
+    let portalEmail = typeof email === 'string' ? email.toLowerCase().trim() : '';
+
+    if (supabase) {
+      const token = req.headers.authorization?.replace('Bearer ', '').trim();
+      if (!token || token.startsWith('demo_token_')) {
+        return res.status(401).json({ error: 'Authentication required to access billing portal' });
+      }
+
+      const { data: authData, error: authErr } = await supabase.auth.getUser(token);
+      const user = authData?.user;
+      if (authErr || !user?.email) {
+        return res.status(401).json({ error: 'Invalid or expired session' });
+      }
+
+      portalEmail = user.email.toLowerCase().trim();
     }
-    if (supabase && token) {
-      const { error: authErr } = await supabase.auth.getUser(token);
-      if (authErr) return res.status(401).json({ error: 'Invalid or expired session' });
-    }
-    if (!email) return res.status(400).json({ error: 'email is required' });
+
+    if (!portalEmail) return res.status(400).json({ error: 'email is required' });
+
     try {
-      // Look up customer by email
-      const searchRes = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(email)}&limit=1`, {
+      // When auth is configured, look up the Stripe customer for the authenticated account only.
+      const searchRes = await fetch(`https://api.stripe.com/v1/customers?email=${encodeURIComponent(portalEmail)}&limit=1`, {
         headers: { 'Authorization': `Bearer ${stripeKey}` }
       });
       const searchData = await searchRes.json();
