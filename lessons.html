@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script>
+if (!window.location.search.includes('legacy=1')) {
+  window.location.replace('/lessons' + window.location.search + window.location.hash)
+}
+</script>
 <title>AI Lessons — Synaptiq</title>
 <meta name="description" content="Interactive A-Level Maths lessons with AI. Step-by-step worked examples, topic walkthroughs and exam-board aligned content.">
 <link rel="canonical" href="https://synaptiq.co.uk/lessons">

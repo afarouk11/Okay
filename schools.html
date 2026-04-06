@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+if (!window.location.search.includes('legacy=1')) {
+  window.location.replace('/schools' + window.location.search + window.location.hash)
+}
+</script>
 <title>Synaptiq for Schools — AI-Powered Maths for Every Student</title>
 <meta name="description" content="Give every student access to an AI maths tutor. Teacher dashboards, real-time progress tracking, and site licence pricing for UK schools.">
 <meta name="robots" content="index, follow">

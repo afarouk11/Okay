@@ -101,10 +101,10 @@ export default function Sidebar() {
           className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
           style={{ background: 'linear-gradient(135deg, #4F8CFF, #22C55E)' }}
         >
-          J
+          S
         </div>
         <div>
-          <span className="font-semibold text-[15px] text-foreground tracking-tight">Jarvis</span>
+          <span className="font-semibold text-[15px] text-foreground tracking-tight">Synaptiq</span>
           <div className="flex items-center gap-1 mt-0.5">
             <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse-slow" />
             <span className="text-[10px] text-muted uppercase tracking-widest">Online</span>

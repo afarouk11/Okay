@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+if (!window.location.search.includes('legacy=1')) {
+  window.location.replace('/terms' + window.location.search + window.location.hash)
+}
+</script>
 <title>Terms &amp; Conditions — Synaptiq</title>
 <meta name="description" content="Read Synaptiq's Terms &amp; Conditions. The terms governing use of our A-Level Maths AI tutoring platform for students and schools.">
 <meta name="robots" content="index, follow">
