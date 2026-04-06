@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Calculator, Play, Check, SkipForward } from 'lucide-react'
+import { Calculator, Play, Check } from 'lucide-react'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'
 import { useAuth } from '@/lib/useAuth'

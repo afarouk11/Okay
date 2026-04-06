@@ -17,6 +17,8 @@ import {
   LogOut,
   Layers3,
   Brain,
+  GraduationCap,
+  Calculator,
   Sigma,
   LibraryBig,
   FileCheck2,
