@@ -34,7 +34,7 @@ export default function Home() {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#08090E' }}>
-      <Sidebar active={activePage} onNavigate={setActivePage} />
+      <Sidebar active={activePage} onNavigate={(p) => setActivePage(p as Section)} />
       <main style={{ flex: 1, overflowY: 'auto', minHeight: '100vh' }}>
         {renderSection()}
       </main>
