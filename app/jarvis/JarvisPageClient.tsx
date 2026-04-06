@@ -600,7 +600,7 @@ export default function JarvisPageClient() {
     }
   }, [input, isLoading, token, effectiveSystem, showToast, router, speakReply]);
 
-  const useBrowserSpeechFallback = useCallback(async (speakReplyAfter = true): Promise<boolean> => {
+  const startBrowserSpeechFallback = useCallback(async (speakReplyAfter = true): Promise<boolean> => {
     if (!getBrowserSpeechRecognitionCtor()) return false;
 
     setIsRecording(true);
@@ -684,7 +684,7 @@ export default function JarvisPageClient() {
       const preferredMimeType = pickRecorderMimeType();
 
       if (!preferredMimeType && getBrowserSpeechRecognitionCtor()) {
-        await useBrowserSpeechFallback(true);
+        await startBrowserSpeechFallback(true);
         return;
       }
 
@@ -753,7 +753,7 @@ export default function JarvisPageClient() {
           await sendMessage(transcript, { shouldSpeak: true });
         } catch (error) {
           const usedBrowserFallback = shouldUseBrowserSpeechFallback(error)
-            ? await useBrowserSpeechFallback(true)
+            ? await startBrowserSpeechFallback(true)
             : false;
 
           if (!usedBrowserFallback) {
@@ -779,7 +779,7 @@ export default function JarvisPageClient() {
       }
     } catch (error) {
       const usedBrowserFallback = shouldUseBrowserSpeechFallback(error)
-        ? await useBrowserSpeechFallback(true)
+        ? await startBrowserSpeechFallback(true)
         : false;
 
       if (!usedBrowserFallback) {
@@ -787,7 +787,7 @@ export default function JarvisPageClient() {
         setCallStatus(callModeRef.current ? 'ready' : 'idle');
       }
     }
-  }, [callStatus, cleanupSilenceDetection, ensureMicrophone, handsFreeMode, isLoading, isRecording, sendMessage, showToast, startSilenceDetection, token, useBrowserSpeechFallback]);
+  }, [callStatus, cleanupSilenceDetection, ensureMicrophone, handsFreeMode, isLoading, isRecording, sendMessage, showToast, startBrowserSpeechFallback, startSilenceDetection, token]);
 
   useEffect(() => {
     queueHandsFreeListeningRef.current = () => {

@@ -256,7 +256,7 @@ export default function ChatPageClient() {
       return
     }
 
-    const useBrowserSpeechFallback = async () => {
+    const startBrowserSpeechFallback = async () => {
       try {
         setIsRecording(true)
         const transcript = await captureBrowserSpeechTranscript()
@@ -304,7 +304,7 @@ export default function ChatPageClient() {
       const preferredMimeType = pickRecorderMimeType()
       if (!preferredMimeType && getBrowserSpeechRecognitionCtor()) {
         stream.getTracks().forEach(t => t.stop())
-        await useBrowserSpeechFallback()
+        await startBrowserSpeechFallback()
         return
       }
 
@@ -342,7 +342,7 @@ export default function ChatPageClient() {
           if (data.transcript) setInput(data.transcript)
         } catch (error) {
           const usedFallback = shouldUseBrowserSpeechFallback(error)
-            ? await useBrowserSpeechFallback()
+            ? await startBrowserSpeechFallback()
             : false
 
           if (!usedFallback) {
@@ -364,7 +364,7 @@ export default function ChatPageClient() {
       setIsRecording(true)
     } catch (error) {
       const usedFallback = shouldUseBrowserSpeechFallback(error)
-        ? await useBrowserSpeechFallback()
+        ? await startBrowserSpeechFallback()
         : false
 
       if (!usedFallback) {
@@ -379,7 +379,7 @@ export default function ChatPageClient() {
         ])
       }
     }
-  }, [captureBrowserSpeechTranscript, isRecording, token, stopBrowserRecognition])
+  }, [captureBrowserSpeechTranscript, isRecording, token])
 
   const clearChat = useCallback(() => {
     setMessages([{ ...INITIAL_MESSAGE, timestamp: new Date() }])
