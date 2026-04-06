@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npm run build && cd kids && npm ci --prefer-offline && npx next build",
-  "outputDirectory": ".",
+  "buildCommand": "npm run build",
+  "framework": "nextjs",
   "headers": [
     {
       "source": "/(.*)",
@@ -38,13 +38,5 @@
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     }
-  ],
-  "rewrites": [
-    { "source": "/kids/:path*", "destination": "/kids/out/:path*" },
-    { "source": "/api/:path*",  "destination": "/api/:path*" }
-  ],
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/404.html", "status": 404 }
   ]
 }
