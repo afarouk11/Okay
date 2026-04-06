@@ -34,6 +34,7 @@ const navItems = [
   { href: '/jarvis',       label: 'J.A.R.V.I.S.',   icon: Sparkles        },
   { href: '/chat',         label: 'Chat',           icon: MessageSquare   },
   { href: '/study',        label: 'Study Hub',      icon: Layers3         },
+  { href: '/kids',         label: 'Kids',           icon: BookOpen        },
   { href: '/predict',      label: 'Exam Insights',  icon: Brain           },
   { href: '/formulas',     label: 'Reference',      icon: Sigma           },
   { href: '/resources',    label: 'Resources',      icon: LibraryBig      },

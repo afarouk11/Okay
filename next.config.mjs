@@ -5,6 +5,7 @@ const legacyHtmlRedirects = [
   { source: '/cookies.html', destination: '/cookies', permanent: true },
   { source: '/integration-by-parts.html', destination: '/integration-by-parts', permanent: true },
   { source: '/jarvis.html', destination: '/jarvis', permanent: true },
+  { source: '/kids.html', destination: '/kids', permanent: true },
   { source: '/lessons.html', destination: '/lessons', permanent: true },
   { source: '/mindmap.html', destination: '/mindmap', permanent: true },
   { source: '/parent.html', destination: '/parent', permanent: true },

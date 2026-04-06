@@ -39,6 +39,7 @@ const REDIRECTS: Record<string, string> = {
   settings: '/settings',
   admin: '/admin',
   parent: '/parent',
+  kids: '/kids',
   schools: '/schools',
   pricing: '/pricing',
   contact: '/contact',
@@ -60,9 +61,9 @@ const REDIRECTS: Record<string, string> = {
   'work-checker': '/work-checker',
   wellbeing: '/wellbeing',
   'exam-sim': '/exam-sim',
-  'kids-gcse': '/parent',
-  'kids-arithmetic': '/parent',
-  'kids-iq': '/parent',
+  'kids-gcse': '/kids?section=gcse',
+  'kids-arithmetic': '/kids?section=arithmetic',
+  'kids-iq': '/kids?section=iq',
 }
 
 export function getLegacyRoute(slug: string): LegacyRouteResolution | null {

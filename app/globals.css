@@ -88,13 +88,26 @@ body {
   40%           { transform: scale(1.0); opacity: 1;   }
 }
 
-/* Typing dots */
-.typing-dot {
+/* Typing / loading dots */
+.typing-dot,
+.loading-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--muted);
   animation: dotPulse 1.4s ease-in-out infinite;
 }
-.typing-dot:nth-child(2) { animation-delay: 0.2s; }
-.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+.typing-dot {
+  background: var(--muted);
+}
+
+.loading-dot {
+  display: inline-block;
+  background: var(--primary);
+}
+
+.typing-dot:nth-child(2),
+.loading-dot:nth-child(2) { animation-delay: 0.2s; }
+
+.typing-dot:nth-child(3),
+.loading-dot:nth-child(3) { animation-delay: 0.4s; }
