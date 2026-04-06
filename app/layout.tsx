@@ -4,7 +4,16 @@ import ChatWindow from '@/components/ChatWindow'
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar'
 import Link from 'next/link'
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+  process.env.VERCEL_URL ||
+  'https://synaptiqai.co.uk'
+
+const resolvedSiteUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`
+
 export const metadata: Metadata = {
+  metadataBase: new URL(resolvedSiteUrl),
   title: {
     default: 'Synaptiq — AI Learning Platform',
     template: '%s | Synaptiq',

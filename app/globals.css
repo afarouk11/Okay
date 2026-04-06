@@ -18,6 +18,11 @@
   --radius: 14px;
   --shadow: 0 4px 24px rgba(0,0,0,0.4);
   --glow: 0 0 20px rgba(79,140,255,0.15);
+  --gold: #C9A84C;
+  --green: #4ADE80;
+  --blue: #4F8CFF;
+  --purple: #A78BFA;
+  --red: #F87171;
 }
 
 * {

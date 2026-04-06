@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+if (window.location.pathname.endsWith('/index.html') && !window.location.search.includes('legacy=1')) {
+  window.location.replace('/' + window.location.search + window.location.hash);
+}
+</script>
 <!-- Set GA4_MEASUREMENT_ID env var in Vercel; build pipeline replaces the content value below -->
 <meta name="ga4-id" content="G-XXXXXXXX">
 <title>Synaptiq — UK A-Level Maths AI Tutor | AQA, Edexcel, OCR &amp; WJEC</title>
@@ -1774,12 +1779,6 @@ body {
   background: rgba(0,212,255,0.06);
   border-color: rgba(0,212,255,0.3);
   color: #00D4FF;
-}
-
-  /* (old tutor-starter-chip rules removed — replaced above) */
-  font-family: var(--font-body); font-size: .925rem;
-  resize: none; min-height: 52px; max-height: 150px;
-  transition: border .2s; line-height: 1.5;
 }
 
 .tts-btn:hover { border-color: var(--gold); color: var(--gold); }
@@ -10180,9 +10179,77 @@ function renderFeedback(text) {
     .replace(/\*(.*?)\*/g,'<em>$1</em>');
 }
 
+const LEGACY_DASH_REDIRECTS = {
+  home: '/dashboard',
+  dashboard: '/dashboard',
+  tutor: '/chat',
+  chat: '/chat',
+  jarvis: '/jarvis',
+  content: '/lessons',
+  lessons: '/lessons',
+  video: '/lessons',
+  examples: '/lessons',
+  questions: '/questions',
+  papers: '/papers',
+  progress: '/dashboard',
+  photo: '/chat',
+  flashcards: '/study?tab=flashcards',
+  blitz: '/study?tab=blitz',
+  checklist: '/study?tab=checklist',
+  goals: '/plan',
+  plan: '/plan',
+  timetable: '/plan',
+  strengths: '/predict',
+  exams: '/predict',
+  predict: '/predict',
+  grade: '/predict',
+  diagnostic: '/predict',
+  notes: '/notes',
+  bookmarks: '/notes',
+  mistakes: '/notes',
+  mood: '/wellbeing',
+  wellbeing: '/wellbeing',
+  pomodoro: '/wellbeing?tab=pomodoro',
+  assignments: '/plan',
+  leaderboard: '/dashboard',
+  achievements: '/dashboard',
+  a11y: '/settings',
+  settings: '/settings',
+  admin: '/admin',
+  parent: '/parent',
+  schools: '/schools',
+  pricing: '/pricing',
+  contact: '/contact',
+  privacy: '/privacy',
+  'privacy-policy': '/privacy',
+  terms: '/terms',
+  cookies: '/cookies',
+  'reset-password': '/reset-password',
+  resources: '/resources',
+  formulas: '/formulas',
+  glossary: '/formulas?tab=glossary',
+  calculator: '/formulas?tab=calculator',
+  mindmap: '/mindmap',
+  'integration-by-parts': '/integration-by-parts',
+  markscheme: '/resources?tab=markscheme',
+  cmdwords: '/formulas?tab=command-words',
+  'command-words': '/formulas?tab=command-words',
+  essay: '/work-checker',
+  'work-checker': '/work-checker',
+  'exam-sim': '/exam-sim',
+  'kids-gcse': '/parent',
+  'kids-arithmetic': '/parent',
+  'kids-iq': '/parent'
+};
 
-// showDash: navigate to a dashboard subpage and trigger side effects
+// showDash: redirect migrated pages to Next.js, otherwise fall back to the legacy dashboard view.
 function showDash(sub) {
+  const migratedTarget = LEGACY_DASH_REDIRECTS[String(sub || '').trim().toLowerCase()];
+  if (migratedTarget) {
+    window.location.href = migratedTarget;
+    return;
+  }
+
   _showDashCore(sub);
   if (sub === 'flashcards') loadFcDue();
   if (sub === 'content') initTeacher();

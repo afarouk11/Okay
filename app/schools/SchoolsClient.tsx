@@ -1,7 +1,8 @@
+import Link from 'next/link'
+
 const BG = '#0B0F14'
 const PRIMARY = '#4F8CFF'
 const GOLD = '#C9A84C'
-const GOLD_DIM = '#a8873d'
 const SURFACE = '#131920'
 const BORDER = '#1e2a38'
 const TEXT_MUTED = '#8899aa'
@@ -12,17 +13,17 @@ export default function SchoolsClient() {
       {/* Nav */}
       <nav style={{ borderBottom: `1px solid ${BORDER}`, backgroundColor: BG, position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
-          <a href="/" style={{ fontSize: 22, fontWeight: 700, color: PRIMARY, textDecoration: 'none', letterSpacing: '-0.5px' }}>
+          <Link href="/" style={{ fontSize: 22, fontWeight: 700, color: PRIMARY, textDecoration: 'none', letterSpacing: '-0.5px' }}>
             Synaptiq
-          </a>
+          </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-            <a href="/pricing" style={{ color: TEXT_MUTED, textDecoration: 'none', fontSize: 15, fontWeight: 500 }} className="hover:text-white transition-colors">
+            <Link href="/pricing" style={{ color: TEXT_MUTED, textDecoration: 'none', fontSize: 15, fontWeight: 500 }} className="hover:text-white transition-colors">
               For Students
-            </a>
-            <a href="/contact" style={{ color: TEXT_MUTED, textDecoration: 'none', fontSize: 15, fontWeight: 500 }} className="hover:text-white transition-colors">
+            </Link>
+            <Link href="/contact" style={{ color: TEXT_MUTED, textDecoration: 'none', fontSize: 15, fontWeight: 500 }} className="hover:text-white transition-colors">
               Contact
-            </a>
-            <a
+            </Link>
+            <Link
               href="/contact"
               style={{
                 backgroundColor: GOLD,
@@ -37,7 +38,7 @@ export default function SchoolsClient() {
               className="hover:opacity-90 transition-opacity"
             >
               Request a Demo
-            </a>
+            </Link>
           </div>
         </div>
       </nav>
@@ -73,7 +74,7 @@ export default function SchoolsClient() {
           </p>
 
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 52 }}>
-            <a
+            <Link
               href="/contact"
               style={{
                 backgroundColor: GOLD,
@@ -87,8 +88,8 @@ export default function SchoolsClient() {
               className="hover:opacity-90 transition-opacity"
             >
               Request a Demo →
-            </a>
-            <a
+            </Link>
+            <Link
               href="/pricing"
               style={{
                 backgroundColor: 'transparent',
@@ -103,7 +104,7 @@ export default function SchoolsClient() {
               className="hover:border-blue-500 transition-colors"
             >
               View Student Pricing →
-            </a>
+            </Link>
           </div>
 
           {/* Stats bar */}
@@ -274,7 +275,7 @@ export default function SchoolsClient() {
             School pricing starts with a free pilot for your department. No contracts, no risk.
           </p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <a
+            <Link
               href="/contact"
               style={{
                 backgroundColor: GOLD,
@@ -288,8 +289,8 @@ export default function SchoolsClient() {
               className="hover:opacity-90 transition-opacity"
             >
               Request a Demo
-            </a>
-            <a
+            </Link>
+            <Link
               href="/pricing"
               style={{
                 backgroundColor: 'transparent',
@@ -304,7 +305,7 @@ export default function SchoolsClient() {
               className="hover:border-blue-500 transition-colors"
             >
               See Student Plans
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -312,18 +313,18 @@ export default function SchoolsClient() {
       {/* Footer */}
       <footer style={{ borderTop: `1px solid ${BORDER}`, backgroundColor: SURFACE }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-          <a href="/" style={{ fontSize: 18, fontWeight: 700, color: PRIMARY, textDecoration: 'none' }}>
+          <Link href="/" style={{ fontSize: 18, fontWeight: 700, color: PRIMARY, textDecoration: 'none' }}>
             Synaptiq
-          </a>
+          </Link>
           <nav style={{ display: 'flex', gap: 24 }}>
             {[
               { label: 'Home', href: '/' },
               { label: 'Pricing', href: '/pricing' },
               { label: 'Contact', href: '/contact' },
             ].map((link) => (
-              <a key={link.href} href={link.href} style={{ color: TEXT_MUTED, textDecoration: 'none', fontSize: 14 }} className="hover:text-white transition-colors">
+              <Link key={link.href} href={link.href} style={{ color: TEXT_MUTED, textDecoration: 'none', fontSize: 14 }} className="hover:text-white transition-colors">
                 {link.label}
-              </a>
+              </Link>
             ))}
           </nav>
           <p style={{ color: TEXT_MUTED, fontSize: 13 }}>© 2026 Synaptiq</p>

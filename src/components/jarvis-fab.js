@@ -103,7 +103,7 @@
 
   const btn = document.createElement('a');
   btn.id = 'jarvis-fab-btn';
-  btn.href = '/jarvis.html';
+  btn.href = '/jarvis';
   btn.setAttribute('aria-label', 'Open J.A.R.V.I.S. AI Maths Assistant');
   btn.setAttribute('title', 'Ask J.A.R.V.I.S.');
   btn.textContent = 'J';
