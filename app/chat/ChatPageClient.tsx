@@ -26,6 +26,45 @@ const INITIAL_MESSAGE: ChatMsg = {
     "Good to see you. I'm Jarvis — your personal tutor. What are we working on today?",
 }
 
+function pickRecorderMimeType(): string | undefined {
+  if (typeof window === 'undefined' || typeof MediaRecorder === 'undefined') return undefined
+
+  const candidates = [
+    'audio/webm;codecs=opus',
+    'audio/webm',
+    'audio/mp4;codecs=mp4a.40.2',
+    'audio/mp4',
+  ]
+
+  for (const candidate of candidates) {
+    try {
+      if (MediaRecorder.isTypeSupported(candidate)) return candidate
+    } catch {}
+  }
+
+  return undefined
+}
+
+function normaliseAudioContentType(value: string): string {
+  const raw = String(value || '').toLowerCase().trim()
+  const base = raw.split(';')[0]?.trim() || ''
+
+  if (!base) return 'audio/webm'
+  if (base.includes('webm')) return 'audio/webm'
+  if (base.includes('mp4') || base.includes('m4a') || base.includes('aac')) return 'audio/mp4'
+  if (base.includes('mpeg') || base.includes('mp3')) return 'audio/mpeg'
+  if (base.includes('ogg') || base.includes('opus')) return 'audio/ogg'
+  return 'audio/webm'
+}
+
+function getVoiceErrorMessage(error: unknown, fallback = 'Voice transcription failed.'): string {
+  const message = error instanceof Error ? error.message : String(error || '')
+  if (/did not match the expected pattern|pattern|mime|format|unsupported/i.test(message)) {
+    return 'Unsupported browser audio format — please try Chrome or Edge and speak again.'
+  }
+  return message || fallback
+}
+
 export default function ChatPageClient() {
   const router = useRouter()
   const { user, token, loading: authLoading } = useAuth()
@@ -127,9 +166,26 @@ export default function ChatPageClient() {
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
-      const recorder = new MediaRecorder(stream, { mimeType })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      })
+
+      const preferredMimeType = pickRecorderMimeType()
+      let recorder: MediaRecorder
+
+      try {
+        recorder = preferredMimeType
+          ? new MediaRecorder(stream, { mimeType: preferredMimeType })
+          : new MediaRecorder(stream)
+      } catch {
+        recorder = new MediaRecorder(stream)
+      }
+
+      const requestContentType = normaliseAudioContentType(recorder.mimeType || preferredMimeType || 'audio/webm')
       const chunks: Blob[] = []
 
       recorder.ondataavailable = e => {
@@ -138,28 +194,45 @@ export default function ChatPageClient() {
 
       recorder.onstop = async () => {
         stream.getTracks().forEach(t => t.stop())
-        const blob = new Blob(chunks, { type: mimeType })
+        const blob = new Blob(chunks, { type: requestContentType })
         try {
           const res = await fetch('/api/transcribe', {
             method: 'POST',
             headers: {
-              'Content-Type': mimeType,
+              'Content-Type': requestContentType,
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
             body: blob,
           })
-          const { transcript } = await res.json()
-          if (transcript) setInput(transcript)
-        } catch {
-          // voice transcription failed silently
+          const data = await res.json() as { transcript?: string; error?: string }
+          if (!res.ok) throw new Error(data.error ?? 'Voice transcription failed.')
+          if (data.transcript) setInput(data.transcript)
+        } catch (error) {
+          setMessages(prev => [
+            ...prev,
+            {
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: getVoiceErrorMessage(error),
+              timestamp: new Date(),
+            },
+          ])
         }
       }
 
       recorder.start()
       mediaRecorderRef.current = recorder
       setIsRecording(true)
-    } catch {
-      // microphone access denied — silent fail
+    } catch (error) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: getVoiceErrorMessage(error, 'I could not access your microphone. Please try again.'),
+          timestamp: new Date(),
+        },
+      ])
     }
   }, [isRecording, token])
 

@@ -613,7 +613,7 @@ export default function JarvisPageClient() {
         setCallStatus('thinking');
         setVoiceCaption('Transcribing with Deepgram…');
 
-        try {
+          try {
           const res = await fetch('/api/transcribe', {
             method: 'POST',
             headers: {
@@ -632,7 +632,7 @@ export default function JarvisPageClient() {
           setVoiceCaption(`You said: “${transcript.slice(0, 72)}${transcript.length > 72 ? '…' : ''}”`);
           await sendMessage(transcript, { shouldSpeak: true });
         } catch (error) {
-          showToast(error instanceof Error ? error.message : 'Voice transcription failed.');
+          showToast(getVoiceErrorMessage(error));
           setVoiceCaption('Mic ready — please try again.');
           setCallStatus(callModeRef.current ? 'ready' : 'idle');
           if (callModeRef.current && handsFreeMode) queueHandsFreeListeningRef.current?.();
@@ -652,10 +652,7 @@ export default function JarvisPageClient() {
         });
       }
     } catch (error) {
-      const message = error instanceof Error && /pattern|mime|format/i.test(error.message)
-        ? 'Your browser audio format is not supported here yet — please try Chrome or Edge.'
-        : 'Could not start recording.';
-      showToast(message);
+      showToast(getVoiceErrorMessage(error, 'Could not start recording.'));
       setCallStatus(callModeRef.current ? 'ready' : 'idle');
     }
   }, [callStatus, cleanupSilenceDetection, ensureMicrophone, handsFreeMode, isLoading, isRecording, sendMessage, showToast, startSilenceDetection, token]);
@@ -1082,4 +1079,12 @@ function normaliseAudioContentType(value: string): string {
   if (base.includes('mpeg') || base.includes('mp3')) return 'audio/mpeg';
   if (base.includes('ogg') || base.includes('opus')) return 'audio/ogg';
   return 'audio/webm';
+}
+
+function getVoiceErrorMessage(error: unknown, fallback = 'Voice transcription failed.'): string {
+  const message = error instanceof Error ? error.message : String(error || '');
+  if (/did not match the expected pattern|pattern|mime|format|unsupported/i.test(message)) {
+    return 'Unsupported browser audio format — please try Chrome or Edge and speak again.';
+  }
+  return message || fallback;
 }
