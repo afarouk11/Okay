@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/useAuth';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -58,13 +59,20 @@ Your role:
 - Cover all A-Level topics: Algebra, Calculus, Trigonometry, Statistics, Mechanics, and Further Maths.`;
 
 const PAGE_MAP = [
-  { keywords: ['past paper', 'past papers', 'exam paper'], url: '/#past-papers', label: 'Past Papers' },
-  { keywords: ['flashcard', 'flashcards'], url: '/#flashcards', label: 'Flashcards' },
-  { keywords: ['lesson', 'lessons', 'topic list'], url: '/lessons.html', label: 'Lessons' },
-  { keywords: ['question', 'questions', 'practice question', 'quiz'], url: '/questions.html', label: 'Practice Questions' },
-  { keywords: ['pricing', 'price', 'upgrade', 'subscribe', 'plan', 'plans'], url: '/pricing.html', label: 'Pricing' },
-  { keywords: ['progress', 'analytics', 'my stats', 'dashboard'], url: '/', label: 'Dashboard' },
-  { keywords: ['contact', 'support', 'help'], url: '/contact.html', label: 'Contact & Support' },
+  { keywords: ['past paper', 'past papers', 'exam paper'], url: '/papers', label: 'Past Papers' },
+  { keywords: ['flashcard', 'flashcards'], url: '/study?tab=flashcards', label: 'Flashcards & Revision' },
+  { keywords: ['lesson', 'lessons', 'topic list'], url: '/lessons', label: 'Lessons' },
+  { keywords: ['question', 'questions', 'practice question', 'quiz'], url: '/questions', label: 'Practice Questions' },
+  { keywords: ['formula', 'formula sheet', 'calculator', 'glossary'], url: '/formulas', label: 'Reference Tools' },
+  { keywords: ['resource', 'resources', 'mark scheme', 'markscheme'], url: '/resources', label: 'Resources' },
+  { keywords: ['work checker', 'essay', 'check my working'], url: '/work-checker', label: 'Work Checker' },
+  { keywords: ['exam sim', 'exam simulator', 'mock exam', 'timed exam'], url: '/exam-sim', label: 'Exam Simulator' },
+  { keywords: ['mind map', 'mindmap'], url: '/mindmap', label: 'Mind Map' },
+  { keywords: ['wellbeing', 'well being', 'pomodoro', 'focus timer'], url: '/wellbeing', label: 'Wellbeing' },
+  { keywords: ['pricing', 'price', 'upgrade', 'subscribe', 'plan', 'plans'], url: '/pricing', label: 'Pricing' },
+  { keywords: ['progress', 'analytics', 'my stats', 'dashboard'], url: '/dashboard', label: 'Dashboard' },
+  { keywords: ['contact', 'support', 'help'], url: '/contact', label: 'Contact & Support' },
+  { keywords: ['note', 'notes', 'revision note'], url: '/notes', label: 'Notes' },
 ];
 
 const NAV_TRIGGER = /\b(take me|go to|navigate to|open|show me|bring me|switch to)\b/i;
@@ -106,6 +114,7 @@ function makeId(): string {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function JarvisPageClient() {
+  const router = useRouter();
   const { token, loading } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -178,7 +187,7 @@ export default function JarvisPageClient() {
       const replyMsg: ChatMessage = { id: makeId(), role: 'assistant', content: `Sure! Taking you to **${navTarget.label}** now… 🚀`, time: formatTime() };
       setMessages(m => [...m, navMsg, replyMsg]);
       setInput('');
-      setTimeout(() => { window.location.href = navTarget.url; }, 900);
+      setTimeout(() => { router.push(navTarget.url); }, 900);
       return;
     }
 
@@ -224,7 +233,7 @@ export default function JarvisPageClient() {
       setIsLoading(false);
       inputRef.current?.focus();
     }
-  }, [input, isLoading, token, effectiveSystem, showToast]);
+  }, [input, isLoading, token, effectiveSystem, showToast, router]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {

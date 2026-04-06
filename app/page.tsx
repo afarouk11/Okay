@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
+import { redirect } from 'next/navigation'
 import HomeClient from './HomeClient'
+import { getLegacyRoute } from '@/lib/legacyRoutes'
 
 const FAQ_ITEMS = [
   {
@@ -91,7 +93,18 @@ export const metadata: Metadata = {
   },
 }
 
-export default function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ nav?: string }>
+}) {
+  const params = searchParams ? await searchParams : undefined
+  const navTarget = params?.nav ? getLegacyRoute(params.nav) : null
+
+  if (navTarget?.kind === 'redirect') {
+    redirect(navTarget.destination)
+  }
+
   return (
     <>
       <Script
