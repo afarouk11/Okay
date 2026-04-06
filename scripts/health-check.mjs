@@ -1,28 +1,30 @@
-'use strict';
+// Health Check Script with Proper Timeout Handling
 
-import fetch from 'node-fetch';
+const abortController = new AbortController();
+const timeout = 5000; // Timeout set to 5 seconds
 
-const TIMEOUT = 5000; // fetch timeout in milliseconds
+async function healthCheck() {
+    const signal = abortController.signal;
 
-const fetchWithTimeout = async (url) => {
-    return Promise.race([
-        fetch(url),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('Fetch timeout')), TIMEOUT))
-    ]);
-};
+    // Set a timeout to abort the request
+    const timeoutId = setTimeout(() => abortController.abort(), timeout);
 
-const healthCheck = async () => {
     try {
-        const response = await fetchWithTimeout('http://example.com/health');
+        const response = await fetch('https://example.com/health', { signal });
         if (!response.ok) {
-            console.error(`Error: ${response.status} - ${response.statusText}`);
-        } else {
-            const data = await response.json();
-            console.log('Health Check Response:', data);
+            throw new Error('Health check failed with status: ' + response.status);
         }
+        const data = await response.json();
+        console.log('Health check passed:', data);
     } catch (error) {
-        console.error('Fetch error:', error);
+        if (error.name === 'AbortError') {
+            console.log('Health check timed out.');
+        } else {
+            console.error('Health check error:', error);
+        }
+    } finally {
+        clearTimeout(timeoutId);
     }
-};
+}
 
 healthCheck();
