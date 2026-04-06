@@ -10,6 +10,8 @@ node_modules/
 # next.js
 /.next/
 /out/
+kids/.next/
+kids/out/
 
 # production
 /build
