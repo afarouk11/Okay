@@ -227,7 +227,7 @@ export default function HomeClient() {
             Log In
           </Link>
           <Link
-            href="/login"
+            href="/login?mode=register"
             style={{
               padding: '.45rem 1.1rem', borderRadius: 10,
               background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
@@ -284,7 +284,7 @@ export default function HomeClient() {
         {/* CTAs */}
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
           <Link
-            href="/login"
+            href="/login?mode=register"
             style={{
               padding: '.85rem 2rem', borderRadius: 12,
               background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
@@ -393,7 +393,7 @@ export default function HomeClient() {
           {FEATURES.map(({ icon, title, desc, tag }) => (
             <Link
               key={title}
-              href="/login"
+              href="/login?mode=register"
               style={{
                 background: 'rgba(18,24,33,0.8)', border: '1px solid rgba(255,255,255,0.06)',
                 borderRadius: 18, padding: '1.5rem', textDecoration: 'none', color: 'inherit',
@@ -665,7 +665,7 @@ export default function HomeClient() {
           {SUBJECTS.map(({ icon, name, level }) => (
             <Link
               key={name}
-              href="/login"
+              href="/login?mode=register"
               style={{
                 background: 'rgba(18,24,33,0.8)', border: '1px solid rgba(255,255,255,0.07)',
                 borderRadius: 16, padding: '1.25rem 1rem', textDecoration: 'none', color: 'inherit',
@@ -783,7 +783,7 @@ export default function HomeClient() {
               ))}
             </ul>
             <Link
-              href="/login"
+              href="/login?mode=register"
               style={{
                 display: 'block', textAlign: 'center', padding: '.9rem',
                 background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
@@ -1019,7 +1019,7 @@ export default function HomeClient() {
                   { href: '#features', label: 'Features' },
                   { href: '#pricing', label: 'Pricing' },
                   { href: '/login', label: 'Log In' },
-                  { href: '/login', label: 'Sign Up Free' },
+                  { href: '/login?mode=register', label: 'Sign Up Free' },
                 ].map(({ href, label }) => (
                   <a key={label} href={href} style={{ color: MUTED, fontSize: '.875rem', textDecoration: 'none', transition: '.15s' }}
                     onMouseOver={e => (e.currentTarget.style.color = '#E6EDF3')}

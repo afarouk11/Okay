@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+if (!window.location.search.includes('legacy=1')) {
+  window.location.replace('/parent' + window.location.search + window.location.hash)
+}
+</script>
 <title>Parent Dashboard — Synaptiq</title>
 <meta name="description" content="Monitor your child's A-Level Maths progress on Synaptiq. View study streaks, quiz accuracy, weekly activity and more.">
 <meta name="robots" content="noindex, nofollow">

@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<script>
+if (!window.location.search.includes('legacy=1')) {
+  window.location.replace('/jarvis' + window.location.search + window.location.hash)
+}
+</script>
 <title>J.A.R.V.I.S. — AI Maths Assistant | Synaptiq</title>
 <meta name="description" content="Talk or type with J.A.R.V.I.S., your A-Level Maths AI assistant. Voice and text chat powered by ElevenLabs and Claude.">
 <link rel="canonical" href="https://synaptiq.co.uk/jarvis">

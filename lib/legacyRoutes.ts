@@ -2,6 +2,7 @@ export type LegacyRouteResolution =
   | { kind: 'redirect'; destination: string }
 
 const REDIRECTS: Record<string, string> = {
+  index: '/',
   home: '/dashboard',
   dashboard: '/dashboard',
   tutor: '/chat',
@@ -68,8 +69,10 @@ export function getLegacyRoute(slug: string): LegacyRouteResolution | null {
   const normalized = String(slug || '').trim().toLowerCase()
   if (!normalized) return null
 
-  if (REDIRECTS[normalized]) {
-    return { kind: 'redirect', destination: REDIRECTS[normalized] }
+  const canonicalSlug = normalized.replace(/\.html?$/, '')
+
+  if (REDIRECTS[canonicalSlug]) {
+    return { kind: 'redirect', destination: REDIRECTS[canonicalSlug] }
   }
 
   return null

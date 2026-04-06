@@ -27,6 +27,13 @@ describe('getLegacyRoute', () => {
     expect(getLegacyRoute('integration-by-parts')).toEqual({ kind: 'redirect', destination: '/integration-by-parts' })
   })
 
+  it('normalizes legacy .html entrypoints to the migrated Next.js routes', () => {
+    expect(getLegacyRoute('index.html')).toEqual({ kind: 'redirect', destination: '/' })
+    expect(getLegacyRoute('pricing.html')).toEqual({ kind: 'redirect', destination: '/pricing' })
+    expect(getLegacyRoute('privacy-policy.html')).toEqual({ kind: 'redirect', destination: '/privacy' })
+    expect(getLegacyRoute('  TERMS.HTML  ')).toEqual({ kind: 'redirect', destination: '/terms' })
+  })
+
   it('returns null for unknown slugs', () => {
     expect(getLegacyRoute('definitely-not-a-real-page')).toBeNull()
   })

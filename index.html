@@ -4342,8 +4342,8 @@ button:active:not(:disabled) { transform:scale(0.97) translateY(1px) !important;
           <h4 style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:1.25rem">Company</h4>
           <div style="display:flex;flex-direction:column;gap:.75rem">
             <a onclick="nav('privacy')" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Privacy Policy</a>
-            <a href="/terms.html" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Terms of Service</a>
-            <a href="/cookies.html" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Cookie Policy</a>
+            <a href="/terms" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Terms of Service</a>
+            <a href="/cookies" style="color:var(--muted);font-size:.875rem;cursor:pointer;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Cookie Policy</a>
             <a href="mailto:hello@synaptiqai.co.uk" style="color:var(--muted);font-size:.875rem;text-decoration:none;transition:.15s" onmouseover="this.style.color='var(--white)'" onmouseout="this.style.color='var(--muted)'">Contact Us</a>
           </div>
         </div>
@@ -18218,7 +18218,7 @@ window.enterDashboard = function() {
     const footer = document.createElement('div');
     footer.id = 'app-footer';
     footer.style.cssText = 'padding:1rem 2rem;border-top:1px solid var(--border);display:flex;gap:1.5rem;flex-wrap:wrap;font-size:.75rem';
-    footer.innerHTML = '<a href="/privacy-policy.html" style="color:var(--muted);text-decoration:none">Privacy Policy</a><a href="/terms.html" style="color:var(--muted);text-decoration:none">Terms & Conditions</a><a href="/contact.html" style="color:var(--muted);text-decoration:none">Support</a><a href="/admin.html" style="color:var(--muted);text-decoration:none">Admin</a>';
+    footer.innerHTML = '<a href="/privacy" style="color:var(--muted);text-decoration:none">Privacy Policy</a><a href="/terms" style="color:var(--muted);text-decoration:none">Terms & Conditions</a><a href="/contact" style="color:var(--muted);text-decoration:none">Support</a><a href="/admin" style="color:var(--muted);text-decoration:none">Admin</a>';
     document.querySelector('.main-content')?.appendChild(footer);
   }
 };

@@ -8,9 +8,9 @@ import { createBrowserClient } from '@/lib/supabase'
 
 type Mode = 'login' | 'register'
 
-export default function LoginClient() {
+export default function LoginClient({ initialMode = 'login' }: { initialMode?: Mode }) {
   const router = useRouter()
-  const [mode, setMode] = useState<Mode>('login')
+  const [mode, setMode] = useState<Mode>(initialMode)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -27,6 +27,17 @@ export default function LoginClient() {
       if (session) router.replace('/dashboard')
     })
   }, [router])
+
+  useEffect(() => {
+    setMode(initialMode)
+  }, [initialMode])
+
+  function handleModeChange(nextMode: Mode) {
+    setMode(nextMode)
+    setError(null)
+    setSuccess(null)
+    router.replace(nextMode === 'register' ? '/login?mode=register' : '/login')
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -62,8 +73,9 @@ export default function LoginClient() {
         // Sign in immediately after registration
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
         if (signInError) {
-          setSuccess('Account created! Please sign in.')
+          setSuccess('Account created! Please sign in to Synaptiq.')
           setMode('login')
+          router.replace('/login')
         } else {
           router.replace('/dashboard')
         }
@@ -93,8 +105,8 @@ export default function LoginClient() {
             <Zap className="w-5 h-5" />
           </div>
           <div>
-            <p className="font-semibold text-lg text-foreground tracking-tight">Jarvis</p>
-            <p className="text-xs text-muted">AI Learning Platform</p>
+            <p className="font-semibold text-lg text-foreground tracking-tight">Synaptiq</p>
+            <p className="text-xs text-muted">Home of your AI tutor</p>
           </div>
         </div>
 
@@ -104,12 +116,12 @@ export default function LoginClient() {
           style={{ background: 'rgba(18,24,33,0.9)', border: '1px solid rgba(255,255,255,0.07)' }}
         >
           <h1 className="text-xl font-semibold text-foreground mb-1">
-            {mode === 'login' ? 'Welcome back' : 'Create account'}
+            {mode === 'login' ? 'Welcome back to Synaptiq' : 'Create your Synaptiq account'}
           </h1>
           <p className="text-sm text-muted mb-6">
             {mode === 'login'
-              ? 'Sign in to continue learning'
-              : 'Start your A-Level Maths journey'}
+              ? 'Sign in to open your Synaptiq dashboard'
+              : 'Start your A-Level Maths journey with Synaptiq'}
           </p>
 
           <AnimatePresence>
@@ -218,7 +230,7 @@ export default function LoginClient() {
             {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
             <button
               type="button"
-              onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(null); setSuccess(null) }}
+              onClick={() => handleModeChange(mode === 'login' ? 'register' : 'login')}
               className="text-primary hover:underline font-medium"
             >
               {mode === 'login' ? 'Sign up' : 'Sign in'}

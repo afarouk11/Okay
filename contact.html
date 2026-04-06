@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+if (!window.location.search.includes('legacy=1')) {
+  window.location.replace('/contact' + window.location.search + window.location.hash)
+}
+</script>
 <title>Contact & Support — Synaptiq</title>
 <meta name="description" content="Get in touch with the Synaptiq team. Support, school partnerships, and general enquiries for our A-Level Maths AI tutoring platform.">
 <meta name="robots" content="index, follow">
