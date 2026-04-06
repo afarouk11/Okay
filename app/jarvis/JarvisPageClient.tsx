@@ -11,6 +11,18 @@ import { useAuth } from '@/lib/useAuth';
 type TeachMode = 'standard' | 'guided' | 'test' | 'eli5';
 type MessageRole = 'user' | 'assistant';
 type CallStatus = 'idle' | 'ready' | 'listening' | 'thinking' | 'speaking';
+type BrowserSpeechRecognition = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  maxAlternatives: number;
+  onresult: ((event: { resultIndex?: number; results: ArrayLike<ArrayLike<{ transcript?: string }>> }) => void) | null;
+  onerror: ((event: { error?: string }) => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+};
 
 interface ChatMessage {
   id: string;
@@ -137,6 +149,7 @@ export default function JarvisPageClient() {
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const speechRecognitionRef = useRef<BrowserSpeechRecognition | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
   const discardRecordingRef = useRef(false);
@@ -202,6 +215,14 @@ export default function JarvisPageClient() {
     toastTimerRef.current = setTimeout(() => setToast(''), 5000);
   }, []);
 
+  const stopBrowserRecognition = useCallback(() => {
+    if (!speechRecognitionRef.current) return;
+    try {
+      speechRecognitionRef.current.abort();
+    } catch {}
+    speechRecognitionRef.current = null;
+  }, []);
+
   const cleanupSilenceDetection = useCallback(() => {
     if (typeof window !== 'undefined' && silenceFrameRef.current !== null) {
       window.cancelAnimationFrame(silenceFrameRef.current);
@@ -241,6 +262,7 @@ export default function JarvisPageClient() {
     discardRecordingRef.current = true;
     stopReasonRef.current = 'discard';
     cleanupSilenceDetection();
+    stopBrowserRecognition();
     if (handsFreeRestartTimerRef.current) clearTimeout(handsFreeRestartTimerRef.current);
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       try {
@@ -252,7 +274,7 @@ export default function JarvisPageClient() {
       mediaStreamRef.current.getTracks().forEach(track => track.stop());
       mediaStreamRef.current = null;
     }
-  }, [cleanupSilenceDetection]);
+  }, [cleanupSilenceDetection, stopBrowserRecognition]);
 
   const ensureMicrophone = useCallback(async (): Promise<MediaStream | null> => {
     if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia || typeof window.MediaRecorder === 'undefined') {
@@ -277,6 +299,66 @@ export default function JarvisPageClient() {
       return null;
     }
   }, [showToast]);
+
+  const captureBrowserSpeechTranscript = useCallback(async (): Promise<string | null> => {
+    const RecognitionCtor = getBrowserSpeechRecognitionCtor();
+    if (!RecognitionCtor) return null;
+
+    stopBrowserRecognition();
+
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+    }
+
+    return new Promise<string | null>((resolve, reject) => {
+      let settled = false;
+      const recognition = new RecognitionCtor();
+      speechRecognitionRef.current = recognition;
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-GB';
+      recognition.maxAlternatives = 1;
+
+      recognition.onresult = event => {
+        if (settled) return;
+        const start = event.resultIndex ?? 0;
+        const parts: string[] = [];
+        for (let i = start; i < event.results.length; i += 1) {
+          const alt = event.results[i]?.[0];
+          const transcript = typeof alt?.transcript === 'string' ? alt.transcript.trim() : '';
+          if (transcript) parts.push(transcript);
+        }
+        settled = true;
+        speechRecognitionRef.current = null;
+        try { recognition.stop(); } catch {}
+        resolve(parts.join(' ').trim() || null);
+      };
+
+      recognition.onerror = event => {
+        if (settled) return;
+        settled = true;
+        speechRecognitionRef.current = null;
+        reject(new Error(event?.error || 'Voice recognition failed.'));
+      };
+
+      recognition.onend = () => {
+        if (settled) return;
+        settled = true;
+        speechRecognitionRef.current = null;
+        resolve(null);
+      };
+
+      try {
+        recognition.start();
+      } catch (error) {
+        if (settled) return;
+        settled = true;
+        speechRecognitionRef.current = null;
+        reject(error);
+      }
+    });
+  }, [stopBrowserRecognition]);
 
   const startSilenceDetection = useCallback((stream: MediaStream, onFinished: (reason: 'silence' | 'timeout') => void) => {
     if (typeof window === 'undefined') return;
@@ -347,10 +429,11 @@ export default function JarvisPageClient() {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
       if (handsFreeRestartTimerRef.current) clearTimeout(handsFreeRestartTimerRef.current);
       stopPlayback();
+      stopBrowserRecognition();
       releaseMicrophone();
       cleanupSilenceDetection();
     };
-  }, [cleanupSilenceDetection, releaseMicrophone, stopPlayback]);
+  }, [cleanupSilenceDetection, releaseMicrophone, stopBrowserRecognition, stopPlayback]);
 
   const effectiveSystem = BASE_SYSTEM + TEACH_MODES[teachMode].suffix;
 
@@ -517,6 +600,37 @@ export default function JarvisPageClient() {
     }
   }, [input, isLoading, token, effectiveSystem, showToast, router, speakReply]);
 
+  const useBrowserSpeechFallback = useCallback(async (speakReplyAfter = true): Promise<boolean> => {
+    if (!getBrowserSpeechRecognitionCtor()) return false;
+
+    setIsRecording(true);
+    setCallStatus('listening');
+    setVoiceCaption('Listening with your browser…');
+
+    try {
+      const transcript = await captureBrowserSpeechTranscript();
+      setIsRecording(false);
+
+      if (!transcript?.trim()) {
+        setVoiceCaption('I did not catch that — try again.');
+        setCallStatus(callModeRef.current ? 'ready' : 'idle');
+        if (callModeRef.current && handsFreeMode) queueHandsFreeListeningRef.current?.();
+        return true;
+      }
+
+      const cleanTranscript = transcript.trim();
+      setVoiceCaption(`You said: “${cleanTranscript.slice(0, 72)}${cleanTranscript.length > 72 ? '…' : ''}”`);
+      await sendMessage(cleanTranscript, { shouldSpeak: speakReplyAfter });
+      return true;
+    } catch (error) {
+      setIsRecording(false);
+      showToast(getVoiceErrorMessage(error));
+      setVoiceCaption('Mic ready — please try again.');
+      setCallStatus(callModeRef.current ? 'ready' : 'idle');
+      return false;
+    }
+  }, [captureBrowserSpeechTranscript, handsFreeMode, sendMessage, showToast]);
+
   const startVoiceCall = useCallback(async () => {
     if (!token) {
       showToast('Please sign in to use voice chat.');
@@ -568,6 +682,12 @@ export default function JarvisPageClient() {
       discardRecordingRef.current = false;
       stopReasonRef.current = 'manual';
       const preferredMimeType = pickRecorderMimeType();
+
+      if (!preferredMimeType && getBrowserSpeechRecognitionCtor()) {
+        await useBrowserSpeechFallback(true);
+        return;
+      }
+
       let recorder: MediaRecorder;
 
       try {
@@ -632,10 +752,16 @@ export default function JarvisPageClient() {
           setVoiceCaption(`You said: “${transcript.slice(0, 72)}${transcript.length > 72 ? '…' : ''}”`);
           await sendMessage(transcript, { shouldSpeak: true });
         } catch (error) {
-          showToast(getVoiceErrorMessage(error));
-          setVoiceCaption('Mic ready — please try again.');
-          setCallStatus(callModeRef.current ? 'ready' : 'idle');
-          if (callModeRef.current && handsFreeMode) queueHandsFreeListeningRef.current?.();
+          const usedBrowserFallback = shouldUseBrowserSpeechFallback(error)
+            ? await useBrowserSpeechFallback(true)
+            : false;
+
+          if (!usedBrowserFallback) {
+            showToast(getVoiceErrorMessage(error));
+            setVoiceCaption('Mic ready — please try again.');
+            setCallStatus(callModeRef.current ? 'ready' : 'idle');
+            if (callModeRef.current && handsFreeMode) queueHandsFreeListeningRef.current?.();
+          }
         }
       };
 
@@ -652,10 +778,16 @@ export default function JarvisPageClient() {
         });
       }
     } catch (error) {
-      showToast(getVoiceErrorMessage(error, 'Could not start recording.'));
-      setCallStatus(callModeRef.current ? 'ready' : 'idle');
+      const usedBrowserFallback = shouldUseBrowserSpeechFallback(error)
+        ? await useBrowserSpeechFallback(true)
+        : false;
+
+      if (!usedBrowserFallback) {
+        showToast(getVoiceErrorMessage(error, 'Could not start recording.'));
+        setCallStatus(callModeRef.current ? 'ready' : 'idle');
+      }
     }
-  }, [callStatus, cleanupSilenceDetection, ensureMicrophone, handsFreeMode, isLoading, isRecording, sendMessage, showToast, startSilenceDetection, token]);
+  }, [callStatus, cleanupSilenceDetection, ensureMicrophone, handsFreeMode, isLoading, isRecording, sendMessage, showToast, startSilenceDetection, token, useBrowserSpeechFallback]);
 
   useEffect(() => {
     queueHandsFreeListeningRef.current = () => {
@@ -1084,7 +1216,21 @@ function normaliseAudioContentType(value: string): string {
 function getVoiceErrorMessage(error: unknown, fallback = 'Voice transcription failed.'): string {
   const message = error instanceof Error ? error.message : String(error || '');
   if (/did not match the expected pattern|pattern|mime|format|unsupported/i.test(message)) {
-    return 'Unsupported browser audio format — please try Chrome or Edge and speak again.';
+    return 'Browser audio upload was rejected — switching to in-browser speech recognition should help.';
   }
   return message || fallback;
+}
+
+function shouldUseBrowserSpeechFallback(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error || '');
+  return /did not match the expected pattern|pattern|mime|format|unsupported/i.test(message);
+}
+
+function getBrowserSpeechRecognitionCtor(): (new () => BrowserSpeechRecognition) | null {
+  if (typeof window === 'undefined') return null;
+  const speechWindow = window as Window & typeof globalThis & {
+    SpeechRecognition?: new () => BrowserSpeechRecognition;
+    webkitSpeechRecognition?: new () => BrowserSpeechRecognition;
+  };
+  return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition ?? null;
 }
