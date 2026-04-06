@@ -136,6 +136,7 @@ function buildTemplates(name: string, stats: Record<string, unknown>, siteUrl: s
 
 export async function POST(request: NextRequest) {
   const siteUrl = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq.co.uk'
+  const ip = getIp(request)
 
   const body = await request.json().catch(() => ({})) as {
     to?: string | string[]
@@ -171,7 +172,6 @@ export async function POST(request: NextRequest) {
 
   // ── Contact form ──────────────────────────────────────────────────────────
   if (type === 'contact') {
-    const ip = getIp(request)
     if (isRateLimited(`${ip}:contact-email`, 5, 60 * 60_000)) {
       return NextResponse.json({ error: 'Too many requests — please try again later' }, { status: 429 })
     }
