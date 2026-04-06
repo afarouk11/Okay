@@ -89,17 +89,17 @@ export default function Sidebar() {
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="fixed left-0 top-0 h-full w-60 flex flex-col z-30"
       style={{
-        background: 'rgba(18,24,33,0.92)',
+        background: 'rgba(8,12,24,0.92)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
+        borderRight: '1px solid rgba(0,212,255,0.12)',
       }}
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-6 border-b border-white/5">
         <div
           className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
-          style={{ background: 'linear-gradient(135deg, #4F8CFF, #22C55E)' }}
+          style={{ background: 'linear-gradient(135deg, #00D4FF, #00FF9D)' }}
         >
           S
         </div>
@@ -165,7 +165,7 @@ export default function Sidebar() {
         <div className="mt-3 px-3 py-2.5 rounded-[10px] bg-white/[0.03] border border-white/5 flex items-center gap-2.5">
           <div
             className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #4F8CFF, #6C3EF4)' }}
+            style={{ background: 'linear-gradient(135deg, #D4A820, #00D4FF)' }}
           >
             <Zap className="w-3.5 h-3.5" />
           </div>

@@ -66,10 +66,10 @@ function SiteFooter() {
   return (
     <footer
       className="border-t py-5"
-      style={{ borderColor: 'rgba(255,255,255,0.05)', background: 'rgba(11,15,20,0.6)' }}
+      style={{ borderColor: 'rgba(0,212,255,0.12)', background: 'rgba(3,5,13,0.72)', backdropFilter: 'blur(12px)' }}
     >
       <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-3">
-        <span className="text-xs" style={{ color: '#6B7394' }}>© {new Date().getFullYear()} Synaptiq Ltd</span>
+        <span className="text-xs" style={{ color: '#5A7499' }}>© {new Date().getFullYear()} Synaptiq Ltd</span>
         <nav className="flex flex-wrap gap-4">
           {[
             { href: '/privacy',  label: 'Privacy'  },
@@ -81,7 +81,7 @@ function SiteFooter() {
               key={href}
               href={href}
               className="text-xs transition-colors hover:text-white"
-              style={{ color: '#6B7394' }}
+              style={{ color: '#5A7499' }}
             >
               {label}
             </Link>

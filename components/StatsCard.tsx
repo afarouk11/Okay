@@ -15,10 +15,10 @@ interface StatsCardProps {
 }
 
 const colorMap = {
-  blue:   { bg: 'rgba(79,140,255,0.1)',  border: 'rgba(79,140,255,0.2)',  text: '#4F8CFF'  },
-  green:  { bg: 'rgba(34,197,94,0.1)',   border: 'rgba(34,197,94,0.2)',   text: '#22C55E'  },
-  purple: { bg: 'rgba(139,92,246,0.1)',  border: 'rgba(139,92,246,0.2)',  text: '#8B5CF6'  },
-  orange: { bg: 'rgba(249,115,22,0.1)',  border: 'rgba(249,115,22,0.2)',  text: '#F97316'  },
+  blue:   { bg: 'rgba(0,212,255,0.10)',  border: 'rgba(0,212,255,0.24)',  text: '#00D4FF'  },
+  green:  { bg: 'rgba(0,255,157,0.10)',  border: 'rgba(0,255,157,0.24)',  text: '#00FF9D'  },
+  purple: { bg: 'rgba(176,96,255,0.10)', border: 'rgba(176,96,255,0.24)', text: '#B060FF'  },
+  orange: { bg: 'rgba(255,140,0,0.10)',  border: 'rgba(255,140,0,0.24)',  text: '#FF8C00'  },
 }
 
 export default function StatsCard({
@@ -40,10 +40,10 @@ export default function StatsCard({
       whileHover={{ y: -2, transition: { duration: 0.2 } }}
       className="rounded-card p-5 flex flex-col gap-3 cursor-default"
       style={{
-        background: 'rgba(18,24,33,0.8)',
+        background: 'rgba(13,18,32,0.82)',
         backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+        border: '1px solid rgba(0,212,255,0.12)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
       }}
     >
       {/* Icon */}

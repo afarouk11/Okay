@@ -9,13 +9,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: '#0B0F14',
-        card: '#121821',
-        primary: '#4F8CFF',
-        accent: '#22C55E',
-        foreground: '#E6EDF3',
-        muted: '#9AA4AF',
-        border: 'rgba(255,255,255,0.07)',
+        background: '#03050D',
+        card: '#0D1220',
+        primary: '#00D4FF',
+        accent: '#00FF9D',
+        foreground: '#E8F0FF',
+        muted: '#5A7499',
+        border: 'rgba(0,212,255,0.12)',
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
@@ -25,8 +25,8 @@ const config: Config = {
         lg: '12px',
       },
       boxShadow: {
-        card: '0 4px 24px rgba(0,0,0,0.4)',
-        glow: '0 0 20px rgba(79,140,255,0.15)',
+        card: '0 8px 32px rgba(0,0,0,0.6)',
+        glow: '0 0 40px rgba(0,212,255,0.12)',
       },
       animation: {
         'pulse-slow': 'pulse 3s ease-in-out infinite',

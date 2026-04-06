@@ -6,8 +6,8 @@ import Link from 'next/link'
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const GOLD = '#C9A84C'
-const MUTED = '#6B7394'
-const BG = '#0B0F14'
+const MUTED = '#5A7499'
+const BG = '#03050D'
 
 const TOPICS = [
   'Differentiation', 'Integration', 'Binomial Expansion', 'Normal Distribution',
@@ -31,9 +31,9 @@ const FEATURES = [
 
 const TESTIMONIALS = [
   { initial: 'E', color: '#C9A84C', secondColor: '#8B6914', name: 'Emily R.', detail: 'Year 13 · AQA A-Level Maths · Now studying Engineering at Bath', borderColor: '#C9A84C', text: 'I went from a D to a B in Pure Maths in just 6 weeks. The AI shows full working exactly like the mark scheme — I finally understood why I kept losing marks. Differentiation clicked on day 3.' },
-  { initial: 'J', color: '#4F8CFF', secondColor: '#1d4ed8', name: 'Jake T.', detail: 'Year 12 · Edexcel A-Level Maths · Predicted A*', borderColor: '#4F8CFF', text: 'Uploading the Edexcel mark scheme was a game changer. Now when I ask about integration by parts, it explains exactly how Edexcel awards the method marks. I got full marks on my mock.' },
+  { initial: 'J', color: '#00D4FF', secondColor: '#0ea5e9', name: 'Jake T.', detail: 'Year 12 · Edexcel A-Level Maths · Predicted A*', borderColor: '#00D4FF', text: 'Uploading the Edexcel mark scheme was a game changer. Now when I ask about integration by parts, it explains exactly how Edexcel awards the method marks. I got full marks on my mock.' },
   { initial: 'A', color: '#A78BFA', secondColor: '#7c3aed', name: 'Aisha M.', detail: 'Year 13 · OCR A-Level Maths · Grade improved from C to A', borderColor: '#A78BFA', text: 'The chapter navigator is perfect. I can jump to any topic and Synaptiq walks through the theory, shows worked examples, then gives me questions to try. It\'s like a private tutor but 24/7.' },
-  { initial: 'M', color: '#4ADE80', secondColor: '#15803d', name: 'Marcus W.', detail: 'Year 12 · AQA A-Level Maths · Dyscalculia support user', borderColor: '#4ADE80', text: 'As someone with dyscalculia, I always struggled with maths. The visual number line and colour-coded working in dyscalculia mode made everything so much clearer. First time I\'ve actually enjoyed revision.' },
+  { initial: 'M', color: '#00FF9D', secondColor: '#0f766e', name: 'Marcus W.', detail: 'Year 12 · AQA A-Level Maths · Dyscalculia support user', borderColor: '#00FF9D', text: 'As someone with dyscalculia, I always struggled with maths. The visual number line and colour-coded working in dyscalculia mode made everything so much clearer. First time I\'ve actually enjoyed revision.' },
   { initial: 'P', color: '#f97316', secondColor: '#c2410c', name: 'Patricia J.', detail: 'Parent · Daughter in Year 13 · Edexcel Maths', borderColor: '#f97316', text: 'My daughter was really struggling with Statistics. Since using Synaptiq she\'s gone from barely passing to getting 78% on her last test. The progress tracking lets me see exactly what she\'s been working on.' },
   { initial: 'S', color: '#ec4899', secondColor: '#9d174d', name: 'Sophie L.', detail: 'Year 13 · OCR A-Level Maths & Further Maths', borderColor: '#ec4899', text: 'I use Synaptiq every evening before bed — ask it to explain whatever we covered in class that day. My teacher actually commented on how much better my working is. The question generator for exam practice is brilliant.' },
 ]
