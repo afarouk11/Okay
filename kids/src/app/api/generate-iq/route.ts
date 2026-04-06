@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { CLAUDE_HAIKU_MODEL } from '../../../../../lib/aiModels'
+
 export async function POST(req: Request) {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
@@ -52,7 +54,7 @@ Return ONLY the JSON array, nothing else.`
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: CLAUDE_HAIKU_MODEL,
         max_tokens: 3000,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
