@@ -2,10 +2,41 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isRateLimited, getIp } from '@/lib/rateLimit'
 import { createServiceClient } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+const ALLOWED_PLANS = new Set(['student', 'homeschool'])
+
+function getBaseUrl(request: NextRequest) {
+  const configured = process.env.APP_URL || process.env.SITE_URL || process.env.NEXT_PUBLIC_APP_URL
+  if (configured) {
+    try {
+      return new URL(configured).origin
+    } catch {
+      // fall through to request origin
+    }
+  }
+
+  return new URL(request.url).origin
+}
+
+function getSafeRedirectUrl(request: NextRequest, candidate: string | undefined, fallbackPath: string) {
+  const baseUrl = getBaseUrl(request)
+  const fallbackUrl = new URL(fallbackPath, baseUrl).toString()
+  if (!candidate) return fallbackUrl
+
+  try {
+    const parsed = new URL(candidate, baseUrl)
+    return parsed.origin === baseUrl ? parsed.toString() : null
+  } catch {
+    return null
+  }
+}
+
 async function getUser(request: NextRequest) {
   const supabase = createServiceClient()
   if (!supabase) return { user: null, supabase: null }
-  const token = request.headers.get('authorization')?.replace('Bearer ', '')
+  const token = request.headers.get('authorization')?.replace('Bearer ', '').trim()
   if (!token) return { user: null, supabase }
   const { data: { user }, error } = await supabase.auth.getUser(token)
   if (error || !user) return { user: null, supabase }
@@ -27,12 +58,15 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({})) as {
     action?: string
     plan?: string
-    email?: string
     successUrl?: string
     cancelUrl?: string
     annual?: boolean
   }
-  const { action, plan, email, successUrl, cancelUrl, annual } = body
+  const { action, plan, successUrl, cancelUrl, annual } = body
+
+  if (plan && !ALLOWED_PLANS.has(plan)) {
+    return NextResponse.json({ error: 'Invalid plan selected' }, { status: 400 })
+  }
 
   // ── Customer Portal ───────────────────────────────────────────────────────
   if (action === 'portal') {
@@ -52,7 +86,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'No Stripe customer found for this email' }, { status: 404 })
       }
 
-      const returnUrl = process.env.APP_URL || process.env.SITE_URL || 'https://synaptiq.co.uk'
+      const returnUrl = getBaseUrl(request)
       const portalRes = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
         method: 'POST',
         headers: {
@@ -84,8 +118,20 @@ export async function POST(request: NextRequest) {
 
   const priceKey = plan === 'student' && annual ? 'student_annual' : (plan || 'student')
   const priceId = prices[priceKey] || prices.student
+  const customerEmail = user.email?.toLowerCase().trim() || ''
+  const resolvedSuccessUrl = getSafeRedirectUrl(request, successUrl, '/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}')
+  const resolvedCancelUrl = getSafeRedirectUrl(request, cancelUrl, '/pricing?checkout=cancelled')
+
   if (!priceId) {
     return NextResponse.json({ error: 'Stripe price not configured for the selected plan' }, { status: 500 })
+  }
+
+  if (!customerEmail) {
+    return NextResponse.json({ error: 'No verified email found for this account' }, { status: 400 })
+  }
+
+  if (!resolvedSuccessUrl || !resolvedCancelUrl) {
+    return NextResponse.json({ error: 'Invalid redirect URL' }, { status: 400 })
   }
 
   try {
@@ -98,12 +144,12 @@ export async function POST(request: NextRequest) {
       body: new URLSearchParams({
         'payment_method_types[]': 'card',
         'mode': 'subscription',
-        'customer_email': email || '',
+        'customer_email': customerEmail,
         'line_items[0][price]': priceId,
         'line_items[0][quantity]': '1',
         'subscription_data[trial_period_days]': '7',
-        'success_url': successUrl || `${process.env.APP_URL || 'http://localhost:3000'}/?session_id={CHECKOUT_SESSION_ID}&status=success`,
-        'cancel_url': cancelUrl || `${process.env.APP_URL || 'http://localhost:3000'}/?status=cancelled`,
+        'success_url': resolvedSuccessUrl,
+        'cancel_url': resolvedCancelUrl,
       }),
     })
     const data = await r.json() as { url?: string; id?: string; error?: { message?: string } }

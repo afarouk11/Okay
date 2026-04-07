@@ -5,6 +5,9 @@ import { isRateLimited, getIp } from '@/lib/rateLimit'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function POST(request: NextRequest) {
   const ip = getIp(request)
   if (isRateLimited(`${ip}:auth`, 10, 60_000)) {
@@ -70,8 +73,8 @@ export async function POST(request: NextRequest) {
 
   if (action === 'forgot_password') {
     if (!email || !EMAIL_RE.test(email)) return NextResponse.json({ error: 'Valid email required' }, { status: 400 })
-    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://synaptiq.co.uk'
-    await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${siteUrl}/reset-password` })
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || process.env.SITE_URL || 'https://synaptiq.co.uk'
+    await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), { redirectTo: `${siteUrl}/reset-password` })
     return NextResponse.json({ success: true })
   }
 
@@ -83,6 +86,29 @@ export async function POST(request: NextRequest) {
       .select('id', { count: 'exact', head: true })
       .eq('last_active', today)
     return NextResponse.json({ count: count ?? 0, date: today })
+  }
+
+  if (action === 'delete_account') {
+    const token = request.headers.get('authorization')?.replace('Bearer ', '').trim()
+    if (!token) return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+
+    const { data: { user }, error } = await supabase.auth.getUser(token)
+    if (error || !user) {
+      return NextResponse.json({ error: 'Invalid or expired session' }, { status: 401 })
+    }
+
+    const tables = ['activity_log', 'notes', 'progress', 'chat_history', 'flashcards', 'mistakes']
+    for (const table of tables) {
+      await supabase.from(table).delete().eq('user_id', user.id)
+    }
+    await supabase.from('profiles').delete().eq('id', user.id)
+
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id)
+    if (deleteError) {
+      return NextResponse.json({ error: deleteError.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
   }
 
   if (action === 'parent_view') {

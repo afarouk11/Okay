@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'
 import { useAuth } from '@/lib/useAuth'
+import { createBrowserClient } from '@/lib/supabase'
 
 type ProfileData = {
   name: string | null
@@ -54,6 +55,7 @@ export default function SettingsClient() {
   const [profileLoading, setProfileLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [savedField, setSavedField] = useState<string | null>(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
 
   // Editable text fields
   const [name, setName] = useState('')
@@ -154,6 +156,41 @@ export default function SettingsClient() {
     await patchProfile({ [key]: next }, key)
   }, [patchProfile])
 
+  const handleDeleteAccount = useCallback(async () => {
+    if (!token || deleteBusy) return
+
+    const confirmed = window.confirm(
+      'Are you sure you want to permanently delete your account and all saved data? This cannot be undone.',
+    )
+    if (!confirmed) return
+
+    setDeleteBusy(true)
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ action: 'delete_account' }),
+      })
+      const data = await res.json().catch(() => ({})) as { error?: string }
+      if (!res.ok) {
+        throw new Error(data.error || 'Unable to delete your account right now.')
+      }
+
+      const supabase = createBrowserClient()
+      if (supabase) {
+        await supabase.auth.signOut()
+      }
+      router.replace('/login?deleted=1')
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Unable to delete your account right now.')
+    } finally {
+      setDeleteBusy(false)
+    }
+  }, [deleteBusy, router, token])
+
   if (authLoading || profileLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center" style={{ background: '#0B0F14' }}>
@@ -167,6 +204,8 @@ export default function SettingsClient() {
   const EXAM_BOARDS = ['AQA', 'Edexcel', 'OCR', 'WJEC', 'Eduqas', 'MEI']
   const YEAR_GROUPS = ['Year 12', 'Year 13', 'Private candidate', 'Other']
   const TARGET_GRADES = ['A*', 'A', 'B', 'C', 'D', 'E']
+  const isPaidPlan = profile?.plan === 'student' || profile?.plan === 'homeschool'
+  const currentPlanLabel = profile?.plan === 'homeschool' ? 'School' : profile?.plan === 'student' ? 'Student' : 'Free'
 
   return (
     <div className="flex min-h-screen" style={{ background: '#0B0F14' }}>
@@ -318,15 +357,15 @@ export default function SettingsClient() {
               <span
                 className="text-xs font-semibold px-2 py-0.5 rounded-full capitalize"
                 style={{
-                  background: profile?.plan === 'homeschool' ? 'rgba(79,140,255,0.12)' : 'rgba(154,164,175,0.1)',
-                  color: profile?.plan === 'homeschool' ? '#4F8CFF' : '#9AA4AF',
-                  border: profile?.plan === 'homeschool' ? '1px solid rgba(79,140,255,0.25)' : '1px solid rgba(154,164,175,0.15)',
+                  background: isPaidPlan ? 'rgba(79,140,255,0.12)' : 'rgba(154,164,175,0.1)',
+                  color: isPaidPlan ? '#4F8CFF' : '#9AA4AF',
+                  border: isPaidPlan ? '1px solid rgba(79,140,255,0.25)' : '1px solid rgba(154,164,175,0.15)',
                 }}
               >
-                {profile?.plan === 'homeschool' ? 'Student' : 'Free'}
+                {currentPlanLabel}
               </span>
             </SettingRow>
-            {profile?.plan !== 'homeschool' && (
+            {!isPaidPlan && (
               <SettingRow label="">
                 <Link
                   href="/pricing"
@@ -351,22 +390,19 @@ export default function SettingsClient() {
               <p className="text-xs text-muted mt-0.5">Permanently delete your account and all data</p>
             </div>
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => {
-                if (window.confirm('Are you sure you want to permanently delete your account? This cannot be undone.')) {
-                  // TODO: wire to delete account API
-                  alert('Please contact support to delete your account.')
-                }
-              }}
-              className="px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+              whileHover={{ scale: deleteBusy ? 1 : 1.02 }}
+              whileTap={{ scale: deleteBusy ? 1 : 0.97 }}
+              onClick={handleDeleteAccount}
+              disabled={deleteBusy}
+              className="px-3 py-2 rounded-lg text-xs font-medium transition-colors inline-flex items-center gap-2"
               style={{
                 background: 'rgba(239,68,68,0.1)',
                 border: '1px solid rgba(239,68,68,0.25)',
                 color: '#ef4444',
+                opacity: deleteBusy ? 0.7 : 1,
               }}
             >
-              Delete
+              {deleteBusy ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Deleting…</> : 'Delete'}
             </motion.button>
           </motion.div>
         </main>

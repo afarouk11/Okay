@@ -38,6 +38,17 @@ export default function ResetPasswordClient() {
     return () => subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    if (sessionReady) return
+
+    const timeoutId = window.setTimeout(() => {
+      setStatus(current => current === 'idle' ? 'invalid' : current)
+      setErrorMsg(current => current ?? 'Reset link invalid or expired. Please request a new password reset email.')
+    }, 15000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [sessionReady])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setErrorMsg(null)

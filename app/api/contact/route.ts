@@ -13,6 +13,9 @@ const CONTACT_CATEGORIES = [
   'Other',
 ]
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 function htmlEscape(str: string) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -40,8 +43,13 @@ export async function POST(request: NextRequest) {
   const resendKey = process.env.RESEND_API_KEY
 
   if (!resendKey) {
-    console.log('[contact] RESEND_API_KEY not set. Would have sent:', { name, email, safeCategory, message })
-    return NextResponse.json({ success: true, note: 'RESEND_API_KEY not configured — email not sent' })
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[contact] RESEND_API_KEY not set. Contact form delivery is disabled.')
+    }
+    return NextResponse.json(
+      { error: 'Email service is not configured right now. Please try again later.' },
+      { status: 503 },
+    )
   }
 
   const html = `
