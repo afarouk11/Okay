@@ -252,15 +252,10 @@ export default async function handler(req, res) {
       if (authErr) return res.status(401).json({ error: 'Invalid token' });
       // Fetch name + email before deleting for goodbye email
       const { data: delProfile } = await supabase.from('profiles').select('name, email').eq('id', authData.user.id).single();
-      // Delete all user data, then auth user
-      await supabase.from('activity_log').delete().eq('user_id', authData.user.id);
-      await supabase.from('notes').delete().eq('user_id', authData.user.id);
-      await supabase.from('progress').delete().eq('user_id', authData.user.id);
-      await supabase.from('chat_history').delete().eq('user_id', authData.user.id);
-      await supabase.from('flashcards').delete().eq('user_id', authData.user.id);
-      await supabase.from('mistakes').delete().eq('user_id', authData.user.id);
-      await supabase.from('profiles').delete().eq('id', authData.user.id);
-      await supabase.auth.admin.deleteUser(authData.user.id);
+      const { error: profileDeleteError } = await supabase.from('profiles').delete().eq('id', authData.user.id);
+      if (profileDeleteError) return res.status(500).json({ error: profileDeleteError.message });
+      const { error: authDeleteError } = await supabase.auth.admin.deleteUser(authData.user.id);
+      if (authDeleteError) return res.status(500).json({ error: authDeleteError.message });
       // Goodbye email (non-blocking, sent after deletion)
       if (delProfile?.email) sendEmail(delProfile.email, delProfile.name || 'there', 'goodbye');
       return res.status(200).json({ success: true });

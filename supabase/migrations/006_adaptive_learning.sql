@@ -2,6 +2,8 @@
 -- Adds spaced repetition (SM-2), mastery tracking, and learning profiles.
 -- Run in Supabase SQL Editor or via: supabase db push
 
+create extension if not exists "pgcrypto";
+
 -- ── learning_profile column on profiles ──────────────────────────────────────
 -- Stores derived teaching preferences inferred from behaviour:
 --   { preferred_pace: "slow"|"normal"|"fast",
@@ -14,7 +16,7 @@ alter table public.profiles
 -- One row per (user, topic). Tracks SM-2 spaced-repetition state and a
 -- 0-5 mastery level aligned with Bloom's taxonomy tiers.
 create table if not exists public.topic_mastery (
-  id                uuid    primary key default uuid_generate_v4(),
+  id                uuid    primary key default gen_random_uuid(),
   user_id           uuid    not null references public.profiles(id) on delete cascade,
   topic             text    not null,
   module            text,                         -- 'Pure 1' | 'Pure 2' | 'Statistics' | 'Mechanics'
@@ -43,6 +45,9 @@ create table if not exists public.topic_mastery (
 
 alter table public.topic_mastery enable row level security;
 
+drop policy if exists "tm_select_own" on public.topic_mastery;
+drop policy if exists "tm_insert_own" on public.topic_mastery;
+drop policy if exists "tm_update_own" on public.topic_mastery;
 create policy "tm_select_own" on public.topic_mastery
   for select using (auth.uid() = user_id);
 
@@ -59,6 +64,7 @@ create index if not exists tm_review_date_idx      on public.topic_mastery(user_
 create index if not exists tm_mastery_level_idx    on public.topic_mastery(user_id, mastery_level);
 
 -- Keep updated_at current automatically
+drop trigger if exists topic_mastery_updated_at on public.topic_mastery;
 create trigger topic_mastery_updated_at
   before update on public.topic_mastery
   for each row execute function public.set_updated_at();

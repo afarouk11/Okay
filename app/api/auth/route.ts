@@ -97,11 +97,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid or expired session' }, { status: 401 })
     }
 
-    const tables = ['activity_log', 'notes', 'progress', 'chat_history', 'flashcards', 'mistakes']
-    for (const table of tables) {
-      await supabase.from(table).delete().eq('user_id', user.id)
+    const { error: profileDeleteError } = await supabase.from('profiles').delete().eq('id', user.id)
+    if (profileDeleteError) {
+      return NextResponse.json({ error: profileDeleteError.message }, { status: 500 })
     }
-    await supabase.from('profiles').delete().eq('id', user.id)
 
     const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id)
     if (deleteError) {

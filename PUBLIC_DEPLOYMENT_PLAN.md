@@ -8,6 +8,7 @@ The site is already on **Next.js 15** with the App Router, public marketing page
 
 - Hardened `app/api/stripe/route.ts` with authenticated checkout email usage and same-origin redirect validation.
 - Hardened `app/api/admin/route.ts` with timing-safe admin key comparison.
+- Added `supabase/migrations/010_harden_rls_policies.sql` to lock user tables to the owning account and keep admin/webhook tables service-role only.
 - Changed contact/email endpoints to fail clearly when email delivery is not configured.
 - Wired the Settings page to a real `delete_account` action.
 - Wired the Pricing page to launch live checkout sessions instead of only linking back to the dashboard.
@@ -35,7 +36,8 @@ The site is already on **Next.js 15** with the App Router, public marketing page
   - `SITE_URL` / `APP_URL`
   - `INTERNAL_API_KEY`
   - `ADMIN_SECRET_KEY`
-- [ ] Confirm Supabase RLS policies are enabled on every user table.
+- [x] Added a repo migration to enable and harden RLS on the user-owned Supabase tables.
+- [ ] Apply the latest Supabase migrations / SQL in the production project.
 - [ ] Restrict admin access to trusted operators only.
 
 ### 2. Product functionality
