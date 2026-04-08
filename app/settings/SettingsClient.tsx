@@ -394,13 +394,8 @@ export default function SettingsClient() {
               whileTap={{ scale: deleteBusy ? 1 : 0.97 }}
               onClick={handleDeleteAccount}
               disabled={deleteBusy}
-              className="px-3 py-2 rounded-lg text-xs font-medium transition-colors inline-flex items-center gap-2"
-              style={{
-                background: 'rgba(239,68,68,0.1)',
-                border: '1px solid rgba(239,68,68,0.25)',
-                color: '#ef4444',
-                opacity: deleteBusy ? 0.7 : 1,
-              }}
+              className="btn btn-danger text-xs font-medium inline-flex items-center gap-2 px-3 py-2"
+              aria-label="Delete account permanently"
             >
               {deleteBusy ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Deleting…</> : 'Delete'}
             </motion.button>
@@ -462,7 +457,18 @@ function ToggleRow({
   return (
     <div
       className="flex items-center justify-between px-5 py-3.5 group hover:bg-white/[0.02] transition-colors cursor-pointer"
+      role="switch"
+      aria-checked={value}
+      aria-label={label}
+      tabIndex={0}
       onClick={onToggle}
+      onKeyDown={e => {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          onToggle();
+        }
+      }}
+      style={{ outline: 'none' }}
     >
       <div>
         <p className="text-sm text-muted group-hover:text-foreground transition-colors">{label}</p>
@@ -483,12 +489,17 @@ function ToggleRow({
         </AnimatePresence>
         <div
           className="relative w-9 h-5 rounded-full transition-colors flex-shrink-0"
-          style={{ background: value ? '#4F8CFF' : 'rgba(255,255,255,0.1)' }}
+          style={{
+            background: value ? '#4F8CFF' : 'rgba(255,255,255,0.1)',
+            boxShadow: value ? '0 0 0 2px #4F8CFF44' : undefined,
+            outline: 'none',
+          }}
         >
           <motion.div
             className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm"
             animate={{ left: value ? '18px' : '2px' }}
             transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+            style={{ boxShadow: value ? '0 0 0 2px #4F8CFF44' : undefined }}
           />
         </div>
       </div>

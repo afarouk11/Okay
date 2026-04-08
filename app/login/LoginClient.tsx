@@ -207,6 +207,11 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              {mode === 'login' && (
+                <div className="mt-2 text-right">
+                  <a href="/reset-password" className="text-xs text-primary hover:underline">Forgot password?</a>
+                </div>
+              )}
             </div>
 
             <motion.button
