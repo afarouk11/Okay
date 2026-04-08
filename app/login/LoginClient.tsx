@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Zap, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
@@ -209,7 +210,7 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
               </div>
               {mode === 'login' && (
                 <div className="mt-2 text-right">
-                  <a href="/reset-password" className="text-xs text-primary hover:underline">Forgot password?</a>
+                  <Link href="/reset-password" className="text-xs text-primary hover:underline">Forgot password?</Link>
                 </div>
               )}
             </div>
