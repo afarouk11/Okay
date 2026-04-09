@@ -7,6 +7,7 @@ import OrbErrorBoundary from '@/components/MathsJarvis/OrbErrorBoundary';
 import { useRouter } from 'next/navigation';
 import { Mic, MicOff, PhoneCall, PhoneOff, Repeat2, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '@/lib/useAuth';
+import katex from 'katex';
 
 const MathsJarvisOrb = dynamic(() => import('@/components/MathsJarvis/MathsJarvisOrb'), { ssr: false });
 
@@ -570,9 +571,10 @@ export default function JarvisPageClient() {
           systemPrompt: effectiveSystem,
         }),
       });
-      const data = await r.json() as { response?: string; error?: string; code?: string };
 
+      // Error responses are still JSON
       if (!r.ok) {
+        const data = await r.json() as { error?: string; code?: string };
         if (data.code === 'TRIAL_LIMIT') {
           setMessages(m => [...m, { id: makeId(), role: 'assistant', content: "⚠️ You've reached your daily message limit. Upgrade to **Pro** to continue!", time: formatTime() }]);
         } else {
@@ -583,12 +585,29 @@ export default function JarvisPageClient() {
         return;
       }
 
-      const reply = data.response ?? '';
-      setMessages(m => [...m, { id: makeId(), role: 'assistant', content: reply, time: formatTime() }]);
-      historyRef.current.push({ role: 'assistant', content: reply });
+      // Stream the response, updating the assistant bubble incrementally
+      const assistantId = makeId();
+      setMessages(m => [...m, { id: assistantId, role: 'assistant', content: '', time: formatTime() }]);
 
-      if ((options?.shouldSpeak ?? callModeRef.current) && reply) {
-        void speakReply(reply);
+      const reader = r.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullReply = '';
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          fullReply += decoder.decode(value, { stream: true });
+          const snapshot = fullReply;
+          setMessages(m => m.map(msg => msg.id === assistantId ? { ...msg, content: snapshot } : msg));
+        }
+        fullReply += decoder.decode();
+      }
+
+      historyRef.current.push({ role: 'assistant', content: fullReply });
+
+      if ((options?.shouldSpeak ?? callModeRef.current) && fullReply) {
+        void speakReply(fullReply);
       } else if (callModeRef.current) {
         setVoiceCaption('Mic ready — your turn.');
         setCallStatus('ready');
@@ -972,7 +991,7 @@ export default function JarvisPageClient() {
               fallback={<div className={`orb ${isRecording ? 'listening' : callStatus === 'speaking' ? 'speaking' : (isLoading || callStatus === 'thinking') ? 'thinking' : ''}`} role="img" aria-label="J.A.R.V.I.S. avatar" />}
             >
               <MathsJarvisOrb
-                state={isRecording ? 'LISTENING' : callStatus === 'speaking' ? 'CHATTING' : (isLoading || callStatus === 'thinking') ? 'THINKING' : 'LISTENING'}
+                state={isRecording ? 'LISTENING' : callStatus === 'speaking' ? 'CHATTING' : 'THINKING'}
               />
             </OrbErrorBoundary>
             <p className="orb-status">{orbStatusText}</p>
@@ -1155,28 +1174,74 @@ export default function JarvisPageClient() {
   );
 }
 
+// ── LaTeX pre-pass ────────────────────────────────────────────────────────────
+// Extract all LaTeX spans before sanitize runs, render via KaTeX, then restore.
+
+function renderLatexPrepass(raw: string): { text: string; map: Map<string, string> } {
+  const map = new Map<string, string>();
+  let idx = 0;
+
+  const replace = (source: string, expr: string, displayMode: boolean): string => {
+    const key = `\x00KATEX${idx++}\x00`;
+    try {
+      map.set(key, katex.renderToString(expr, {
+        displayMode,
+        throwOnError: false,
+        output: 'html',
+      }));
+    } catch {
+      map.set(key, sanitize(displayMode ? `$$${expr}$$` : `$${expr}$`));
+    }
+    return key;
+  };
+
+  // Display math first ($$...$$), then inline ($...$)
+  let text = raw.replace(/\$\$([^$]+?)\$\$/g, (_, expr) => replace(_, expr.trim(), true));
+  text = text.replace(/\$([^$\n]+?)\$/g, (_, expr) => replace(_, expr.trim(), false));
+
+  return { text, map };
+}
+
+function restoreLatex(html: string, map: Map<string, string>): string {
+  // Keys survive sanitize untouched (no HTML chars). Replace them back.
+  return html.replace(/\x00KATEX\d+\x00/g, key => map.get(key) ?? key);
+}
+
 function formatMessageContent(raw: string): string {
-  const blocks = raw.split(/\n{2,}/);
-  return blocks.map(block => {
+  const { text: preText, map } = renderLatexPrepass(raw);
+  const blocks = preText.split(/\n{2,}/);
+  const html = blocks.map(block => {
     const lines = block.split('\n');
     if (lines.every(l => /^\d+\.\s/.test(l.trim()))) {
-      const items = lines.map(l => `<li>${inlineFmt(l.trim().replace(/^\d+\.\s+/, ''))}</li>`).join('');
+      const items = lines.map(l => `<li>${inlineFmt(l.trim().replace(/^\d+\.\s+/, ''), map)}</li>`).join('');
       return `<ol>${items}</ol>`;
     }
     if (lines.every(l => /^[-*]\s/.test(l.trim()))) {
-      const items = lines.map(l => `<li>${inlineFmt(l.trim().replace(/^[-*]\s+/, ''))}</li>`).join('');
+      const items = lines.map(l => `<li>${inlineFmt(l.trim().replace(/^[-*]\s+/, ''), map)}</li>`).join('');
       return `<ul>${items}</ul>`;
     }
-    return `<p>${lines.map(inlineFmt).join('<br>')}</p>`;
+    return `<p>${lines.map(l => inlineFmt(l, map)).join('<br>')}</p>`;
   }).join('');
+  return restoreLatex(html, map);
 }
 
-function inlineFmt(text: string): string {
-  const s = sanitize(text);
-  return s
+function inlineFmt(text: string, map?: Map<string, string>): string {
+  // Temporarily extract placeholder keys so sanitize doesn't touch them
+  const keys: string[] = [];
+  const withSlots = text.replace(/\x00KATEX\d+\x00/g, key => {
+    keys.push(key);
+    return `\x00SLOT${keys.length - 1}\x00`;
+  });
+
+  const s = sanitize(withSlots);
+  const restored = s.replace(/\x00SLOT(\d+)\x00/g, (_, i) => keys[Number(i)] ?? '');
+
+  const formatted = restored
     .replace(/&#x60;([^<]+?)&#x60;/g, (_, p) => `<code>${p}</code>`)
     .replace(/\*\*([^*]+?)\*\*/g, (_, p) => `<strong>${p}</strong>`)
     .replace(/\*([^*]+?)\*/g, (_, p) => `<em>${p}</em>`);
+
+  return map ? restoreLatex(formatted, map) : formatted;
 }
 
 function stripForSpeech(text: string): string {

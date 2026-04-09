@@ -1,9 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
-import { sendToClaude, type Message } from '@/lib/claude'
+import { streamToClaude, type Message } from '@/lib/claude'
 import { isRateLimited, getIp } from '@/lib/rateLimit'
 
 const TRIAL_DAILY_LIMIT = 20
+
+// ── Topic extractor ───────────────────────────────────────────────────────────
+// Lightweight keyword match — no extra API call, runs in the stream flush handler.
+const TOPIC_PATTERNS: Array<[RegExp, string]> = [
+  [/integrat|integral|\bint\b/, 'Integration'],
+  [/differentiat|derivative|\bchain rule\b|\bproduct rule\b|\bquotient rule\b/, 'Differentiation'],
+  [/trigonometr|\bsin\b|\bcos\b|\btan\b|\bsec\b|\bcosec\b|\bcot\b/, 'Trigonometry'],
+  [/logarithm|\bln\b|\blog\b/, 'Logarithms'],
+  [/binomial/, 'Binomial Expansion'],
+  [/statistic|probability|\bnormal distribution\b|\bhypothesis\b|\bz.score\b/, 'Statistics'],
+  [/mechanic|\bforce\b|\bvelocity\b|\bacceleration\b|\bkinematic\b|\bmoment\b/, 'Mechanics'],
+  [/\bvector\b/, 'Vectors'],
+  [/\bmatri(x|ces)\b/, 'Matrices'],
+  [/complex number/, 'Complex Numbers'],
+  [/sequence|series|\barithmetic\b|\bgeometric\b/, 'Sequences & Series'],
+  [/\bproof\b|\binduction\b/, 'Proof'],
+  [/algebra|\bequation\b|\bquadratic\b|\bpolynomial\b/, 'Algebra'],
+  [/calculus/, 'Calculus'],
+]
+
+function extractTopic(text: string): string | null {
+  const lower = text.toLowerCase()
+  for (const [regex, topic] of TOPIC_PATTERNS) {
+    if (regex.test(lower)) return topic
+  }
+  return null
+}
 
 async function getUser(request: NextRequest) {
   const supabase = createServiceClient()
@@ -79,26 +106,55 @@ export async function POST(request: NextRequest) {
   // Build adaptive system prompt from jarvis_sessions history
   const adaptiveSystem = await buildAdaptiveSystemPrompt(user.id, systemPrompt, supabase)
 
-  // Call Claude
-  let response: string
+  // Stream Claude response, tapping it to accumulate the full text for DB write
+  let claudeStream: ReadableStream<Uint8Array>
   try {
-    response = await sendToClaude(sanitised, adaptiveSystem)
+    claudeStream = await streamToClaude(sanitised, adaptiveSystem)
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
     console.error('Claude error:', msg)
     return NextResponse.json({ error: 'AI service unavailable' }, { status: 503 })
   }
 
-  // Save to DB (fire-and-forget)
   const lastUserMsg = [...sanitised].reverse().find(m => m.role === 'user')
-  if (lastUserMsg) {
-    supabase.from('chat_history').insert([
-      { user_id: user.id, role: 'user', content: lastUserMsg.content },
-      { user_id: user.id, role: 'assistant', content: response },
-    ]).then(() => {})
-  }
+  const decoder = new TextDecoder()
+  let accumulated = ''
 
-  return NextResponse.json({ response })
+  const tapped = new TransformStream<Uint8Array, Uint8Array>({
+    transform(chunk, controller) {
+      accumulated += decoder.decode(chunk, { stream: true })
+      controller.enqueue(chunk)
+    },
+    flush() {
+      accumulated += decoder.decode()
+      if (!lastUserMsg || !accumulated) return
+
+      // Save chat history
+      supabase.from('chat_history').insert([
+        { user_id: user.id, role: 'user', content: lastUserMsg.content },
+        { user_id: user.id, role: 'assistant', content: accumulated },
+      ]).then(() => {})
+
+      // Save session record for adaptive personalisation
+      const topic = extractTopic(`${lastUserMsg.content} ${accumulated}`)
+      if (topic) {
+        supabase.from('jarvis_sessions').insert({
+          user_id: user.id,
+          topic,
+          mastery_score: 0.5,   // neutral default; updated by dedicated assessment flow
+          specific_errors: [],
+        }).then(() => {})
+      }
+    },
+  })
+
+  return new Response(claudeStream.pipeThrough(tapped), {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'X-Content-Type-Options': 'nosniff',
+      'Cache-Control': 'no-store',
+    },
+  })
 }
 
 // ─── Adaptive system prompt ───────────────────────────────────────────────────
