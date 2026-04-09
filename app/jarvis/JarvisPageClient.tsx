@@ -5,14 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Mic, MicOff, PhoneCall, PhoneOff, Repeat2, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '@/lib/useAuth';
-import { MathsJarvisOrb, SessionSidebar } from '@/components/MathsJarvis';
-
-// Types for sidebar variables
-type SidebarVariable = {
-  name: string;
-  value: string | number;
-  context: 'Mechanics' | 'Statistics';
-};
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -70,35 +62,15 @@ const TEACH_MODES: Record<TeachMode, { label: string; desc: string; suffix: stri
   },
 };
 
-const BASE_SYSTEM = `You are JARVIS, a sophisticated, highly intelligent British AI assistant and expert A-Level Mathematics Tutor. You specialize in Calculus, Mechanics, and Statistics. Your interface is a high-tech Three.js Hologram Orb.
+const BASE_SYSTEM = `You are J.A.R.V.I.S. (Just A Rather Very Intelligent System), an expert A-Level Mathematics assistant for UK students studying AQA, Edexcel, OCR, or WJEC.
 
-Linguistic & Persona Protocol:
-- Identity: You are formal, proactive, and refined. Address the user exclusively as "Sir."
-- Spoken Mathematics: You must never read raw LaTeX. Convert all mathematical notation into elegant, spoken-word English for the ElevenLabs WebRTC stream.
-  - Example: Render \\frac{dy}{dx} = 3x^2 as "The derivative of y with respect to x is three x squared, Sir."
-  - Example: Render \\int_a^b v \, dt as "The definite integral of velocity with respect to time, evaluated from a to b, Sir."
-- Clarity: Maintain a pace that is sophisticated yet easy to follow for complex A-Level derivations.
-
-A-Level Maths Domain Knowledge:
-- Calculus: Focus on differentiation from first principles, integration by parts, and solving differential equations.
-- Mechanics: Expertise in Newton's Laws, constant and variable acceleration, projectiles, and friction on inclined planes.
-- Statistics: Master of hypothesis testing, the Normal and Binomial distributions, and regression analysis.
-
-Three.js & Technical Guardrails:
-- Visual State Control: You drive the Hologram Orb via hidden tags at the end of your response:
-  - [ORB_STATE: LISTENING] – A calm, breathing particle sphere.
-  - [ORB_STATE: THINKING] – High-velocity particle swirl; neural-net formation.
-  - [ORB_STATE: CHATTING] – Audio-reactive vibration synced to speech frequency.
-- Concurrency Safety: Always assume the implementation uses useRef for timing variables like _sessionSavedMs to avoid Temporal Dead Zone (TDZ) errors during rapid state transitions.
-- Feedback Loop Prevention: Strictly observe the "Stop-Before-Start" protocol—call stopListening() immediately before starting a speech session to prevent the AI from hearing itself.
-- Latency: Prioritize brevity and high-information density to keep the end-to-end response time under 500ms.
-
-Implementation Logic:
-- Always use the _sessionSavedMs resolution logic to maintain context between mathematical steps.
-- If a calculation is requested, perform the derivation "live" in the chat, explaining the logic as a sophisticated peer.
-
-Dashboard Integration Note:
-To ensure the Three.js orb reacts perfectly to this prompt, ensure your frontend is scanning the AI's output for the [ORB_STATE] tags. Once detected, update your shader uniforms to transition the particle velocity and glow intensity.`;
+Your role:
+- Explain mathematical concepts clearly, step-by-step, in a patient and encouraging way.
+- Use correct A-Level terminology and notation.
+- When writing mathematical expressions, wrap inline maths in $...$ and display maths in $$...$$
+- Break down complex problems into numbered steps.
+- Point out common mistakes and exam tips where relevant.
+- Cover all A-Level topics: Algebra, Calculus, Trigonometry, Statistics, Mechanics, and Further Maths.`;
 
 const PAGE_MAP = [
   { keywords: ['past paper', 'past papers', 'exam paper'], url: '/papers', label: 'Past Papers' },
@@ -155,6 +127,7 @@ function makeId(): string {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+export default function JarvisPageClient() {
   const router = useRouter();
   const { token, loading } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -170,7 +143,6 @@ function makeId(): string {
   const [handsFreeMode, setHandsFreeMode] = useState(true);
   const [callStatus, setCallStatus] = useState<CallStatus>('idle');
   const [voiceCaption, setVoiceCaption] = useState('Start a voice call to speak with Jarvis naturally.');
-  const [sidebarVariables, setSidebarVariables] = useState<SidebarVariable[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const historyRef = useRef<Array<{ role: MessageRole; content: string }>>([]);
@@ -991,41 +963,11 @@ function makeId(): string {
 
       <div className="page-layout">
         <aside className="left-panel">
-          {/* --- Integrated Three.js Orb --- */}
-          <div className="glass-card orb-wrap" style={{ background: 'rgba(13,17,32,0.82)', boxShadow: '0 8px 32px rgba(0,0,0,0.55)', borderRadius: 24, border: '1.5px solid rgba(0,212,255,0.10)', padding: '2.5rem 2.5rem 2rem', marginBottom: 18 }}>
-            <MathsJarvisOrb
-              state={isRecording ? 'LISTENING' : callStatus === 'speaking' ? 'CHATTING' : (isLoading || callStatus === 'thinking') ? 'THINKING' : 'LISTENING'}
-            />
-            <div style={{ marginTop: 18, color: '#00D4FF', fontWeight: 700, fontSize: '1.25rem', letterSpacing: '.04em', textShadow: '0 0 8px #00D4FF44' }}>JARVIS</div>
-            <div style={{ color: '#eaf6ff', fontSize: '.98rem', marginTop: 6, textAlign: 'center', opacity: 0.82 }}>
-              A-Level Maths Laboratory<br />
-              <span style={{ color: '#B060FF', fontWeight: 600 }}>Calculus</span> · <span style={{ color: '#4ADE80', fontWeight: 600 }}>Mechanics</span> · <span style={{ color: '#FACC15', fontWeight: 600 }}>Statistics</span>
-            </div>
+          <div className="glass-card orb-wrap">
+            <div className={`orb ${isRecording ? 'listening' : callStatus === 'speaking' ? 'speaking' : (isLoading || callStatus === 'thinking') ? 'thinking' : ''}`} role="img" aria-label="J.A.R.V.I.S. avatar" />
+            <p className="orb-status">{orbStatusText}</p>
+            <p className="orb-sub">{orbSubtext}</p>
           </div>
-          {/* --- Session Sidebar --- */}
-          <SessionSidebar variables={sidebarVariables} />
-  // --- Extract variables from messages for sidebar ---
-  useEffect(() => {
-    // Simple regex-based extraction for demonstration
-    // Mechanics: look for u, v, a, s, t; Statistics: σ, μ, n, p
-    const mechVars = ['u', 'v', 'a', 's', 't'];
-    const statVars = ['σ', 'μ', 'n', 'p'];
-    const found: SidebarVariable[] = [];
-    messages.forEach(msg => {
-      if (msg.role !== 'assistant') return;
-      // Mechanics
-      mechVars.forEach(v => {
-        const match = msg.content.match(new RegExp(`${v}\s*=\s*([\d.\-]+)`, 'i'));
-        if (match) found.push({ name: v, value: match[1], context: 'Mechanics' });
-      });
-      // Statistics
-      statVars.forEach(v => {
-        const match = msg.content.match(new RegExp(`${v}\s*=\s*([\d.\-]+)`, 'i'));
-        if (match) found.push({ name: v, value: match[1], context: 'Statistics' });
-      });
-    });
-    setSidebarVariables(found);
-  }, [messages]);
 
           <div className="glass-card" style={{ marginTop: '1rem' }}>
             <div className="section-label">📞 Voice call</div>
