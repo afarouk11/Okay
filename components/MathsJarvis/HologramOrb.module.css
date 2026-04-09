@@ -1,0 +1,143 @@
+/* ── HologramOrb — CSS fallback for when WebGL is unavailable ──────────────── */
+
+.wrapper {
+  --orb-color: rgba(0, 212, 255, 0.80);
+  --glow-size: 22px;
+  --ring-opacity: 0.28;
+  --pulse-scale: 1.04;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 280px;
+  height: 280px;
+  perspective: 1000px;
+  transition: --orb-color 0.5s ease, --glow-size 0.5s ease;
+}
+
+/* ── State colour tokens ──────────────────────────────────────────────────── */
+
+.listening {
+  --orb-color: rgba(34, 197, 94, 0.90);   /* green — mic active */
+  --glow-size: 38px;
+  --ring-opacity: 0.40;
+  --pulse-scale: 1.07;
+}
+
+.chatting {
+  --orb-color: rgba(176, 96, 255, 0.85);  /* purple — TTS speaking */
+  --glow-size: 30px;
+  --ring-opacity: 0.35;
+  --pulse-scale: 1.06;
+}
+
+.thinking {
+  --orb-color: rgba(0, 212, 255, 0.80);   /* cyan — idle / processing */
+  --glow-size: 22px;
+  --ring-opacity: 0.28;
+  --pulse-scale: 1.04;
+}
+
+/* ── Core orb ────────────────────────────────────────────────────────────── */
+
+.core {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle at 38% 36%, var(--orb-color) 0%, rgba(0, 0, 0, 0) 72%);
+  border-radius: 50%;
+  box-shadow:
+    0 0 var(--glow-size) var(--orb-color),
+    0 0 calc(var(--glow-size) * 2.2) rgba(0, 212, 255, 0.18);
+  transition: box-shadow 0.5s ease, background 0.5s ease;
+}
+
+.listening .core,
+.chatting .core {
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.thinking .core {
+  animation: pulse 3s ease-in-out infinite;
+}
+
+/* ── Rings ───────────────────────────────────────────────────────────────── */
+
+.ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border: 1px solid var(--orb-color);
+  border-radius: 50%;
+  opacity: var(--ring-opacity);
+  transform: translate(-50%, -50%);
+  transition: border-color 0.5s ease, opacity 0.5s ease;
+}
+
+.ring1 {
+  width: 160px;
+  height: 160px;
+  animation: rotate 5s linear infinite;
+}
+
+.ring2 {
+  width: 200px;
+  height: 110px;
+  animation: rotateReverse 7s linear infinite;
+}
+
+.ring3 {
+  width: 90px;
+  height: 210px;
+  animation: rotate 11s linear infinite;
+}
+
+/* ── Scan line ───────────────────────────────────────────────────────────── */
+
+.scanLine {
+  position: absolute;
+  left: 10%;
+  width: 80%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--orb-color), transparent);
+  opacity: 0.35;
+  top: 0;
+  animation: scan 2.2s linear infinite;
+  transition: background 0.5s ease;
+}
+
+/* ── Keyframes ───────────────────────────────────────────────────────────── */
+
+@keyframes rotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes rotateReverse {
+  from { transform: translate(-50%, -50%) rotate(360deg); }
+  to   { transform: translate(-50%, -50%) rotate(0deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1);               opacity: 0.85; }
+  50%       { transform: scale(var(--pulse-scale)); opacity: 1;    }
+}
+
+@keyframes scan {
+  0%   { top: 5%;  opacity: 0;    }
+  10%  { opacity: 0.35; }
+  90%  { opacity: 0.35; }
+  100% { top: 95%; opacity: 0;    }
+}
+
+/* ── Accessibility ───────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .core,
+  .ring1,
+  .ring2,
+  .ring3,
+  .scanLine {
+    animation: none;
+  }
+}

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import OrbErrorBoundary from '@/components/MathsJarvis/OrbErrorBoundary';
+import HologramOrb from '@/components/MathsJarvis/HologramOrb';
 import { useRouter } from 'next/navigation';
 import { Mic, MicOff, PhoneCall, PhoneOff, Repeat2, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '@/lib/useAuth';
@@ -988,7 +989,11 @@ export default function JarvisPageClient() {
         <aside className="left-panel">
           <div className="glass-card orb-wrap">
             <OrbErrorBoundary
-              fallback={<div className={`orb ${isRecording ? 'listening' : callStatus === 'speaking' ? 'speaking' : (isLoading || callStatus === 'thinking') ? 'thinking' : ''}`} role="img" aria-label="J.A.R.V.I.S. avatar" />}
+              fallback={
+                <HologramOrb
+                  state={isRecording ? 'listening' : callStatus === 'speaking' ? 'chatting' : 'thinking'}
+                />
+              }
             >
               <MathsJarvisOrb
                 state={isRecording ? 'LISTENING' : callStatus === 'speaking' ? 'CHATTING' : 'THINKING'}
