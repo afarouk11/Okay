@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Points, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 
 type OrbState = 'LISTENING' | 'THINKING' | 'CHATTING';
@@ -22,19 +21,23 @@ const vertexShader = `
   varying float vScale;
   void main() {
     vScale = aScale;
-    vec3 transformed = position;
+    vec3 pos = position;
     float pulse = 1.0;
     if (uState == 0) {
       pulse = 1.0 + 0.08 * sin(uTime * 1.2 + position.x * 2.0);
     } else if (uState == 1) {
       float angle = 0.25 * sin(uTime * 3.0 + position.y * 6.0);
-      float c = cos(angle); float s = sin(angle);
-      transformed.xz = vec2(c * transformed.x - s * transformed.z, s * transformed.x + c * transformed.z);
+      float c = cos(angle);
+      float s = sin(angle);
+      float nx = c * pos.x - s * pos.z;
+      float nz = s * pos.x + c * pos.z;
+      pos.x = nx;
+      pos.z = nz;
       pulse = 1.0 + 0.18 * sin(uTime * 2.5 + position.y * 3.0);
     } else {
       pulse = aScale;
     }
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(transformed * pulse, 1.0);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos * pulse, 1.0);
     gl_PointSize = 2.5 + 2.5 * vScale;
   }
 `;
@@ -48,31 +51,37 @@ const fragmentShader = `
   }
 `;
 
-function useParticleData() {
-  return useMemo(() => {
-    const positions = new Float32Array(PARTICLE_COUNT * 3);
-    const scales = new Float32Array(PARTICLE_COUNT);
+function OrbParticles({ state, analyserNode }: MathsJarvisOrbProps) {
+  const pointsRef = useRef<THREE.Points>(null);
+  const materialRef = useRef<THREE.ShaderMaterial>(null);
+  const uTime = useRef(0);
+  const stateIndex = state === 'LISTENING' ? 0 : state === 'THINKING' ? 1 : 2;
+
+  const { positions, scales } = useMemo(() => {
+    const pos = new Float32Array(PARTICLE_COUNT * 3);
+    const sc = new Float32Array(PARTICLE_COUNT);
     for (let i = 0; i < PARTICLE_COUNT; i++) {
       const phi = Math.acos(1 - 2 * (i + 0.5) / PARTICLE_COUNT);
       const theta = Math.PI * (1 + Math.sqrt(5)) * (i + 0.5);
-      const r = ORB_RADIUS;
-      positions[3 * i] = r * Math.cos(theta) * Math.sin(phi);
-      positions[3 * i + 1] = r * Math.sin(theta) * Math.sin(phi);
-      positions[3 * i + 2] = r * Math.cos(phi);
-      scales[i] = 0.7 + 0.6 * Math.random();
+      pos[3 * i]     = ORB_RADIUS * Math.cos(theta) * Math.sin(phi);
+      pos[3 * i + 1] = ORB_RADIUS * Math.sin(theta) * Math.sin(phi);
+      pos[3 * i + 2] = ORB_RADIUS * Math.cos(phi);
+      sc[i] = 0.7 + 0.6 * Math.random();
     }
-    return { positions, scales };
+    return { positions: pos, scales: sc };
   }, []);
-}
 
-function OrbInner({ state, analyserNode }: MathsJarvisOrbProps) {
-  const meshRef = useRef<THREE.Points>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-  const { positions, scales } = useParticleData();
-  const uTime = useRef(0);
-  const chattingScales = useRef<Float32Array>(scales.slice());
+  const geometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('aScale', new THREE.BufferAttribute(scales, 1));
+    return geo;
+  }, [positions, scales]);
 
-  const stateIndex = state === 'LISTENING' ? 0 : state === 'THINKING' ? 1 : 2;
+  const uniforms = useMemo(() => ({
+    uTime: { value: 0 },
+    uState: { value: 0 },
+  }), []);
 
   useFrame((_, delta) => {
     uTime.current += delta;
@@ -80,49 +89,41 @@ function OrbInner({ state, analyserNode }: MathsJarvisOrbProps) {
       materialRef.current.uniforms.uTime.value = uTime.current;
       materialRef.current.uniforms.uState.value = stateIndex;
     }
-    if (state === 'CHATTING' && analyserNode && meshRef.current) {
+    if (state === 'CHATTING' && analyserNode && pointsRef.current) {
       const data = new Uint8Array(analyserNode.frequencyBinCount);
       analyserNode.getByteFrequencyData(data);
+      const sc = new Float32Array(PARTICLE_COUNT);
       for (let i = 0; i < PARTICLE_COUNT; i++) {
-        chattingScales.current[i] = 0.7 + 1.2 * (data[i % data.length] / 255);
+        sc[i] = 0.7 + 1.2 * (data[i % data.length] / 255);
       }
-      meshRef.current.geometry.setAttribute('aScale', new THREE.BufferAttribute(chattingScales.current, 1));
+      pointsRef.current.geometry.setAttribute('aScale', new THREE.BufferAttribute(sc, 1));
     }
   });
 
-  useEffect(() => {
-    if (meshRef.current) {
-      meshRef.current.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      meshRef.current.geometry.setAttribute('aScale', new THREE.BufferAttribute(scales, 1));
-    }
-  }, [positions, scales]);
-
   return (
-    <Points ref={meshRef} frustumCulled={false}>
+    <points ref={pointsRef} geometry={geometry} frustumCulled={false}>
       <shaderMaterial
         ref={materialRef}
-        attach="material"
-        args={[{
-          uniforms: { uTime: { value: 0 }, uState: { value: 0 } },
-          vertexShader,
-          fragmentShader,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-          transparent: true,
-        }]}
+        uniforms={uniforms}
+        vertexShader={vertexShader}
+        fragmentShader={fragmentShader}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+        transparent
       />
-    </Points>
+    </points>
   );
 }
 
-const MathsJarvisOrb: React.FC<MathsJarvisOrbProps> = ({ state, analyserNode }) => {
+export default function MathsJarvisOrb({ state, analyserNode }: MathsJarvisOrbProps) {
   return (
-    <Canvas camera={{ position: [0, 0, 4.5], fov: 38 }} style={{ height: 320, background: 'transparent' }}>
+    <Canvas
+      camera={{ position: [0, 0, 4.5], fov: 38 }}
+      style={{ height: 320, background: 'transparent' }}
+      gl={{ antialias: false, alpha: true }}
+    >
       <ambientLight intensity={0.7} />
-      <OrbInner state={state} analyserNode={analyserNode} />
-      <OrbitControls enablePan={false} enableZoom={false} enableRotate={false} />
+      <OrbParticles state={state} analyserNode={analyserNode} />
     </Canvas>
   );
-};
-
-export default MathsJarvisOrb;
+}
