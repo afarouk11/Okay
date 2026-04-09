@@ -6,9 +6,10 @@ import Link from 'next/link';
 import OrbErrorBoundary from '@/components/MathsJarvis/OrbErrorBoundary';
 import HologramOrb from '@/components/MathsJarvis/HologramOrb';
 import { useRouter } from 'next/navigation';
-import { Mic, MicOff, PhoneCall, PhoneOff, Repeat2, Volume2, VolumeX } from 'lucide-react';
+import { Mic, MicOff, PhoneCall, PhoneOff, Repeat2, VolumeX } from 'lucide-react';
 import { useAuth } from '@/lib/useAuth';
 import katex from 'katex';
+import { useJarvisVoice } from '@/hooks/useJarvisVoice';
 
 const MathsJarvisOrb = dynamic(() => import('@/components/MathsJarvis/MathsJarvisOrb'), { ssr: false });
 
@@ -16,19 +17,7 @@ const MathsJarvisOrb = dynamic(() => import('@/components/MathsJarvis/MathsJarvi
 
 type TeachMode = 'standard' | 'guided' | 'test' | 'eli5';
 type MessageRole = 'user' | 'assistant';
-type CallStatus = 'idle' | 'ready' | 'listening' | 'thinking' | 'speaking';
-type BrowserSpeechRecognition = {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  maxAlternatives: number;
-  onresult: ((event: { resultIndex?: number; results: ArrayLike<ArrayLike<{ transcript?: string }>> }) => void) | null;
-  onerror: ((event: { error?: string }) => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-  abort: () => void;
-};
+type CallStatus = 'idle' | 'listening' | 'thinking' | 'speaking';
 
 interface ChatMessage {
   id: string;
@@ -136,6 +125,7 @@ function makeId(): string {
 export default function JarvisPageClient() {
   const router = useRouter();
   const { token, loading } = useAuth();
+  // ── Text chat state ────────────────────────────────────────────────────────
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -143,36 +133,61 @@ export default function JarvisPageClient() {
   const [showQuickPrompts, setShowQuickPrompts] = useState(true);
   const [lastSession, setLastSession] = useState<Memory | null>(null);
   const [toast, setToast] = useState('');
-  const [isCallMode, setIsCallMode] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [handsFreeMode, setHandsFreeMode] = useState(true);
-  const [callStatus, setCallStatus] = useState<CallStatus>('idle');
   const [voiceCaption, setVoiceCaption] = useState('Start a voice call to speak with Jarvis naturally.');
+  const [handsFreeMode, setHandsFreeMode] = useState(true);
+  const [micMuted, setMicMuted_] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const historyRef = useRef<Array<{ role: MessageRole; content: string }>>([]);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const speechRecognitionRef = useRef<BrowserSpeechRecognition | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioUrlRef = useRef<string | null>(null);
-  const discardRecordingRef = useRef(false);
-  const callModeRef = useRef(false);
-  const handsFreeRestartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const queueHandsFreeListeningRef = useRef<(() => void) | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const silenceFrameRef = useRef<number | null>(null);
-  const heardSpeechRef = useRef(false);
-  const silenceStartRef = useRef<number | null>(null);
-  const stopReasonRef = useRef<'manual' | 'silence' | 'timeout' | 'discard'>('manual');
+
+  // ── Voice session (ElevenLabs SDK) ────────────────────────────────────────
+  const effectiveSystem = BASE_SYSTEM + TEACH_MODES[teachMode].suffix;
+
+  const { status, mode, lastMessage, startSession, endSession, setMicMuted } = useJarvisVoice(
+    token,
+    effectiveSystem,
+  );
+
+  // Derived UI state from SDK
+  const isCallMode  = status === 'connected' || status === 'connecting';
+  const isRecording = status === 'connected' && mode === 'listening';
+  const callStatus: CallStatus =
+    status === 'connecting'                       ? 'thinking'  :
+    status === 'connected' && mode === 'speaking' ? 'speaking'  :
+    status === 'connected'                        ? 'listening' :
+    'idle';
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Sync voice caption from SDK status/mode
+  useEffect(() => {
+    if (status === 'connecting') {
+      setVoiceCaption('Connecting to Jarvis…');
+    } else if (status === 'connected' && mode === 'speaking') {
+      setVoiceCaption('Jarvis is speaking…');
+    } else if (status === 'connected' && mode === 'listening') {
+      setVoiceCaption(handsFreeMode ? 'Listening — speak naturally.' : 'Mic ready — your turn.');
+    } else if (status === 'disconnecting') {
+      setVoiceCaption('Ending call…');
+    } else {
+      setVoiceCaption('Start a voice call to speak with Jarvis naturally.');
+    }
+  }, [status, mode, handsFreeMode]);
+
+  // Pipe SDK voice messages into the chat transcript
+  useEffect(() => {
+    if (!lastMessage) return;
+    setMessages(m => [...m, {
+      id: makeId(),
+      role: lastMessage.role === 'agent' ? 'assistant' : 'user',
+      content: lastMessage.text,
+      time: formatTime(),
+    }]);
+    setShowQuickPrompts(false);
+  }, [lastMessage]);
 
   useEffect(() => {
     if (loading) return;
@@ -211,325 +226,57 @@ export default function JarvisPageClient() {
     init();
   }, [loading, token]);
 
-  useEffect(() => {
-    callModeRef.current = isCallMode;
-  }, [isCallMode]);
-
   const showToast = useCallback((msg: string) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast(msg);
     toastTimerRef.current = setTimeout(() => setToast(''), 5000);
   }, []);
 
-  const stopBrowserRecognition = useCallback(() => {
-    if (!speechRecognitionRef.current) return;
-    try {
-      speechRecognitionRef.current.abort();
-    } catch {}
-    speechRecognitionRef.current = null;
-  }, []);
+  // ── Voice call handlers (SDK) ─────────────────────────────────────────────
 
-  const cleanupSilenceDetection = useCallback(() => {
-    if (typeof window !== 'undefined' && silenceFrameRef.current !== null) {
-      window.cancelAnimationFrame(silenceFrameRef.current);
-    }
-    silenceFrameRef.current = null;
-    silenceStartRef.current = null;
-    heardSpeechRef.current = false;
+  const handleStartCall = useCallback(async () => {
+    if (!token) { showToast('Please sign in to use voice chat.'); return; }
+    await startSession();
+  }, [token, startSession, showToast]);
 
-    try { sourceNodeRef.current?.disconnect(); } catch {}
-    try { analyserRef.current?.disconnect(); } catch {}
+  const handleEndCall = useCallback(async () => {
+    await endSession();
+  }, [endSession]);
 
-    sourceNodeRef.current = null;
-    analyserRef.current = null;
+  const handleToggleMic = useCallback(() => {
+    const next = !micMuted;
+    setMicMuted_(next);
+    setMicMuted(next);
+  }, [micMuted, setMicMuted]);
 
-    if (audioContextRef.current) {
-      void audioContextRef.current.close().catch(() => undefined);
-      audioContextRef.current = null;
-    }
-  }, []);
+  const handleToggleHandsFree = useCallback(() => {
+    const next = !handsFreeMode;
+    setHandsFreeMode(next);
+    // In manual mode mute the mic; in hands-free unmute
+    setMicMuted_(next ? false : true);
+    setMicMuted(next ? false : true);
+  }, [handsFreeMode, setMicMuted]);
 
-  const stopPlayback = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.src = '';
-      audioRef.current = null;
-    }
-    if (audioUrlRef.current) {
-      URL.revokeObjectURL(audioUrlRef.current);
-      audioUrlRef.current = null;
-    }
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
-  }, []);
-
-  const releaseMicrophone = useCallback(() => {
-    discardRecordingRef.current = true;
-    stopReasonRef.current = 'discard';
-    cleanupSilenceDetection();
-    stopBrowserRecognition();
-    if (handsFreeRestartTimerRef.current) clearTimeout(handsFreeRestartTimerRef.current);
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      try {
-        mediaRecorderRef.current.stop();
-      } catch {}
-    }
-    mediaRecorderRef.current = null;
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop());
-      mediaStreamRef.current = null;
-    }
-  }, [cleanupSilenceDetection, stopBrowserRecognition]);
-
-  const ensureMicrophone = useCallback(async (): Promise<MediaStream | null> => {
-    if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia || typeof window.MediaRecorder === 'undefined') {
-      showToast('Voice chat is not supported in this browser.');
-      return null;
-    }
-
-    if (mediaStreamRef.current?.active) return mediaStreamRef.current;
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
-      mediaStreamRef.current = stream;
-      return stream;
-    } catch {
-      showToast('Please allow microphone access to use voice chat.');
-      return null;
-    }
-  }, [showToast]);
-
-  const captureBrowserSpeechTranscript = useCallback(async (): Promise<string | null> => {
-    const RecognitionCtor = getBrowserSpeechRecognitionCtor();
-    if (!RecognitionCtor) return null;
-
-    stopBrowserRecognition();
-
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop());
-      mediaStreamRef.current = null;
-    }
-
-    return new Promise<string | null>((resolve, reject) => {
-      let settled = false;
-      const recognition = new RecognitionCtor();
-      speechRecognitionRef.current = recognition;
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-GB';
-      recognition.maxAlternatives = 1;
-
-      recognition.onresult = event => {
-        if (settled) return;
-        const start = event.resultIndex ?? 0;
-        const parts: string[] = [];
-        for (let i = start; i < event.results.length; i += 1) {
-          const alt = event.results[i]?.[0];
-          const transcript = typeof alt?.transcript === 'string' ? alt.transcript.trim() : '';
-          if (transcript) parts.push(transcript);
-        }
-        settled = true;
-        speechRecognitionRef.current = null;
-        try { recognition.stop(); } catch {}
-        resolve(parts.join(' ').trim() || null);
-      };
-
-      recognition.onerror = event => {
-        if (settled) return;
-        settled = true;
-        speechRecognitionRef.current = null;
-        reject(new Error(event?.error || 'Voice recognition failed.'));
-      };
-
-      recognition.onend = () => {
-        if (settled) return;
-        settled = true;
-        speechRecognitionRef.current = null;
-        resolve(null);
-      };
-
-      try {
-        recognition.start();
-      } catch (error) {
-        if (settled) return;
-        settled = true;
-        speechRecognitionRef.current = null;
-        reject(error);
-      }
-    });
-  }, [stopBrowserRecognition]);
-
-  const startSilenceDetection = useCallback((stream: MediaStream, onFinished: (reason: 'silence' | 'timeout') => void) => {
-    if (typeof window === 'undefined') return;
-
-    const AudioContextCtor = window.AudioContext || (window as Window & typeof globalThis & {
-      webkitAudioContext?: typeof AudioContext;
-    }).webkitAudioContext;
-
-    if (!AudioContextCtor) return;
-
-    cleanupSilenceDetection();
-
-    try {
-      const context = new AudioContextCtor();
-      const analyser = context.createAnalyser();
-      const source = context.createMediaStreamSource(stream);
-      analyser.fftSize = 2048;
-      analyser.smoothingTimeConstant = 0.85;
-      source.connect(analyser);
-
-      audioContextRef.current = context;
-      analyserRef.current = analyser;
-      sourceNodeRef.current = source;
-      heardSpeechRef.current = false;
-      silenceStartRef.current = null;
-
-      const samples = new Uint8Array(analyser.fftSize);
-      const startedAt = performance.now();
-
-      const monitor = () => {
-        analyser.getByteTimeDomainData(samples);
-        let sum = 0;
-        for (let i = 0; i < samples.length; i += 1) {
-          const amplitude = (samples[i] - 128) / 128;
-          sum += amplitude * amplitude;
-        }
-
-        const rms = Math.sqrt(sum / samples.length);
-        const now = performance.now();
-
-        if (rms > 0.025) {
-          heardSpeechRef.current = true;
-          silenceStartRef.current = null;
-        } else if (heardSpeechRef.current) {
-          silenceStartRef.current ??= now;
-          if (now - silenceStartRef.current > 1200) {
-            cleanupSilenceDetection();
-            onFinished('silence');
-            return;
-          }
-        } else if (now - startedAt > 12000) {
-          cleanupSilenceDetection();
-          onFinished('timeout');
-          return;
-        }
-
-        silenceFrameRef.current = window.requestAnimationFrame(monitor);
-      };
-
-      silenceFrameRef.current = window.requestAnimationFrame(monitor);
-    } catch {
-      cleanupSilenceDetection();
-    }
-  }, [cleanupSilenceDetection]);
-
+  // ── Cleanup ───────────────────────────────────────────────────────────────
   useEffect(() => {
     return () => {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-      if (handsFreeRestartTimerRef.current) clearTimeout(handsFreeRestartTimerRef.current);
-      stopPlayback();
-      stopBrowserRecognition();
-      releaseMicrophone();
-      cleanupSilenceDetection();
     };
-  }, [cleanupSilenceDetection, releaseMicrophone, stopBrowserRecognition, stopPlayback]);
-
-  const effectiveSystem = BASE_SYSTEM + TEACH_MODES[teachMode].suffix;
-
-  const speakReply = useCallback(async (rawText: string) => {
-    const speechText = stripForSpeech(rawText);
-    if (!speechText) {
-      setCallStatus(callModeRef.current ? 'ready' : 'idle');
-      if (callModeRef.current && handsFreeMode) queueHandsFreeListeningRef.current?.();
-      return;
-    }
-
-    if (!voiceEnabled) {
-      setVoiceCaption(callModeRef.current ? 'Speaker muted — listening for your reply.' : 'Speaker muted — Jarvis has replied in text.');
-      setCallStatus(callModeRef.current ? 'ready' : 'idle');
-      if (callModeRef.current && handsFreeMode) queueHandsFreeListeningRef.current?.();
-      return;
-    }
-
-    if (!token) {
-      setCallStatus(callModeRef.current ? 'ready' : 'idle');
-      return;
-    }
-
-    setCallStatus('speaking');
-    setVoiceCaption('Jarvis is speaking…');
-    stopPlayback();
-
-    try {
-      const res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ text: speechText, voice: 'jarvis' }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => null) as { error?: string } | null;
-        throw new Error(err?.error ?? 'Voice playback is unavailable right now.');
-      }
-
-      const blob = await res.blob();
-      if (!blob.size) throw new Error('Empty audio response received.');
-
-      const audioUrl = URL.createObjectURL(blob);
-      audioUrlRef.current = audioUrl;
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-
-      await new Promise<void>((resolve, reject) => {
-        audio.onended = () => resolve();
-        audio.onpause = () => resolve();
-        audio.onerror = () => reject(new Error('Audio playback failed.'));
-        audio.play().then(() => undefined).catch(reject);
-      });
-    } catch {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        await new Promise<void>(resolve => {
-          const utterance = new SpeechSynthesisUtterance(speechText);
-          utterance.rate = 1.01;
-          utterance.pitch = 0.95;
-          utterance.onend = () => resolve();
-          utterance.onerror = () => resolve();
-          window.speechSynthesis.speak(utterance);
-        });
-      } else {
-        showToast('Voice reply unavailable right now.');
-      }
-    } finally {
-      stopPlayback();
-      setVoiceCaption(callModeRef.current ? (handsFreeMode ? 'Listening for your reply…' : 'Mic ready — your turn.') : 'Voice call ended.');
-      setCallStatus(callModeRef.current ? 'ready' : 'idle');
-      if (callModeRef.current && handsFreeMode) queueHandsFreeListeningRef.current?.();
-    }
-  }, [handsFreeMode, showToast, stopPlayback, token, voiceEnabled]);
+  }, []);
 
   const orbStatusText = isRecording
     ? 'LISTENING…'
     : callStatus === 'speaking'
       ? 'SPEAKING…'
-      : isLoading || callStatus === 'thinking'
+      : callStatus === 'thinking' || isLoading
         ? 'THINKING…'
         : isCallMode
           ? 'ON CALL'
           : 'READY';
 
-  const orbSubtext = isCallMode ? 'Deepgram • Claude • ElevenLabs' : 'A-Level Mathematics Assistant';
+  const orbSubtext = isCallMode ? 'ElevenLabs Conversational AI' : 'A-Level Mathematics Assistant';
 
-  const sendMessage = useCallback(async (text?: string, options?: { shouldSpeak?: boolean }) => {
+  const sendMessage = useCallback(async (text?: string) => {
     const textToSend = (text ?? input).trim();
     if (!textToSend || isLoading) return;
 
@@ -551,10 +298,6 @@ export default function JarvisPageClient() {
     setIsLoading(true);
     setInput('');
     setShowQuickPrompts(false);
-    if (callModeRef.current) {
-      setCallStatus('thinking');
-      setVoiceCaption('Jarvis is thinking…');
-    }
 
     const userMsg: ChatMessage = { id: makeId(), role: 'user', content: textToSend, time: formatTime() };
     setMessages(m => [...m, userMsg]);
@@ -573,7 +316,6 @@ export default function JarvisPageClient() {
         }),
       });
 
-      // Error responses are still JSON
       if (!r.ok) {
         const data = await r.json() as { error?: string; code?: string };
         if (data.code === 'TRIAL_LIMIT') {
@@ -582,11 +324,9 @@ export default function JarvisPageClient() {
           showToast(data.error ?? 'Something went wrong — please try again.');
           historyRef.current.pop();
         }
-        setCallStatus(callModeRef.current ? 'ready' : 'idle');
         return;
       }
 
-      // Stream the response, updating the assistant bubble incrementally
       const assistantId = makeId();
       setMessages(m => [...m, { id: assistantId, role: 'assistant', content: '', time: formatTime() }]);
 
@@ -606,238 +346,24 @@ export default function JarvisPageClient() {
       }
 
       historyRef.current.push({ role: 'assistant', content: fullReply });
-
-      if ((options?.shouldSpeak ?? callModeRef.current) && fullReply) {
-        void speakReply(fullReply);
-      } else if (callModeRef.current) {
-        setVoiceCaption('Mic ready — your turn.');
-        setCallStatus('ready');
-      }
     } catch (_) {
       showToast('Connection error — please try again.');
       historyRef.current.pop();
-      setCallStatus(callModeRef.current ? 'ready' : 'idle');
-      if (callModeRef.current) setVoiceCaption('Connection dropped — try again.');
     } finally {
       setIsLoading(false);
       inputRef.current?.focus();
     }
-  }, [input, isLoading, token, effectiveSystem, showToast, router, speakReply]);
-
-  const startBrowserSpeechFallback = useCallback(async (speakReplyAfter = true): Promise<boolean> => {
-    if (!getBrowserSpeechRecognitionCtor()) return false;
-
-    setIsRecording(true);
-    setCallStatus('listening');
-    setVoiceCaption('Listening with your browser…');
-
-    try {
-      const transcript = await captureBrowserSpeechTranscript();
-      setIsRecording(false);
-
-      if (!transcript?.trim()) {
-        setVoiceCaption('I did not catch that — try again.');
-        setCallStatus(callModeRef.current ? 'ready' : 'idle');
-        if (callModeRef.current && handsFreeMode) queueHandsFreeListeningRef.current?.();
-        return true;
-      }
-
-      const cleanTranscript = transcript.trim();
-      setVoiceCaption(`You said: “${cleanTranscript.slice(0, 72)}${cleanTranscript.length > 72 ? '…' : ''}”`);
-      await sendMessage(cleanTranscript, { shouldSpeak: speakReplyAfter });
-      return true;
-    } catch (error) {
-      setIsRecording(false);
-      showToast(getVoiceErrorMessage(error));
-      setVoiceCaption('Mic ready — please try again.');
-      setCallStatus(callModeRef.current ? 'ready' : 'idle');
-      return false;
-    }
-  }, [captureBrowserSpeechTranscript, handsFreeMode, sendMessage, showToast]);
-
-  const startVoiceCall = useCallback(async () => {
-    if (!token) {
-      showToast('Please sign in to use voice chat.');
-      return;
-    }
-
-    const stream = await ensureMicrophone();
-    if (!stream) return;
-
-    setIsCallMode(true);
-    callModeRef.current = true;
-    setCallStatus('ready');
-    setVoiceCaption(handsFreeMode ? 'Call connected — speak naturally, and interrupt Jarvis any time.' : 'Call connected — tap Talk and speak naturally.');
-    if (handsFreeMode) queueHandsFreeListeningRef.current?.();
-  }, [ensureMicrophone, handsFreeMode, showToast, token]);
-
-  const endVoiceCall = useCallback(() => {
-    callModeRef.current = false;
-    stopPlayback();
-    releaseMicrophone();
-    setIsRecording(false);
-    setIsCallMode(false);
-    setCallStatus('idle');
-    setVoiceCaption('Voice call ended.');
-  }, [releaseMicrophone, stopPlayback]);
-
-  const handleVoiceRecording = useCallback(async () => {
-    if (isRecording) {
-      stopReasonRef.current = 'manual';
-      mediaRecorderRef.current?.stop();
-      return;
-    }
-
-    if (isLoading || callStatus === 'thinking' || callStatus === 'speaking') return;
-    if (!token) {
-      showToast('Please sign in to use voice chat.');
-      return;
-    }
-
-    const stream = await ensureMicrophone();
-    if (!stream) return;
-
-    if (!callModeRef.current) {
-      setIsCallMode(true);
-      callModeRef.current = true;
-    }
-
-    try {
-      discardRecordingRef.current = false;
-      stopReasonRef.current = 'manual';
-      const preferredMimeType = pickRecorderMimeType();
-
-      if (!preferredMimeType && getBrowserSpeechRecognitionCtor()) {
-        await startBrowserSpeechFallback(true);
-        return;
-      }
-
-      let recorder: MediaRecorder;
-
-      try {
-        recorder = preferredMimeType
-          ? new MediaRecorder(stream, { mimeType: preferredMimeType })
-          : new MediaRecorder(stream);
-      } catch {
-        recorder = new MediaRecorder(stream);
-      }
-
-      const requestContentType = normaliseAudioContentType(recorder.mimeType || preferredMimeType || 'audio/webm');
-      const chunks: Blob[] = [];
-
-      recorder.ondataavailable = event => {
-        if (event.data.size > 0) chunks.push(event.data);
-      };
-
-      recorder.onstop = async () => {
-        const stopReason = stopReasonRef.current;
-        stopReasonRef.current = 'manual';
-        cleanupSilenceDetection();
-        setIsRecording(false);
-
-        if (discardRecordingRef.current) {
-          discardRecordingRef.current = false;
-          setCallStatus(callModeRef.current ? 'ready' : 'idle');
-          return;
-        }
-
-        if (stopReason === 'timeout') {
-          setVoiceCaption('Still here — speak whenever you are ready.');
-          setCallStatus(callModeRef.current ? 'ready' : 'idle');
-          return;
-        }
-
-        const blob = new Blob(chunks, { type: requestContentType });
-        if (!blob.size) {
-          setVoiceCaption('I did not catch that — try again.');
-          setCallStatus(callModeRef.current ? 'ready' : 'idle');
-          return;
-        }
-
-        setCallStatus('thinking');
-        setVoiceCaption('Transcribing with Deepgram…');
-
-          try {
-          const res = await fetch('/api/transcribe', {
-            method: 'POST',
-            headers: {
-              'Content-Type': requestContentType,
-              Authorization: `Bearer ${token}`,
-            },
-            body: blob,
-          });
-          const data = await res.json() as { transcript?: string; error?: string };
-
-          if (!res.ok || !data.transcript?.trim()) {
-            throw new Error(data.error ?? 'Could not transcribe that audio.');
-          }
-
-          const transcript = data.transcript.trim();
-          setVoiceCaption(`You said: “${transcript.slice(0, 72)}${transcript.length > 72 ? '…' : ''}”`);
-          await sendMessage(transcript, { shouldSpeak: true });
-        } catch (error) {
-          const usedBrowserFallback = shouldUseBrowserSpeechFallback(error)
-            ? await startBrowserSpeechFallback(true)
-            : false;
-
-          if (!usedBrowserFallback) {
-            showToast(getVoiceErrorMessage(error));
-            setVoiceCaption('Mic ready — please try again.');
-            setCallStatus(callModeRef.current ? 'ready' : 'idle');
-            if (callModeRef.current && handsFreeMode) queueHandsFreeListeningRef.current?.();
-          }
-        }
-      };
-
-      mediaRecorderRef.current = recorder;
-      recorder.start();
-      setIsRecording(true);
-      setCallStatus('listening');
-      setVoiceCaption(handsFreeMode ? 'Listening… just speak naturally.' : 'Listening… tap again when you finish speaking.');
-
-      if (handsFreeMode) {
-        startSilenceDetection(stream, reason => {
-          stopReasonRef.current = reason;
-          if (recorder.state !== 'inactive') recorder.stop();
-        });
-      }
-    } catch (error) {
-      const usedBrowserFallback = shouldUseBrowserSpeechFallback(error)
-        ? await startBrowserSpeechFallback(true)
-        : false;
-
-      if (!usedBrowserFallback) {
-        showToast(getVoiceErrorMessage(error, 'Could not start recording.'));
-        setCallStatus(callModeRef.current ? 'ready' : 'idle');
-      }
-    }
-  }, [callStatus, cleanupSilenceDetection, ensureMicrophone, handsFreeMode, isLoading, isRecording, sendMessage, showToast, startBrowserSpeechFallback, startSilenceDetection, token]);
-
-  useEffect(() => {
-    queueHandsFreeListeningRef.current = () => {
-      if (!handsFreeMode || !callModeRef.current || isRecording || isLoading || callStatus === 'thinking' || callStatus === 'speaking') {
-        return;
-      }
-
-      if (handsFreeRestartTimerRef.current) clearTimeout(handsFreeRestartTimerRef.current);
-      handsFreeRestartTimerRef.current = setTimeout(() => {
-        if (!callModeRef.current || isRecording || isLoading) return;
-        void handleVoiceRecording();
-      }, 320);
-    };
-  }, [callStatus, handleVoiceRecording, handsFreeMode, isLoading, isRecording]);
+  }, [input, isLoading, token, effectiveSystem, showToast, router]);
 
   const handleInterruptOrRecord = useCallback(() => {
-    if (callStatus === 'speaking') {
-      stopPlayback();
-      setVoiceCaption('Interrupted — listening now.');
-      setCallStatus('ready');
-      void handleVoiceRecording();
-      return;
+    if (callStatus === 'speaking' || isRecording) {
+      handleToggleMic();
+    } else if (!isCallMode) {
+      void handleStartCall();
+    } else {
+      handleToggleMic();
     }
-
-    void handleVoiceRecording();
-  }, [callStatus, handleVoiceRecording, stopPlayback]);
+  }, [callStatus, isCallMode, isRecording, handleStartCall, handleToggleMic]);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -1011,55 +537,44 @@ export default function JarvisPageClient() {
               <div className="call-actions">
                 <button
                   className={`call-btn primary ${isCallMode ? 'danger' : ''}`}
-                  onClick={isCallMode ? endVoiceCall : startVoiceCall}
+                  onClick={isCallMode ? handleEndCall : handleStartCall}
+                  disabled={callStatus === 'thinking'}
                   aria-pressed={isCallMode}
                 >
                   {isCallMode ? <PhoneOff size={16} /> : <PhoneCall size={16} />}
                   <span>{isCallMode ? 'End call' : 'Start call'}</span>
                 </button>
                 <button
-                  className={`call-btn ${isRecording || callStatus === 'speaking' ? 'active' : ''}`}
-                  onClick={handleInterruptOrRecord}
-                  disabled={isLoading || callStatus === 'thinking'}
-                  aria-pressed={isRecording || callStatus === 'speaking'}
+                  className={`call-btn ${micMuted ? '' : isCallMode ? 'active' : ''}`}
+                  onClick={handleToggleMic}
+                  disabled={!isCallMode || callStatus === 'thinking'}
+                  aria-pressed={!micMuted}
                 >
-                  {isRecording ? <MicOff size={16} /> : <Mic size={16} />}
-                  <span>{isRecording ? 'Stop' : callStatus === 'speaking' ? 'Interrupt' : 'Talk'}</span>
+                  {micMuted ? <MicOff size={16} /> : <Mic size={16} />}
+                  <span>{micMuted ? 'Muted' : 'Live'}</span>
                 </button>
                 <button
                   className={`call-btn ${handsFreeMode ? 'active' : ''}`}
-                  onClick={() => {
-                    const next = !handsFreeMode;
-                    setHandsFreeMode(next);
-                    if (!next && handsFreeRestartTimerRef.current) clearTimeout(handsFreeRestartTimerRef.current);
-                    setVoiceCaption(next ? 'Hands-free mode on — Jarvis will keep listening after each reply.' : 'Hands-free mode off — use Talk to start each turn.');
-                    setCallStatus(callModeRef.current ? 'ready' : 'idle');
-                    if (next && callModeRef.current) queueHandsFreeListeningRef.current?.();
-                  }}
+                  onClick={handleToggleHandsFree}
                   aria-pressed={handsFreeMode}
                 >
                   <Repeat2 size={16} />
                   <span>{handsFreeMode ? 'Hands-free' : 'Manual'}</span>
                 </button>
                 <button
-                  className={`call-btn ${!voiceEnabled ? 'active' : ''}`}
-                  onClick={() => {
-                    if (voiceEnabled) stopPlayback();
-                    setVoiceEnabled(v => !v);
-                    setVoiceCaption(voiceEnabled ? 'Voice replies muted.' : 'Voice replies back on.');
-                    setCallStatus(callModeRef.current ? 'ready' : 'idle');
-                  }}
+                  className="call-btn"
+                  onClick={() => endSession()}
                   disabled={!isCallMode}
-                  aria-pressed={!voiceEnabled}
+                  aria-label="End session"
                 >
-                  {voiceEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                  <span>{voiceEnabled ? 'Speaker' : 'Muted'}</span>
+                  <VolumeX size={16} />
+                  <span>End</span>
                 </button>
               </div>
               <div className="voice-stack">
-                <span className="stack-chip">Deepgram STT</span>
-                <span className="stack-chip">Claude tutor</span>
-                <span className="stack-chip">ElevenLabs TTS</span>
+                <span className="stack-chip">WebRTC</span>
+                <span className="stack-chip">ElevenLabs</span>
+                <span className="stack-chip">Conversational AI</span>
               </div>
             </div>
           </div>
@@ -1153,13 +668,13 @@ export default function JarvisPageClient() {
                 maxLength={4000}
               />
               <button
-                className={`voice-btn ${isRecording || callStatus === 'speaking' ? 'recording' : ''}`}
-                onClick={handleInterruptOrRecord}
+                className={`voice-btn ${isCallMode ? 'active' : ''}`}
+                onClick={isCallMode ? handleEndCall : handleStartCall}
                 disabled={isLoading || callStatus === 'thinking'}
-                aria-label={isRecording ? 'Stop recording' : callStatus === 'speaking' ? 'Interrupt Jarvis and speak' : 'Start voice chat'}
-                title={isRecording ? 'Stop recording' : callStatus === 'speaking' ? 'Interrupt and speak' : 'Talk to Jarvis'}
+                aria-label={isCallMode ? 'End voice call' : 'Start voice call'}
+                title={isCallMode ? 'End voice call' : 'Start voice call'}
               >
-                {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
+                {isCallMode ? <MicOff size={18} /> : <Mic size={18} />}
               </button>
               <button
                 className="send-btn"
@@ -1249,68 +764,3 @@ function inlineFmt(text: string, map?: Map<string, string>): string {
   return map ? restoreLatex(formatted, map) : formatted;
 }
 
-function stripForSpeech(text: string): string {
-  return String(text || '')
-    .replace(/<nav>[\s\S]*?<\/nav>/g, ' ')
-    .replace(/\$\$?([\s\S]*?)\$\$?/g, '$1')
-    .replace(/`([^`]+)`/g, '$1')
-    .replace(/\*\*([^*]+?)\*\*/g, '$1')
-    .replace(/\*([^*]+?)\*/g, '$1')
-    .replace(/\[(.*?)\]\((.*?)\)/g, '$1')
-    .replace(/[#>*_~-]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function pickRecorderMimeType(): string | undefined {
-  if (typeof window === 'undefined' || typeof MediaRecorder === 'undefined') return undefined;
-
-  const candidates = [
-    'audio/webm;codecs=opus',
-    'audio/webm',
-    'audio/mp4;codecs=mp4a.40.2',
-    'audio/mp4',
-  ];
-
-  for (const candidate of candidates) {
-    try {
-      if (MediaRecorder.isTypeSupported(candidate)) return candidate;
-    } catch {}
-  }
-
-  return undefined;
-}
-
-function normaliseAudioContentType(value: string): string {
-  const raw = String(value || '').toLowerCase().trim();
-  const base = raw.split(';')[0]?.trim() || '';
-
-  if (!base) return 'audio/webm';
-  if (base.includes('webm')) return 'audio/webm';
-  if (base.includes('mp4') || base.includes('m4a') || base.includes('aac')) return 'audio/mp4';
-  if (base.includes('mpeg') || base.includes('mp3')) return 'audio/mpeg';
-  if (base.includes('ogg') || base.includes('opus')) return 'audio/ogg';
-  return 'audio/webm';
-}
-
-function getVoiceErrorMessage(error: unknown, fallback = 'Voice transcription failed.'): string {
-  const message = error instanceof Error ? error.message : String(error || '');
-  if (/did not match the expected pattern|pattern|mime|format|unsupported/i.test(message)) {
-    return 'Browser audio upload was rejected — switching to in-browser speech recognition should help.';
-  }
-  return message || fallback;
-}
-
-function shouldUseBrowserSpeechFallback(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error || '');
-  return /did not match the expected pattern|pattern|mime|format|unsupported/i.test(message);
-}
-
-function getBrowserSpeechRecognitionCtor(): (new () => BrowserSpeechRecognition) | null {
-  if (typeof window === 'undefined') return null;
-  const speechWindow = window as Window & typeof globalThis & {
-    SpeechRecognition?: new () => BrowserSpeechRecognition;
-    webkitSpeechRecognition?: new () => BrowserSpeechRecognition;
-  };
-  return speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition ?? null;
-}
