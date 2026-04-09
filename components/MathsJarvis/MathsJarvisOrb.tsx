@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -116,11 +116,25 @@ function OrbParticles({ state, analyserNode }: MathsJarvisOrbProps) {
 }
 
 export default function MathsJarvisOrb({ state, analyserNode }: MathsJarvisOrbProps) {
+  const [webglReady, setWebglReady] = useState(false);
+
+  useEffect(() => {
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+      if (gl) setWebglReady(true);
+    } catch {
+      // WebGL not available — OrbErrorBoundary will show CSS fallback
+    }
+  }, []);
+
+  if (!webglReady) return null;
+
   return (
     <Canvas
       camera={{ position: [0, 0, 4.5], fov: 38 }}
       style={{ height: 320, background: 'transparent' }}
-      gl={{ antialias: false, alpha: true }}
+      gl={{ antialias: false, alpha: true, powerPreference: 'low-power', failIfMajorPerformanceCaveat: false }}
     >
       <ambientLight intensity={0.7} />
       <OrbParticles state={state} analyserNode={analyserNode} />

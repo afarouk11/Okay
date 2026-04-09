@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import OrbErrorBoundary from '@/components/MathsJarvis/OrbErrorBoundary';
 import { useRouter } from 'next/navigation';
 import { Mic, MicOff, PhoneCall, PhoneOff, Repeat2, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '@/lib/useAuth';
@@ -967,9 +968,13 @@ export default function JarvisPageClient() {
       <div className="page-layout">
         <aside className="left-panel">
           <div className="glass-card orb-wrap">
-            <MathsJarvisOrb
-              state={isRecording ? 'LISTENING' : callStatus === 'speaking' ? 'CHATTING' : (isLoading || callStatus === 'thinking') ? 'THINKING' : 'LISTENING'}
-            />
+            <OrbErrorBoundary
+              fallback={<div className={`orb ${isRecording ? 'listening' : callStatus === 'speaking' ? 'speaking' : (isLoading || callStatus === 'thinking') ? 'thinking' : ''}`} role="img" aria-label="J.A.R.V.I.S. avatar" />}
+            >
+              <MathsJarvisOrb
+                state={isRecording ? 'LISTENING' : callStatus === 'speaking' ? 'CHATTING' : (isLoading || callStatus === 'thinking') ? 'THINKING' : 'LISTENING'}
+              />
+            </OrbErrorBoundary>
             <p className="orb-status">{orbStatusText}</p>
             <p className="orb-sub">{orbSubtext}</p>
           </div>
