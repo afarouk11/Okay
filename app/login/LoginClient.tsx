@@ -199,13 +199,16 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
                     border: '1px solid rgba(0,212,255,0.12)',
                   }}
                 />
-                <button
+                <motion.button
                   type="button"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setShowPassword(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+                </motion.button>
               </div>
               {mode === 'login' && (
                 <div className="mt-2 text-right">
@@ -233,13 +236,15 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
 
           <p className="text-center text-sm text-muted mt-5">
             {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
-            <button
+            <motion.button
               type="button"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => handleModeChange(mode === 'login' ? 'register' : 'login')}
               className="text-primary hover:underline font-medium"
             >
               {mode === 'login' ? 'Sign up' : 'Sign in'}
-            </button>
+            </motion.button>
           </p>
         </div>
       </motion.div>

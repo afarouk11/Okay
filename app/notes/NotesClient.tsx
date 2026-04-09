@@ -219,23 +219,27 @@ export default function NotesClient() {
                       style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#F0EEF8' }}
                     />
                     <div className="flex items-center gap-2 ml-auto">
-                      <button
+                      <motion.button
                         type="button"
+                        whileHover={{ scale: 1.04 }}
+                        whileTap={{ scale: 0.97 }}
                         onClick={() => setShowForm(false)}
                         className="px-3 py-1.5 rounded-lg text-xs"
                         style={{ color: '#9AA4AF' }}
                       >
                         Cancel
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
                         type="submit"
                         disabled={saving}
+                        whileHover={saving ? {} : { scale: 1.04 }}
+                        whileTap={saving ? {} : { scale: 0.97 }}
                         className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium"
-                        style={{ background: '#4F8CFF', color: '#fff' }}
+                        style={{ background: '#4F8CFF', color: '#fff', opacity: saving ? 0.7 : 1 }}
                       >
                         {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                         Save
-                      </button>
+                      </motion.button>
                     </div>
                   </div>
                 </form>
@@ -263,14 +267,16 @@ export default function NotesClient() {
               <StickyNote className="w-10 h-10 mb-4" style={{ color: '#4F8CFF', opacity: 0.4 }} />
               <p className="font-medium mb-1" style={{ color: '#F0EEF8' }}>No notes yet</p>
               <p className="text-sm mb-5" style={{ color: '#9AA4AF' }}>Capture key ideas, formulas, and reminders.</p>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => setShowForm(true)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium"
                 style={{ background: 'rgba(79,140,255,0.12)', border: '1px solid rgba(79,140,255,0.25)', color: '#4F8CFF' }}
               >
                 <Plus className="w-4 h-4" />
                 Create your first note
-              </button>
+              </motion.button>
             </div>
           )}
 
@@ -306,12 +312,25 @@ export default function NotesClient() {
                         {SUBJECTS.map(s => <option key={s} value={s} style={{ background: '#121821' }}>{s}</option>)}
                       </select>
                       <div className="flex gap-2">
-                        <button onClick={() => handleSaveEdit(note.id)} className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium" style={{ background: '#22C55E20', color: '#22C55E' }}>
+                        <motion.button
+                          whileHover={{ scale: 1.04 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={() => handleSaveEdit(note.id)}
+                          className="flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium"
+                          style={{ background: '#22C55E20', color: '#22C55E' }}
+                        >
                           {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />} Save
-                        </button>
-                        <button onClick={() => setEditId(null)} className="px-3 py-1 rounded-lg text-xs" style={{ color: '#9AA4AF' }}>
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setEditId(null)}
+                          className="px-3 py-1 rounded-lg text-xs"
+                          style={{ color: '#9AA4AF' }}
+                          aria-label="Cancel edit"
+                        >
                           <X className="w-3 h-3" />
-                        </button>
+                        </motion.button>
                       </div>
                     </div>
                   ) : (
@@ -334,12 +353,26 @@ export default function NotesClient() {
                           )}
                         </div>
                         <div className="flex items-center gap-1 flex-shrink-0">
-                          <button onClick={() => startEdit(note)} className="p-1.5 rounded-lg transition-colors hover:bg-white/5" style={{ color: '#9AA4AF' }}>
+                          <motion.button
+                            whileHover={{ scale: 1.1, color: '#F0EEF8' }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => startEdit(note)}
+                            className="p-1.5 rounded-lg"
+                            style={{ color: '#9AA4AF' }}
+                            aria-label="Edit note"
+                          >
                             <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={() => handleDelete(note.id)} className="p-1.5 rounded-lg transition-colors hover:bg-red-500/10" style={{ color: '#9AA4AF' }}>
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.1, color: '#ef4444' }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleDelete(note.id)}
+                            className="p-1.5 rounded-lg"
+                            style={{ color: '#9AA4AF' }}
+                            aria-label="Delete note"
+                          >
                             <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          </motion.button>
                         </div>
                       </div>
                       {note.created_at && (
