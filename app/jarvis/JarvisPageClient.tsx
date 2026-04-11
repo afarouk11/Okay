@@ -443,8 +443,10 @@ export default function JarvisPageClient() {
   const effectiveSystem = BASE_SYSTEM + TEACH_MODES[teachMode].suffix;
 
   const speakReply = useCallback(async (rawText: string) => {
+
     const speechText = stripForSpeech(rawText);
-    if (!speechText) {
+    if (!speechText || !speechText.trim()) {
+      showToast('Cannot read out empty or invalid text.');
       setCallStatus(callModeRef.current ? 'ready' : 'idle');
       if (callModeRef.current && handsFreeMode) queueHandsFreeListeningRef.current?.();
       return;

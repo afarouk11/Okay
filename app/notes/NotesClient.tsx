@@ -68,7 +68,11 @@ export default function NotesClient() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    if (!token || !newContent.trim()) return
+    if (!token) return
+    if (!newContent.trim()) {
+      alert('Note content cannot be empty.');
+      return;
+    }
     setSaving(true)
     try {
       const res = await fetch('/api/notes', {
@@ -92,6 +96,10 @@ export default function NotesClient() {
 
   async function handleSaveEdit(id: string) {
     if (!token) return
+    if (!editContent.trim()) {
+      alert('Note content cannot be empty.');
+      return;
+    }
     setSaving(true)
     try {
       const res = await fetch('/api/notes', {
