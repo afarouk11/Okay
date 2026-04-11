@@ -52,11 +52,14 @@ export async function POST(request: NextRequest) {
   if (!supabase) return NextResponse.json({ error: 'Service unavailable' }, { status: 503 })
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  let body: { messages?: Message[]; systemPrompt?: string }
+  // Parse body via text() → JSON.parse() to avoid edge-case failures with
+  // request.json() in certain Next.js 15 deployment environments.
+  let body: { messages?: unknown; systemPrompt?: string }
   try {
-    body = await request.json()
+    const raw = await request.text()
+    body = JSON.parse(raw) as { messages?: unknown; systemPrompt?: string }
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
   const { messages, systemPrompt } = body
@@ -64,13 +67,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'messages array is required' }, { status: 400 })
   }
 
-  // Validate and sanitise messages
-  const sanitised: Message[] = messages
-    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
-    .map(m => ({ role: m.role, content: m.content.slice(0, 8000) }))
+  // Validate and sanitise messages — coerce content to string defensively
+  const sanitised: Message[] = (messages as unknown[])
+    .filter((m): m is Record<string, unknown> => {
+      if (m === null || typeof m !== 'object') return false
+      const r = (m as Record<string, unknown>).role
+      const c = (m as Record<string, unknown>).content
+      return (r === 'user' || r === 'assistant') && c !== undefined && c !== null
+    })
+    .map(m => ({
+      role: m.role as 'user' | 'assistant',
+      content: String(m.content).slice(0, 8000),
+    }))
 
   if (sanitised.length === 0) {
-    return NextResponse.json({ error: 'No valid messages' }, { status: 400 })
+    return NextResponse.json({ error: 'No valid messages — ensure each message has role user/assistant and a content string' }, { status: 400 })
   }
 
   // Check trial limits
