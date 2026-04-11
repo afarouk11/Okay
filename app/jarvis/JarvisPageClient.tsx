@@ -574,16 +574,15 @@ export default function JarvisPageClient() {
 
       // Error responses are still JSON
       if (!r.ok) {
-        const data = await r.json() as { error?: string; code?: string };
+        const data = await r.json().catch(() => ({})) as { error?: string; message?: string; code?: string };
         if (data.code === 'TRIAL_LIMIT') {
           setMessages(m => [...m, { id: makeId(), role: 'assistant', content: "⚠️ You've reached your daily message limit. Upgrade to **Pro** to continue!", time: formatTime() }]);
         } else {
-          // Map known user-facing messages; fall back to a generic prompt for
-          // raw API/internal errors (e.g. "text is required", "Invalid JSON").
-          const knownSafe = /too many requests|service unavailable|unauthori[sz]ed|daily limit/i;
-          const msg = (data.error && knownSafe.test(data.error))
-            ? data.error
-            : 'Something went wrong — please try again.';
+          // Prefer the API's own error string; fall back to a generic message for
+          // raw internal errors (e.g. Next.js 500 "Internal Server Error").
+          const knownSafe = /too many requests|service unavailable|unauthori[sz]ed|daily limit|ai service/i;
+          const raw = data.error ?? data.message ?? '';
+          const msg = (raw && knownSafe.test(raw)) ? raw : 'Something went wrong — please try again.';
           showToast(msg);
           historyRef.current.pop();
         }

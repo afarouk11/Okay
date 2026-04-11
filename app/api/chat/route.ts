@@ -103,8 +103,14 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  // Build adaptive system prompt from jarvis_sessions history
-  const adaptiveSystem = await buildAdaptiveSystemPrompt(user.id, systemPrompt, supabase)
+  // Build adaptive system prompt from jarvis_sessions history.
+  // Wrapped in try-catch: a Supabase network hiccup must not kill the whole request.
+  let adaptiveSystem: string
+  try {
+    adaptiveSystem = await buildAdaptiveSystemPrompt(user.id, systemPrompt, supabase)
+  } catch {
+    adaptiveSystem = systemPrompt ?? ''
+  }
 
   // Stream Claude response, tapping it to accumulate the full text for DB write
   let claudeStream: ReadableStream<Uint8Array>
