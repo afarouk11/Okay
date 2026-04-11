@@ -578,11 +578,14 @@ export default function JarvisPageClient() {
         if (data.code === 'TRIAL_LIMIT') {
           setMessages(m => [...m, { id: makeId(), role: 'assistant', content: "⚠️ You've reached your daily message limit. Upgrade to **Pro** to continue!", time: formatTime() }]);
         } else {
-          // Prefer the API's own error string; fall back to a generic message for
-          // raw internal errors (e.g. Next.js 500 "Internal Server Error").
-          const knownSafe = /too many requests|service unavailable|unauthori[sz]ed|daily limit|ai service/i;
-          const raw = data.error ?? data.message ?? '';
-          const msg = (raw && knownSafe.test(raw)) ? raw : 'Something went wrong — please try again.';
+          // Show a user-safe error: use the API's own string when it's meaningful,
+          // fall back to a status-code hint so the user (and we) know what happened.
+          const rawVal = data.error ?? data.message ?? '';
+          const raw = typeof rawVal === 'string' ? rawVal : '';
+          const knownSafe = /too many requests|service unavailable|unauthori[sz]ed|daily limit|ai service|authentication/i;
+          const msg = (raw && knownSafe.test(raw))
+            ? raw
+            : `Something went wrong (${r.status}) — please try again.`;
           showToast(msg);
           historyRef.current.pop();
         }
