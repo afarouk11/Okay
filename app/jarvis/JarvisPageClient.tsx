@@ -578,7 +578,13 @@ export default function JarvisPageClient() {
         if (data.code === 'TRIAL_LIMIT') {
           setMessages(m => [...m, { id: makeId(), role: 'assistant', content: "⚠️ You've reached your daily message limit. Upgrade to **Pro** to continue!", time: formatTime() }]);
         } else {
-          showToast(data.error ?? 'Something went wrong — please try again.');
+          // Map known user-facing messages; fall back to a generic prompt for
+          // raw API/internal errors (e.g. "text is required", "Invalid JSON").
+          const knownSafe = /too many requests|service unavailable|unauthori[sz]ed|daily limit/i;
+          const msg = (data.error && knownSafe.test(data.error))
+            ? data.error
+            : 'Something went wrong — please try again.';
+          showToast(msg);
           historyRef.current.pop();
         }
         setCallStatus(callModeRef.current ? 'ready' : 'idle');

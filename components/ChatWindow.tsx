@@ -7,7 +7,8 @@ import MessageBubble from './MessageBubble'
 import InputBox from './InputBox'
 import TypingIndicator from './TypingIndicator'
 import { stripNavCommand, extractNavCommand } from '@/lib/jarvis'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import { useAuth } from '@/lib/useAuth'
 
 export type ChatMsg = {
   id: string
@@ -24,6 +25,8 @@ const INITIAL_MESSAGE: ChatMsg = {
 
 export default function ChatWindow() {
   const router = useRouter()
+  const pathname = usePathname()
+  const { token } = useAuth()
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMsg[]>([INITIAL_MESSAGE])
   const [input, setInput] = useState('')
@@ -44,6 +47,19 @@ export default function ChatWindow() {
     const text = input.trim()
     if (!text || loading) return
 
+    if (!token) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: 'Please sign in to chat with Jarvis.',
+          timestamp: new Date(),
+        },
+      ])
+      return
+    }
+
     const userMsg: ChatMsg = {
       id: Date.now().toString(),
       role: 'user',
@@ -63,26 +79,48 @@ export default function ChatWindow() {
 
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ messages: history }),
       })
 
       if (!res.ok) throw new Error('Failed to send message')
 
-      const data = await res.json()
-      const rawContent: string = data.response || 'Sorry, something went wrong.'
+      // Read the streaming response incrementally
+      const reader = res.body?.getReader()
+      const decoder = new TextDecoder()
+      let accumulated = ''
 
-      const navCmd = extractNavCommand(rawContent)
-      const displayContent = stripNavCommand(rawContent)
+      const assistantId = (Date.now() + 1).toString()
+      setMessages(prev => [
+        ...prev,
+        { id: assistantId, role: 'assistant', content: '', timestamp: new Date() },
+      ])
+      setLoading(false)
 
-      const assistantMsg: ChatMsg = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: displayContent,
-        timestamp: new Date(),
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          accumulated += decoder.decode(value, { stream: true })
+          const snapshot = accumulated
+          setMessages(prev =>
+            prev.map(m => (m.id === assistantId ? { ...m, content: snapshot } : m)),
+          )
+        }
+        accumulated += decoder.decode()
       }
 
-      setMessages(prev => [...prev, assistantMsg])
+      const navCmd = extractNavCommand(accumulated)
+      const displayContent = stripNavCommand(accumulated)
+
+      if (displayContent !== accumulated) {
+        setMessages(prev =>
+          prev.map(m => (m.id === assistantId ? { ...m, content: displayContent } : m)),
+        )
+      }
 
       if (navCmd?.page) {
         setTimeout(() => {
@@ -100,10 +138,9 @@ export default function ChatWindow() {
           timestamp: new Date(),
         },
       ])
-    } finally {
       setLoading(false)
     }
-  }, [input, loading, messages, router])
+  }, [input, loading, messages, router, token])
 
   const handleVoice = useCallback(async () => {
     if (isRecording) {
@@ -138,6 +175,9 @@ export default function ChatWindow() {
       setIsRecording(true)
     } catch { /* mic access denied */ }
   }, [isRecording])
+
+  // Don't show the floating widget on the dedicated Jarvis page
+  if (pathname === '/jarvis') return null
 
   return (
     <>
