@@ -42,6 +42,19 @@ export async function POST(request: NextRequest) {
       if (error.message.toLowerCase().includes('already') || error.message.toLowerCase().includes('duplicate')) {
         return NextResponse.json({ error: 'An account with this email already exists. Try signing in instead.' }, { status: 400 })
       }
+      // Supabase returns "Authentication required" (HTTP 401) when the service
+      // role key is invalid or absent. Never expose that internal detail to the
+      // browser — it looks like the *user* needs to authenticate, which is
+      // confusing on a sign-up form.
+      if (
+        error.message.toLowerCase().includes('authentication') ||
+        error.message.toLowerCase().includes('not a service_role') ||
+        error.message.toLowerCase().includes('invalid api key') ||
+        error.message.toLowerCase().includes('unauthorized')
+      ) {
+        console.error('[auth/register] Supabase admin API auth error:', error.message)
+        return NextResponse.json({ error: 'Registration is temporarily unavailable. Please try again later.' }, { status: 503 })
+      }
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
