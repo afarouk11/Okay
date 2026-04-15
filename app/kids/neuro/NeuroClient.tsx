@@ -58,10 +58,10 @@ export default function NeuroClient() {
   async function startSession() {
     setPhase('loading'); setError('')
     try {
-      const res = await fetch('/api/generate-iq', {
+      const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ exerciseType, difficulty }),
+        body: JSON.stringify({ type: 'iq', exerciseType, difficulty }),
       })
       const data = await res.json()
       if (!res.ok || data.error) throw new Error(data.error ?? 'Generation failed')

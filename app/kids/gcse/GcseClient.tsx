@@ -43,10 +43,10 @@ export default function GcseClient() {
   async function generate() {
     setLoading(true); setError(''); setShowSolution(false); setQuestion(''); setSolution('')
     try {
-      const res = await fetch('/api/generate-gcse', {
+      const res = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, tier, marks }),
+        body: JSON.stringify({ type: 'gcse', topic, tier, marks }),
       })
       const data = await res.json()
       if (!res.ok || data.error) throw new Error(data.error ?? 'Generation failed')

@@ -39,7 +39,7 @@ export default function PredictClient() {
     async function loadInsights() {
       if (!token) return
       try {
-        const res = await fetch('/api/adaptive', {
+        const res = await fetch('/api/progress', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
