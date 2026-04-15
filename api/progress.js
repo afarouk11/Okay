@@ -42,7 +42,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { subject, topic, correct, total, xpEarned } = req.body;
+    const { subject, topic, correct, total, xpEarned = 0 } = req.body;
     if (!Number.isInteger(total) || !Number.isInteger(correct) || !Number.isInteger(xpEarned)) {
       return res.status(400).json({ error: 'total, correct, and xpEarned must be integers' });
     }
