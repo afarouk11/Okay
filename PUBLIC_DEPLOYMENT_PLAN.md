@@ -14,6 +14,9 @@ The site is already on **Next.js 15** with the App Router, public marketing page
 - Wired the Pricing page to launch live checkout sessions instead of only linking back to the dashboard.
 - Added deploy-safe dynamic handling to sensitive API routes and refreshed stale service-worker core assets.
 - Strengthened CSP and form/frame restrictions in `vercel.json`.
+- Fixed wrong domain (`synaptiqai.co.uk` → `synaptiq.co.uk`) in sitemap.xml, robots.txt, and layout.tsx fallback URL (all root and public/ copies).
+- Fixed CI workflow to run `typecheck` and `test` as separate steps.
+- Added `/schools` to sitemap; corrected `/privacy-policy` → `/privacy` in public/sitemap.xml.
 
 ## Launch checklist
 
@@ -57,8 +60,8 @@ The site is already on **Next.js 15** with the App Router, public marketing page
 - [x] Keep the app on modern Next.js App Router patterns.
 - [x] Refresh service-worker cache targets to canonical routes.
 - [x] Add webhook health-check support.
-- [ ] Run `npm run build`, `npm run typecheck`, and `npm test` in CI on every push.
-- [ ] Verify metadata, sitemap, robots, and canonical URLs on the production domain.
+- [x] Run `npm run build`, `npm run typecheck`, and `npm test` in CI on every push.
+- [x] Verify metadata, sitemap, robots, and canonical URLs on the production domain.
 - [ ] Add uptime monitoring and error tracking for `/api/chat`, `/api/stripe`, `/api/webhook`, and `/api/resend`.
 
 ### 4. Go-live steps

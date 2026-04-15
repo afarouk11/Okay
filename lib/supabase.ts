@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient as createSSRBrowserClient } from '@supabase/ssr'
 
 // Server-side client (service role) — full DB access, never expose to browser
 export function createServiceClient() {
@@ -20,7 +21,8 @@ export function createServiceClient() {
   }
 }
 
-// Client-side Supabase (anon key) — safe for browser
+// Client-side Supabase (anon key) — uses @supabase/ssr for cookie-based sessions
+// required in Next.js 15 App Router so the server can read auth state from cookies
 export function createBrowserClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -31,7 +33,7 @@ export function createBrowserClient() {
     return null
   }
   try {
-    return createClient(url, key)
+    return createSSRBrowserClient(url, key)
   } catch (err) {
     console.error('Failed to create Supabase browser client:', err)
     return null

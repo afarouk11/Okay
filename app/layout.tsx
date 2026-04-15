@@ -13,7 +13,7 @@ const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.VERCEL_PROJECT_PRODUCTION_URL ||
   process.env.VERCEL_URL ||
-  'https://synaptiqai.co.uk'
+  'https://synaptiq.co.uk'
 
 const resolvedSiteUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`
 

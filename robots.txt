@@ -6,4 +6,4 @@ Disallow: /questions
 Disallow: /reset-password
 Disallow: /test
 
-Sitemap: https://synaptiqai.co.uk/sitemap.xml
+Sitemap: https://synaptiq.co.uk/sitemap.xml
