@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Zap, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
@@ -53,9 +54,18 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
     }
 
     if (mode === 'login') {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
+        password,
+      })
       if (signInError) {
-        setError(signInError.message)
+        if (/email not confirmed/i.test(signInError.message)) {
+          setError('Please verify your email address before signing in. Check your inbox for a confirmation link.')
+        } else if (/invalid login credentials|invalid email or password/i.test(signInError.message)) {
+          setError('Incorrect email or password. Please try again.')
+        } else {
+          setError(signInError.message)
+        }
       } else {
         router.replace('/dashboard')
       }
@@ -71,7 +81,10 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
         setError(data.error ?? 'Registration failed.')
       } else {
         // Sign in immediately after registration
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.toLowerCase().trim(),
+          password,
+        })
         if (signInError) {
           setSuccess('Account created! Please sign in to Synaptiq.')
           setMode('login')
@@ -199,14 +212,22 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
                     border: '1px solid rgba(0,212,255,0.12)',
                   }}
                 />
-                <button
+                <motion.button
                   type="button"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setShowPassword(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+                </motion.button>
               </div>
+              {mode === 'login' && (
+                <div className="mt-2 text-right">
+                  <Link href="/reset-password" className="text-xs text-primary hover:underline">Forgot password?</Link>
+                </div>
+              )}
             </div>
 
             <motion.button
@@ -228,13 +249,15 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
 
           <p className="text-center text-sm text-muted mt-5">
             {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
-            <button
+            <motion.button
               type="button"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => handleModeChange(mode === 'login' ? 'register' : 'login')}
               className="text-primary hover:underline font-medium"
             >
               {mode === 'login' ? 'Sign up' : 'Sign in'}
-            </button>
+            </motion.button>
           </p>
         </div>
       </motion.div>

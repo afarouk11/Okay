@@ -1,4 +1,4 @@
-# Test files — not needed in production
+# Shared kids source is now used by the main `/kids` route, so keep it in the Vercel upload.
 coverage/
 tests/
 

@@ -1,9 +1,26 @@
+import { createHash, timingSafeEqual } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { isRateLimited, getIp } from '@/lib/rateLimit'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const FROM_EMAIL = process.env.EMAIL_FROM || 'Synaptiq <hello@synaptiq.co.uk>'
 const SITE_URL = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq.co.uk'
+
+function hasValidAdminKey(adminKey: string | null) {
+  const expectedKey = process.env.ADMIN_SECRET_KEY || ''
+  if (!adminKey || !expectedKey) return false
+
+  try {
+    const providedHash = createHash('sha256').update(adminKey).digest()
+    const expectedHash = createHash('sha256').update(expectedKey).digest()
+    return timingSafeEqual(providedHash, expectedHash)
+  } catch {
+    return false
+  }
+}
 
 function logAdminAction(
   supabase: ReturnType<typeof createServiceClient>,
@@ -83,7 +100,7 @@ async function handleAdmin(request: NextRequest) {
   }
 
   const adminKey = request.headers.get('x-admin-key')
-  if (!adminKey || adminKey !== process.env.ADMIN_SECRET_KEY) {
+  if (!hasValidAdminKey(adminKey)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

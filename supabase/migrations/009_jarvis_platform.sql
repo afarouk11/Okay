@@ -16,6 +16,7 @@ create index if not exists idx_chat_history_user_id   on public.chat_history(use
 create index if not exists idx_chat_history_created   on public.chat_history(created_at desc);
 
 alter table public.chat_history enable row level security;
+drop policy if exists "chat_history_own" on public.chat_history;
 create policy "chat_history_own" on public.chat_history
   for all using (user_id::text = auth.uid()::text);
 
@@ -34,6 +35,7 @@ create table if not exists public.daily_plans (
 create index if not exists idx_daily_plans_user_date on public.daily_plans(user_id, date desc);
 
 alter table public.daily_plans enable row level security;
+drop policy if exists "daily_plans_own" on public.daily_plans;
 create policy "daily_plans_own" on public.daily_plans
   for all using (user_id::text = auth.uid()::text);
 
@@ -51,6 +53,7 @@ create table if not exists public.jarvis_memory (
 );
 
 alter table public.jarvis_memory enable row level security;
+drop policy if exists "jarvis_memory_own" on public.jarvis_memory;
 create policy "jarvis_memory_own" on public.jarvis_memory
   for all using (user_id::text = auth.uid()::text);
 

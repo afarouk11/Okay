@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Mail, Phone, Building2, Shield, CheckCircle, Loader2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react'
+import { Mail, Phone, Building2, Shield, CheckCircle, Loader2, AlertCircle, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { Zap, ArrowLeft } from 'lucide-react'
 
@@ -202,16 +202,21 @@ export default function ContactClient() {
                   className="rounded-xl overflow-hidden"
                   style={{ background: 'rgba(18,24,33,0.8)', border: '1px solid rgba(255,255,255,0.06)' }}
                 >
-                  <button
+                  <motion.button
                     className="w-full flex items-center justify-between px-4 py-3.5 text-left"
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    whileHover={{ backgroundColor: 'rgba(255,255,255,0.02)' }}
+                    whileTap={{ scale: 0.99 }}
                   >
                     <span className="text-sm font-medium pr-3" style={{ color: '#F0EEF8' }}>{faq.q}</span>
-                    {openFaq === i
-                      ? <ChevronUp className="w-4 h-4 flex-shrink-0" style={{ color: '#6B7394' }} />
-                      : <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: '#6B7394' }} />
-                    }
-                  </button>
+                    <motion.span
+                      animate={{ rotate: openFaq === i ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                      style={{ flexShrink: 0 }}
+                    >
+                      <ChevronDown className="w-4 h-4" style={{ color: '#6B7394' }} />
+                    </motion.span>
+                  </motion.button>
                   {openFaq === i && (
                     <div className="px-4 pb-4">
                       <p className="text-sm leading-relaxed" style={{ color: '#9AA4AF' }}>{faq.a}</p>

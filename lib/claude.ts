@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { CLAUDE_HAIKU_MODEL } from './aiModels'
 import { JARVIS_SYSTEM_PROMPT } from './jarvis'
 
 const client = new Anthropic({
@@ -15,7 +16,7 @@ export async function sendToClaude(
   systemPrompt?: string,
 ): Promise<string> {
   const response = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: CLAUDE_HAIKU_MODEL,
     max_tokens: 1024,
     system: systemPrompt ?? JARVIS_SYSTEM_PROMPT,
     messages,
@@ -31,7 +32,7 @@ export async function streamToClaude(
   systemPrompt?: string,
 ): Promise<ReadableStream<Uint8Array>> {
   const stream = client.messages.stream({
-    model: 'claude-haiku-4-5-20251001',
+    model: CLAUDE_HAIKU_MODEL,
     max_tokens: 1024,
     system: systemPrompt ?? JARVIS_SYSTEM_PROMPT,
     messages,

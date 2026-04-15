@@ -1,10 +1,28 @@
 'use client'
 
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Check, Zap, Star, Building2, ArrowRight } from 'lucide-react'
+import { Check, Zap, Star, Building2, ArrowRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/useAuth'
 
-const PLANS = [
+type PlanConfig = {
+  name: string
+  price: string
+  period: string
+  description: string
+  color: string
+  icon: typeof Zap
+  popular: boolean
+  features: string[]
+  cta: string
+  action: 'link' | 'checkout'
+  href?: string
+  checkoutPlan?: 'student' | 'homeschool'
+}
+
+const PLANS: PlanConfig[] = [
   {
     name: 'Free',
     price: '£0',
@@ -21,6 +39,7 @@ const PLANS = [
       'Limited plan generation',
     ],
     cta: 'Get started free',
+    action: 'link',
     href: '/dashboard',
   },
   {
@@ -42,7 +61,8 @@ const PLANS = [
       'Progress analytics',
     ],
     cta: 'Start 7-day trial',
-    href: '/dashboard',
+    action: 'checkout',
+    checkoutPlan: 'student',
   },
   {
     name: 'School',
@@ -62,11 +82,55 @@ const PLANS = [
       'Custom branding',
     ],
     cta: 'Contact us',
+    action: 'link',
     href: '/contact',
   },
 ]
 
 export default function PricingClient() {
+  const router = useRouter()
+  const { token, loading } = useAuth()
+  const [checkoutBusy, setCheckoutBusy] = useState<string | null>(null)
+  const [checkoutError, setCheckoutError] = useState<string | null>(null)
+
+  async function startCheckout(plan: PlanConfig) {
+    if (plan.action !== 'checkout' || !plan.checkoutPlan || loading || checkoutBusy) return
+
+    if (!token) {
+      router.push('/login?mode=register')
+      return
+    }
+
+    setCheckoutError(null)
+    setCheckoutBusy(plan.name)
+
+    try {
+      const res = await fetch('/api/stripe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          plan: plan.checkoutPlan,
+          successUrl: `${window.location.origin}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+          cancelUrl: `${window.location.origin}/pricing?checkout=cancelled`,
+        }),
+      })
+
+      const data = await res.json().catch(() => ({})) as { error?: string; url?: string }
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || 'Unable to start checkout right now.')
+      }
+
+      window.location.assign(data.url)
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : 'Unable to start checkout right now.')
+    } finally {
+      setCheckoutBusy(null)
+    }
+  }
+
   return (
     <div className="min-h-screen" style={{ background: '#0B0F14' }}>
       {/* Nav */}
@@ -113,10 +177,28 @@ export default function PricingClient() {
           </p>
         </motion.div>
 
+        {checkoutError && (
+          <div
+            className="mb-6 rounded-xl px-4 py-3 text-sm"
+            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: '#fecaca' }}
+          >
+            {checkoutError}
+          </div>
+        )}
+
         {/* Plans */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {PLANS.map((plan, i) => {
             const Icon = plan.icon
+            const isBusy = checkoutBusy === plan.name
+            const ctaStyles = plan.popular
+              ? { background: '#4F8CFF', color: '#fff' }
+              : {
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: '#E6EDF3',
+                }
+
             return (
               <motion.div
                 key={plan.name}
@@ -144,7 +226,6 @@ export default function PricingClient() {
                   </div>
                 )}
 
-                {/* Icon + name */}
                 <div className="flex items-center gap-3 mb-4">
                   <div
                     className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -155,14 +236,12 @@ export default function PricingClient() {
                   <span className="text-sm font-semibold text-foreground">{plan.name}</span>
                 </div>
 
-                {/* Price */}
                 <div className="mb-2">
                   <span className="text-3xl font-bold text-foreground">{plan.price}</span>
                   <span className="text-sm text-muted ml-1.5">/ {plan.period}</span>
                 </div>
                 <p className="text-sm text-muted mb-6">{plan.description}</p>
 
-                {/* Features */}
                 <ul className="space-y-2.5 mb-8 flex-1">
                   {plan.features.map(feature => (
                     <li key={feature} className="flex items-start gap-2.5 text-sm text-muted">
@@ -172,32 +251,35 @@ export default function PricingClient() {
                   ))}
                 </ul>
 
-                {/* CTA */}
-                <Link href={plan.href}>
+                {plan.action === 'checkout' ? (
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileHover={{ scale: isBusy ? 1 : 1.02 }}
+                    whileTap={{ scale: isBusy ? 1 : 0.97 }}
+                    onClick={() => startCheckout(plan)}
+                    disabled={isBusy || loading}
                     className="w-full flex items-center justify-center gap-2 py-2.5 rounded-[10px] text-sm font-medium transition-all"
-                    style={
-                      plan.popular
-                        ? { background: '#4F8CFF', color: '#fff' }
-                        : {
-                            background: 'rgba(255,255,255,0.05)',
-                            border: '1px solid rgba(255,255,255,0.1)',
-                            color: '#E6EDF3',
-                          }
-                    }
+                    style={{ ...ctaStyles, opacity: (isBusy || loading) ? 0.75 : 1 }}
                   >
-                    {plan.cta}
-                    <ArrowRight className="w-4 h-4" />
+                    {isBusy ? <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting…</> : <>{plan.cta}<ArrowRight className="w-4 h-4" /></>}
                   </motion.button>
-                </Link>
+                ) : (
+                  <Link href={plan.name === 'Free' && !token ? '/login?mode=register' : (plan.href || '/')} className="block">
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="w-full flex items-center justify-center gap-2 py-2.5 rounded-[10px] text-sm font-medium transition-all"
+                      style={ctaStyles}
+                    >
+                      {plan.cta}
+                      <ArrowRight className="w-4 h-4" />
+                    </motion.div>
+                  </Link>
+                )}
               </motion.div>
             )
           })}
         </div>
 
-        {/* Footer note */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

@@ -25,6 +25,10 @@ import {
   Clock3,
   Network,
   HeartPulse,
+  Trophy,
+  AlertTriangle,
+  CheckSquare,
+  Target,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/lib/useAuth'
@@ -36,6 +40,7 @@ const navItems = [
   { href: '/jarvis',       label: 'J.A.R.V.I.S.',   icon: Sparkles        },
   { href: '/chat',         label: 'Chat',           icon: MessageSquare   },
   { href: '/study',        label: 'Study Hub',      icon: Layers3         },
+  { href: '/kids',         label: 'Kids',           icon: BookOpen        },
   { href: '/predict',      label: 'Exam Insights',  icon: Brain           },
   { href: '/formulas',     label: 'Reference',      icon: Sigma           },
   { href: '/resources',    label: 'Resources',      icon: LibraryBig      },
@@ -48,6 +53,12 @@ const navItems = [
   { href: '/questions',    label: 'Questions',      icon: HelpCircle      },
   { href: '/papers',       label: 'Past Papers',    icon: FileText        },
   { href: '/notes',        label: 'Notes',          icon: StickyNote      },
+  { href: '/leaderboard', label: 'Leaderboard',    icon: Trophy          },
+  { href: '/blitz',       label: 'Quick Blitz',    icon: Zap             },
+  { href: '/mistakes',    label: 'Mistakes',       icon: AlertTriangle   },
+  { href: '/exams',       label: 'Exam Countdown', icon: CalendarDays    },
+  { href: '/checklist',   label: 'Checklist',      icon: CheckSquare     },
+  { href: '/goals',       label: 'Daily Goals',    icon: Target          },
 ]
 
 const kidsItems = [

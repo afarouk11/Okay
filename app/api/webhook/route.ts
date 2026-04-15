@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createServiceClient } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const siteUrl = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq.co.uk'
 
 async function sendEmail(to: string, type: string, params: { name?: string; stats?: Record<string, unknown> } = {}) {
@@ -16,6 +19,10 @@ async function sendEmail(to: string, type: string, params: { name?: string; stat
     headers,
     body: JSON.stringify(payload),
   }).catch(() => {})
+}
+
+export async function GET() {
+  return NextResponse.json({ status: 'ok' })
 }
 
 export async function POST(request: NextRequest) {

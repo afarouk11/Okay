@@ -28,6 +28,9 @@ create index if not exists jarvis_sessions_user_date_idx
 
 alter table public.jarvis_sessions enable row level security;
 
+drop policy if exists "Users can read own Jarvis sessions" on public.jarvis_sessions;
+drop policy if exists "Users can insert own Jarvis sessions" on public.jarvis_sessions;
+drop policy if exists "Users can delete own Jarvis sessions" on public.jarvis_sessions;
 -- Users can only read their own sessions
 create policy "Users can read own Jarvis sessions"
   on public.jarvis_sessions for select

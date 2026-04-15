@@ -2,6 +2,8 @@
 -- Adds missing columns to profiles and creates all app tables.
 -- Applied 2026-03-17 via Supabase MCP.
 
+create extension if not exists "pgcrypto";
+
 -- ── Add missing columns to profiles ──────────────────────────────────────────
 alter table public.profiles
   add column if not exists plan                 text default 'student',
@@ -31,7 +33,7 @@ $$;
 
 -- ── Notes table ───────────────────────────────────────────────────────────────
 create table if not exists public.notes (
-  id         uuid primary key default uuid_generate_v4(),
+  id         uuid primary key default gen_random_uuid(),
   user_id    uuid references public.profiles(id) on delete cascade,
   title      text not null default 'Untitled',
   content    text not null default '',
@@ -41,16 +43,18 @@ create table if not exists public.notes (
   updated_at timestamptz default now()
 );
 alter table public.notes enable row level security;
+drop policy if exists "notes_own" on public.notes;
 create policy "notes_own" on public.notes
   for all using (user_id::text = auth.uid()::text);
 grant all on public.notes to service_role;
+drop trigger if exists notes_updated_at on public.notes;
 create trigger notes_updated_at
   before update on public.notes
   for each row execute function public.set_updated_at();
 
 -- ── Progress table ─────────────────────────────────────────────────────────────
 create table if not exists public.progress (
-  id         uuid primary key default uuid_generate_v4(),
+  id         uuid primary key default gen_random_uuid(),
   user_id    uuid references public.profiles(id) on delete cascade,
   subject    text not null default '',
   topic      text default '',
@@ -60,13 +64,14 @@ create table if not exists public.progress (
   session_at timestamptz default now()
 );
 alter table public.progress enable row level security;
+drop policy if exists "progress_own" on public.progress;
 create policy "progress_own" on public.progress
   for all using (user_id::text = auth.uid()::text);
 grant all on public.progress to service_role;
 
 -- ── Activity log table ────────────────────────────────────────────────────────
 create table if not exists public.activity_log (
-  id        uuid primary key default uuid_generate_v4(),
+  id        uuid primary key default gen_random_uuid(),
   user_id   uuid references public.profiles(id) on delete cascade,
   type      text not null default '',
   detail    text default '',
@@ -74,13 +79,14 @@ create table if not exists public.activity_log (
   logged_at timestamptz default now()
 );
 alter table public.activity_log enable row level security;
+drop policy if exists "activity_log_own" on public.activity_log;
 create policy "activity_log_own" on public.activity_log
   for all using (user_id::text = auth.uid()::text);
 grant all on public.activity_log to service_role;
 
 -- ── Mistakes table ────────────────────────────────────────────────────────────
 create table if not exists public.mistakes (
-  id          uuid primary key default uuid_generate_v4(),
+  id          uuid primary key default gen_random_uuid(),
   user_id     uuid references public.profiles(id) on delete cascade,
   subject     text default '',
   topic       text default '',
@@ -90,13 +96,14 @@ create table if not exists public.mistakes (
   logged_at   timestamptz default now()
 );
 alter table public.mistakes enable row level security;
+drop policy if exists "mistakes_own" on public.mistakes;
 create policy "mistakes_own" on public.mistakes
   for all using (user_id::text = auth.uid()::text);
 grant all on public.mistakes to service_role;
 
 -- ── Chat history table ────────────────────────────────────────────────────────
 create table if not exists public.chat_history (
-  id         uuid primary key default uuid_generate_v4(),
+  id         uuid primary key default gen_random_uuid(),
   user_id    uuid references public.profiles(id) on delete cascade,
   role       text not null check (role in ('user', 'assistant')),
   content    text not null default '',
@@ -104,6 +111,7 @@ create table if not exists public.chat_history (
   created_at timestamptz default now()
 );
 alter table public.chat_history enable row level security;
+drop policy if exists "chat_history_own" on public.chat_history;
 create policy "chat_history_own" on public.chat_history
   for all using (user_id::text = auth.uid()::text);
 grant all on public.chat_history to service_role;

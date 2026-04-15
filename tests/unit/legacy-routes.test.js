@@ -23,7 +23,10 @@ describe('getLegacyRoute', () => {
     expect(getLegacyRoute('timetable')).toEqual({ kind: 'redirect', destination: '/plan' })
     expect(getLegacyRoute('mistakes')).toEqual({ kind: 'redirect', destination: '/notes' })
     expect(getLegacyRoute('admin')).toEqual({ kind: 'redirect', destination: '/admin' })
-    expect(getLegacyRoute('kids-gcse')).toEqual({ kind: 'redirect', destination: '/parent' })
+    expect(getLegacyRoute('kids')).toEqual({ kind: 'redirect', destination: '/kids' })
+    expect(getLegacyRoute('kids-gcse')).toEqual({ kind: 'redirect', destination: '/kids?section=gcse' })
+    expect(getLegacyRoute('kids-arithmetic')).toEqual({ kind: 'redirect', destination: '/kids?section=arithmetic' })
+    expect(getLegacyRoute('kids-iq')).toEqual({ kind: 'redirect', destination: '/kids?section=iq' })
     expect(getLegacyRoute('integration-by-parts')).toEqual({ kind: 'redirect', destination: '/integration-by-parts' })
   })
 

@@ -10,6 +10,32 @@ function getSupabase() {
   return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 }
 
+function getBaseUrl(req) {
+  const configured = process.env.APP_URL || process.env.SITE_URL || process.env.NEXT_PUBLIC_APP_URL;
+  if (configured) {
+    try {
+      return new URL(configured).origin;
+    } catch {}
+  }
+  try {
+    return new URL(req.headers.origin || 'http://localhost:3000').origin;
+  } catch {
+    return 'http://localhost:3000';
+  }
+}
+
+function getSafeRedirectUrl(req, candidate, fallbackPath) {
+  const baseUrl = getBaseUrl(req);
+  const fallbackUrl = new URL(fallbackPath, baseUrl).toString();
+  if (!candidate) return fallbackUrl;
+  try {
+    const parsed = new URL(candidate, baseUrl);
+    return parsed.origin === baseUrl ? parsed.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 // Disable the built-in body parser so we can read the raw bytes needed for
 // Stripe webhook signature verification.  Non-webhook requests parse JSON
 // manually below.
@@ -149,6 +175,12 @@ export default async function handler(req, res) {
   if (!stripeKey) return res.status(500).json({ error: 'Missing Stripe key' });
 
   const { action, plan, email, successUrl, cancelUrl, annual } = req.body;
+  const resolvedSuccessUrl = getSafeRedirectUrl(req, successUrl, '/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}');
+  const resolvedCancelUrl = getSafeRedirectUrl(req, cancelUrl, '/pricing?checkout=cancelled');
+
+  if (!resolvedSuccessUrl || !resolvedCancelUrl) {
+    return res.status(400).json({ error: 'Invalid redirect URL' });
+  }
 
   // ── Customer Portal ─────────────────────────────────────────────────────────
   if (action === 'portal') {
@@ -181,7 +213,7 @@ export default async function handler(req, res) {
       const customer = searchData.data?.[0];
       if (!customer) return res.status(404).json({ error: 'No Stripe customer found for this email' });
 
-      const returnUrl = process.env.APP_URL || process.env.SITE_URL || 'https://synaptiq.co.uk';
+      const returnUrl = getBaseUrl(req);
       const portalRes = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
         method: 'POST',
         headers: {
@@ -223,8 +255,8 @@ export default async function handler(req, res) {
         'line_items[0][price]': priceId,
         'line_items[0][quantity]': '1',
         'subscription_data[trial_period_days]': '7',
-        'success_url': successUrl || `${process.env.APP_URL || 'http://localhost:3000'}/?session_id={CHECKOUT_SESSION_ID}&status=success`,
-        'cancel_url': cancelUrl || `${process.env.APP_URL || 'http://localhost:3000'}/?status=cancelled`
+        'success_url': resolvedSuccessUrl,
+        'cancel_url': resolvedCancelUrl
       })
     });
     const data = await r.json();

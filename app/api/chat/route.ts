@@ -1,9 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
-import { sendToClaude, type Message } from '@/lib/claude'
+import { streamToClaude, type Message } from '@/lib/claude'
 import { isRateLimited, getIp } from '@/lib/rateLimit'
 
 const TRIAL_DAILY_LIMIT = 20
+
+// ── Topic extractor ───────────────────────────────────────────────────────────
+// Lightweight keyword match — no extra API call, runs in the stream flush handler.
+const TOPIC_PATTERNS: Array<[RegExp, string]> = [
+  [/integrat|integral|\bint\b/, 'Integration'],
+  [/differentiat|derivative|\bchain rule\b|\bproduct rule\b|\bquotient rule\b/, 'Differentiation'],
+  [/trigonometr|\bsin\b|\bcos\b|\btan\b|\bsec\b|\bcosec\b|\bcot\b/, 'Trigonometry'],
+  [/logarithm|\bln\b|\blog\b/, 'Logarithms'],
+  [/binomial/, 'Binomial Expansion'],
+  [/statistic|probability|\bnormal distribution\b|\bhypothesis\b|\bz.score\b/, 'Statistics'],
+  [/mechanic|\bforce\b|\bvelocity\b|\bacceleration\b|\bkinematic\b|\bmoment\b/, 'Mechanics'],
+  [/\bvector\b/, 'Vectors'],
+  [/\bmatri(x|ces)\b/, 'Matrices'],
+  [/complex number/, 'Complex Numbers'],
+  [/sequence|series|\barithmetic\b|\bgeometric\b/, 'Sequences & Series'],
+  [/\bproof\b|\binduction\b/, 'Proof'],
+  [/algebra|\bequation\b|\bquadratic\b|\bpolynomial\b/, 'Algebra'],
+  [/calculus/, 'Calculus'],
+]
+
+function extractTopic(text: string): string | null {
+  const lower = text.toLowerCase()
+  for (const [regex, topic] of TOPIC_PATTERNS) {
+    if (regex.test(lower)) return topic
+  }
+  return null
+}
 
 async function getUser(request: NextRequest) {
   const supabase = createServiceClient()
@@ -25,11 +52,14 @@ export async function POST(request: NextRequest) {
   if (!supabase) return NextResponse.json({ error: 'Service unavailable' }, { status: 503 })
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  let body: { messages?: Message[]; systemPrompt?: string }
+  // Parse body via text() → JSON.parse() to avoid edge-case failures with
+  // request.json() in certain Next.js 15 deployment environments.
+  let body: { messages?: unknown; systemPrompt?: string }
   try {
-    body = await request.json()
+    const raw = await request.text()
+    body = JSON.parse(raw) as { messages?: unknown; systemPrompt?: string }
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
   const { messages, systemPrompt } = body
@@ -37,13 +67,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'messages array is required' }, { status: 400 })
   }
 
-  // Validate and sanitise messages
-  const sanitised: Message[] = messages
-    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
-    .map(m => ({ role: m.role, content: m.content.slice(0, 8000) }))
+  // Validate and sanitise messages — coerce content to string defensively
+  const sanitised: Message[] = (messages as unknown[])
+    .filter((m): m is Record<string, unknown> => {
+      if (m === null || typeof m !== 'object') return false
+      const r = (m as Record<string, unknown>).role
+      const c = (m as Record<string, unknown>).content
+      return (r === 'user' || r === 'assistant') && c !== undefined && c !== null
+    })
+    .map(m => ({
+      role: m.role as 'user' | 'assistant',
+      content: String(m.content).slice(0, 8000),
+    }))
 
   if (sanitised.length === 0) {
-    return NextResponse.json({ error: 'No valid messages' }, { status: 400 })
+    return NextResponse.json({ error: 'No valid messages — ensure each message has role user/assistant and a content string' }, { status: 400 })
   }
 
   // Check trial limits
@@ -76,29 +114,64 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  // Build adaptive system prompt from jarvis_sessions history
-  const adaptiveSystem = await buildAdaptiveSystemPrompt(user.id, systemPrompt, supabase)
-
-  // Call Claude
-  let response: string
+  // Build adaptive system prompt from jarvis_sessions history.
+  // Wrapped in try-catch: a Supabase network hiccup must not kill the whole request.
+  let adaptiveSystem: string
   try {
-    response = await sendToClaude(sanitised, adaptiveSystem)
+    adaptiveSystem = await buildAdaptiveSystemPrompt(user.id, systemPrompt, supabase)
+  } catch {
+    adaptiveSystem = systemPrompt ?? ''
+  }
+
+  // Stream Claude response, tapping it to accumulate the full text for DB write
+  let claudeStream: ReadableStream<Uint8Array>
+  try {
+    claudeStream = await streamToClaude(sanitised, adaptiveSystem)
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error'
     console.error('Claude error:', msg)
     return NextResponse.json({ error: 'AI service unavailable' }, { status: 503 })
   }
 
-  // Save to DB (fire-and-forget)
   const lastUserMsg = [...sanitised].reverse().find(m => m.role === 'user')
-  if (lastUserMsg) {
-    supabase.from('chat_history').insert([
-      { user_id: user.id, role: 'user', content: lastUserMsg.content },
-      { user_id: user.id, role: 'assistant', content: response },
-    ]).then(() => {})
-  }
+  const decoder = new TextDecoder()
+  let accumulated = ''
 
-  return NextResponse.json({ response })
+  const tapped = new TransformStream<Uint8Array, Uint8Array>({
+    transform(chunk, controller) {
+      accumulated += decoder.decode(chunk, { stream: true })
+      controller.enqueue(chunk)
+    },
+    flush() {
+      accumulated += decoder.decode()
+      if (!lastUserMsg || !accumulated) return
+
+      // Save chat history
+      supabase.from('chat_history').insert([
+        { user_id: user.id, role: 'user', content: lastUserMsg.content },
+        { user_id: user.id, role: 'assistant', content: accumulated },
+      ]).then(() => {})
+
+      // Save session record for adaptive personalisation
+      const topic = extractTopic(`${lastUserMsg.content} ${accumulated}`)
+      if (topic) {
+        supabase.from('jarvis_sessions').insert({
+          user_id: user.id,
+          topic,
+          mastery_score: 0.5,   // neutral default; updated by dedicated assessment flow
+          specific_errors: [],
+        }).then(() => {})
+      }
+    },
+  })
+
+  return new Response(claudeStream.pipeThrough(tapped), {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'X-Content-Type-Options': 'nosniff',
+      'Cache-Control': 'no-store',
+    },
+  })
 }
 
 // ─── Adaptive system prompt ───────────────────────────────────────────────────

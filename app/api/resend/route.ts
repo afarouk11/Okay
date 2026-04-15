@@ -6,6 +6,9 @@ import { createServiceClient } from '@/lib/supabase'
 const FROM_ADDRESS = 'Synaptiq <hello@synaptiq.co.uk>'
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 const CONTACT_CATEGORIES = [
   'General support',
   'Billing issue',
@@ -184,8 +187,13 @@ export async function POST(request: NextRequest) {
     const safeCategory = category || 'General support'
     const resendKey = process.env.RESEND_API_KEY
     if (!resendKey) {
-      console.log('[resend] RESEND_API_KEY not set. Would have sent:', { name, email, safeCategory, message })
-      return NextResponse.json({ success: true, note: 'RESEND_API_KEY not configured — email not sent' })
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[resend] RESEND_API_KEY not set. Transactional contact email was skipped.')
+      }
+      return NextResponse.json(
+        { error: 'Email service is not configured right now. Please try again later.' },
+        { status: 503 },
+      )
     }
 
     const html = `

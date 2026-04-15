@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -212,30 +213,35 @@ export default function HomeClient() {
           </a>
         </div>
         <div style={{ display: 'flex', gap: '.75rem' }}>
-          <Link
-            href="/login"
-            style={{
-              padding: '.45rem 1.1rem', borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'transparent', color: '#E6EDF3',
-              textDecoration: 'none', fontSize: '.875rem', fontWeight: 600,
-              transition: 'border-color .15s',
-            }}
-            onMouseOver={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)')}
-            onMouseOut={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
-          >
-            Log In
+          <Link href="/login" passHref legacyBehavior>
+            <motion.a
+              whileHover={{ scale: 1.04, borderColor: 'rgba(255,255,255,0.25)' }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                padding: '.45rem 1.1rem', borderRadius: 10,
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'transparent', color: '#E6EDF3',
+                textDecoration: 'none', fontSize: '.875rem', fontWeight: 600,
+                display: 'inline-block',
+              }}
+            >
+              Log In
+            </motion.a>
           </Link>
-          <Link
-            href="/login?mode=register"
-            style={{
-              padding: '.45rem 1.1rem', borderRadius: 10,
-              background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
-              color: '#0B0F14', textDecoration: 'none',
-              fontSize: '.875rem', fontWeight: 700,
-            }}
-          >
-            Sign Up
+          <Link href="/login?mode=register" passHref legacyBehavior>
+            <motion.a
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                padding: '.45rem 1.1rem', borderRadius: 10,
+                background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
+                color: '#0B0F14', textDecoration: 'none',
+                fontSize: '.875rem', fontWeight: 700,
+                display: 'inline-block',
+              }}
+            >
+              Sign Up
+            </motion.a>
           </Link>
         </div>
       </nav>
@@ -283,30 +289,37 @@ export default function HomeClient() {
 
         {/* CTAs */}
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-          <Link
-            href="/login?mode=register"
-            style={{
-              padding: '.85rem 2rem', borderRadius: 12,
-              background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
-              color: '#0B0F14', textDecoration: 'none',
-              fontSize: '1rem', fontWeight: 800,
-              boxShadow: '0 8px 32px rgba(201,168,76,0.3)',
-            }}
-          >
-            Start Your Free Trial →
+          <Link href="/login?mode=register" passHref legacyBehavior>
+            <motion.a
+              whileHover={{ scale: 1.04, boxShadow: '0 12px 40px rgba(201,168,76,0.45)' }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                padding: '.85rem 2rem', borderRadius: 12,
+                background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
+                color: '#0B0F14', textDecoration: 'none',
+                fontSize: '1rem', fontWeight: 800,
+                boxShadow: '0 8px 32px rgba(201,168,76,0.3)',
+                display: 'inline-block',
+              }}
+            >
+              Start Your Free Trial →
+            </motion.a>
           </Link>
-          <a
+          <motion.a
             href="#how-it-works"
+            whileHover={{ scale: 1.04, background: 'rgba(255,255,255,0.07)' }}
+            whileTap={{ scale: 0.97 }}
             style={{
               padding: '.85rem 2rem', borderRadius: 12,
               border: '1px solid rgba(255,255,255,0.12)',
               background: 'rgba(255,255,255,0.04)',
               color: '#E6EDF3', textDecoration: 'none',
               fontSize: '1rem', fontWeight: 600,
+              display: 'inline-block',
             }}
           >
             ▶ See How It Works
-          </a>
+          </motion.a>
         </div>
 
         {/* Trust bar */}
@@ -540,20 +553,20 @@ export default function HomeClient() {
           {/* Example chips */}
           <div style={{ padding: '.75rem 1.5rem 0', display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
             {EXAM_CHIPS.map((chip, i) => (
-              <button
+              <motion.button
                 key={chip}
                 onClick={() => sendDemo(DEMO_QUESTIONS[i])}
+                whileHover={{ scale: 1.05, borderColor: 'rgba(201,168,76,0.4)', color: GOLD }}
+                whileTap={{ scale: 0.95 }}
                 style={{
                   background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 16, padding: '.3rem .75rem',
-                  fontSize: '.72rem', color: MUTED, cursor: 'pointer', transition: 'all .2s',
+                  fontSize: '.72rem', color: MUTED, cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}
-                onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.4)'; e.currentTarget.style.color = GOLD }}
-                onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = MUTED }}
               >
                 {chip}
-              </button>
+              </motion.button>
             ))}
           </div>
 
@@ -574,9 +587,11 @@ export default function HomeClient() {
               onFocus={e => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.5)')}
               onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
             />
-            <button
+            <motion.button
               onClick={() => sendDemo(demoInput)}
               disabled={demoLoading}
+              whileHover={demoLoading ? {} : { scale: 1.04, boxShadow: '0 6px 20px rgba(201,168,76,0.35)' }}
+              whileTap={demoLoading ? {} : { scale: 0.97 }}
               style={{
                 padding: '.7rem 1.25rem', borderRadius: 10,
                 background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
@@ -586,7 +601,7 @@ export default function HomeClient() {
               }}
             >
               Ask ✦
-            </button>
+            </motion.button>
           </div>
 
           {/* Footer note */}
@@ -943,30 +958,37 @@ export default function HomeClient() {
           2,400+ students have already improved by an average of +2 grades. The free trial takes 30 seconds to start.
         </p>
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
-          <Link
-            href="/login"
-            style={{
-              padding: '.9rem 2.25rem', borderRadius: 12,
-              background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
-              color: '#0B0F14', textDecoration: 'none',
-              fontSize: '1rem', fontWeight: 800,
-              boxShadow: '0 8px 32px rgba(201,168,76,0.3)',
-            }}
-          >
-            Start Your Free Trial →
+          <Link href="/login" passHref legacyBehavior>
+            <motion.a
+              whileHover={{ scale: 1.04, boxShadow: '0 12px 40px rgba(201,168,76,0.45)' }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                padding: '.9rem 2.25rem', borderRadius: 12,
+                background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
+                color: '#0B0F14', textDecoration: 'none',
+                fontSize: '1rem', fontWeight: 800,
+                boxShadow: '0 8px 32px rgba(201,168,76,0.3)',
+                display: 'inline-block',
+              }}
+            >
+              Start Your Free Trial →
+            </motion.a>
           </Link>
-          <a
+          <motion.a
             href="mailto:schools@synaptiqai.co.uk?subject=School%20Enquiry"
+            whileHover={{ scale: 1.04, background: 'rgba(255,255,255,0.07)' }}
+            whileTap={{ scale: 0.97 }}
             style={{
               padding: '.9rem 2.25rem', borderRadius: 12,
               border: '1px solid rgba(255,255,255,0.12)',
               background: 'rgba(255,255,255,0.04)',
               color: '#E6EDF3', textDecoration: 'none',
               fontSize: '1rem', fontWeight: 600,
+              display: 'inline-block',
             }}
           >
             Schools — Book a Demo
-          </a>
+          </motion.a>
         </div>
         <p style={{ color: MUTED, fontSize: '.8rem' }}>£35/month after trial · Cancel any time · AQA · Edexcel · OCR · WJEC</p>
       </section>

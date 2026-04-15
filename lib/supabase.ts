@@ -4,7 +4,12 @@ import { createClient } from '@supabase/supabase-js'
 export function createServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_KEY
-  if (!url || !key) return null
+  if (!url || !key) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('[supabase] Missing server-side environment variables for the service client')
+    }
+    return null
+  }
   try {
     return createClient(url, key, {
       auth: { autoRefreshToken: false, persistSession: false },
@@ -19,7 +24,12 @@ export function createServiceClient() {
 export function createBrowserClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!url || !key) return null
+  if (!url || !key) {
+    if (process.env.NODE_ENV !== 'test') {
+      console.error('[supabase] Missing browser-side environment variables for the public client')
+    }
+    return null
+  }
   try {
     return createClient(url, key)
   } catch (err) {

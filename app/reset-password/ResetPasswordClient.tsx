@@ -38,6 +38,17 @@ export default function ResetPasswordClient() {
     return () => subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    if (sessionReady) return
+
+    const timeoutId = window.setTimeout(() => {
+      setStatus(current => current === 'idle' ? 'invalid' : current)
+      setErrorMsg(current => current ?? 'Reset link invalid or expired. Please request a new password reset email.')
+    }, 15000)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [sessionReady])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setErrorMsg(null)
@@ -135,15 +146,17 @@ export default function ResetPasswordClient() {
                     color: '#F0EEF8',
                   }}
                 />
-                <button
+                <motion.button
                   type="button"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setShowPassword(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2"
                   style={{ color: '#9AA4AF' }}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+                </motion.button>
               </div>
             </div>
 
