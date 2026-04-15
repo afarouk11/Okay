@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { isRateLimited, getIp } from '@/lib/rateLimit'
 
+export const runtime = 'edge'
+
 async function getUser(request: NextRequest) {
   const supabase = createServiceClient()
   if (!supabase) return { user: null, supabase: null }

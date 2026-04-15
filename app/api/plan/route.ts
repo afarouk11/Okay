@@ -4,6 +4,8 @@ import { sendToClaude } from '@/lib/claude'
 import { isRateLimited, getIp } from '@/lib/rateLimit'
 import type { PlanTask } from '@/lib/supabase'
 
+export const runtime = 'edge'
+
 async function getUser(request: NextRequest) {
   const supabase = createServiceClient()
   if (!supabase) return { user: null, supabase: null }

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isRateLimited, getIp } from '@/lib/rateLimit'
 
+export const runtime = 'edge'
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const CONTACT_CATEGORIES = [
