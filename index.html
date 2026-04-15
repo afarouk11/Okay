@@ -8425,7 +8425,8 @@ async function callClaude(messages, system, max_tokens, model) {
 }
 
 function getReply(data) {
-  let text = data.content && data.content[0] ? data.content[0].text : '(no response)';
+  // Handle Next.js API format { response: "..." } and Anthropic direct format { content: [...] }
+  let text = data.response || (data.content && data.content[0] ? data.content[0].text : '') || '(no response)';
   // Strip any AI self-identification references
   text = text.replace(/\bClaude\s*Opus\s*[\d.-]*/gi, 'Synaptiq AI');
   text = text.replace(/\bClaude\b(?!\s*Code)/g, 'Synaptiq AI');
@@ -11882,13 +11883,18 @@ function _jarvisAvatarSpeaking(on) {
   if (orb) orb.classList.toggle('speaking', on);
 }
 function elSpeak(text, onEnd, voice) {
+  if (!text || !text.trim()) { if (onEnd) onEnd(); return () => {}; }
   if (_elAudio) { _elAudio.pause(); _elAudio = null; }
   _jarvisAvatarSpeaking(false);
   let cancelled = false;
   const cancel = () => { cancelled = true; if (_elAudio) { _elAudio.pause(); _elAudio = null; } _jarvisAvatarSpeaking(false); if (onEnd) onEnd(); };
+  // Attach auth token so the Next.js TTS route accepts the request
+  const token = localStorage.getItem('synaptiq_token') || state?.token || '';
+  const hdrs = { 'Content-Type': 'application/json' };
+  if (token) hdrs['Authorization'] = 'Bearer ' + token;
   fetch('/api/tts', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: hdrs,
     body: JSON.stringify({ text, voice: voice || 'jarvis' }),
   }).then(r => {
     if (!r.ok || cancelled) { if (onEnd && !cancelled) onEnd(); return; }
@@ -21241,6 +21247,7 @@ function voStopSpeaking() {
 function voSpeak(text, onEnd) {
   voSetState('speaking');
   const clean = text.replace(/\$\$?[^$]+\$\$?/g, '').replace(/[*_`#~>\[\]]/g, '').replace(/\s+/g,' ').trim();
+  if (!clean) { if (onEnd) onEnd(); return; }
   document.getElementById('vo-reply').textContent = clean;
 
   if (VO.cancelTTS) VO.cancelTTS();
@@ -21304,6 +21311,7 @@ function closeVoiceMode()  { voClose(); }
 const _elSpeakOrig = (typeof elSpeak === 'function') ? elSpeak : null;
 if (_elSpeakOrig) {
   elSpeak = function(text, onEnd, voice, audioReadyCb) {
+    if (!text || !text.trim()) { if (onEnd) onEnd(); return () => {}; }
     if (_elAudio) { _elAudio.pause(); _elAudio = null; }
     let cancelled = false;
     const cancel = () => {
@@ -21311,9 +21319,12 @@ if (_elSpeakOrig) {
       if (_elAudio) { _elAudio.pause(); _elAudio = null; }
       if (onEnd) onEnd();
     };
+    const token = localStorage.getItem('synaptiq_token') || state?.token || '';
+    const hdrs = { 'Content-Type': 'application/json' };
+    if (token) hdrs['Authorization'] = 'Bearer ' + token;
     fetch('/api/tts', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: hdrs,
       body: JSON.stringify({ text: text.slice(0, 5000), voice: voice || 'jarvis' }),
     }).then(r => {
       if (!r.ok || cancelled) { if (onEnd && !cancelled) onEnd(); return; }
