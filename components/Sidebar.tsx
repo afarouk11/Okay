@@ -23,6 +23,10 @@ import {
   Clock3,
   Network,
   HeartPulse,
+  Trophy,
+  AlertTriangle,
+  CheckSquare,
+  Target,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/lib/useAuth'
@@ -47,6 +51,12 @@ const navItems = [
   { href: '/questions',    label: 'Questions',      icon: HelpCircle      },
   { href: '/papers',       label: 'Past Papers',    icon: FileText        },
   { href: '/notes',        label: 'Notes',          icon: StickyNote      },
+  { href: '/leaderboard', label: 'Leaderboard',    icon: Trophy          },
+  { href: '/blitz',       label: 'Quick Blitz',    icon: Zap             },
+  { href: '/mistakes',    label: 'Mistakes',       icon: AlertTriangle   },
+  { href: '/exams',       label: 'Exam Countdown', icon: CalendarDays    },
+  { href: '/checklist',   label: 'Checklist',      icon: CheckSquare     },
+  { href: '/goals',       label: 'Daily Goals',    icon: Target          },
 ]
 
 const bottomItems = [

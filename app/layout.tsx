@@ -4,6 +4,7 @@ import './globals.css'
 import 'katex/dist/katex.min.css'
 import ChatWindow from '@/components/ChatWindow'
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar'
+import CookieConsent from '@/components/CookieConsent'
 import Link from 'next/link'
 
 const GA4_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID
@@ -71,6 +72,7 @@ export default function RootLayout({
         {children}
         <ChatWindow />
         <ServiceWorkerRegistrar />
+        <CookieConsent />
         <SiteFooter />
       </body>
     </html>
