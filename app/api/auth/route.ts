@@ -226,10 +226,15 @@ export async function POST(request: NextRequest) {
     const { createClient } = await import('@supabase/supabase-js')
     const anonClient = createClient(supabaseUrl, supabaseAnonKey)
 
-    const { data, error: signInError } = await anonClient.auth.signInWithPassword({
-      email: normalisedEmail,
-      password,
-    })
+    let signInData: Awaited<ReturnType<typeof anonClient.auth.signInWithPassword>>['data']
+    let signInError: Awaited<ReturnType<typeof anonClient.auth.signInWithPassword>>['error']
+    try {
+      const result = await anonClient.auth.signInWithPassword({ email: normalisedEmail, password })
+      signInData = result.data
+      signInError = result.error
+    } catch {
+      return NextResponse.json({ error: 'Authentication service unavailable. Please try again.' }, { status: 503 })
+    }
 
     if (signInError) {
       if (/email not confirmed/i.test(signInError.message)) {
@@ -238,12 +243,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
     }
 
+    if (!signInData?.user) {
+      return NextResponse.json({ error: 'Login failed — please try again' }, { status: 401 })
+    }
+
     // Ensure profile exists
-    const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single()
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', signInData.user.id).single()
     if (!profile) {
       await supabase.from('profiles').upsert({
-        id: data.user.id,
-        name: data.user.user_metadata?.name || normalisedEmail.split('@')[0],
+        id: signInData.user.id,
+        name: signInData.user.user_metadata?.name || normalisedEmail.split('@')[0],
         email: normalisedEmail,
         plan: 'student',
         xp: 0, level: 1,
@@ -253,8 +262,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      token: data.session?.access_token,
-      user: data.user,
+      token: signInData.session?.access_token,
+      user: signInData.user,
       profile: profile ?? null,
     })
   }

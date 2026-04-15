@@ -200,7 +200,7 @@ export default async function handler(req, res) {
 
       return res.status(200).json({
         success: true,
-        token: data.session.access_token,
+        token: data.session?.access_token,
         user: { ...data.user, ...profile }
       });
     }
