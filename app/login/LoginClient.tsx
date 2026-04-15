@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Zap, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
 import { createBrowserClient } from '@/lib/supabase'
