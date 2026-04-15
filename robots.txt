@@ -1,9 +1,11 @@
 User-agent: *
 Disallow: /admin
+Disallow: /api
 Disallow: /jarvis
 Disallow: /lessons
 Disallow: /questions
 Disallow: /reset-password
 Disallow: /test
+Disallow: /test.html
 
 Sitemap: https://synaptiq.co.uk/sitemap.xml

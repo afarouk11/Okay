@@ -478,7 +478,7 @@ async function handleProxyAction(req, res, action, body) {
     if (action === 'verify_login') {
       const { email, password } = payload || {};
       if (!email || !password) return res.status(400).json({ error: 'email and password are required' });
-      const anonKey = process.env.SUPABASE_ANON_KEY;
+      const anonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
       if (!anonKey) return res.status(500).json({ error: 'Supabase anon key is missing' });
       const loginR = await fetch(`${url}/auth/v1/token?grant_type=password`, {
         method: 'POST', headers: sbaHeaders(anonKey),
@@ -505,7 +505,7 @@ async function handleProxyAction(req, res, action, body) {
     if (action === 'forgot_password') {
       const { email } = payload || {};
       if (!email) return res.status(400).json({ error: 'email is required' });
-      const anonKey = process.env.SUPABASE_ANON_KEY;
+      const anonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
       if (!anonKey) return res.status(500).json({ error: 'Supabase anon key is missing' });
       await fetch(`${url}/auth/v1/recover`, {
         method: 'POST', headers: sbaHeaders(anonKey),
