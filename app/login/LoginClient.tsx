@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Zap, Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react'
@@ -8,9 +9,9 @@ import { createBrowserClient } from '@/lib/supabase'
 
 type Mode = 'login' | 'register'
 
-export default function LoginClient() {
+export default function LoginClient({ initialMode = 'login' }: { initialMode?: Mode }) {
   const router = useRouter()
-  const [mode, setMode] = useState<Mode>('login')
+  const [mode, setMode] = useState<Mode>(initialMode)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [name, setName] = useState('')
@@ -28,6 +29,17 @@ export default function LoginClient() {
     })
   }, [router])
 
+  useEffect(() => {
+    setMode(initialMode)
+  }, [initialMode])
+
+  function handleModeChange(nextMode: Mode) {
+    setMode(nextMode)
+    setError(null)
+    setSuccess(null)
+    router.replace(nextMode === 'register' ? '/login?mode=register' : '/login')
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -42,9 +54,18 @@ export default function LoginClient() {
     }
 
     if (mode === 'login') {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
+        password,
+      })
       if (signInError) {
-        setError(signInError.message)
+        if (/email not confirmed/i.test(signInError.message)) {
+          setError('Please verify your email address before signing in. Check your inbox for a confirmation link.')
+        } else if (/invalid login credentials|invalid email or password/i.test(signInError.message)) {
+          setError('Incorrect email or password. Please try again.')
+        } else {
+          setError(signInError.message)
+        }
       } else {
         router.replace('/dashboard')
       }
@@ -60,10 +81,14 @@ export default function LoginClient() {
         setError(data.error ?? 'Registration failed.')
       } else {
         // Sign in immediately after registration
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.toLowerCase().trim(),
+          password,
+        })
         if (signInError) {
-          setSuccess('Account created! Please sign in.')
+          setSuccess('Account created! Please sign in to Synaptiq.')
           setMode('login')
+          router.replace('/login')
         } else {
           router.replace('/dashboard')
         }
@@ -76,7 +101,7 @@ export default function LoginClient() {
   return (
     <div
       className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: '#0B0F14' }}
+      style={{ background: '#03050D' }}
     >
       <motion.div
         initial={{ y: 20, opacity: 0 }}
@@ -88,28 +113,28 @@ export default function LoginClient() {
         <div className="flex items-center gap-3 mb-8">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold"
-            style={{ background: 'linear-gradient(135deg, #4F8CFF, #22C55E)' }}
+            style={{ background: 'linear-gradient(135deg, #D4A820, #C9A84C)', boxShadow: '0 8px 24px rgba(201,168,76,0.25)' }}
           >
             <Zap className="w-5 h-5" />
           </div>
           <div>
-            <p className="font-semibold text-lg text-foreground tracking-tight">Jarvis</p>
-            <p className="text-xs text-muted">AI Learning Platform</p>
+            <p className="font-semibold text-lg text-foreground tracking-tight">Synaptiq</p>
+            <p className="text-xs text-muted">Home of your AI tutor</p>
           </div>
         </div>
 
         {/* Card */}
         <div
           className="rounded-card p-6"
-          style={{ background: 'rgba(18,24,33,0.9)', border: '1px solid rgba(255,255,255,0.07)' }}
+          style={{ background: 'rgba(13,18,32,0.88)', border: '1px solid rgba(0,212,255,0.12)', boxShadow: '0 12px 40px rgba(0,0,0,0.35)' }}
         >
           <h1 className="text-xl font-semibold text-foreground mb-1">
-            {mode === 'login' ? 'Welcome back' : 'Create account'}
+            {mode === 'login' ? 'Welcome back to Synaptiq' : 'Create your Synaptiq account'}
           </h1>
           <p className="text-sm text-muted mb-6">
             {mode === 'login'
-              ? 'Sign in to continue learning'
-              : 'Start your A-Level Maths journey'}
+              ? 'Sign in to open your Synaptiq dashboard'
+              : 'Start your A-Level Maths journey with Synaptiq'}
           </p>
 
           <AnimatePresence>
@@ -130,7 +155,7 @@ export default function LoginClient() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 className="mb-4 px-4 py-3 rounded-lg text-sm"
-                style={{ background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', color: '#22C55E' }}
+                style={{ background: 'rgba(0,255,157,0.08)', border: '1px solid rgba(0,255,157,0.2)', color: '#00FF9D' }}
               >
                 {success}
               </motion.div>
@@ -148,8 +173,8 @@ export default function LoginClient() {
                   placeholder="Your name"
                   className="w-full px-3.5 py-2.5 rounded-[10px] text-sm text-foreground placeholder:text-muted/50 outline-none transition-colors"
                   style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.09)',
+                    background: 'rgba(3,5,13,0.55)',
+                    border: '1px solid rgba(0,212,255,0.12)',
                   }}
                 />
               </div>
@@ -165,8 +190,8 @@ export default function LoginClient() {
                 required
                 className="w-full px-3.5 py-2.5 rounded-[10px] text-sm text-foreground placeholder:text-muted/50 outline-none transition-colors"
                 style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.09)',
+                  background: 'rgba(3,5,13,0.55)',
+                  border: '1px solid rgba(0,212,255,0.12)',
                 }}
               />
             </div>
@@ -183,18 +208,26 @@ export default function LoginClient() {
                   minLength={mode === 'register' ? 8 : undefined}
                   className="w-full px-3.5 py-2.5 pr-10 rounded-[10px] text-sm text-foreground placeholder:text-muted/50 outline-none transition-colors"
                   style={{
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.09)',
+                    background: 'rgba(3,5,13,0.55)',
+                    border: '1px solid rgba(0,212,255,0.12)',
                   }}
                 />
-                <button
+                <motion.button
                   type="button"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => setShowPassword(v => !v)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+                </motion.button>
               </div>
+              {mode === 'login' && (
+                <div className="mt-2 text-right">
+                  <Link href="/reset-password" className="text-xs text-primary hover:underline">Forgot password?</Link>
+                </div>
+              )}
             </div>
 
             <motion.button
@@ -203,7 +236,7 @@ export default function LoginClient() {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               className="w-full flex items-center justify-center gap-2 py-2.5 rounded-[10px] text-sm font-medium text-white transition-all disabled:opacity-60 mt-2"
-              style={{ background: '#4F8CFF' }}
+              style={{ background: 'linear-gradient(135deg, #D4A820, #C9A84C)', color: '#03050D', boxShadow: '0 8px 24px rgba(201,168,76,0.22)' }}
             >
               {loading
                 ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -216,13 +249,15 @@ export default function LoginClient() {
 
           <p className="text-center text-sm text-muted mt-5">
             {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
-            <button
+            <motion.button
               type="button"
-              onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(null); setSuccess(null) }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => handleModeChange(mode === 'login' ? 'register' : 'login')}
               className="text-primary hover:underline font-medium"
             >
               {mode === 'login' ? 'Sign up' : 'Sign in'}
-            </button>
+            </motion.button>
           </p>
         </div>
       </motion.div>

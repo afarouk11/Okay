@@ -17,6 +17,7 @@ create table if not exists public.tasks (
 
 alter table public.tasks enable row level security;
 
+drop policy if exists "Users can manage own tasks" on public.tasks;
 create policy "Users can manage own tasks"
   on public.tasks
   for all

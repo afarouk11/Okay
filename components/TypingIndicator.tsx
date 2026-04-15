@@ -14,7 +14,7 @@ export default function TypingIndicator() {
       {/* Jarvis avatar */}
       <div
         className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 mt-0.5"
-        style={{ background: 'linear-gradient(135deg, #4F8CFF, #22C55E)' }}
+        style={{ background: 'linear-gradient(135deg, #00D4FF, #00FF9D)' }}
       >
         J
       </div>
@@ -23,8 +23,8 @@ export default function TypingIndicator() {
       <div
         className="flex items-center gap-1 px-4 py-3 rounded-[14px] rounded-tl-sm"
         style={{
-          background: 'rgba(18,24,33,0.9)',
-          border: '1px solid rgba(255,255,255,0.07)',
+          background: 'rgba(13,18,32,0.9)',
+          border: '1px solid rgba(201,168,76,0.12)',
         }}
       >
         <div className="typing-dot" />

@@ -1,12 +1,12 @@
 // Synaptiq Service Worker — offline support for flashcards & core app
-const CACHE = 'synaptiq-v15';
+const CACHE = 'synaptiq-v16';
 
 const CORE_ASSETS = [
   '/',
-  '/index.html',
-  '/lessons.html',
-  '/jarvis.html',
-  '/pricing.html',
+  '/lessons',
+  '/jarvis',
+  '/pricing',
+  '/contact',
   '/og-image.svg',
   '/favicon.svg',
 ];

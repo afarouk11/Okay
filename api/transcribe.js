@@ -27,6 +27,26 @@ function getRawBody(req) {
   });
 }
 
+function normaliseAudioContentType(value) {
+  const raw = String(value || '').toLowerCase().trim();
+  const base = raw.split(';')[0].trim();
+
+  if (!base) return 'audio/webm';
+  if (base.includes('webm')) return 'audio/webm';
+  if (base.includes('mp4') || base.includes('m4a') || base.includes('aac')) return 'audio/mp4';
+  if (base.includes('mpeg') || base.includes('mp3')) return 'audio/mpeg';
+  if (base.includes('ogg') || base.includes('opus')) return 'audio/ogg';
+  return 'audio/webm';
+}
+
+function formatUpstreamError(err) {
+  const text = String(err || '').trim();
+  if (/did not match the expected pattern|unsupported|invalid/i.test(text)) {
+    return 'Unsupported audio format from the browser — please try Chrome or Edge and speak again.';
+  }
+  return text || 'Transcription failed — please try again.';
+}
+
 export default async function handler(req, res) {
   applyHeaders(res, 'POST, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -51,7 +71,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Audio data is required' });
   }
 
-  const contentType = req.headers['content-type'] || 'audio/webm';
+  const contentType = normaliseAudioContentType(req.headers['content-type']);
 
   let upstream;
   try {
@@ -71,7 +91,7 @@ export default async function handler(req, res) {
   }
 
   if (!upstream.ok) {
-    const err = await upstream.text();
+    const err = formatUpstreamError(await upstream.text());
     return res.status(upstream.status).json({ error: err });
   }
 

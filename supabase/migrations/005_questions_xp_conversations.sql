@@ -1,6 +1,8 @@
 -- ─── Migration 005: Questions, XP Logs, Conversations, Trial & Webhooks ──────
 -- Run in Supabase SQL Editor or via: supabase db push
 
+create extension if not exists "pgcrypto";
+
 -- ── trial_ends_at on profiles ────────────────────────────────────────────────
 alter table public.profiles
   add column if not exists trial_ends_at       timestamptz,
@@ -23,7 +25,7 @@ update public.profiles
 
 -- ── questions_answered table ─────────────────────────────────────────────────
 create table if not exists public.questions_answered (
-  id              uuid primary key default uuid_generate_v4(),
+  id              uuid primary key default gen_random_uuid(),
   user_id         uuid not null references public.profiles(id) on delete cascade,
   topic           text,
   module          text,          -- 'Pure 1' | 'Pure 2' | 'Statistics' | 'Mechanics'
@@ -40,6 +42,8 @@ create table if not exists public.questions_answered (
 
 alter table public.questions_answered enable row level security;
 
+drop policy if exists "qa_select_own" on public.questions_answered;
+drop policy if exists "qa_insert_own" on public.questions_answered;
 create policy "qa_select_own" on public.questions_answered
   for select using (auth.uid() = user_id);
 
@@ -52,7 +56,7 @@ create index if not exists qa_topic_idx   on public.questions_answered(user_id, 
 
 -- ── xp_logs table ────────────────────────────────────────────────────────────
 create table if not exists public.xp_logs (
-  id         uuid primary key default uuid_generate_v4(),
+  id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references public.profiles(id) on delete cascade,
   amount     integer not null,
   reason     text,
@@ -61,6 +65,8 @@ create table if not exists public.xp_logs (
 
 alter table public.xp_logs enable row level security;
 
+drop policy if exists "xp_select_own" on public.xp_logs;
+drop policy if exists "xp_insert_own" on public.xp_logs;
 create policy "xp_select_own" on public.xp_logs
   for select using (auth.uid() = user_id);
 
@@ -72,7 +78,7 @@ create index if not exists xp_user_id_idx on public.xp_logs(user_id);
 
 -- ── streak_logs table ─────────────────────────────────────────────────────────
 create table if not exists public.streak_logs (
-  id               uuid primary key default uuid_generate_v4(),
+  id               uuid primary key default gen_random_uuid(),
   user_id          uuid not null references public.profiles(id) on delete cascade,
   date             date not null,
   questions_count  integer default 0,
@@ -82,6 +88,8 @@ create table if not exists public.streak_logs (
 
 alter table public.streak_logs enable row level security;
 
+drop policy if exists "sl_select_own" on public.streak_logs;
+drop policy if exists "sl_insert_own" on public.streak_logs;
 create policy "sl_select_own" on public.streak_logs
   for select using (auth.uid() = user_id);
 
@@ -92,7 +100,7 @@ grant all on public.streak_logs to service_role;
 
 -- ── conversations table ───────────────────────────────────────────────────────
 create table if not exists public.conversations (
-  id         uuid primary key default uuid_generate_v4(),
+  id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references public.profiles(id) on delete cascade,
   messages   jsonb not null default '[]',
   topic      text,
@@ -102,6 +110,9 @@ create table if not exists public.conversations (
 
 alter table public.conversations enable row level security;
 
+drop policy if exists "conv_select_own" on public.conversations;
+drop policy if exists "conv_insert_own" on public.conversations;
+drop policy if exists "conv_update_own" on public.conversations;
 create policy "conv_select_own" on public.conversations
   for select using (auth.uid() = user_id);
 
@@ -114,6 +125,7 @@ create policy "conv_update_own" on public.conversations
 grant all on public.conversations to service_role;
 create index if not exists conv_user_id_idx on public.conversations(user_id);
 
+drop trigger if exists conversations_updated_at on public.conversations;
 create trigger conversations_updated_at
   before update on public.conversations
   for each row execute function public.set_updated_at();

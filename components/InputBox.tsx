@@ -43,8 +43,8 @@ export default function InputBox({
     <div
       className="flex items-end gap-2 p-3 rounded-[14px]"
       style={{
-        background: 'rgba(18,24,33,0.8)',
-        border: '1px solid rgba(255,255,255,0.08)',
+        background: 'rgba(13,18,32,0.82)',
+        border: '1px solid rgba(0,212,255,0.12)',
       }}
     >
       {/* Textarea */}
@@ -71,9 +71,9 @@ export default function InputBox({
           disabled={disabled}
           className="w-8 h-8 rounded-lg flex items-center justify-center transition-colors flex-shrink-0"
           style={{
-            background: isRecording ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.05)',
-            border: isRecording ? '1px solid rgba(239,68,68,0.4)' : '1px solid rgba(255,255,255,0.08)',
-            color: isRecording ? '#ef4444' : '#9AA4AF',
+            background: isRecording ? 'rgba(255,64,96,0.15)' : 'rgba(0,212,255,0.06)',
+            border: isRecording ? '1px solid rgba(255,64,96,0.4)' : '1px solid rgba(0,212,255,0.12)',
+            color: isRecording ? '#FF4060' : '#5A7499',
           }}
           aria-label={isRecording ? 'Stop recording' : 'Start voice input'}
         >
@@ -89,8 +89,8 @@ export default function InputBox({
         disabled={disabled || !value.trim()}
         className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all"
         style={{
-          background: value.trim() && !disabled ? '#4F8CFF' : 'rgba(79,140,255,0.15)',
-          color: value.trim() && !disabled ? '#fff' : 'rgba(79,140,255,0.5)',
+          background: value.trim() && !disabled ? 'linear-gradient(135deg, #D4A820, #C9A84C)' : 'rgba(201,168,76,0.15)',
+          color: value.trim() && !disabled ? '#03050D' : 'rgba(201,168,76,0.55)',
         }}
         aria-label="Send message"
       >

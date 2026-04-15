@@ -7,8 +7,8 @@ interface SidebarProps {
 
 const navItems = [
   { id: 'gcse', icon: '🎓', label: 'GCSE Maths' },
-  { id: 'arithmetic', icon: '🔢', label: 'Arithmetic' },
-  { id: 'iq', icon: '🧠', label: 'IQ Training' },
+  { id: 'arithmetic', icon: '🔢', label: 'Arithmetic & SATs' },
+  { id: 'neuro', icon: '🧠', label: 'Neuroplasticity' },
 ]
 
 export default function Sidebar({ active, onNavigate }: SidebarProps) {

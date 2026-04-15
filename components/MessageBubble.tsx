@@ -26,8 +26,9 @@ export default function MessageBubble({ role, content, timestamp }: MessageBubbl
         )}
         style={{
           background: isUser
-            ? 'linear-gradient(135deg, #4F8CFF, #6C3EF4)'
-            : 'linear-gradient(135deg, #4F8CFF, #22C55E)',
+            ? 'linear-gradient(135deg, #D4A820, #C9A84C)'
+            : 'linear-gradient(135deg, #00D4FF, #00FF9D)',
+          color: isUser ? '#03050D' : '#FFFFFF',
         }}
       >
         {isUser ? 'S' : 'J'}
@@ -44,10 +45,14 @@ export default function MessageBubble({ role, content, timestamp }: MessageBubbl
           )}
           style={
             isUser
-              ? { background: '#4F8CFF' }
+              ? {
+                  background: 'linear-gradient(135deg, #D4A820, #C9A84C)',
+                  color: '#03050D',
+                  boxShadow: '0 4px 16px rgba(201,168,76,0.28)',
+                }
               : {
-                  background: 'rgba(18,24,33,0.9)',
-                  border: '1px solid rgba(255,255,255,0.07)',
+                  background: 'rgba(13,18,32,0.9)',
+                  border: '1px solid rgba(201,168,76,0.12)',
                 }
           }
         >

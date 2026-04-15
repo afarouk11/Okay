@@ -163,14 +163,16 @@ export default function AdminClient() {
                 style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', color: '#F0EEF8' }}
               />
             </div>
-            <button
+            <motion.button
               onClick={() => loadDashboard(adminKey)}
               disabled={state === 'loading' || !adminKey}
+              whileHover={(state === 'loading' || !adminKey) ? {} : { scale: 1.02 }}
+              whileTap={(state === 'loading' || !adminKey) ? {} : { scale: 0.98 }}
               className="w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2"
               style={{ background: 'linear-gradient(135deg,#ef4444,#f59e0b)', color: '#fff', opacity: (state === 'loading' || !adminKey) ? 0.6 : 1 }}
             >
               {state === 'loading' ? <><Loader2 className="w-4 h-4 animate-spin" /> Verifying…</> : 'Access Dashboard'}
-            </button>
+            </motion.button>
           </div>
         </motion.div>
       </div>
@@ -190,27 +192,37 @@ export default function AdminClient() {
         </div>
         <div className="flex items-center gap-3">
           {lastRefreshed && <span className="text-xs" style={{ color: '#6B7394' }}>Updated {lastRefreshed}</span>}
-          <button onClick={() => loadDashboard(adminKey)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs" style={{ background: 'rgba(255,255,255,0.06)', color: '#9AA4AF' }}>
+          <motion.button
+            onClick={() => loadDashboard(adminKey)}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs"
+            style={{ background: 'rgba(255,255,255,0.06)', color: '#9AA4AF' }}
+          >
             <RefreshCw className="w-3.5 h-3.5" /> Refresh
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             onClick={() => handleAction('send_weekly_emails')}
             disabled={actionLoading === 'send_weekly_emails'}
+            whileHover={actionLoading === 'send_weekly_emails' ? {} : { scale: 1.03 }}
+            whileTap={actionLoading === 'send_weekly_emails' ? {} : { scale: 0.97 }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs"
-            style={{ background: 'rgba(79,140,255,0.12)', border: '1px solid rgba(79,140,255,0.2)', color: '#4F8CFF' }}
+            style={{ background: 'rgba(79,140,255,0.12)', border: '1px solid rgba(79,140,255,0.2)', color: '#4F8CFF', opacity: actionLoading === 'send_weekly_emails' ? 0.6 : 1 }}
           >
             {actionLoading === 'send_weekly_emails' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
             Send weekly emails
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             onClick={() => handleAction('reset_users', 'WARNING: This will delete ALL users and data. Are you absolutely sure?')}
             disabled={actionLoading === 'reset_users'}
+            whileHover={actionLoading === 'reset_users' ? {} : { scale: 1.03 }}
+            whileTap={actionLoading === 'reset_users' ? {} : { scale: 0.97 }}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs"
-            style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444' }}
+            style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', opacity: actionLoading === 'reset_users' ? 0.6 : 1 }}
           >
             {actionLoading === 'reset_users' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
             Reset all users
-          </button>
+          </motion.button>
         </div>
       </div>
 

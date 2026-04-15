@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { FAQ_ITEMS } from './home-data'
+import { motion } from 'framer-motion'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const GOLD = '#C9A84C'
-const MUTED = '#6B7394'
-const BG = '#0B0F14'
+const MUTED = '#5A7499'
+const BG = '#03050D'
 
 const TOPICS = [
   'Differentiation', 'Integration', 'Binomial Expansion', 'Normal Distribution',
@@ -32,9 +32,9 @@ const FEATURES = [
 
 const TESTIMONIALS = [
   { initial: 'E', color: '#C9A84C', secondColor: '#8B6914', name: 'Emily R.', detail: 'Year 13 · AQA A-Level Maths · Now studying Engineering at Bath', borderColor: '#C9A84C', text: 'I went from a D to a B in Pure Maths in just 6 weeks. The AI shows full working exactly like the mark scheme — I finally understood why I kept losing marks. Differentiation clicked on day 3.' },
-  { initial: 'J', color: '#4F8CFF', secondColor: '#1d4ed8', name: 'Jake T.', detail: 'Year 12 · Edexcel A-Level Maths · Predicted A*', borderColor: '#4F8CFF', text: 'Uploading the Edexcel mark scheme was a game changer. Now when I ask about integration by parts, it explains exactly how Edexcel awards the method marks. I got full marks on my mock.' },
+  { initial: 'J', color: '#00D4FF', secondColor: '#0ea5e9', name: 'Jake T.', detail: 'Year 12 · Edexcel A-Level Maths · Predicted A*', borderColor: '#00D4FF', text: 'Uploading the Edexcel mark scheme was a game changer. Now when I ask about integration by parts, it explains exactly how Edexcel awards the method marks. I got full marks on my mock.' },
   { initial: 'A', color: '#A78BFA', secondColor: '#7c3aed', name: 'Aisha M.', detail: 'Year 13 · OCR A-Level Maths · Grade improved from C to A', borderColor: '#A78BFA', text: 'The chapter navigator is perfect. I can jump to any topic and Synaptiq walks through the theory, shows worked examples, then gives me questions to try. It\'s like a private tutor but 24/7.' },
-  { initial: 'M', color: '#4ADE80', secondColor: '#15803d', name: 'Marcus W.', detail: 'Year 12 · AQA A-Level Maths · Dyscalculia support user', borderColor: '#4ADE80', text: 'As someone with dyscalculia, I always struggled with maths. The visual number line and colour-coded working in dyscalculia mode made everything so much clearer. First time I\'ve actually enjoyed revision.' },
+  { initial: 'M', color: '#00FF9D', secondColor: '#0f766e', name: 'Marcus W.', detail: 'Year 12 · AQA A-Level Maths · Dyscalculia support user', borderColor: '#00FF9D', text: 'As someone with dyscalculia, I always struggled with maths. The visual number line and colour-coded working in dyscalculia mode made everything so much clearer. First time I\'ve actually enjoyed revision.' },
   { initial: 'P', color: '#f97316', secondColor: '#c2410c', name: 'Patricia J.', detail: 'Parent · Daughter in Year 13 · Edexcel Maths', borderColor: '#f97316', text: 'My daughter was really struggling with Statistics. Since using Synaptiq she\'s gone from barely passing to getting 78% on her last test. The progress tracking lets me see exactly what she\'s been working on.' },
   { initial: 'S', color: '#ec4899', secondColor: '#9d174d', name: 'Sophie L.', detail: 'Year 13 · OCR A-Level Maths & Further Maths', borderColor: '#ec4899', text: 'I use Synaptiq every evening before bed — ask it to explain whatever we covered in class that day. My teacher actually commented on how much better my working is. The question generator for exam practice is brilliant.' },
 ]
@@ -48,6 +48,18 @@ const SUBJECTS = [
   { icon: '🔧', name: 'Mechanics Y2', level: 'Year 13' },
   { icon: '📄', name: 'Past Papers', level: 'All Boards' },
   { icon: '✅', name: 'Mark Schemes', level: 'AI Aligned' },
+]
+
+const FAQ_ITEMS = [
+  { q: 'Is there actually a free trial? Do I need a card?', a: 'Yes — 7 days completely free. Your card is stored securely via Stripe but not charged until the trial ends. Cancel any time with one click. No questions asked.' },
+  { q: 'How is Synaptiq different from ChatGPT?', a: "ChatGPT is a general assistant. Synaptiq is trained specifically on A-Level Maths curricula — it knows AQA, Edexcel, OCR and WJEC mark schemes, shows working exactly how examiners expect it, tracks your progress over time, and won't hallucinate a GCSE answer when you ask an A-Level question." },
+  { q: 'Which exam boards does Synaptiq cover?', a: 'AQA, Edexcel, OCR, and WJEC — all fully supported. You set your exam board during signup and every answer is aligned to that board\'s mark scheme style.' },
+  { q: 'Can I use Synaptiq for both Year 12 and Year 13?', a: 'Yes. The full content library covers Pure 1 & 2, Statistics Y1 & Y2, and Mechanics Y1 & Y2 — so whether you\'re starting AS or finishing A2, every topic is covered.' },
+  { q: 'What if I get the same question wrong repeatedly?', a: 'Synaptiq tracks your weak spots and surfaces them through the spaced-repetition flashcard system. The more you practice, the smarter your personalised revision plan becomes.' },
+  { q: 'Is Synaptiq suitable if I have ADHD, dyslexia, or dyscalculia?', a: 'Yes — these are first-class features, not afterthoughts. ADHD mode breaks responses into shorter, focused steps. Dyslexia mode uses Lexend font with increased spacing. Dyscalculia mode adds colour-coded working and visual number lines.' },
+  { q: 'How much does it cost after the trial?', a: '£35/month (about £1.17/day), or £276/year (£23/month, saving 34%). For context, the average A-Level Maths tutor on Tutorful charges £41.59/hour — Synaptiq gives you unlimited 24/7 access for less than the cost of a single tutoring session per month.' },
+  { q: 'Can parents see how their child is progressing?', a: 'Yes. Students can open the Parent View from their dashboard at any time and email a progress report directly to a parent or guardian. The report includes study streak, questions answered, XP earned, and the specific topics needing most attention — no account needed for the parent.' },
+  { q: 'Can my school or college get Synaptiq?', a: 'Yes. We offer custom pricing for schools, sixth forms, and tuition centres with whole-class accounts, teacher dashboards, and invoice billing. Email schools@synaptiqai.co.uk or click "Book a Demo" on the pricing section.' },
 ]
 
 const EXAM_CHIPS = ['📐 Product rule', '∫ Integration by parts', '🔢 Binomial expansion', '📊 Hypothesis testing']
@@ -129,14 +141,43 @@ export default function HomeClient() {
     setChatMessages(prev => [...prev, { role: 'user', content: q }])
     setDemoLoading(true)
 
-    // The chat API requires authentication. Show a sign-up prompt directly.
-    await new Promise<void>(resolve => setTimeout(resolve, 700))
-    setChatMessages(prev => [...prev, {
-      role: 'assistant',
-      content: '👋 Thanks for your question! Full step-by-step AI answers are available after sign up so we can use the secure chat service. Start your free 7-day trial to see the complete working.',
-    }])
-    setDemoCount(c => c + 1)
-    setDemoLoading(false)
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [{ role: 'user', content: q }],
+          systemPrompt: 'You are an expert A-Level Maths tutor. Show full working step by step, exactly as a UK mark scheme expects. Keep responses focused and clear.',
+        }),
+      })
+
+      if (res.status === 401 || res.status === 403) {
+        setChatMessages(prev => [...prev, {
+          role: 'assistant',
+          content: '👋 Great question! To see the full step-by-step working, sign up for a free 7-day trial. No card charged for 7 days — cancel any time.',
+        }])
+      } else if (!res.ok) {
+        const data = await res.json().catch(() => ({})) as { error?: string }
+        setChatMessages(prev => [...prev, {
+          role: 'assistant',
+          content: data.error ?? 'Sorry, I couldn\'t process that right now. Sign up to get full access.',
+        }])
+      } else {
+        const data = await res.json() as { response?: string }
+        setChatMessages(prev => [...prev, {
+          role: 'assistant',
+          content: data.response ?? 'Sign up for the full answer!',
+        }])
+        setDemoCount(c => c + 1)
+      }
+    } catch {
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Hmm, couldn\'t reach the AI right now. Sign up for guaranteed full access — 7-day free trial.',
+      }])
+    } finally {
+      setDemoLoading(false)
+    }
   }, [demoCount, demoLoading])
 
   return (
@@ -172,30 +213,35 @@ export default function HomeClient() {
           </a>
         </div>
         <div style={{ display: 'flex', gap: '.75rem' }}>
-          <Link
-            href="/login"
-            style={{
-              padding: '.45rem 1.1rem', borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.1)',
-              background: 'transparent', color: '#E6EDF3',
-              textDecoration: 'none', fontSize: '.875rem', fontWeight: 600,
-              transition: 'border-color .15s',
-            }}
-            onMouseOver={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)')}
-            onMouseOut={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)')}
-          >
-            Log In
+          <Link href="/login" passHref legacyBehavior>
+            <motion.a
+              whileHover={{ scale: 1.04, borderColor: 'rgba(255,255,255,0.25)' }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                padding: '.45rem 1.1rem', borderRadius: 10,
+                border: '1px solid rgba(255,255,255,0.1)',
+                background: 'transparent', color: '#E6EDF3',
+                textDecoration: 'none', fontSize: '.875rem', fontWeight: 600,
+                display: 'inline-block',
+              }}
+            >
+              Log In
+            </motion.a>
           </Link>
-          <Link
-            href="/login"
-            style={{
-              padding: '.45rem 1.1rem', borderRadius: 10,
-              background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
-              color: '#0B0F14', textDecoration: 'none',
-              fontSize: '.875rem', fontWeight: 700,
-            }}
-          >
-            Sign Up
+          <Link href="/login?mode=register" passHref legacyBehavior>
+            <motion.a
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                padding: '.45rem 1.1rem', borderRadius: 10,
+                background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
+                color: '#0B0F14', textDecoration: 'none',
+                fontSize: '.875rem', fontWeight: 700,
+                display: 'inline-block',
+              }}
+            >
+              Sign Up
+            </motion.a>
           </Link>
         </div>
       </nav>
@@ -243,30 +289,37 @@ export default function HomeClient() {
 
         {/* CTAs */}
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-          <Link
-            href="/login"
-            style={{
-              padding: '.85rem 2rem', borderRadius: 12,
-              background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
-              color: '#0B0F14', textDecoration: 'none',
-              fontSize: '1rem', fontWeight: 800,
-              boxShadow: '0 8px 32px rgba(201,168,76,0.3)',
-            }}
-          >
-            Start Your Free Trial →
+          <Link href="/login?mode=register" passHref legacyBehavior>
+            <motion.a
+              whileHover={{ scale: 1.04, boxShadow: '0 12px 40px rgba(201,168,76,0.45)' }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                padding: '.85rem 2rem', borderRadius: 12,
+                background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
+                color: '#0B0F14', textDecoration: 'none',
+                fontSize: '1rem', fontWeight: 800,
+                boxShadow: '0 8px 32px rgba(201,168,76,0.3)',
+                display: 'inline-block',
+              }}
+            >
+              Start Your Free Trial →
+            </motion.a>
           </Link>
-          <a
+          <motion.a
             href="#how-it-works"
+            whileHover={{ scale: 1.04, background: 'rgba(255,255,255,0.07)' }}
+            whileTap={{ scale: 0.97 }}
             style={{
               padding: '.85rem 2rem', borderRadius: 12,
               border: '1px solid rgba(255,255,255,0.12)',
               background: 'rgba(255,255,255,0.04)',
               color: '#E6EDF3', textDecoration: 'none',
               fontSize: '1rem', fontWeight: 600,
+              display: 'inline-block',
             }}
           >
             ▶ See How It Works
-          </a>
+          </motion.a>
         </div>
 
         {/* Trust bar */}
@@ -353,7 +406,7 @@ export default function HomeClient() {
           {FEATURES.map(({ icon, title, desc, tag }) => (
             <Link
               key={title}
-              href="/login"
+              href="/login?mode=register"
               style={{
                 background: 'rgba(18,24,33,0.8)', border: '1px solid rgba(255,255,255,0.06)',
                 borderRadius: 18, padding: '1.5rem', textDecoration: 'none', color: 'inherit',
@@ -500,20 +553,20 @@ export default function HomeClient() {
           {/* Example chips */}
           <div style={{ padding: '.75rem 1.5rem 0', display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
             {EXAM_CHIPS.map((chip, i) => (
-              <button
+              <motion.button
                 key={chip}
                 onClick={() => sendDemo(DEMO_QUESTIONS[i])}
+                whileHover={{ scale: 1.05, borderColor: 'rgba(201,168,76,0.4)', color: GOLD }}
+                whileTap={{ scale: 0.95 }}
                 style={{
                   background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: 16, padding: '.3rem .75rem',
-                  fontSize: '.72rem', color: MUTED, cursor: 'pointer', transition: 'all .2s',
+                  fontSize: '.72rem', color: MUTED, cursor: 'pointer',
                   whiteSpace: 'nowrap',
                 }}
-                onMouseOver={e => { e.currentTarget.style.borderColor = 'rgba(201,168,76,0.4)'; e.currentTarget.style.color = GOLD }}
-                onMouseOut={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = MUTED }}
               >
                 {chip}
-              </button>
+              </motion.button>
             ))}
           </div>
 
@@ -524,7 +577,6 @@ export default function HomeClient() {
               value={demoInput}
               onChange={e => setDemoInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendDemo(demoInput)}
-              aria-label="Type your own A-Level Maths question"
               placeholder="Or type your own A-Level Maths question…"
               style={{
                 flex: 1, background: 'rgba(255,255,255,0.04)',
@@ -535,9 +587,11 @@ export default function HomeClient() {
               onFocus={e => (e.currentTarget.style.borderColor = 'rgba(201,168,76,0.5)')}
               onBlur={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)')}
             />
-            <button
+            <motion.button
               onClick={() => sendDemo(demoInput)}
               disabled={demoLoading}
+              whileHover={demoLoading ? {} : { scale: 1.04, boxShadow: '0 6px 20px rgba(201,168,76,0.35)' }}
+              whileTap={demoLoading ? {} : { scale: 0.97 }}
               style={{
                 padding: '.7rem 1.25rem', borderRadius: 10,
                 background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
@@ -547,7 +601,7 @@ export default function HomeClient() {
               }}
             >
               Ask ✦
-            </button>
+            </motion.button>
           </div>
 
           {/* Footer note */}
@@ -626,7 +680,7 @@ export default function HomeClient() {
           {SUBJECTS.map(({ icon, name, level }) => (
             <Link
               key={name}
-              href="/login"
+              href="/login?mode=register"
               style={{
                 background: 'rgba(18,24,33,0.8)', border: '1px solid rgba(255,255,255,0.07)',
                 borderRadius: 16, padding: '1.25rem 1rem', textDecoration: 'none', color: 'inherit',
@@ -744,7 +798,7 @@ export default function HomeClient() {
               ))}
             </ul>
             <Link
-              href="/login"
+              href="/login?mode=register"
               style={{
                 display: 'block', textAlign: 'center', padding: '.9rem',
                 background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
@@ -904,30 +958,37 @@ export default function HomeClient() {
           2,400+ students have already improved by an average of +2 grades. The free trial takes 30 seconds to start.
         </p>
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '1rem' }}>
-          <Link
-            href="/login"
-            style={{
-              padding: '.9rem 2.25rem', borderRadius: 12,
-              background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
-              color: '#0B0F14', textDecoration: 'none',
-              fontSize: '1rem', fontWeight: 800,
-              boxShadow: '0 8px 32px rgba(201,168,76,0.3)',
-            }}
-          >
-            Start Your Free Trial →
+          <Link href="/login" passHref legacyBehavior>
+            <motion.a
+              whileHover={{ scale: 1.04, boxShadow: '0 12px 40px rgba(201,168,76,0.45)' }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                padding: '.9rem 2.25rem', borderRadius: 12,
+                background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
+                color: '#0B0F14', textDecoration: 'none',
+                fontSize: '1rem', fontWeight: 800,
+                boxShadow: '0 8px 32px rgba(201,168,76,0.3)',
+                display: 'inline-block',
+              }}
+            >
+              Start Your Free Trial →
+            </motion.a>
           </Link>
-          <a
+          <motion.a
             href="mailto:schools@synaptiqai.co.uk?subject=School%20Enquiry"
+            whileHover={{ scale: 1.04, background: 'rgba(255,255,255,0.07)' }}
+            whileTap={{ scale: 0.97 }}
             style={{
               padding: '.9rem 2.25rem', borderRadius: 12,
               border: '1px solid rgba(255,255,255,0.12)',
               background: 'rgba(255,255,255,0.04)',
               color: '#E6EDF3', textDecoration: 'none',
               fontSize: '1rem', fontWeight: 600,
+              display: 'inline-block',
             }}
           >
             Schools — Book a Demo
-          </a>
+          </motion.a>
         </div>
         <p style={{ color: MUTED, fontSize: '.8rem' }}>£35/month after trial · Cancel any time · AQA · Edexcel · OCR · WJEC</p>
       </section>
@@ -980,7 +1041,7 @@ export default function HomeClient() {
                   { href: '#features', label: 'Features' },
                   { href: '#pricing', label: 'Pricing' },
                   { href: '/login', label: 'Log In' },
-                  { href: '/login', label: 'Sign Up Free' },
+                  { href: '/login?mode=register', label: 'Sign Up Free' },
                 ].map(({ href, label }) => (
                   <a key={label} href={href} style={{ color: MUTED, fontSize: '.875rem', textDecoration: 'none', transition: '.15s' }}
                     onMouseOver={e => (e.currentTarget.style.color = '#E6EDF3')}
@@ -1033,7 +1094,7 @@ export default function HomeClient() {
           {/* Bottom bar */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <p style={{ color: MUTED, fontSize: '.75rem' }}>© {new Date().getFullYear()} Synaptiq Ltd. All rights reserved.</p>
+              <p style={{ color: MUTED, fontSize: '.75rem' }}>© 2025 Synaptiq Ltd. All rights reserved.</p>
               <p style={{ color: MUTED, fontSize: '.7rem', marginTop: '.2rem' }}>Registered in England &amp; Wales · hello@synaptiqai.co.uk</p>
             </div>
             <div style={{ display: 'flex', gap: '.75rem', alignItems: 'center', flexWrap: 'wrap' }}>

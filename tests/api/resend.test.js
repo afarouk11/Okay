@@ -9,8 +9,20 @@ import handler from '../../api/resend.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function req(body = {}, method = 'POST') {
-  return { method, body, headers: {} };
+function req(body = {}, method = 'POST', headers = null) {
+  const defaultHeaders = process.env.INTERNAL_API_KEY
+    ? { 'x-internal-key': process.env.INTERNAL_API_KEY }
+    : {};
+  return { method, body, headers: headers ?? defaultHeaders };
+}
+
+async function importHandlerWithSupabase(fakeSupabase) {
+  vi.resetModules();
+  vi.doMock('@supabase/supabase-js', () => ({
+    createClient: () => fakeSupabase,
+  }));
+  const mod = await import('../../api/resend.js');
+  return mod.default;
 }
 
 function res() {
@@ -26,10 +38,17 @@ beforeEach(() => {
   vi.clearAllMocks();
   delete process.env.RESEND_API_KEY;
   delete process.env.APP_URL;
+  process.env.INTERNAL_API_KEY = 'internal-test-key';
+  delete process.env.SUPABASE_URL;
+  delete process.env.SUPABASE_SERVICE_KEY;
 });
 
 afterEach(() => {
   delete process.env.RESEND_API_KEY;
+  delete process.env.INTERNAL_API_KEY;
+  delete process.env.SUPABASE_URL;
+  delete process.env.SUPABASE_SERVICE_KEY;
+  vi.doUnmock('@supabase/supabase-js');
 });
 
 // ─── OPTIONS ─────────────────────────────────────────────────────────────────
@@ -60,6 +79,47 @@ describe('missing RESEND_API_KEY', () => {
     await handler(req({ to: 'user@test.com', type: 'welcome', name: 'Alice' }), r);
     expect(r.statusCode).toBe(500);
     expect(r.body.error).toMatch(/resend/i);
+  });
+});
+
+// ─── Access control ───────────────────────────────────────────────────────────
+
+describe('access control', () => {
+  it('rejects transactional emails when no auth or internal key is provided', async () => {
+    process.env.RESEND_API_KEY = 'resend-test-key';
+
+    const r = res();
+    await handler(req({ to: 'user@test.com', type: 'welcome', name: 'Alice' }, 'POST', {}), r);
+    expect(r.statusCode).toBe(401);
+    expect(r.body.error).toMatch(/auth|forbidden/i);
+  });
+
+  it('rejects authenticated users sending email to another address', async () => {
+    process.env.RESEND_API_KEY = 'resend-test-key';
+    process.env.SUPABASE_URL = 'https://supabase.test';
+    process.env.SUPABASE_SERVICE_KEY = 'service-key';
+
+    const fakeSupabase = {
+      auth: {
+        getUser: vi.fn().mockResolvedValue({
+          data: { user: { email: 'owner@test.com' } },
+          error: null,
+        }),
+      },
+    };
+
+    const authedHandler = await importHandlerWithSupabase(fakeSupabase);
+    const r = res();
+    await authedHandler(
+      req(
+        { email: 'other@test.com', type: 'welcome', name: 'Alice' },
+        'POST',
+        { authorization: 'Bearer valid-token' },
+      ),
+      r,
+    );
+    expect(r.statusCode).toBe(403);
+    expect(r.body.error).toMatch(/own email|forbidden/i);
   });
 });
 

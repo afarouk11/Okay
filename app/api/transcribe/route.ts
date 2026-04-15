@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase'
 import { isRateLimited, getIp, fetchWithRetry } from '@/lib/rateLimit'
 
+function normaliseAudioContentType(value: string | null): string {
+  const raw = String(value || '').toLowerCase().trim()
+  const base = raw.split(';')[0]?.trim() || ''
+
+  if (!base) return 'audio/webm'
+  if (base.includes('webm')) return 'audio/webm'
+  if (base.includes('mp4') || base.includes('m4a') || base.includes('aac')) return 'audio/mp4'
+  if (base.includes('mpeg') || base.includes('mp3')) return 'audio/mpeg'
+  if (base.includes('ogg') || base.includes('opus')) return 'audio/ogg'
+  return 'audio/webm'
+}
+
+function formatUpstreamError(err: string): string {
+  const text = String(err || '').trim()
+  if (/did not match the expected pattern|unsupported|invalid/i.test(text)) {
+    return 'Unsupported audio format from the browser — please try Chrome or Edge and speak again.'
+  }
+  return text || 'Transcription failed — please try again.'
+}
+
 async function getUser(request: NextRequest) {
   const supabase = createServiceClient()
   if (!supabase) return { user: null }
@@ -35,7 +55,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Audio data is required' }, { status: 400 })
   }
 
-  const contentType = request.headers.get('content-type') || 'audio/webm'
+  const contentType = normaliseAudioContentType(request.headers.get('content-type'))
 
   let upstream: Response
   try {
@@ -55,7 +75,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!upstream.ok) {
-    const err = await upstream.text()
+    const err = formatUpstreamError(await upstream.text())
     return NextResponse.json({ error: err }, { status: upstream.status })
   }
 

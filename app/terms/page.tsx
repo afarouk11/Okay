@@ -5,6 +5,8 @@ import { Zap, ArrowLeft } from 'lucide-react'
 export const metadata: Metadata = {
   title: 'Terms of Service',
   description: 'Synaptiq terms and conditions of use.',
+  openGraph: { title: 'Terms of Service | Synaptiq', description: 'Synaptiq terms and conditions of use.', type: 'website' },
+  twitter: { card: 'summary', title: 'Terms | Synaptiq', description: 'Synaptiq terms and conditions.' },
 }
 
 export default function TermsPage() {

@@ -59,8 +59,8 @@ export default async function handler(req, res) {
       supabase.from('profiles').select('id', { count: 'exact', head: true })
         .in('subscription_status', ['active'])
     ]);
-    // MRR: count active subscribers × £35/month (student plan)
-    const mrr = (paying.count || 0) * 35;
+    // MRR: count active subscribers × plan price (default £40/month)
+    const mrr = (paying.count || 0) * (Number(process.env.PLAN_PRICE_GBP) || 40);
     const result = {
       total_users: users.count || 0,
       active_7d: active.count || 0,
@@ -93,9 +93,13 @@ export default async function handler(req, res) {
     let failed = 0;
     for (const user of (users || [])) {
       try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (process.env.INTERNAL_API_KEY) {
+          headers['x-internal-key'] = process.env.INTERNAL_API_KEY;
+        }
         await fetch(`${process.env.SITE_URL}/api/resend`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
             type: 'weekly',
             email: user.email,

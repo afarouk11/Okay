@@ -4,6 +4,7 @@
 
 -- ── Enable UUID extension ─────────────────────────────────────────────────────
 create extension if not exists "uuid-ossp";
+create extension if not exists "pgcrypto";
 
 -- ── Profiles table ────────────────────────────────────────────────────────────
 -- Stores extended user data beyond what Supabase Auth provides.
@@ -11,7 +12,7 @@ create extension if not exists "uuid-ossp";
 -- the create_auth_user API action which calls /auth/v1/admin/users).
 
 create table if not exists public.profiles (
-  id           uuid primary key default uuid_generate_v4(),
+  id           uuid primary key default gen_random_uuid(),
   email        text unique not null,
   name         text,
   plan         text default 'student' check (plan in ('student', 'homeschool')),
@@ -33,7 +34,7 @@ create table if not exists public.profiles (
 -- Stores uploaded mark schemes, past papers, and shared global resources.
 
 create table if not exists public.resources (
-  id            uuid primary key default uuid_generate_v4(),
+  id            uuid primary key default gen_random_uuid(),
   user_id       uuid references public.profiles(id) on delete cascade,
   name          text not null,
   type          text,                         -- 'mark_scheme' | 'past_paper' | 'notes'
@@ -53,6 +54,8 @@ alter table public.profiles  enable row level security;
 alter table public.resources enable row level security;
 
 -- Profiles: users can only read/update their own row
+drop policy if exists "profiles_select_own" on public.profiles;
+drop policy if exists "profiles_update_own" on public.profiles;
 create policy "profiles_select_own" on public.profiles
   for select using (auth.uid()::text = id::text);
 
@@ -60,6 +63,9 @@ create policy "profiles_update_own" on public.profiles
   for update using (auth.uid()::text = id::text);
 
 -- Resources: users can read their own + global resources
+drop policy if exists "resources_select" on public.resources;
+drop policy if exists "resources_insert_own" on public.resources;
+drop policy if exists "resources_delete_own" on public.resources;
 create policy "resources_select" on public.resources
   for select using (
     user_id::text = auth.uid()::text
@@ -81,6 +87,7 @@ begin
 end;
 $$;
 
+drop trigger if exists profiles_updated_at on public.profiles;
 create trigger profiles_updated_at
   before update on public.profiles
   for each row execute function public.set_updated_at();

@@ -5,6 +5,8 @@ import { Zap, ArrowLeft } from 'lucide-react'
 export const metadata: Metadata = {
   title: 'Cookie Policy',
   description: 'How Synaptiq uses cookies and how to manage them.',
+  openGraph: { title: 'Cookie Policy | Synaptiq', description: 'How Synaptiq uses cookies.', type: 'website' },
+  twitter: { card: 'summary', title: 'Cookies | Synaptiq', description: 'How Synaptiq uses cookies.' },
 }
 
 export default function CookiesPage() {

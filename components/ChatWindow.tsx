@@ -7,7 +7,8 @@ import MessageBubble from './MessageBubble'
 import InputBox from './InputBox'
 import TypingIndicator from './TypingIndicator'
 import { stripNavCommand, extractNavCommand } from '@/lib/jarvis'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
+import { useAuth } from '@/lib/useAuth'
 
 export type ChatMsg = {
   id: string
@@ -24,6 +25,8 @@ const INITIAL_MESSAGE: ChatMsg = {
 
 export default function ChatWindow() {
   const router = useRouter()
+  const pathname = usePathname()
+  const { token } = useAuth()
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMsg[]>([INITIAL_MESSAGE])
   const [input, setInput] = useState('')
@@ -44,6 +47,19 @@ export default function ChatWindow() {
     const text = input.trim()
     if (!text || loading) return
 
+    if (!token) {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: 'Please sign in to chat with Jarvis.',
+          timestamp: new Date(),
+        },
+      ])
+      return
+    }
+
     const userMsg: ChatMsg = {
       id: Date.now().toString(),
       role: 'user',
@@ -63,26 +79,48 @@ export default function ChatWindow() {
 
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ messages: history }),
       })
 
       if (!res.ok) throw new Error('Failed to send message')
 
-      const data = await res.json()
-      const rawContent: string = data.response || 'Sorry, something went wrong.'
+      // Read the streaming response incrementally
+      const reader = res.body?.getReader()
+      const decoder = new TextDecoder()
+      let accumulated = ''
 
-      const navCmd = extractNavCommand(rawContent)
-      const displayContent = stripNavCommand(rawContent)
+      const assistantId = (Date.now() + 1).toString()
+      setMessages(prev => [
+        ...prev,
+        { id: assistantId, role: 'assistant', content: '', timestamp: new Date() },
+      ])
+      setLoading(false)
 
-      const assistantMsg: ChatMsg = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: displayContent,
-        timestamp: new Date(),
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          accumulated += decoder.decode(value, { stream: true })
+          const snapshot = accumulated
+          setMessages(prev =>
+            prev.map(m => (m.id === assistantId ? { ...m, content: snapshot } : m)),
+          )
+        }
+        accumulated += decoder.decode()
       }
 
-      setMessages(prev => [...prev, assistantMsg])
+      const navCmd = extractNavCommand(accumulated)
+      const displayContent = stripNavCommand(accumulated)
+
+      if (displayContent !== accumulated) {
+        setMessages(prev =>
+          prev.map(m => (m.id === assistantId ? { ...m, content: displayContent } : m)),
+        )
+      }
 
       if (navCmd?.page) {
         setTimeout(() => {
@@ -100,10 +138,9 @@ export default function ChatWindow() {
           timestamp: new Date(),
         },
       ])
-    } finally {
       setLoading(false)
     }
-  }, [input, loading, messages, router])
+  }, [input, loading, messages, router, token])
 
   const handleVoice = useCallback(async () => {
     if (isRecording) {
@@ -125,7 +162,10 @@ export default function ChatWindow() {
         try {
           const res = await fetch('/api/transcribe', {
             method: 'POST',
-            headers: { 'Content-Type': mimeType },
+            headers: {
+              'Content-Type': mimeType,
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
             body: blob,
           })
           const { transcript } = await res.json()
@@ -137,7 +177,10 @@ export default function ChatWindow() {
       mediaRecorderRef.current = recorder
       setIsRecording(true)
     } catch { /* mic access denied */ }
-  }, [isRecording])
+  }, [isRecording, token])
+
+  // Don't show the floating widget on the dedicated Jarvis page
+  if (pathname === '/jarvis') return null
 
   return (
     <>
@@ -152,10 +195,10 @@ export default function ChatWindow() {
         className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
         style={{
           background: open
-            ? 'rgba(79,140,255,0.2)'
-            : 'linear-gradient(135deg, #4F8CFF, #22C55E)',
-          border: open ? '1px solid rgba(79,140,255,0.4)' : 'none',
-          boxShadow: '0 8px 32px rgba(79,140,255,0.35)',
+            ? 'rgba(0,212,255,0.14)'
+            : 'linear-gradient(135deg, #00D4FF, #00FF9D)',
+          border: open ? '1px solid rgba(0,212,255,0.28)' : 'none',
+          boxShadow: '0 8px 32px rgba(0,212,255,0.28)',
         }}
         aria-label={open ? 'Close Jarvis' : 'Open Jarvis'}
         aria-expanded={open}
@@ -197,11 +240,11 @@ export default function ChatWindow() {
             className="fixed bottom-24 right-6 z-50 w-[380px] flex flex-col rounded-2xl overflow-hidden"
             style={{
               height: '520px',
-              background: 'rgba(13,17,26,0.96)',
+              background: 'rgba(8,12,24,0.96)',
               backdropFilter: 'blur(24px)',
               WebkitBackdropFilter: 'blur(24px)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(79,140,255,0.08)',
+              border: '1px solid rgba(0,212,255,0.12)',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,212,255,0.08)',
             }}
             role="dialog"
             aria-label="Jarvis AI assistant"
@@ -209,11 +252,11 @@ export default function ChatWindow() {
             {/* Header */}
             <div
               className="flex items-center gap-3 px-4 py-3.5 border-b border-white/6 flex-shrink-0"
-              style={{ background: 'rgba(18,24,33,0.6)' }}
+              style={{ background: 'rgba(13,18,32,0.68)' }}
             >
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white"
-                style={{ background: 'linear-gradient(135deg, #4F8CFF, #22C55E)' }}
+                style={{ background: 'linear-gradient(135deg, #00D4FF, #00FF9D)' }}
               >
                 J
               </div>

@@ -1,10 +1,24 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
+import 'katex/dist/katex.min.css'
 import ChatWindow from '@/components/ChatWindow'
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar'
-import ConditionalSiteFooter from '@/components/ConditionalSiteFooter'
+import CookieConsent from '@/components/CookieConsent'
+import Link from 'next/link'
+
+const GA4_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID
+
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.VERCEL_PROJECT_PRODUCTION_URL ||
+  process.env.VERCEL_URL ||
+  'https://synaptiqai.co.uk'
+
+const resolvedSiteUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`
 
 export const metadata: Metadata = {
+  metadataBase: new URL(resolvedSiteUrl),
   title: {
     default: 'Synaptiq — AI Learning Platform',
     template: '%s | Synaptiq',
@@ -42,14 +56,55 @@ export default function RootLayout({
           rel="stylesheet"
         />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        {GA4_ID && GA4_ID !== 'G-' && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA4_ID}');`}
+            </Script>
+          </>
+        )}
       </head>
       <body className="bg-background text-foreground antialiased">
         {children}
         <ChatWindow />
         <ServiceWorkerRegistrar />
-        <ConditionalSiteFooter />
+        <CookieConsent />
+        <SiteFooter />
       </body>
     </html>
   )
 }
 
+function SiteFooter() {
+  return (
+    <footer
+      className="border-t py-5"
+      style={{ borderColor: 'rgba(0,212,255,0.12)', background: 'rgba(3,5,13,0.72)', backdropFilter: 'blur(12px)' }}
+    >
+      <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-3">
+        <span className="text-xs" style={{ color: '#5A7499' }}>© {new Date().getFullYear()} Synaptiq Ltd</span>
+        <nav className="flex flex-wrap gap-4">
+          {[
+            { href: '/privacy',  label: 'Privacy'  },
+            { href: '/terms',    label: 'Terms'    },
+            { href: '/cookies',  label: 'Cookies'  },
+            { href: '/contact',  label: 'Contact'  },
+          ].map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              className="text-xs transition-colors hover:text-white"
+              style={{ color: '#5A7499' }}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+      </div>
+    </footer>
+  )
+}

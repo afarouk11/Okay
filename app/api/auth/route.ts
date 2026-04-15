@@ -5,6 +5,9 @@ import { isRateLimited, getIp } from '@/lib/rateLimit'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function POST(request: NextRequest) {
   const ip = getIp(request)
   if (isRateLimited(`${ip}:auth`, 10, 60_000)) {
@@ -39,6 +42,19 @@ export async function POST(request: NextRequest) {
       if (error.message.toLowerCase().includes('already') || error.message.toLowerCase().includes('duplicate')) {
         return NextResponse.json({ error: 'An account with this email already exists. Try signing in instead.' }, { status: 400 })
       }
+      // Supabase returns "Authentication required" (HTTP 401) when the service
+      // role key is invalid or absent. Never expose that internal detail to the
+      // browser — it looks like the *user* needs to authenticate, which is
+      // confusing on a sign-up form.
+      if (
+        error.message.toLowerCase().includes('authentication') ||
+        error.message.toLowerCase().includes('not a service_role') ||
+        error.message.toLowerCase().includes('invalid api key') ||
+        error.message.toLowerCase().includes('unauthorized')
+      ) {
+        console.error('[auth/register] Supabase admin API auth error:', error.message)
+        return NextResponse.json({ error: 'Registration is temporarily unavailable. Please try again later.' }, { status: 503 })
+      }
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
@@ -70,8 +86,8 @@ export async function POST(request: NextRequest) {
 
   if (action === 'forgot_password') {
     if (!email || !EMAIL_RE.test(email)) return NextResponse.json({ error: 'Valid email required' }, { status: 400 })
-    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://synaptiq.co.uk'
-    await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${siteUrl}/reset-password` })
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || process.env.SITE_URL || 'https://synaptiq.co.uk'
+    await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), { redirectTo: `${siteUrl}/reset-password` })
     return NextResponse.json({ success: true })
   }
 
@@ -83,6 +99,28 @@ export async function POST(request: NextRequest) {
       .select('id', { count: 'exact', head: true })
       .eq('last_active', today)
     return NextResponse.json({ count: count ?? 0, date: today })
+  }
+
+  if (action === 'delete_account') {
+    const token = request.headers.get('authorization')?.replace('Bearer ', '').trim()
+    if (!token) return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+
+    const { data: { user }, error } = await supabase.auth.getUser(token)
+    if (error || !user) {
+      return NextResponse.json({ error: 'Invalid or expired session' }, { status: 401 })
+    }
+
+    const { error: profileDeleteError } = await supabase.from('profiles').delete().eq('id', user.id)
+    if (profileDeleteError) {
+      return NextResponse.json({ error: profileDeleteError.message }, { status: 500 })
+    }
+
+    const { error: deleteError } = await supabase.auth.admin.deleteUser(user.id)
+    if (deleteError) {
+      return NextResponse.json({ error: deleteError.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
   }
 
   if (action === 'parent_view') {
@@ -169,6 +207,52 @@ export async function POST(request: NextRequest) {
       weekly: { xp: totalXp, questions: totalQuestions, days_active: daysActive },
       topics: top3Topics,
       activity,
+    })
+  }
+
+  if (action === 'login') {
+    if (!email || !EMAIL_RE.test(email)) return NextResponse.json({ error: 'A valid email is required' }, { status: 400 })
+    if (!password) return NextResponse.json({ error: 'Please enter your password' }, { status: 400 })
+
+    const normalisedEmail = email.toLowerCase().trim()
+
+    // Use anon client for password sign-in (service client doesn't support signInWithPassword)
+    const { createClient } = await import('@supabase/supabase-js')
+    const anonClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    const { data, error: signInError } = await anonClient.auth.signInWithPassword({
+      email: normalisedEmail,
+      password,
+    })
+
+    if (signInError) {
+      if (/email not confirmed/i.test(signInError.message)) {
+        return NextResponse.json({ error: 'Please verify your email address before logging in. Check your inbox for a confirmation link.' }, { status: 401 })
+      }
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+    }
+
+    // Ensure profile exists
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single()
+    if (!profile) {
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        name: data.user.user_metadata?.name || normalisedEmail.split('@')[0],
+        email: normalisedEmail,
+        plan: 'student',
+        xp: 0, level: 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' })
+    }
+
+    return NextResponse.json({
+      token: data.session?.access_token,
+      user: data.user,
+      profile: profile ?? null,
     })
   }
 

@@ -11,8 +11,11 @@ import handler from '../../api/resend.js';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function req(body = {}, method = 'POST') {
-  return { method, body, headers: {} };
+function req(body = {}, method = 'POST', headers = null) {
+  const defaultHeaders = process.env.INTERNAL_API_KEY
+    ? { 'x-internal-key': process.env.INTERNAL_API_KEY }
+    : {};
+  return { method, body, headers: headers ?? defaultHeaders };
 }
 
 function res() {
@@ -27,11 +30,13 @@ function res() {
 beforeEach(() => {
   vi.clearAllMocks();
   delete process.env.RESEND_API_KEY;
+  process.env.INTERNAL_API_KEY = 'internal-test-key';
   process.env.SITE_URL = 'https://synaptiq.test';
 });
 
 afterEach(() => {
   delete process.env.RESEND_API_KEY;
+  delete process.env.INTERNAL_API_KEY;
 });
 
 // ─── OPTIONS ─────────────────────────────────────────────────────────────────

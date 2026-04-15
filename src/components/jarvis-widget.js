@@ -3,11 +3,10 @@
  *
  * A bottom-right chat button that appears on every page.
  * Understands navigation intents so students can say "open flashcards" and
- * Jarvis will navigate to the right section / page automatically.
+ * Jarvis will navigate to the right Next.js route automatically.
  *
- * On index.html (which owns window.showDash) navigation is in-page.
- * On all other pages navigation uses the /?nav= query parameter which
- * index.html handles on load (see bottom of index.html).
+ * This keeps older pages working while the product finishes moving away from
+ * the legacy single-file `index.html` experience.
  */
 
 (function () {
@@ -16,45 +15,45 @@
   // ── Navigation intent map ──────────────────────────────────────────────────
   const NAV_INTENTS = [
     { keywords: ['flashcard', 'flash card', 'revision card', 'flash cards'],
-      section: 'flashcards', label: '📇 Flashcards' },
+      url: '/dashboard', label: '📇 Flashcards & Revision' },
     { keywords: ['past paper', 'past papers', 'exam paper', 'exam papers', 'past exam', 'old paper'],
-      section: 'papers', label: '📄 Past Papers' },
+      url: '/papers', label: '📄 Past Papers' },
     { keywords: ['practice question', 'question bank', 'practice paper', 'practice questions', 'question generator'],
-      section: 'questions', label: '📝 Practice Questions' },
+      url: '/questions', label: '📝 Practice Questions' },
     { keywords: ['progress', 'my progress', 'analytics', 'my stats', 'dashboard stats'],
-      section: 'progress', label: '📊 Progress' },
+      url: '/dashboard', label: '📊 Progress' },
     { keywords: ['formula', 'formula sheet', 'formula sheets', 'formulas'],
-      section: 'formulas', label: '📐 Formula Sheets' },
+      url: '/formulas', label: '📐 Formula Sheets' },
     { keywords: ['glossary', 'definitions', 'key terms', 'terminology'],
-      section: 'glossary', label: '📖 Glossary' },
+      url: '/formulas?tab=glossary', label: '📖 Glossary' },
     { keywords: ['calculator', 'calc'],
-      section: 'calculator', label: '🔢 Calculator' },
+      url: '/formulas?tab=calculator', label: '🔢 Calculator' },
     { keywords: ['exam sim', 'exam simulator', 'mock exam', 'timed exam', 'simulated exam'],
-      section: 'exam-sim', label: '⏱️ Exam Simulator' },
+      url: '/exam-sim', label: '⏱️ Exam Simulator' },
     { keywords: ['timetable', 'revision timetable', 'study plan', 'study schedule', 'revision plan'],
-      section: 'timetable', label: '🗓️ Revision Timetable' },
+      url: '/plan', label: '🗓️ Revision Plan' },
     { keywords: ['mind map', 'mindmap', 'concept map', 'topic map'],
-      section: 'mindmap', label: '🧠 Mind Map' },
+      url: '/mindmap', label: '🧠 Mind Map' },
     { keywords: ['notes', 'my notes'],
-      section: 'notes', label: '📓 My Notes' },
+      url: '/notes', label: '📓 My Notes' },
     { keywords: ['lesson', 'lessons', 'ai lesson', 'ai lessons', 'watch lesson'],
-      url: '/lessons.html', label: '🎓 AI Lessons' },
+      url: '/lessons', label: '🎓 AI Lessons' },
     { keywords: ['maths assistant', 'ai tutor', 'jarvis chat', 'jarvis page', 'open jarvis'],
-      url: '/jarvis.html', label: '🤖 J.A.R.V.I.S.' },
+      url: '/jarvis', label: '🤖 J.A.R.V.I.S.' },
     { keywords: ['tutor', 'chat with ai', 'ai chat', 'ask question', 'ai maths'],
-      section: 'tutor', label: '🤖 AI Maths Assistant' },
+      url: '/chat', label: '🤖 AI Maths Assistant' },
     { keywords: ['home', 'dashboard', 'go home', 'main page'],
-      section: 'home', label: '🏠 Dashboard' },
+      url: '/dashboard', label: '🏠 Dashboard' },
     { keywords: ['settings', 'account settings', 'profile'],
-      section: 'settings', label: '⚙️ Settings' },
+      url: '/settings', label: '⚙️ Settings' },
     { keywords: ['exam countdown', 'my exam', 'exam date'],
-      section: 'exams', label: '📅 Exam Countdown' },
+      url: '/dashboard', label: '📅 Exam Dashboard' },
     { keywords: ['predict', 'grade prediction', 'predicted grade'],
-      section: 'predict', label: '✨ Exam Prediction' },
+      url: '/dashboard', label: '✨ Exam Dashboard' },
     { keywords: ['photo', 'photo question', 'scan question', 'camera'],
-      section: 'photo', label: '📷 Photo Question' },
+      url: '/chat', label: '📷 Photo Question Help' },
     { keywords: ['pricing', 'subscription', 'upgrade', 'premium', 'pro plan', 'plans'],
-      url: '/pricing.html', label: '💎 Pricing' },
+      url: '/pricing', label: '💎 Pricing' },
   ];
 
   // Quick suggestion chips shown at the start
@@ -101,17 +100,9 @@
     return /^(hi|hello|hey|yo|sup|good (morning|afternoon|evening)|what can you do|help me|what do you do)/.test(lower);
   }
 
-  // Navigate: in-page on index.html, else URL with ?nav= param
+  // Navigate using canonical Next.js routes rather than the old index.html SPA.
   function navigateTo(intent) {
-    if (intent.url) {
-      window.location.href = intent.url;
-      return;
-    }
-    if (typeof window.showDash === 'function') {
-      window.showDash(intent.section);
-    } else {
-      window.location.href = '/?nav=' + encodeURIComponent(intent.section);
-    }
+    window.location.href = intent.url || '/dashboard';
   }
 
   // ── Build widget DOM ───────────────────────────────────────────────────────
