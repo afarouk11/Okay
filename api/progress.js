@@ -42,7 +42,10 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { subject, topic, correct, total, xpEarned } = req.body;
+    const { subject, topic, correct, total, xpEarned = 0 } = req.body;
+    if (!Number.isInteger(total) || !Number.isInteger(correct) || !Number.isInteger(xpEarned)) {
+      return res.status(400).json({ error: 'total, correct, and xpEarned must be integers' });
+    }
     if (total < 0) return res.status(400).json({ error: 'total must not be negative' });
     if (correct > total) return res.status(400).json({ error: 'correct must not exceed total' });
     if (xpEarned < 0) return res.status(400).json({ error: 'xpEarned must not be negative' });

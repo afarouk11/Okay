@@ -1,9 +1,13 @@
 import type { Metadata } from 'next'
+import Script from 'next/script'
 import './globals.css'
 import 'katex/dist/katex.min.css'
 import ChatWindow from '@/components/ChatWindow'
 import ServiceWorkerRegistrar from '@/components/ServiceWorkerRegistrar'
+import CookieConsent from '@/components/CookieConsent'
 import Link from 'next/link'
+
+const GA4_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
@@ -52,11 +56,23 @@ export default function RootLayout({
           rel="stylesheet"
         />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        {GA4_ID && GA4_ID !== 'G-' && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-init" strategy="afterInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA4_ID}');`}
+            </Script>
+          </>
+        )}
       </head>
       <body className="bg-background text-foreground antialiased">
         {children}
         <ChatWindow />
         <ServiceWorkerRegistrar />
+        <CookieConsent />
         <SiteFooter />
       </body>
     </html>

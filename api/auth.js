@@ -261,43 +261,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
 
-    if (action === 'get_profile') {
-      const { email: profileEmail } = body.payload || {};
-      if (!profileEmail) return res.status(400).json({ error: 'email required' });
-      const { data: profile } = await supabase.from('profiles').select('*').eq('email', profileEmail).single();
-      return res.status(200).json(profile || null);
-    }
-
-    if (action === 'patch_profile') {
-      const token = req.headers.authorization?.replace('Bearer ', '');
-      if (!token) return res.status(401).json({ error: 'Authentication required' });
-      const { data: authData, error: authErr } = await supabase.auth.getUser(token);
-      if (authErr) return res.status(401).json({ error: 'Invalid token' });
-      const { id: profileId, ...fields } = body.payload || {};
-      if (!profileId) return res.status(400).json({ error: 'id required' });
-      if (profileId !== authData.user.id) return res.status(403).json({ error: 'Forbidden' });
-      // Strip is_admin — cannot self-escalate
-      delete fields.is_admin;
-      const { data: profile, error } = await supabase.from('profiles').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', profileId).select().single();
-      if (error) return res.status(400).json({ error: error.message });
-      return res.status(200).json(profile || {});
-    }
-
-    if (action === 'save_upload') {
-      const upload = body.upload || body.payload;
-      const { data, error } = await supabase.from('resources').insert(upload).select();
-      if (error) return res.status(400).json({ error: error.message });
-      return res.status(200).json(data);
-    }
-
-    if (action === 'get_uploads') {
-      const uid = body.userId || (body.payload && body.payload.userId);
-      if (!uid) return res.status(400).json({ error: 'userId required' });
-      const { data, error } = await supabase.from('resources').select('*').or(`user_id.eq.${uid},is_global.eq.true`).order('uploaded_at', { ascending: false });
-      if (error) return res.status(400).json({ error: error.message });
-      return res.status(200).json({ data: data || [] });
-    }
-
     if (action === 'leaderboard') {
       const { userId: uid } = body.payload || {};
       const { data: top } = await supabase.from('profiles').select('name,xp,streak,avatar_emoji').order('xp', { ascending: false }).limit(20);
@@ -587,10 +550,9 @@ async function handleProxyAction(req, res, action, body) {
     if (action === 'get_profile') {
       const callerId = await getCallerUserId();
       if (!callerId) return res.status(401).json({ error: 'Authentication required' });
-      const { email } = payload || {};
-      if (!email || !EMAIL_RE.test(email)) return res.status(400).json({ error: 'A valid email is required' });
+      // Always return the caller's own profile — prevents reading other users' data
       const r = await fetch(
-        `${url}/rest/v1/profiles?email=eq.${encodeURIComponent(email)}&select=*`,
+        `${url}/rest/v1/profiles?id=eq.${callerId}&select=*`,
         { headers: sbaHeaders(svcKey) },
       );
       const data = await r.json();

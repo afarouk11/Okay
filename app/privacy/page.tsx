@@ -5,6 +5,8 @@ import { Zap, ArrowLeft } from 'lucide-react'
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description: 'How Synaptiq collects, uses, and protects your personal data.',
+  openGraph: { title: 'Privacy Policy | Synaptiq', description: 'How Synaptiq handles your data.', type: 'website' },
+  twitter: { card: 'summary', title: 'Privacy Policy | Synaptiq', description: 'How Synaptiq handles your data.' },
 }
 
 export default function PrivacyPage() {

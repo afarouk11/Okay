@@ -26,7 +26,7 @@ export default function NotesClient() {
   const { user, token, loading: authLoading } = useAuth()
 
   const [notes, setNotes] = useState<Note[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
 
   // New note form
