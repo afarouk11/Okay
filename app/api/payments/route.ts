@@ -284,7 +284,7 @@ async function handleWebhook(request: NextRequest) {
   try {
     await supabase.from('processed_webhooks').insert({ event_id: event.id })
   } catch {
-    // no-op
+    // Legacy /api/webhook swallowed this write error; keep it non-blocking so valid Stripe events still return success.
   }
 
   return NextResponse.json({ received: true })

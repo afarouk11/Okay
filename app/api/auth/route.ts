@@ -416,11 +416,7 @@ async function handleAdmin(request: NextRequest) {
         u.name ?? 'Student',
         { questions: u.questions_answered ?? 0, accuracy: u.accuracy ?? 0, xp: u.xp ?? 0, streak: u.streak ?? 0 },
       ).catch(() => false)
-      if (ok) {
-        sent++
-      } else {
-        failed++
-      }
+      ok ? sent++ : failed++
     }
     logAdminAction(supabase, 'send_weekly_emails', ip, { sent, failed })
     return NextResponse.json({ sent, failed })

@@ -152,8 +152,8 @@ export async function POST(request: NextRequest) {
     message?: string
   }
   const { to, email, type, name, stats, category, message } = body
-  const inferredContactRequest = !type && !!name?.trim() && !!email && !!message
-  const effectiveType = type || (resource === 'contact' || inferredContactRequest ? 'contact' : undefined)
+  const isInferredContactRequest = !type && !!name?.trim() && !!email && !!message
+  const effectiveType = type || (resource === 'contact' || isInferredContactRequest ? 'contact' : undefined)
 
   const internalAccess = hasValidInternalKey(request)
   if (effectiveType !== 'contact' && !internalAccess) {
