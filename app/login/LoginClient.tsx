@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -54,9 +55,18 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
     }
 
     if (mode === 'login') {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
+        password,
+      })
       if (signInError) {
-        setError(signInError.message)
+        if (/email not confirmed/i.test(signInError.message)) {
+          setError('Please verify your email address before signing in. Check your inbox for a confirmation link.')
+        } else if (/invalid login credentials|invalid email or password/i.test(signInError.message)) {
+          setError('Incorrect email or password. Please try again.')
+        } else {
+          setError(signInError.message)
+        }
       } else {
         router.replace('/dashboard')
       }
@@ -72,7 +82,10 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
         setError(data.error ?? 'Registration failed.')
       } else {
         // Sign in immediately after registration
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: email.toLowerCase().trim(),
+          password,
+        })
         if (signInError) {
           setSuccess('Account created! Please sign in to Synaptiq.')
           setMode('login')

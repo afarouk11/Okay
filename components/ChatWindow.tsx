@@ -81,7 +81,7 @@ export default function ChatWindow() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ messages: history }),
       })
@@ -162,7 +162,10 @@ export default function ChatWindow() {
         try {
           const res = await fetch('/api/transcribe', {
             method: 'POST',
-            headers: { 'Content-Type': mimeType },
+            headers: {
+              'Content-Type': mimeType,
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
             body: blob,
           })
           const { transcript } = await res.json()
@@ -174,7 +177,7 @@ export default function ChatWindow() {
       mediaRecorderRef.current = recorder
       setIsRecording(true)
     } catch { /* mic access denied */ }
-  }, [isRecording])
+  }, [isRecording, token])
 
   // Don't show the floating widget on the dedicated Jarvis page
   if (pathname === '/jarvis') return null

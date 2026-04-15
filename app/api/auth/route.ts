@@ -210,5 +210,51 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  if (action === 'login') {
+    if (!email || !EMAIL_RE.test(email)) return NextResponse.json({ error: 'A valid email is required' }, { status: 400 })
+    if (!password) return NextResponse.json({ error: 'Please enter your password' }, { status: 400 })
+
+    const normalisedEmail = email.toLowerCase().trim()
+
+    // Use anon client for password sign-in (service client doesn't support signInWithPassword)
+    const { createClient } = await import('@supabase/supabase-js')
+    const anonClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    const { data, error: signInError } = await anonClient.auth.signInWithPassword({
+      email: normalisedEmail,
+      password,
+    })
+
+    if (signInError) {
+      if (/email not confirmed/i.test(signInError.message)) {
+        return NextResponse.json({ error: 'Please verify your email address before logging in. Check your inbox for a confirmation link.' }, { status: 401 })
+      }
+      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 })
+    }
+
+    // Ensure profile exists
+    const { data: profile } = await supabase.from('profiles').select('*').eq('id', data.user.id).single()
+    if (!profile) {
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        name: data.user.user_metadata?.name || normalisedEmail.split('@')[0],
+        email: normalisedEmail,
+        plan: 'student',
+        xp: 0, level: 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' })
+    }
+
+    return NextResponse.json({
+      token: data.session?.access_token,
+      user: data.user,
+      profile: profile ?? null,
+    })
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
 }
