@@ -23,6 +23,19 @@ const nextConfig = {
   async redirects() {
     return legacyHtmlRedirects
   },
+  async rewrites() {
+    return [
+      { source: '/api/admin', destination: '/api/auth?resource=admin' },
+      { source: '/api/generate-gcse', destination: '/api/generate?mode=gcse' },
+      { source: '/api/generate-iq', destination: '/api/generate?mode=iq' },
+      { source: '/api/memory', destination: '/api/notes?resource=memory' },
+      { source: '/api/tasks', destination: '/api/notes?resource=tasks' },
+      { source: '/api/adaptive', destination: '/api/progress?resource=adaptive' },
+      { source: '/api/contact', destination: '/api/resend?resource=contact' },
+      { source: '/api/stripe', destination: '/api/payments?resource=stripe' },
+      { source: '/api/webhook', destination: '/api/payments?resource=webhook' },
+    ]
+  },
   webpack: (config) => {
     // iceberg-js is an optional S3-protocol dep of @supabase/storage-js that
     // is not required for standard Supabase usage. Mark it as false so webpack
