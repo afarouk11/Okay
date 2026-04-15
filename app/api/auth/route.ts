@@ -216,12 +216,15 @@ export async function POST(request: NextRequest) {
 
     const normalisedEmail = email.toLowerCase().trim()
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    if (!supabaseUrl || !supabaseAnonKey) {
+      return NextResponse.json({ error: 'Auth service not configured' }, { status: 503 })
+    }
+
     // Use anon client for password sign-in (service client doesn't support signInWithPassword)
     const { createClient } = await import('@supabase/supabase-js')
-    const anonClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey)
 
     const { data, error: signInError } = await anonClient.auth.signInWithPassword({
       email: normalisedEmail,
