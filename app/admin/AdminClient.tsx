@@ -49,8 +49,8 @@ export default function AdminClient() {
     setError(null)
     try {
       const [statsRes, usersRes] = await Promise.all([
-        fetch('/api/admin?action=stats', { headers: { 'x-admin-key': key } }),
-        fetch('/api/admin?action=users&page=1', { headers: { 'x-admin-key': key } }),
+        fetch('/api/auth?action=stats', { headers: { 'x-admin-key': key } }),
+        fetch('/api/auth?action=users&page=1', { headers: { 'x-admin-key': key } }),
       ])
       if (!statsRes.ok || !usersRes.ok) {
         const err = await statsRes.json().catch(() => ({}))
@@ -74,7 +74,7 @@ export default function AdminClient() {
 
   async function loadUsers(p: number) {
     try {
-      const res = await fetch(`/api/admin?action=users&page=${p}`, { headers: authHeaders() })
+      const res = await fetch(`/api/auth?action=users&page=${p}`, { headers: authHeaders() })
       if (!res.ok) return
       const data = await res.json()
       setUsers(data.users)
@@ -93,7 +93,7 @@ export default function AdminClient() {
     try {
       const body: Record<string, unknown> = {}
       if (action === 'reset_users') body.confirm = 'DELETE_ALL_USERS'
-      const res = await fetch(`/api/admin?action=${action}`, {
+      const res = await fetch(`/api/auth?action=${action}`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify(body),
@@ -103,7 +103,7 @@ export default function AdminClient() {
       if (action === 'send_weekly_emails') setActionMsg(`Sent ${data.sent} emails (${data.failed} failed)`)
       if (action === 'reset_users') setActionMsg(data.message)
       // Refresh stats after action
-      const statsRes = await fetch('/api/admin?action=stats', { headers: authHeaders() })
+      const statsRes = await fetch('/api/auth?action=stats', { headers: authHeaders() })
       if (statsRes.ok) setStats(await statsRes.json())
     } catch {
       setActionMsg('Action failed')

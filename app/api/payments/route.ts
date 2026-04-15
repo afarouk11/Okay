@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import Stripe from 'stripe'
 import { isRateLimited, getIp } from '@/lib/rateLimit'
 import { createServiceClient } from '@/lib/supabase'
 
@@ -6,6 +7,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 const ALLOWED_PLANS = new Set(['student', 'homeschool'])
+const siteUrl = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq.co.uk'
 
 function getBaseUrl(request: NextRequest) {
   const configured = process.env.APP_URL || process.env.SITE_URL || process.env.NEXT_PUBLIC_APP_URL
@@ -16,7 +18,6 @@ function getBaseUrl(request: NextRequest) {
       // fall through to request origin
     }
   }
-
   return new URL(request.url).origin
 }
 
@@ -24,7 +25,6 @@ function getSafeRedirectUrl(request: NextRequest, candidate: string | undefined,
   const baseUrl = getBaseUrl(request)
   const fallbackUrl = new URL(fallbackPath, baseUrl).toString()
   if (!candidate) return fallbackUrl
-
   try {
     const parsed = new URL(candidate, baseUrl)
     return parsed.origin === baseUrl ? parsed.toString() : null
@@ -43,7 +43,138 @@ async function getUser(request: NextRequest) {
   return { user, supabase }
 }
 
-export async function POST(request: NextRequest) {
+async function sendEmail(to: string, type: string, params: { name?: string; stats?: Record<string, unknown> } = {}) {
+  if (!process.env.RESEND_API_KEY) return
+  const payload = { type, email: to, name: params.name || '', stats: params.stats || {} }
+  const headers: HeadersInit = { 'Content-Type': 'application/json' }
+  if (process.env.INTERNAL_API_KEY) {
+    headers['x-internal-key'] = process.env.INTERNAL_API_KEY
+  }
+  await fetch(`${siteUrl}/api/resend`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+  }).catch(() => {})
+}
+
+// ── Stripe Webhook ────────────────────────────────────────────────────────────
+async function handleWebhook(request: NextRequest) {
+  const stripeSecret = process.env.STRIPE_SECRET_KEY
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+
+  if (!stripeSecret || !webhookSecret) {
+    return NextResponse.json({ error: 'Payments not configured' }, { status: 503 })
+  }
+
+  const supabase = createServiceClient()
+  if (!supabase) {
+    return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
+  }
+
+  const sig = request.headers.get('stripe-signature')
+  if (!sig) {
+    return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 })
+  }
+
+  const rawBody = await request.arrayBuffer()
+  const stripe = new Stripe(stripeSecret)
+
+  let event: Stripe.Event
+  try {
+    event = await stripe.webhooks.constructEventAsync(
+      Buffer.from(rawBody),
+      sig,
+      webhookSecret,
+    )
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Invalid signature'
+    console.error('Webhook signature failed:', msg)
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+  }
+
+  // Idempotency: skip duplicate events
+  const { data: existing } = await supabase
+    .from('processed_webhooks')
+    .select('event_id')
+    .eq('event_id', event.id)
+    .single()
+  if (existing) {
+    return NextResponse.json({ received: true, duplicate: true })
+  }
+
+  try {
+    const data = event.data.object as unknown as Record<string, unknown>
+
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const emailAddr = typeof data.customer_email === 'string' ? data.customer_email : null
+        const metadata = data.metadata && typeof data.metadata === 'object'
+          ? data.metadata as Record<string, string>
+          : {}
+        const plan = metadata.plan || 'student'
+        if (emailAddr) {
+          const { error: updateErr } = await supabase.from('profiles').update({
+            plan,
+            subscription_status: 'active',
+            stripe_customer_id: data.customer,
+            subscription_id: data.subscription,
+          }).eq('email', emailAddr)
+          if (updateErr) console.error('Webhook profile update failed:', updateErr.message)
+          await sendEmail(emailAddr, 'payment_confirmed', { stats: { plan } })
+        }
+        break
+      }
+
+      case 'invoice.payment_succeeded': {
+        const customerId = data.customer as string
+        const { error: updateErr } = await supabase.from('profiles').update({
+          subscription_status: 'active',
+        }).eq('stripe_customer_id', customerId)
+        if (updateErr) console.error('Webhook status update failed:', updateErr.message)
+        break
+      }
+
+      case 'invoice.payment_failed': {
+        const customerId = data.customer as string
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email,name')
+          .eq('stripe_customer_id', customerId)
+          .single()
+        const { error: updateErr } = await supabase.from('profiles').update({
+          subscription_status: 'past_due',
+        }).eq('stripe_customer_id', customerId)
+        if (updateErr) console.error('Webhook past_due update failed:', updateErr.message)
+        if (profile?.email) {
+          await sendEmail(profile.email as string, 'payment_failed', { name: profile.name as string, stats: {} })
+        }
+        break
+      }
+
+      case 'customer.subscription.deleted': {
+        const customerId = data.customer as string
+        const { error: updateErr } = await supabase.from('profiles').update({
+          subscription_status: 'cancelled',
+          plan: 'free',
+        }).eq('stripe_customer_id', customerId)
+        if (updateErr) console.error('Webhook cancellation update failed:', updateErr.message)
+        break
+      }
+    }
+  } catch (e) {
+    console.error('Webhook processing error:', e instanceof Error ? e.message : e)
+  }
+
+  // Record event for idempotency
+  try {
+    await supabase.from('processed_webhooks').insert({ event_id: event.id })
+  } catch (_) {}
+
+  return NextResponse.json({ received: true })
+}
+
+// ── Checkout / Portal ─────────────────────────────────────────────────────────
+async function handleCheckout(request: NextRequest) {
   const ip = getIp(request)
   if (isRateLimited(`${ip}:stripe`, 10, 60_000)) {
     return NextResponse.json({ error: 'Too many requests — please try again later' }, { status: 429 })
@@ -68,7 +199,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid plan selected' }, { status: 400 })
   }
 
-  // ── Customer Portal ───────────────────────────────────────────────────────
   if (action === 'portal') {
     const portalEmail = user.email?.toLowerCase().trim()
     if (!portalEmail) {
@@ -109,7 +239,6 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // ── Checkout Session ──────────────────────────────────────────────────────
   const prices: Record<string, string | undefined> = {
     student:        process.env.STRIPE_PRICE_STUDENT,
     student_annual: process.env.STRIPE_PRICE_STUDENT_ANNUAL,
@@ -159,4 +288,17 @@ export async function POST(request: NextRequest) {
     const msg = e instanceof Error ? e.message : 'Unknown error'
     return NextResponse.json({ error: msg }, { status: 500 })
   }
+}
+
+export async function GET() {
+  return NextResponse.json({ status: 'ok' })
+}
+
+export async function POST(request: NextRequest) {
+  // Route Stripe webhook events (identified by the stripe-signature header)
+  // to the webhook handler; all other POSTs go to the checkout handler.
+  if (request.headers.get('stripe-signature')) {
+    return handleWebhook(request)
+  }
+  return handleCheckout(request)
 }

@@ -47,10 +47,10 @@ export default function ContactClient() {
     setErrorMsg(null)
     setStatus('loading')
 
-    const res = await fetch('/api/contact', {
+    const res = await fetch('/api/resend', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, category, message }),
+      body: JSON.stringify({ type: 'contact', name, email, category, message }),
     })
     const data = await res.json()
 

@@ -181,7 +181,7 @@ export default function JarvisPageClient() {
 
       if (token) {
         try {
-          const r = await fetch('/api/memory', {
+          const r = await fetch('/api/notes?resource=memory', {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (r.ok) {

@@ -105,7 +105,7 @@ export default function PricingClient() {
     setCheckoutBusy(plan.name)
 
     try {
-      const res = await fetch('/api/stripe', {
+      const res = await fetch('/api/payments', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
