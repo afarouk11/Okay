@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build && cd kids && npm ci --prefer-offline && npx next build",
+  "buildCommand": "npm run build",
   "outputDirectory": ".",
   "headers": [
     {
@@ -40,7 +40,6 @@
     }
   ],
   "rewrites": [
-    { "source": "/kids/:path*", "destination": "/kids/out/:path*" },
     { "source": "/api/:path*",  "destination": "/api/:path*" }
   ],
   "routes": [

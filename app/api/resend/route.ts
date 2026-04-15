@@ -140,6 +140,7 @@ function buildTemplates(name: string, stats: Record<string, unknown>, siteUrl: s
 export async function POST(request: NextRequest) {
   const siteUrl = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq.co.uk'
   const ip = getIp(request)
+  const resource = new URL(request.url).searchParams.get('resource')
 
   const body = await request.json().catch(() => ({})) as {
     to?: string | string[]
@@ -151,9 +152,11 @@ export async function POST(request: NextRequest) {
     message?: string
   }
   const { to, email, type, name, stats, category, message } = body
+  const isInferredContactRequest = !type && !!name?.trim() && !!email && !!message
+  const effectiveType = type || (resource === 'contact' || isInferredContactRequest ? 'contact' : undefined)
 
   const internalAccess = hasValidInternalKey(request)
-  if (type !== 'contact' && !internalAccess) {
+  if (effectiveType !== 'contact' && !internalAccess) {
     const { user } = await getAuthenticatedUser(request)
     if (!user?.email) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
@@ -169,12 +172,12 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (type !== 'contact' && isRateLimited(`${ip}:transactional-email`, 10, 60_000)) {
+  if (effectiveType !== 'contact' && isRateLimited(`${ip}:transactional-email`, 10, 60_000)) {
     return NextResponse.json({ error: 'Too many email requests — please try again later' }, { status: 429 })
   }
 
   // ── Contact form ──────────────────────────────────────────────────────────
-  if (type === 'contact') {
+  if (effectiveType === 'contact') {
     if (isRateLimited(`${ip}:contact-email`, 5, 60 * 60_000)) {
       return NextResponse.json({ error: 'Too many requests — please try again later' }, { status: 429 })
     }
@@ -236,7 +239,7 @@ export async function POST(request: NextRequest) {
     if (!to) return NextResponse.json({ error: 'recipient (to) is required' }, { status: 400 })
 
     const tmpl = buildTemplates(name || 'Student', stats || {}, siteUrl)
-    const tpl = (tmpl as Record<string, { subject: string; html: string }>)[type || '']
+    const tpl = (tmpl as Record<string, { subject: string; html: string }>)[effectiveType || '']
     if (!tpl) return NextResponse.json({ error: 'Unknown email type' }, { status: 400 })
 
     try {
@@ -266,7 +269,7 @@ export async function POST(request: NextRequest) {
   if (!name) return NextResponse.json({ error: 'name is required' }, { status: 400 })
 
   const tmpl = buildTemplates(name, stats || {}, siteUrl)
-  const tpl = (tmpl as Record<string, { subject: string; html: string }>)[type || '']
+  const tpl = (tmpl as Record<string, { subject: string; html: string }>)[effectiveType || '']
   if (!tpl) return NextResponse.json({ error: 'Unknown email type' }, { status: 400 })
 
   const resendKey = process.env.RESEND_API_KEY
