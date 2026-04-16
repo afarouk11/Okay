@@ -148,7 +148,7 @@ export default function DashboardClient() {
     <div className="flex min-h-screen" style={{ background: '#050810' }}>
       <Sidebar />
 
-      <main className="flex-1 ml-[225px] min-h-screen overflow-y-auto">
+      <main style={{ flex: 1, marginLeft: 225, minHeight: '100vh' }}>
         {/* Top bar */}
         <div className="sticky top-0 z-20 flex items-center justify-between px-8 h-[60px]"
              style={{ background: 'rgba(5,8,16,0.9)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>

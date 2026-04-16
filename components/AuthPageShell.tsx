@@ -43,7 +43,7 @@ export default function AuthPageShell({
     <div className="flex min-h-screen" style={{ background: '#050810' }}>
       <Sidebar />
 
-      <div className="flex-1 flex flex-col ml-[225px] min-h-screen">
+      <div style={{ flex: 1, marginLeft: 225, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         {/* Page top bar */}
         <div className="sticky top-0 z-20 flex items-center justify-between px-8 h-[60px] flex-shrink-0"
              style={{
