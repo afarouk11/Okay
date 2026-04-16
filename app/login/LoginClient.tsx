@@ -181,8 +181,8 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
           style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
         >
           <p className="text-[13px] leading-relaxed italic" style={{ color: '#7A9AB0' }}>
-            "I went from a predicted C to an A* after a month on Synaptiq. The AI actually
-            explains <em>why</em> my working is wrong — not just that it is."
+            &ldquo;I went from a predicted C to an A* after a month on Synaptiq. The AI actually
+            explains <em>why</em> my working is wrong — not just that it is.&rdquo;
           </p>
           <div className="flex items-center gap-2.5 mt-3">
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
