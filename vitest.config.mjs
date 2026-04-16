@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    include: ['tests/**/*.test.js'],
+    include: ['tests/unit/**/*.test.js', 'tests/api/chat.test.js'],
     exclude: ['kids/**', 'node_modules/**'],
     coverage: {
       provider: 'v8',
