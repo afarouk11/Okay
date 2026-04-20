@@ -107,6 +107,7 @@ function ExamBadges({ color = GOLD }: { color?: string }) {
 export default function HomeClient() {
   const [activeTopicIdx, setActiveTopicIdx] = useState(0)
   const [isAnnual, setIsAnnual] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     { role: 'assistant', content: 'Hello! Ask me any A-Level Maths question — I\'ll show you full working, step by step, exactly as a mark scheme expects. 🎓' },
   ])
@@ -187,87 +188,101 @@ export default function HomeClient() {
       <nav
         style={{
           position: 'sticky', top: 0, zIndex: 100,
-          background: 'rgba(11,15,20,0.85)', backdropFilter: 'blur(20px)',
+          background: 'rgba(3,5,13,0.92)', backdropFilter: 'blur(20px)',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
-          padding: '.875rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '.875rem 1.5rem',
         }}
       >
-        <Link href="/" style={{ textDecoration: 'none', fontWeight: 800, fontSize: '1.1rem', color: '#E6EDF3' }}>
-          Synapti<span style={{ color: GOLD }}>q</span>
-        </Link>
-        <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-          <Link href="/" style={{ color: MUTED, textDecoration: 'none', fontSize: '.9rem', transition: 'color .15s' }}
-            onMouseOver={e => (e.currentTarget.style.color = '#E6EDF3')}
-            onMouseOut={e => (e.currentTarget.style.color = MUTED)}>
-            Home
+        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '.6rem' }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, ${GOLD}, #8B6914)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#050810" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <span style={{ fontWeight: 800, fontSize: '1.05rem', color: '#E6EDF3', letterSpacing: '-.01em' }}>Synapnode</span>
           </Link>
-          <a href="#features" style={{ color: MUTED, textDecoration: 'none', fontSize: '.9rem', transition: 'color .15s' }}
-            onMouseOver={e => (e.currentTarget.style.color = '#E6EDF3')}
-            onMouseOut={e => (e.currentTarget.style.color = MUTED)}>
-            Features
-          </a>
-          <a href="#pricing" style={{ color: MUTED, textDecoration: 'none', fontSize: '.9rem', transition: 'color .15s' }}
-            onMouseOver={e => (e.currentTarget.style.color = '#E6EDF3')}
-            onMouseOut={e => (e.currentTarget.style.color = MUTED)}>
-            Pricing
-          </a>
+
+          {/* Desktop links */}
+          <div className="hidden md:flex" style={{ gap: '2rem', alignItems: 'center' }}>
+            {[['#features','Features'],['#pricing','Pricing'],['#faq','FAQ']].map(([href, label]) => (
+              <a key={href} href={href} style={{ color: MUTED, textDecoration: 'none', fontSize: '.875rem', transition: 'color .15s' }}
+                onMouseOver={e => (e.currentTarget.style.color = '#E6EDF3')}
+                onMouseOut={e => (e.currentTarget.style.color = MUTED)}>
+                {label}
+              </a>
+            ))}
+          </div>
+
+          {/* Desktop CTAs */}
+          <div className="hidden md:flex" style={{ gap: '.75rem', alignItems: 'center' }}>
+            <Link href="/login" passHref legacyBehavior>
+              <motion.a whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
+                style={{ padding: '.45rem 1.1rem', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#E6EDF3', textDecoration: 'none', fontSize: '.875rem', fontWeight: 600, display: 'inline-block' }}>
+                Log In
+              </motion.a>
+            </Link>
+            <Link href="/login?mode=register" passHref legacyBehavior>
+              <motion.a whileHover={{ scale: 1.03, boxShadow: `0 6px 20px rgba(201,168,76,0.35)` }} whileTap={{ scale: 0.97 }}
+                style={{ padding: '.45rem 1.1rem', borderRadius: 10, background: `linear-gradient(135deg, ${GOLD}, #8B6914)`, color: '#0B0F14', textDecoration: 'none', fontSize: '.875rem', fontWeight: 700, display: 'inline-block' }}>
+                Start Free Trial
+              </motion.a>
+            </Link>
+          </div>
+
+          {/* Mobile hamburger */}
+          <button
+            className="md:hidden"
+            onClick={() => setMobileNavOpen(v => !v)}
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '.5rem', cursor: 'pointer', color: '#E6EDF3' }}
+            aria-label="Toggle navigation"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              {mobileNavOpen ? <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></> : <><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></>}
+            </svg>
+          </button>
         </div>
-        <div style={{ display: 'flex', gap: '.75rem' }}>
-          <Link href="/login" passHref legacyBehavior>
-            <motion.a
-              whileHover={{ scale: 1.04, borderColor: 'rgba(255,255,255,0.25)' }}
-              whileTap={{ scale: 0.97 }}
-              style={{
-                padding: '.45rem 1.1rem', borderRadius: 10,
-                border: '1px solid rgba(255,255,255,0.1)',
-                background: 'transparent', color: '#E6EDF3',
-                textDecoration: 'none', fontSize: '.875rem', fontWeight: 600,
-                display: 'inline-block',
-              }}
-            >
-              Log In
-            </motion.a>
-          </Link>
-          <Link href="/login?mode=register" passHref legacyBehavior>
-            <motion.a
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.97 }}
-              style={{
-                padding: '.45rem 1.1rem', borderRadius: 10,
-                background: `linear-gradient(135deg, ${GOLD}, #8B6914)`,
-                color: '#0B0F14', textDecoration: 'none',
-                fontSize: '.875rem', fontWeight: 700,
-                display: 'inline-block',
-              }}
-            >
-              Sign Up
-            </motion.a>
-          </Link>
-        </div>
+
+        {/* Mobile nav drawer */}
+        {mobileNavOpen && (
+          <div className="md:hidden" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '1rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
+            {[['#features','Features'],['#pricing','Pricing'],['#faq','FAQ']].map(([href, label]) => (
+              <a key={href} href={href} onClick={() => setMobileNavOpen(false)} style={{ color: MUTED, textDecoration: 'none', fontSize: '.95rem', fontWeight: 500 }}>{label}</a>
+            ))}
+            <div style={{ display: 'flex', gap: '.75rem', paddingTop: '.5rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <Link href="/login" style={{ flex: 1, textAlign: 'center', padding: '.7rem', borderRadius: 10, border: '1px solid rgba(255,255,255,0.1)', color: '#E6EDF3', textDecoration: 'none', fontSize: '.875rem', fontWeight: 600 }}>Log In</Link>
+              <Link href="/login?mode=register" style={{ flex: 1, textAlign: 'center', padding: '.7rem', borderRadius: 10, background: `linear-gradient(135deg, ${GOLD}, #8B6914)`, color: '#0B0F14', textDecoration: 'none', fontSize: '.875rem', fontWeight: 700 }}>Start Free</Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
-      <section style={{ textAlign: 'center', padding: '5rem 2rem 4rem', maxWidth: 900, margin: '0 auto' }}>
-        <div style={{
-          display: 'inline-block', background: 'rgba(201,168,76,0.1)',
-          border: '1px solid rgba(201,168,76,0.25)', borderRadius: 20,
-          padding: '.35rem 1rem', fontSize: '.82rem', fontWeight: 700,
-          color: GOLD, marginBottom: '1.5rem',
-        }}>
-          ⭐ Trusted by 2,400+ UK A-Level students · AQA · Edexcel · OCR
+      <section style={{ position: 'relative', overflow: 'hidden', textAlign: 'center', padding: '6rem 2rem 5rem', maxWidth: 1000, margin: '0 auto' }}>
+        {/* Background glow orb */}
+        <div style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', width: 600, height: 400, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(201,168,76,0.07) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '.5rem',
+            background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.22)',
+            borderRadius: 20, padding: '.35rem 1rem', fontSize: '.82rem', fontWeight: 700,
+            color: GOLD, marginBottom: '1.75rem',
+          }}>
+            <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#C9A84C', boxShadow: '0 0 6px rgba(201,168,76,0.8)' }} />
+            Trusted by 2,400+ UK A-Level students · AQA · Edexcel · OCR
+          </div>
+
+          <h1 style={{
+            fontSize: 'clamp(2.4rem, 5.5vw, 4rem)', fontWeight: 900, lineHeight: 1.12,
+            marginBottom: '1.5rem', letterSpacing: '-.03em',
+          }}>
+            The only AI tutor that<br />
+            knows <em style={{ fontStyle: 'normal', background: `linear-gradient(135deg, ${GOLD} 0%, #F0D080 50%, ${GOLD} 100%)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>your exact mark scheme</em>
+          </h1>
+
+          <p style={{ color: MUTED, fontSize: '1.05rem', maxWidth: 580, margin: '0 auto 2.5rem', lineHeight: 1.75 }}>
+            Step-by-step working that earns full marks — tailored to your exam board, year group, and weak topics. Available 24/7. Less than one tutoring session per month.
+          </p>
         </div>
-
-        <h1 style={{
-          fontSize: 'clamp(2.2rem, 5vw, 3.8rem)', fontWeight: 900, lineHeight: 1.15,
-          marginBottom: '1.25rem', letterSpacing: '-.02em',
-        }}>
-          The only AI tutor that<br />
-          knows <em style={{ fontStyle: 'normal', background: `linear-gradient(135deg, ${GOLD} 0%, #F0D080 50%, ${GOLD} 100%)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>your exact mark scheme</em>
-        </h1>
-
-        <p style={{ color: MUTED, fontSize: '1.05rem', maxWidth: 620, margin: '0 auto 2rem', lineHeight: 1.7 }}>
-          Get the same step-by-step working a marker awards full marks for — tailored to your exam board, your year, and your weak topics. Available 24/7. Less than the cost of a single tutoring session per month.
-        </p>
 
         {/* Topic chips */}
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '.5rem', marginBottom: '2rem' }}>
@@ -999,8 +1014,11 @@ export default function HomeClient() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '3rem', marginBottom: '3rem' }}>
             {/* Brand */}
             <div>
-              <div style={{ fontWeight: 900, fontSize: '1.1rem', marginBottom: '.75rem' }}>
-                Synapti<span style={{ color: GOLD }}>q</span>
+              <div style={{ fontWeight: 900, fontSize: '1.1rem', marginBottom: '.75rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                <div style={{ width: 24, height: 24, borderRadius: 6, background: `linear-gradient(135deg, ${GOLD}, #8B6914)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#050810" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                </div>
+                Synapnode
               </div>
               <p style={{ color: MUTED, fontSize: '.875rem', lineHeight: 1.7, maxWidth: 280, marginBottom: '1.25rem' }}>
                 The UK&apos;s most focused A-Level Maths AI tutor. Step-by-step working, mark-scheme-aligned answers, and personalised revision for every exam board.
@@ -1094,7 +1112,7 @@ export default function HomeClient() {
           {/* Bottom bar */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <p style={{ color: MUTED, fontSize: '.75rem' }}>© 2025 Synapnode Ltd. All rights reserved.</p>
+              <p style={{ color: MUTED, fontSize: '.75rem' }}>© 2026 Synapnode Ltd. All rights reserved.</p>
               <p style={{ color: MUTED, fontSize: '.7rem', marginTop: '.2rem' }}>Registered in England &amp; Wales · hello@synaptiqai.co.uk</p>
             </div>
             <div style={{ display: 'flex', gap: '.75rem', alignItems: 'center', flexWrap: 'wrap' }}>

@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { BarChart3, Brain, Target } from 'lucide-react'
 import AuthPageShell from '@/components/AuthPageShell'
 import { useAuth } from '@/lib/useAuth'
-import { gradeTrajectory, identifyWeakTopics, predictGrade } from '@/src/adaptive.js'
+import { gradeTrajectory, identifyWeakTopics, predictGrade, predictGradeML } from '@/src/adaptive.js'
+import { DIFFICULTY_LABELS, getTopicMeta } from '@/src/topicData.js'
 
 interface TopicStat {
   topic: string
@@ -34,6 +35,7 @@ export default function PredictClient() {
   const [questionsDone, setQuestionsDone] = useState(48)
   const [insightsLoaded, setInsightsLoaded] = useState(false)
   const [topicResults, setTopicResults] = useState<TopicStat[]>(SAMPLE_TOPIC_RESULTS)
+  const [mlResult, setMlResult] = useState<{ grade: string; confidence: string; score: number; trend: string } | null>(null)
 
   useEffect(() => {
     async function loadInsights() {
@@ -50,13 +52,18 @@ export default function PredictClient() {
         if (!res.ok) return
         const data = await res.json() as {
           stats?: { accuracy_pct?: number; total_questions?: number }
+          features?: {
+            accuracy: number; recentSessionScore: number | null; olderSessionScore: number | null
+            topicCoverage: number; masteredFraction: number; totalAttempts: number; sessionsThisWeek: number
+          }
           weak_topics?: Array<{ topic: string; attempts: number; accuracy: number }>
-          grade_trajectory?: { target?: string }
         }
 
         if (typeof data.stats?.accuracy_pct === 'number') setAccuracy(data.stats.accuracy_pct)
         if (typeof data.stats?.total_questions === 'number') setQuestionsDone(data.stats.total_questions)
-        if (data.grade_trajectory?.target) setTargetGrade(data.grade_trajectory.target)
+        if (data.features) {
+          setMlResult(predictGradeML(data.features))
+        }
         if (Array.isArray(data.weak_topics) && data.weak_topics.length > 0) {
           const derived: TopicStat[] = []
           for (const item of data.weak_topics) {
@@ -76,10 +83,13 @@ export default function PredictClient() {
     loadInsights()
   }, [token])
 
-  const predicted = useMemo(() => predictGrade(accuracy / 100), [accuracy])
+  const simplePredicted = useMemo(() => predictGrade(accuracy / 100), [accuracy])
+  const predicted = mlResult ? mlResult.grade : simplePredicted
   const trajectory = useMemo(() => gradeTrajectory(accuracy / 100, targetGrade), [accuracy, targetGrade])
   const weakTopics = useMemo(() => identifyWeakTopics(topicResults, 0.7), [topicResults])
   const confidenceBand = accuracy >= 80 ? 'High confidence' : accuracy >= 65 ? 'Building well' : 'Needs focused revision'
+  const trendLabel = mlResult?.trend === 'improving' ? '↑ Improving' : mlResult?.trend === 'declining' ? '↓ Declining' : mlResult?.trend === 'new' ? 'Getting started' : '→ Stable'
+  const trendColor = mlResult?.trend === 'improving' ? '#22C55E' : mlResult?.trend === 'declining' ? '#F87171' : '#9AA4AF'
 
   return (
     <AuthPageShell
@@ -99,8 +109,19 @@ export default function PredictClient() {
         <section className="grid gap-4 md:grid-cols-3">
           <div className="rounded-card p-5" style={{ background: 'rgba(18,24,33,0.8)', border: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="text-xs uppercase tracking-[0.14em] text-primary font-semibold mb-2">Predicted grade</div>
-            <div className="text-4xl font-black text-foreground">{predicted}</div>
-            <p className="text-sm text-muted mt-2">Based on current accuracy and recent topic coverage.</p>
+            <div className="flex items-end gap-3">
+              <div className="text-4xl font-black text-foreground">{predicted}</div>
+              {mlResult && (
+                <span className="text-xs font-semibold mb-1.5 px-2 py-0.5 rounded-full" style={{ background: 'rgba(79,140,255,0.12)', color: '#4F8CFF' }}>
+                  {mlResult.confidence} confidence
+                </span>
+              )}
+            </div>
+            {mlResult ? (
+              <p className="text-sm mt-2" style={{ color: trendColor }}>{trendLabel} · score {mlResult.score}/100</p>
+            ) : (
+              <p className="text-sm text-muted mt-2">Based on current accuracy and recent topic coverage.</p>
+            )}
           </div>
           <div className="rounded-card p-5" style={{ background: 'rgba(18,24,33,0.8)', border: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="text-xs uppercase tracking-[0.14em] text-primary font-semibold mb-2">On-track status</div>
@@ -145,7 +166,9 @@ export default function PredictClient() {
               </div>
 
               <div>
-                <label className="text-sm text-muted block mb-2">Current overall accuracy: {accuracy}%</label>
+                <label className="text-sm text-muted block mb-2">
+                  {insightsLoaded ? 'What-if accuracy (live data loaded above)' : 'Current overall accuracy'}: {accuracy}%
+                </label>
                 <input
                   type="range"
                   min="35"
@@ -153,6 +176,7 @@ export default function PredictClient() {
                   value={accuracy}
                   onChange={e => setAccuracy(Number(e.target.value))}
                   className="w-full"
+                  style={{ opacity: insightsLoaded ? 0.5 : 1 }}
                 />
               </div>
 
@@ -173,17 +197,35 @@ export default function PredictClient() {
 
             {weakTopics.length > 0 ? (
               <div className="space-y-3">
-                {weakTopics.map(item => (
+                {weakTopics.map(item => {
+                  const meta = getTopicMeta(item.topic) as { topic: string; module: string; year: number | string; difficulty: number; tags: string[] } | null
+                  const diffLabel = meta ? DIFFICULTY_LABELS[meta.difficulty as keyof typeof DIFFICULTY_LABELS] : null
+                  const isHard = meta && meta.difficulty >= 4
+                  return (
                   <div key={item.topic} className="rounded-xl p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                    <div className="flex items-center justify-between gap-3 mb-2">
+                    <div className="flex items-center justify-between gap-3 mb-1.5">
                       <span className="text-sm font-semibold text-foreground">{item.topic}</span>
                       <span className="text-xs font-semibold" style={{ color: '#F59E0B' }}>
                         {Math.round(item.accuracy * 100)}% accuracy
                       </span>
                     </div>
-                    <p className="text-xs text-muted">{item.attempts} tracked attempts — ideal candidate for new flashcards and a focused Jarvis session.</p>
+                    {diffLabel && (
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                          style={{
+                            background: isHard ? 'rgba(248,113,113,0.12)' : 'rgba(255,255,255,0.06)',
+                            color: isHard ? '#F87171' : '#9AA4AF',
+                          }}>
+                          {diffLabel}
+                        </span>
+                        {meta?.module && (
+                          <span className="text-[10px]" style={{ color: '#5A7499' }}>{meta.module}</span>
+                        )}
+                      </div>
+                    )}
+                    <p className="text-xs text-muted">{item.attempts} tracked attempts{isHard ? ' — high-difficulty topic, focus here first.' : ' — ideal candidate for new flashcards and a focused Jarvis session.'}</p>
                   </div>
-                ))}
+                )})}
               </div>
             ) : (
               <div className="rounded-xl p-4 text-sm text-muted" style={{ background: 'rgba(255,255,255,0.03)' }}>
@@ -217,7 +259,7 @@ export default function PredictClient() {
           </div>
 
           {insightsLoaded && (
-            <p className="text-xs text-muted mt-4">Live adaptive insights loaded from your account.</p>
+            <p className="text-xs text-muted mt-4">Adaptive grade predictor — weighted using your accuracy, topic coverage, mastery, and recent session trend.</p>
           )}
         </section>
       </div>

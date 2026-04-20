@@ -127,6 +127,63 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  if (action === 'get_learning_insights') {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]
+
+    const [masteryRes, sessionsRes, activityRes] = await Promise.all([
+      supabase.from('topic_mastery').select('topic, correct_attempts, total_attempts, mastery_level').eq('user_id', user.id),
+      supabase.from('jarvis_sessions').select('mastery_score, session_date').eq('user_id', user.id).order('session_date', { ascending: false }).limit(10),
+      supabase.from('activity').select('date').eq('user_id', user.id).gte('date', sevenDaysAgo),
+    ])
+
+    const topics = masteryRes.data ?? []
+    const totalAttempts = topics.reduce((s, t) => s + (t.total_attempts ?? 0), 0)
+    const totalCorrect  = topics.reduce((s, t) => s + (t.correct_attempts ?? 0), 0)
+    const accuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0
+    const topicCoverage = Math.min(1, topics.length / 34)
+    const masteredFraction = topics.length > 0
+      ? topics.filter(t => (t.mastery_level ?? 0) >= 3).length / topics.length
+      : 0
+
+    const sessions = (sessionsRes.data ?? []).filter(s => typeof s.mastery_score === 'number')
+    const recent = sessions.slice(0, 5)
+    const older  = sessions.slice(5, 10)
+    const avg = (arr: typeof sessions) => arr.length ? arr.reduce((s, x) => s + x.mastery_score, 0) / arr.length : null
+    const recentSessionScore = recent.length >= 3 ? avg(recent) : null
+    const olderSessionScore  = older.length  >= 3 ? avg(older)  : null
+
+    const uniqueDays = new Set((activityRes.data ?? []).map(r => r.date)).size
+    const sessionsThisWeek = uniqueDays
+
+    const weakTopics = topics
+      .filter(t => (t.total_attempts ?? 0) >= 3)
+      .map(t => ({
+        topic: t.topic,
+        attempts: t.total_attempts,
+        accuracy: t.total_attempts > 0 ? t.correct_attempts / t.total_attempts : 0,
+      }))
+      .filter(t => t.accuracy < 0.65)
+      .sort((a, b) => a.accuracy - b.accuracy)
+      .slice(0, 5)
+
+    return NextResponse.json({
+      stats: {
+        accuracy_pct: Math.round(accuracy * 100),
+        total_questions: totalAttempts,
+      },
+      features: {
+        accuracy,
+        recentSessionScore,
+        olderSessionScore,
+        topicCoverage,
+        masteredFraction,
+        totalAttempts,
+        sessionsThisWeek,
+      },
+      weak_topics: weakTopics,
+    })
+  }
+
   if (action === 'get_session_driven_topics') {
     // Surface topics from jarvis_sessions.specific_errors that recur across sessions,
     // closing the loop between AI tutoring and spaced-repetition practice.

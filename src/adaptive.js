@@ -220,3 +220,101 @@ export function gradeTrajectory(accuracy, target_grade) {
     gap: targetIdx - predictedIdx   // negative = exceeding target
   };
 }
+
+// ─── Adaptive Multi-Feature Grade Predictor ───────────────────────────────────
+
+/**
+ * Adaptive grade predictor using weighted multi-feature scoring with recency bias.
+ *
+ * Features:
+ *   accuracy          — overall correct/total across all questions
+ *   recentSessionScore — average mastery_score of last 5 jarvis sessions (null if < 3 sessions)
+ *   olderSessionScore  — average mastery_score of sessions 6-10 (null if insufficient)
+ *   topicCoverage     — fraction of ~34 A-level topics practiced (0-1)
+ *   masteredFraction  — fraction of practiced topics with mastery_level >= 3 (0-1)
+ *   totalAttempts     — total questions answered
+ *   sessionsThisWeek  — number of study days in last 7 days
+ *
+ * @param {Object} features
+ * @returns {{ grade: string, confidence: 'high'|'medium'|'low', score: number, trend: 'improving'|'stable'|'declining'|'new' }}
+ */
+export function predictGradeML(features) {
+  const {
+    accuracy,
+    recentSessionScore,
+    olderSessionScore,
+    topicCoverage,
+    masteredFraction,
+    totalAttempts,
+    sessionsThisWeek,
+  } = features;
+
+  if (totalAttempts < 10) {
+    return { grade: '?', confidence: 'low', score: 0, trend: 'new' };
+  }
+
+  // Recency-biased accuracy: if we have recent session data, blend it in
+  // (RL-style: recent outcomes get higher weight than historical baseline)
+  let effectiveAccuracy = accuracy;
+  if (recentSessionScore !== null) {
+    // Weight recent session mastery 50%, overall accuracy 50%
+    effectiveAccuracy = recentSessionScore * 0.5 + accuracy * 0.5;
+  }
+
+  // Feature weights (sum to 1.0)
+  const W = {
+    accuracy: 0.40,
+    coverage: 0.20,
+    mastery:  0.20,
+    trend:    0.20,
+  };
+
+  // Trend signal: how much recent sessions outperform older ones
+  let trendScore = effectiveAccuracy; // fallback to blended accuracy
+  if (recentSessionScore !== null && olderSessionScore !== null) {
+    // Slope scaled into 0-1: 0.5 = neutral, higher = improving
+    const slope = recentSessionScore - olderSessionScore;
+    trendScore = Math.max(0, Math.min(1, effectiveAccuracy + slope * 0.5));
+  }
+
+  // Coverage score — slight boost above 50% coverage
+  const coverageScore = Math.min(1, topicCoverage * 1.2);
+
+  // Consistency micro-bonus (max 0.04)
+  const consistencyBonus = Math.min(0.04, (sessionsThisWeek ?? 0) * 0.006);
+
+  const rawScore =
+    W.accuracy * effectiveAccuracy +
+    W.coverage * coverageScore +
+    W.mastery  * (masteredFraction ?? 0) +
+    W.trend    * trendScore +
+    consistencyBonus;
+
+  const score = Math.max(0, Math.min(1, rawScore));
+
+  const BOUNDARIES = [
+    { grade: 'A*', min: 0.88 },
+    { grade: 'A',  min: 0.76 },
+    { grade: 'B',  min: 0.64 },
+    { grade: 'C',  min: 0.52 },
+    { grade: 'D',  min: 0.42 },
+    { grade: 'E',  min: 0.32 },
+    { grade: 'U',  min: 0.00 },
+  ];
+  const grade = (BOUNDARIES.find(b => score >= b.min) ?? BOUNDARIES[BOUNDARIES.length - 1]).grade;
+
+  const confidence =
+    totalAttempts >= 80 && topicCoverage >= 0.4 ? 'high' :
+    totalAttempts >= 30 || topicCoverage >= 0.2 ? 'medium' : 'low';
+
+  let trend = 'stable';
+  if (recentSessionScore !== null && olderSessionScore !== null) {
+    const delta = recentSessionScore - olderSessionScore;
+    if (delta > 0.06) trend = 'improving';
+    else if (delta < -0.06) trend = 'declining';
+  } else if (recentSessionScore === null) {
+    trend = 'new';
+  }
+
+  return { grade, confidence, score: Math.round(score * 100), trend };
+}
