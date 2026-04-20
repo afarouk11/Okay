@@ -47,7 +47,7 @@ export default function LeaderboardClient() {
     : [...entries].sort((a, b) => b.xp - a.xp)
 
   return (
-    <AuthPageShell title="Leaderboard" subtitle="See how you rank against other Synaptiq learners">
+    <AuthPageShell title="Leaderboard" subtitle="See how you rank against other Synapnode learners">
       {/* Tab bar */}
       <div className="flex gap-2 mb-6">
         {(['alltime', 'weekly', 'streak'] as Tab[]).map(t => (

@@ -335,7 +335,7 @@ export default function ParentPageClient() {
         <p className="text-center text-xs pb-4" style={{ color: '#8B949E' }}>
           Powered by{' '}
           <Link href="/" style={{ color: '#C9A84C' }} className="hover:underline">
-            Synaptiq
+            Synapnode
           </Link>
         </p>
       </div>

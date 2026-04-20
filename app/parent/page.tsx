@@ -3,7 +3,7 @@ import ParentPageClient from './ParentPageClient'
 
 export const metadata: Metadata = {
   title: 'Parent Dashboard',
-  description: "Monitor your child's learning progress on Synaptiq.",
+  description: "Monitor your child's learning progress on Synapnode.",
 }
 
 export default function ParentPage() {

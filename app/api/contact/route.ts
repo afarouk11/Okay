@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       <h3>Message</h3>
       <p style="white-space:pre-wrap;background:#f5f5f5;padding:12px;border-radius:6px">${htmlEscape(message)}</p>
       <hr>
-      <p style="color:#888;font-size:12px">Sent from Synaptiq contact form</p>
+      <p style="color:#888;font-size:12px">Sent from Synapnode contact form</p>
     </div>
   `
 
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Synaptiq <hello@synaptiq.co.uk>',
+        from: 'Synapnode <hello@synaptiq.co.uk>',
         to: 'support@synaptiq.co.uk',
         reply_to: email,
         subject: `[${safeCategory}] Message from ${name}`,

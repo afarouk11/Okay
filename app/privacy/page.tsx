@@ -4,9 +4,9 @@ import { Zap, ArrowLeft } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'How Synaptiq collects, uses, and protects your personal data.',
-  openGraph: { title: 'Privacy Policy | Synaptiq', description: 'How Synaptiq handles your data.', type: 'website' },
-  twitter: { card: 'summary', title: 'Privacy Policy | Synaptiq', description: 'How Synaptiq handles your data.' },
+  description: 'How Synapnode collects, uses, and protects your personal data.',
+  openGraph: { title: 'Privacy Policy | Synapnode', description: 'How Synapnode handles your data.', type: 'website' },
+  twitter: { card: 'summary', title: 'Privacy Policy | Synapnode', description: 'How Synapnode handles your data.' },
 }
 
 export default function PrivacyPage() {
@@ -21,7 +21,7 @@ export default function PrivacyPage() {
           <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#4F8CFF,#22C55E)' }}>
             <Zap className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-sm text-white">Synaptiq</span>
+          <span className="font-bold text-sm text-white">Synapnode</span>
         </Link>
         <Link href="/dashboard" className="flex items-center gap-1.5 text-sm no-underline" style={{ color: '#9AA4AF' }}>
           <ArrowLeft className="w-4 h-4" />
@@ -34,7 +34,7 @@ export default function PrivacyPage() {
         <p className="text-sm mb-10" style={{ color: '#6B7394' }}>Last updated: January 2025</p>
 
         <Section title="Who We Are">
-          <p>Synaptiq is an AI-powered learning platform for UK students. We are operated by Synaptiq Ltd. If you have any questions about this policy, contact us at <a href="mailto:privacy@synaptiqai.co.uk" className="text-blue-400 hover:underline">privacy@synaptiqai.co.uk</a>.</p>
+          <p>Synapnode is an AI-powered learning platform for UK students. We are operated by Synapnode Ltd. If you have any questions about this policy, contact us at <a href="mailto:privacy@synaptiqai.co.uk" className="text-blue-400 hover:underline">privacy@synaptiqai.co.uk</a>.</p>
         </Section>
 
         <Section title="Data We Collect">
@@ -59,7 +59,7 @@ export default function PrivacyPage() {
         </Section>
 
         <Section title="Children's Privacy">
-          <p>Synaptiq is primarily designed for students aged 16 and over. If you are under 13, you must have verifiable parental consent before creating an account. We do not serve advertisements to users under 18 and we do not share under-18 data with third parties except for the service providers listed below. Parents may request deletion of their child&apos;s data by emailing <a href="mailto:privacy@synaptiqai.co.uk" className="text-blue-400 hover:underline">privacy@synaptiqai.co.uk</a>. We comply with the UK Children&apos;s Code.</p>
+          <p>Synapnode is primarily designed for students aged 16 and over. If you are under 13, you must have verifiable parental consent before creating an account. We do not serve advertisements to users under 18 and we do not share under-18 data with third parties except for the service providers listed below. Parents may request deletion of their child&apos;s data by emailing <a href="mailto:privacy@synaptiqai.co.uk" className="text-blue-400 hover:underline">privacy@synaptiqai.co.uk</a>. We comply with the UK Children&apos;s Code.</p>
         </Section>
 
         <Section title="Legal Basis (UK GDPR)">
@@ -152,7 +152,7 @@ function Footer() {
   return (
     <footer className="border-t py-8 mt-4" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#6B7394' }}>
       <div className="max-w-3xl mx-auto px-6 flex flex-wrap gap-4 text-xs">
-        <span>© {new Date().getFullYear()} Synaptiq Ltd</span>
+        <span>© {new Date().getFullYear()} Synapnode Ltd</span>
         <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
         <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
         <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>

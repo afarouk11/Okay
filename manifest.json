@@ -1,6 +1,6 @@
 {
-  "name": "Synaptiq",
-  "short_name": "Synaptiq",
+  "name": "Synapnode",
+  "short_name": "Synapnode",
   "description": "UK A-Level Maths AI Tutor — step-by-step working for AQA, Edexcel, OCR & WJEC",
   "start_url": "/",
   "scope": "/",
@@ -47,7 +47,7 @@
       "src": "/screenshots/dashboard.png",
       "sizes": "1280x800",
       "type": "image/png",
-      "label": "Synaptiq Dashboard"
+      "label": "Synapnode Dashboard"
     },
     {
       "src": "/screenshots/chat.png",

@@ -94,7 +94,7 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
         justifyContent: 'center',
       }} className="hidden md:flex">
 
-        {/* Layered arch shapes — Synaptiq gold version */}
+        {/* Layered arch shapes — Synapnode gold version */}
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 0 }}>
           {/* Outermost arch */}
           <div style={{
@@ -159,7 +159,7 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
           }}>
             <Zap style={{ width: 24, height: 24, color: '#07091A' }} strokeWidth={2.5} />
           </div>
-          <p style={{ color: '#fff', fontWeight: 800, fontSize: 22, letterSpacing: '-0.02em', margin: 0 }}>Synaptiq</p>
+          <p style={{ color: '#fff', fontWeight: 800, fontSize: 22, letterSpacing: '-0.02em', margin: 0 }}>Synapnode</p>
           <p style={{ color: 'rgba(201,168,76,0.6)', fontSize: 12, marginTop: 6, letterSpacing: '0.1em', textTransform: 'uppercase' }}>A-Level Maths AI</p>
         </div>
       </div>
@@ -180,7 +180,7 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
           <div style={{ width: 32, height: 32, borderRadius: 10, background: 'linear-gradient(135deg, #C9A84C, #D4B86A)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Zap style={{ width: 16, height: 16, color: '#07091A' }} strokeWidth={2.5} />
           </div>
-          <span style={{ fontWeight: 800, fontSize: 17, color: '#0A0E1A', letterSpacing: '-0.02em' }}>Synaptiq</span>
+          <span style={{ fontWeight: 800, fontSize: 17, color: '#0A0E1A', letterSpacing: '-0.02em' }}>Synapnode</span>
         </div>
 
         <div style={{ width: '100%', maxWidth: 380 }}>
@@ -194,7 +194,7 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
             }}>
               <Zap style={{ width: 20, height: 20, color: '#07091A' }} strokeWidth={2.5} />
             </div>
-            <p style={{ fontWeight: 800, fontSize: 20, color: '#0A0E1A', letterSpacing: '-0.02em', margin: 0 }}>Synaptiq</p>
+            <p style={{ fontWeight: 800, fontSize: 20, color: '#0A0E1A', letterSpacing: '-0.02em', margin: 0 }}>Synapnode</p>
           </div>
 
           {/* Heading */}
@@ -208,7 +208,7 @@ export default function LoginClient({ initialMode = 'login' }: { initialMode?: M
                 {mode === 'login' ? 'Welcome back' : 'Create your account'}
               </h1>
               <p style={{ fontSize: 14, color: '#6B7B99', margin: 0 }}>
-                {mode === 'login' ? 'Sign in to continue to Synaptiq' : 'Start your A-Level journey today'}
+                {mode === 'login' ? 'Sign in to continue to Synapnode' : 'Start your A-Level journey today'}
               </p>
             </motion.div>
           </AnimatePresence>

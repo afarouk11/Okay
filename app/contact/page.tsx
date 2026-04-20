@@ -3,13 +3,13 @@ import ContactClient from './ContactClient'
 
 export const metadata: Metadata = {
   title: 'Contact Us',
-  description: 'Get in touch with the Synaptiq team for support, billing, or school licensing.',
+  description: 'Get in touch with the Synapnode team for support, billing, or school licensing.',
   openGraph: {
-    title: 'Contact | Synaptiq',
-    description: 'Get in touch with the Synaptiq team for support, billing, or school licensing.',
+    title: 'Contact | Synapnode',
+    description: 'Get in touch with the Synapnode team for support, billing, or school licensing.',
     type: 'website',
   },
-  twitter: { card: 'summary', title: 'Contact | Synaptiq', description: 'Get in touch with the Synaptiq team.' },
+  twitter: { card: 'summary', title: 'Contact | Synapnode', description: 'Get in touch with the Synapnode team.' },
 }
 
 export default function ContactPage() {

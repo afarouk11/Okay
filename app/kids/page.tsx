@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import KidsPageClient, { type KidsSection } from './KidsPageClient'
 
 export const metadata: Metadata = {
-  title: 'Synaptiq Kids',
+  title: 'Synapnode Kids',
   description:
-    'A family-friendly Synaptiq area for GCSE maths, arithmetic drills, and reasoning practice.',
+    'A family-friendly Synapnode area for GCSE maths, arithmetic drills, and reasoning practice.',
 }
 
 function resolveSection(value?: string | string[]): KidsSection {

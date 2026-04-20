@@ -20,21 +20,21 @@ const resolvedSiteUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUr
 export const metadata: Metadata = {
   metadataBase: new URL(resolvedSiteUrl),
   title: {
-    default: 'Synaptiq — AI Learning Platform',
-    template: '%s | Synaptiq',
+    default: 'Synapnode — AI Learning Platform',
+    template: '%s | Synapnode',
   },
-  description: 'Your personal AI tutor. Synaptiq teaches step-by-step, adapts to your level, and guides you to mastery in A-Level Maths.',
+  description: 'Your personal AI tutor. Synapnode teaches step-by-step, adapts to your level, and guides you to mastery in A-Level Maths.',
   keywords: ['AI tutor', 'A-Level Maths', 'AQA', 'Edexcel', 'OCR', 'WJEC', 'personalised learning'],
   openGraph: {
-    title: 'Synaptiq — AI Learning Platform',
+    title: 'Synapnode — AI Learning Platform',
     description: 'Your personal AI tutor. Premium, intelligent, personalised.',
     type: 'website',
     url: 'https://synaptiq.co.uk',
-    images: [{ url: '/og-image.svg', width: 1200, height: 630, alt: 'Synaptiq — AI Learning Platform' }],
+    images: [{ url: '/og-image.svg', width: 1200, height: 630, alt: 'Synapnode — AI Learning Platform' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Synaptiq — AI Learning Platform',
+    title: 'Synapnode — AI Learning Platform',
     description: 'Your personal AI tutor for A-Level Maths.',
     images: ['/og-image.svg'],
   },
@@ -86,7 +86,7 @@ function SiteFooter() {
       style={{ borderColor: 'rgba(0,212,255,0.12)', background: 'rgba(3,5,13,0.72)', backdropFilter: 'blur(12px)' }}
     >
       <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-3">
-        <span className="text-xs" style={{ color: '#5A7499' }}>© {new Date().getFullYear()} Synaptiq Ltd</span>
+        <span className="text-xs" style={{ color: '#5A7499' }}>© {new Date().getFullYear()} Synapnode Ltd</span>
         <nav className="flex flex-wrap gap-4">
           {[
             { href: '/privacy',  label: 'Privacy'  },

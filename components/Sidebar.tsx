@@ -180,7 +180,7 @@ export default function Sidebar() {
           <Zap className="w-4 h-4 text-white" />
         </div>
         <div>
-          <p className="font-bold text-[15px] text-white tracking-tight leading-none">Synaptiq</p>
+          <p className="font-bold text-[15px] text-white tracking-tight leading-none">Synapnode</p>
           <p className="text-[10px] mt-0.5" style={{ color: '#5A7499' }}>A-Level Maths AI</p>
         </div>
       </div>

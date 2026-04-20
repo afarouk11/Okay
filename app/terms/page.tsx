@@ -4,9 +4,9 @@ import { Zap, ArrowLeft } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Synaptiq terms and conditions of use.',
-  openGraph: { title: 'Terms of Service | Synaptiq', description: 'Synaptiq terms and conditions of use.', type: 'website' },
-  twitter: { card: 'summary', title: 'Terms | Synaptiq', description: 'Synaptiq terms and conditions.' },
+  description: 'Synapnode terms and conditions of use.',
+  openGraph: { title: 'Terms of Service | Synapnode', description: 'Synapnode terms and conditions of use.', type: 'website' },
+  twitter: { card: 'summary', title: 'Terms | Synapnode', description: 'Synapnode terms and conditions.' },
 }
 
 export default function TermsPage() {
@@ -20,7 +20,7 @@ export default function TermsPage() {
           <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#4F8CFF,#22C55E)' }}>
             <Zap className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-sm text-white">Synaptiq</span>
+          <span className="font-bold text-sm text-white">Synapnode</span>
         </Link>
         <Link href="/dashboard" className="flex items-center gap-1.5 text-sm no-underline" style={{ color: '#9AA4AF' }}>
           <ArrowLeft className="w-4 h-4" />
@@ -33,11 +33,11 @@ export default function TermsPage() {
         <p className="text-sm mb-10" style={{ color: '#6B7394' }}>Last updated: January 2025</p>
 
         <Section title="1. Acceptance">
-          <p>By accessing or using Synaptiq, you agree to these Terms. If you are under 18, you must have the consent of a parent or guardian. If you do not agree, please do not use the platform.</p>
+          <p>By accessing or using Synapnode, you agree to these Terms. If you are under 18, you must have the consent of a parent or guardian. If you do not agree, please do not use the platform.</p>
         </Section>
 
         <Section title="2. The Service">
-          <p>Synaptiq provides AI-powered tutoring, practice questions, essay marking, revision tools, and progress tracking. We reserve the right to modify or suspend features with reasonable notice.</p>
+          <p>Synapnode provides AI-powered tutoring, practice questions, essay marking, revision tools, and progress tracking. We reserve the right to modify or suspend features with reasonable notice.</p>
         </Section>
 
         <Section title="3. Account Registration">
@@ -72,15 +72,15 @@ export default function TermsPage() {
         </Section>
 
         <Section title="6. AI-Generated Content">
-          <p>AI responses may contain errors or inaccuracies. Synaptiq is a study aid — it is not a replacement for professional advice. Always verify AI output for high-stakes decisions. Exam content is guidance only.</p>
+          <p>AI responses may contain errors or inaccuracies. Synapnode is a study aid — it is not a replacement for professional advice. Always verify AI output for high-stakes decisions. Exam content is guidance only.</p>
         </Section>
 
         <Section title="7. Intellectual Property">
-          <p>Synaptiq owns the platform, code, design, and branding. You own the content you create (notes, essays, flashcards). By using the platform you grant Synaptiq a limited licence to process your content to deliver the service. AI responses are provided for personal educational use only.</p>
+          <p>Synapnode owns the platform, code, design, and branding. You own the content you create (notes, essays, flashcards). By using the platform you grant Synapnode a limited licence to process your content to deliver the service. AI responses are provided for personal educational use only.</p>
         </Section>
 
         <Section title="8. Limitation of Liability">
-          <p>To the maximum extent permitted by law, Synaptiq is not liable for indirect or consequential damages. Our total liability in any 12-month period is limited to the amount you paid us in that period. Nothing in these Terms limits our liability for death, personal injury, negligence, or fraud.</p>
+          <p>To the maximum extent permitted by law, Synapnode is not liable for indirect or consequential damages. Our total liability in any 12-month period is limited to the amount you paid us in that period. Nothing in these Terms limits our liability for death, personal injury, negligence, or fraud.</p>
         </Section>
 
         <Section title="9. Consumer Rights">
@@ -124,7 +124,7 @@ function Footer() {
   return (
     <footer className="border-t py-8 mt-4" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#6B7394' }}>
       <div className="max-w-3xl mx-auto px-6 flex flex-wrap gap-4 text-xs">
-        <span>© {new Date().getFullYear()} Synaptiq Ltd</span>
+        <span>© {new Date().getFullYear()} Synapnode Ltd</span>
         <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
         <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
         <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>

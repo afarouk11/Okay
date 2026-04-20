@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 export const metadata: Metadata = {
-  title: 'Integration by Parts | Synaptiq',
+  title: 'Integration by Parts | Synapnode',
   description:
     'Learn the integration by parts method for A-Level Maths with the core formula, when to use it, and a worked example.',
 }

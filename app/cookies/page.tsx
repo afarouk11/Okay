@@ -4,9 +4,9 @@ import { Zap, ArrowLeft } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Cookie Policy',
-  description: 'How Synaptiq uses cookies and how to manage them.',
-  openGraph: { title: 'Cookie Policy | Synaptiq', description: 'How Synaptiq uses cookies.', type: 'website' },
-  twitter: { card: 'summary', title: 'Cookies | Synaptiq', description: 'How Synaptiq uses cookies.' },
+  description: 'How Synapnode uses cookies and how to manage them.',
+  openGraph: { title: 'Cookie Policy | Synapnode', description: 'How Synapnode uses cookies.', type: 'website' },
+  twitter: { card: 'summary', title: 'Cookies | Synapnode', description: 'How Synapnode uses cookies.' },
 }
 
 export default function CookiesPage() {
@@ -20,7 +20,7 @@ export default function CookiesPage() {
           <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#4F8CFF,#22C55E)' }}>
             <Zap className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-sm text-white">Synaptiq</span>
+          <span className="font-bold text-sm text-white">Synapnode</span>
         </Link>
         <Link href="/dashboard" className="flex items-center gap-1.5 text-sm no-underline" style={{ color: '#9AA4AF' }}>
           <ArrowLeft className="w-4 h-4" />
@@ -123,7 +123,7 @@ function Footer() {
   return (
     <footer className="border-t py-8 mt-4" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#6B7394' }}>
       <div className="max-w-3xl mx-auto px-6 flex flex-wrap gap-4 text-xs">
-        <span>© {new Date().getFullYear()} Synaptiq Ltd</span>
+        <span>© {new Date().getFullYear()} Synapnode Ltd</span>
         <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
         <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
         <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>

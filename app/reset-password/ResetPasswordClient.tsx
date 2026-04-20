@@ -201,7 +201,7 @@ export default function ResetPasswordClient() {
         </div>
 
         <p className="text-center mt-6 text-xs" style={{ color: '#6B7394' }}>
-          <Link href="/login" className="hover:text-white transition-colors">← Back to Synaptiq</Link>
+          <Link href="/login" className="hover:text-white transition-colors">← Back to Synapnode</Link>
         </p>
       </motion.div>
     </div>

@@ -14,7 +14,7 @@ export default function SchoolsClient() {
       <nav style={{ borderBottom: `1px solid ${BORDER}`, backgroundColor: BG, position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
           <Link href="/" style={{ fontSize: 22, fontWeight: 700, color: PRIMARY, textDecoration: 'none', letterSpacing: '-0.5px' }}>
-            Synaptiq
+            Synapnode
           </Link>
           <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
             <Link href="/pricing" style={{ color: TEXT_MUTED, textDecoration: 'none', fontSize: 15, fontWeight: 500 }} className="hover:text-white transition-colors">
@@ -314,7 +314,7 @@ export default function SchoolsClient() {
       <footer style={{ borderTop: `1px solid ${BORDER}`, backgroundColor: SURFACE }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
           <Link href="/" style={{ fontSize: 18, fontWeight: 700, color: PRIMARY, textDecoration: 'none' }}>
-            Synaptiq
+            Synapnode
           </Link>
           <nav style={{ display: 'flex', gap: 24 }}>
             {[
@@ -327,7 +327,7 @@ export default function SchoolsClient() {
               </Link>
             ))}
           </nav>
-          <p style={{ color: TEXT_MUTED, fontSize: 13 }}>© 2026 Synaptiq</p>
+          <p style={{ color: TEXT_MUTED, fontSize: 13 }}>© 2026 Synapnode</p>
         </div>
       </footer>
     </div>

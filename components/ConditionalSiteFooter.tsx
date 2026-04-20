@@ -14,7 +14,7 @@ export default function ConditionalSiteFooter() {
       style={{ borderColor: 'rgba(255,255,255,0.05)', background: 'rgba(11,15,20,0.6)' }}
     >
       <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-between gap-3">
-        <span className="text-xs" style={{ color: '#6B7394' }}>© {new Date().getFullYear()} Synaptiq Ltd</span>
+        <span className="text-xs" style={{ color: '#6B7394' }}>© {new Date().getFullYear()} Synapnode Ltd</span>
         <nav className="flex flex-wrap gap-4">
           {[
             { href: '/privacy',  label: 'Privacy'  },

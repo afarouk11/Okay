@@ -1,4 +1,4 @@
-// Synaptiq Service Worker v15 — clears legacy caches, network-first
+// Synapnode Service Worker v15 — clears legacy caches, network-first
 const CACHE = 'synaptiq-v15';
 
 self.addEventListener('install', () => {

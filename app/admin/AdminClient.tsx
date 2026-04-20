@@ -140,7 +140,7 @@ export default function AdminClient() {
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(135deg,#ef4444,#f59e0b)' }}>
               <span className="text-white font-bold text-lg">✦</span>
             </div>
-            <h1 className="text-xl font-bold" style={{ color: '#F0EEF8' }}>Synaptiq Admin</h1>
+            <h1 className="text-xl font-bold" style={{ color: '#F0EEF8' }}>Synapnode Admin</h1>
             <p className="text-sm mt-1" style={{ color: '#9AA4AF' }}>Restricted access</p>
           </div>
 
@@ -188,7 +188,7 @@ export default function AdminClient() {
           <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#ef4444,#f59e0b)' }}>
             <span className="text-white font-bold text-sm">✦</span>
           </div>
-          <span className="font-bold text-sm" style={{ color: '#F0EEF8' }}>Synaptiq Admin</span>
+          <span className="font-bold text-sm" style={{ color: '#F0EEF8' }}>Synapnode Admin</span>
         </div>
         <div className="flex items-center gap-3">
           {lastRefreshed && <span className="text-xs" style={{ color: '#6B7394' }}>Updated {lastRefreshed}</span>}

@@ -16,13 +16,13 @@ const TOPICS = [
 ]
 
 const FEATURES = [
-  { icon: '🤖', title: 'A-Level Maths AI Tutor', desc: 'Ask anything. Get full working shown step by step — exactly how a mark scheme expects it. Covers Pure, Stats and Mechanics.', tag: 'Synaptiq AI' },
+  { icon: '🤖', title: 'A-Level Maths AI Tutor', desc: 'Ask anything. Get full working shown step by step — exactly how a mark scheme expects it. Covers Pure, Stats and Mechanics.', tag: 'Synapnode AI' },
   { icon: '📚', title: 'Complete Content Library', desc: 'Every chapter organised by module — Pure 1, Pure 2, Statistics Year 1 & 2, Mechanics Year 1 & 2. Click any chapter to study with AI.', tag: 'All Chapters' },
   { icon: '📄', title: 'Upload Mark Schemes & Past Papers', desc: 'Upload your exam board\'s mark scheme. The AI reads it and gives answers aligned to exactly how your board awards marks.', tag: 'AQA · Edexcel · OCR' },
   { icon: '📝', title: 'A-Level Question Generator', desc: 'Generate exam-style A-Level Maths questions for any topic, difficulty, and exam board. Full working and hints included.', tag: 'Exam-Style' },
   { icon: '🎯', title: 'Topic Strength Analysis', desc: 'Claude identifies your weak spots across A-Level topics and builds you a personalised revision priority list.', tag: 'AI Analysis' },
   { icon: '🧮', title: 'Visual Maths & Dyscalculia Support', desc: 'Visual number lines, colour-coded working, step-by-step breakdowns. Full accessibility for ADHD and dyslexia too.', tag: 'Accessibility' },
-  { icon: '⭐', title: 'Mark Scheme Coach', desc: 'Paste any mark scheme. Synaptiq decodes exactly WHY each point earns marks — with model answers, key phrases, and examiner tips.', tag: 'Unique to Synaptiq' },
+  { icon: '⭐', title: 'Mark Scheme Coach', desc: 'Paste any mark scheme. Synapnode decodes exactly WHY each point earns marks — with model answers, key phrases, and examiner tips.', tag: 'Unique to Synapnode' },
   { icon: '📝', title: 'Command Words Guide', desc: '"Evaluate", "Assess", "Explain" — master what each command word demands. Includes AI-marked practice so you know you\'re doing it right.', tag: 'Exam Technique' },
   { icon: '⚡', title: 'Quick Blitz & Spaced Repetition', desc: '5-question rapid blitz mode and 60+ pre-built A-Level Maths flashcard packs using science-backed spaced repetition.', tag: 'Proven Revision' },
   { icon: '✅', title: 'Topic Revision Checklist', desc: 'Rate your confidence on all 34 A-Level Maths spec topics. Radar chart shows your coverage across Pure, Stats and Mechanics at a glance.', tag: 'Track Everything' },
@@ -33,10 +33,10 @@ const FEATURES = [
 const TESTIMONIALS = [
   { initial: 'E', color: '#C9A84C', secondColor: '#8B6914', name: 'Emily R.', detail: 'Year 13 · AQA A-Level Maths · Now studying Engineering at Bath', borderColor: '#C9A84C', text: 'I went from a D to a B in Pure Maths in just 6 weeks. The AI shows full working exactly like the mark scheme — I finally understood why I kept losing marks. Differentiation clicked on day 3.' },
   { initial: 'J', color: '#00D4FF', secondColor: '#0ea5e9', name: 'Jake T.', detail: 'Year 12 · Edexcel A-Level Maths · Predicted A*', borderColor: '#00D4FF', text: 'Uploading the Edexcel mark scheme was a game changer. Now when I ask about integration by parts, it explains exactly how Edexcel awards the method marks. I got full marks on my mock.' },
-  { initial: 'A', color: '#A78BFA', secondColor: '#7c3aed', name: 'Aisha M.', detail: 'Year 13 · OCR A-Level Maths · Grade improved from C to A', borderColor: '#A78BFA', text: 'The chapter navigator is perfect. I can jump to any topic and Synaptiq walks through the theory, shows worked examples, then gives me questions to try. It\'s like a private tutor but 24/7.' },
+  { initial: 'A', color: '#A78BFA', secondColor: '#7c3aed', name: 'Aisha M.', detail: 'Year 13 · OCR A-Level Maths · Grade improved from C to A', borderColor: '#A78BFA', text: 'The chapter navigator is perfect. I can jump to any topic and Synapnode walks through the theory, shows worked examples, then gives me questions to try. It\'s like a private tutor but 24/7.' },
   { initial: 'M', color: '#00FF9D', secondColor: '#0f766e', name: 'Marcus W.', detail: 'Year 12 · AQA A-Level Maths · Dyscalculia support user', borderColor: '#00FF9D', text: 'As someone with dyscalculia, I always struggled with maths. The visual number line and colour-coded working in dyscalculia mode made everything so much clearer. First time I\'ve actually enjoyed revision.' },
-  { initial: 'P', color: '#f97316', secondColor: '#c2410c', name: 'Patricia J.', detail: 'Parent · Daughter in Year 13 · Edexcel Maths', borderColor: '#f97316', text: 'My daughter was really struggling with Statistics. Since using Synaptiq she\'s gone from barely passing to getting 78% on her last test. The progress tracking lets me see exactly what she\'s been working on.' },
-  { initial: 'S', color: '#ec4899', secondColor: '#9d174d', name: 'Sophie L.', detail: 'Year 13 · OCR A-Level Maths & Further Maths', borderColor: '#ec4899', text: 'I use Synaptiq every evening before bed — ask it to explain whatever we covered in class that day. My teacher actually commented on how much better my working is. The question generator for exam practice is brilliant.' },
+  { initial: 'P', color: '#f97316', secondColor: '#c2410c', name: 'Patricia J.', detail: 'Parent · Daughter in Year 13 · Edexcel Maths', borderColor: '#f97316', text: 'My daughter was really struggling with Statistics. Since using Synapnode she\'s gone from barely passing to getting 78% on her last test. The progress tracking lets me see exactly what she\'s been working on.' },
+  { initial: 'S', color: '#ec4899', secondColor: '#9d174d', name: 'Sophie L.', detail: 'Year 13 · OCR A-Level Maths & Further Maths', borderColor: '#ec4899', text: 'I use Synapnode every evening before bed — ask it to explain whatever we covered in class that day. My teacher actually commented on how much better my working is. The question generator for exam practice is brilliant.' },
 ]
 
 const SUBJECTS = [
@@ -52,14 +52,14 @@ const SUBJECTS = [
 
 const FAQ_ITEMS = [
   { q: 'Is there actually a free trial? Do I need a card?', a: 'Yes — 7 days completely free. Your card is stored securely via Stripe but not charged until the trial ends. Cancel any time with one click. No questions asked.' },
-  { q: 'How is Synaptiq different from ChatGPT?', a: "ChatGPT is a general assistant. Synaptiq is trained specifically on A-Level Maths curricula — it knows AQA, Edexcel, OCR and WJEC mark schemes, shows working exactly how examiners expect it, tracks your progress over time, and won't hallucinate a GCSE answer when you ask an A-Level question." },
-  { q: 'Which exam boards does Synaptiq cover?', a: 'AQA, Edexcel, OCR, and WJEC — all fully supported. You set your exam board during signup and every answer is aligned to that board\'s mark scheme style.' },
-  { q: 'Can I use Synaptiq for both Year 12 and Year 13?', a: 'Yes. The full content library covers Pure 1 & 2, Statistics Y1 & Y2, and Mechanics Y1 & Y2 — so whether you\'re starting AS or finishing A2, every topic is covered.' },
-  { q: 'What if I get the same question wrong repeatedly?', a: 'Synaptiq tracks your weak spots and surfaces them through the spaced-repetition flashcard system. The more you practice, the smarter your personalised revision plan becomes.' },
-  { q: 'Is Synaptiq suitable if I have ADHD, dyslexia, or dyscalculia?', a: 'Yes — these are first-class features, not afterthoughts. ADHD mode breaks responses into shorter, focused steps. Dyslexia mode uses Lexend font with increased spacing. Dyscalculia mode adds colour-coded working and visual number lines.' },
-  { q: 'How much does it cost after the trial?', a: '£35/month (about £1.17/day), or £276/year (£23/month, saving 34%). For context, the average A-Level Maths tutor on Tutorful charges £41.59/hour — Synaptiq gives you unlimited 24/7 access for less than the cost of a single tutoring session per month.' },
+  { q: 'How is Synapnode different from ChatGPT?', a: "ChatGPT is a general assistant. Synapnode is trained specifically on A-Level Maths curricula — it knows AQA, Edexcel, OCR and WJEC mark schemes, shows working exactly how examiners expect it, tracks your progress over time, and won't hallucinate a GCSE answer when you ask an A-Level question." },
+  { q: 'Which exam boards does Synapnode cover?', a: 'AQA, Edexcel, OCR, and WJEC — all fully supported. You set your exam board during signup and every answer is aligned to that board\'s mark scheme style.' },
+  { q: 'Can I use Synapnode for both Year 12 and Year 13?', a: 'Yes. The full content library covers Pure 1 & 2, Statistics Y1 & Y2, and Mechanics Y1 & Y2 — so whether you\'re starting AS or finishing A2, every topic is covered.' },
+  { q: 'What if I get the same question wrong repeatedly?', a: 'Synapnode tracks your weak spots and surfaces them through the spaced-repetition flashcard system. The more you practice, the smarter your personalised revision plan becomes.' },
+  { q: 'Is Synapnode suitable if I have ADHD, dyslexia, or dyscalculia?', a: 'Yes — these are first-class features, not afterthoughts. ADHD mode breaks responses into shorter, focused steps. Dyslexia mode uses Lexend font with increased spacing. Dyscalculia mode adds colour-coded working and visual number lines.' },
+  { q: 'How much does it cost after the trial?', a: '£35/month (about £1.17/day), or £276/year (£23/month, saving 34%). For context, the average A-Level Maths tutor on Tutorful charges £41.59/hour — Synapnode gives you unlimited 24/7 access for less than the cost of a single tutoring session per month.' },
   { q: 'Can parents see how their child is progressing?', a: 'Yes. Students can open the Parent View from their dashboard at any time and email a progress report directly to a parent or guardian. The report includes study streak, questions answered, XP earned, and the specific topics needing most attention — no account needed for the parent.' },
-  { q: 'Can my school or college get Synaptiq?', a: 'Yes. We offer custom pricing for schools, sixth forms, and tuition centres with whole-class accounts, teacher dashboards, and invoice billing. Email schools@synaptiqai.co.uk or click "Book a Demo" on the pricing section.' },
+  { q: 'Can my school or college get Synapnode?', a: 'Yes. We offer custom pricing for schools, sixth forms, and tuition centres with whole-class accounts, teacher dashboards, and invoice billing. Email schools@synaptiqai.co.uk or click "Book a Demo" on the pricing section.' },
 ]
 
 const EXAM_CHIPS = ['📐 Product rule', '∫ Integration by parts', '🔢 Binomial expansion', '📊 Hypothesis testing']
@@ -363,9 +363,9 @@ export default function HomeClient() {
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', maxWidth: 900, margin: '0 auto' }}>
           {[
-            { icon: '🎯', step: '01', title: 'Set your exam board', desc: 'Tell Synaptiq your exam board, year group, and target grade. Takes 60 seconds.' },
+            { icon: '🎯', step: '01', title: 'Set your exam board', desc: 'Tell Synapnode your exam board, year group, and target grade. Takes 60 seconds.' },
             { icon: '🤖', step: '02', title: 'Ask anything 24/7', desc: 'Ask questions, upload past papers, practice topics. Get full mark-scheme working every time.' },
-            { icon: '📈', step: '03', title: 'Track & improve', desc: 'See your mastery grow. Synaptiq spots patterns, surfaces weak topics, and builds your revision plan.' },
+            { icon: '📈', step: '03', title: 'Track & improve', desc: 'See your mastery grow. Synapnode spots patterns, surfaces weak topics, and builds your revision plan.' },
           ].map(({ icon, step, title, desc }) => (
             <div
               key={step}
@@ -400,7 +400,7 @@ export default function HomeClient() {
           <span style={{ background: `linear-gradient(135deg, ${GOLD} 0%, #F0D080 50%, ${GOLD} 100%)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>ace A-Level Maths</span>
         </h2>
         <p style={{ color: MUTED, textAlign: 'center', marginBottom: '3rem', fontSize: '.95rem' }}>
-          From Pure 1 to Mechanics — Synaptiq covers every topic, every exam board, every mark scheme.
+          From Pure 1 to Mechanics — Synapnode covers every topic, every exam board, every mark scheme.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
           {FEATURES.map(({ icon, title, desc, tag }) => (
@@ -433,7 +433,7 @@ export default function HomeClient() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem' }}>
           {[
             { num: '2,400+', label: 'A-Level Maths Students' },
-            { num: '97%', label: 'Would Recommend Synaptiq' },
+            { num: '97%', label: 'Would Recommend Synapnode' },
             { num: '180+', label: 'A-Level Topics Covered' },
             { num: '+2 grades', label: 'Average Improvement' },
           ].map(({ num, label }) => (
@@ -475,7 +475,7 @@ export default function HomeClient() {
           </div>
           <h2 style={{ fontSize: 'clamp(1.8rem,3vw,2.6rem)', fontWeight: 900, marginBottom: '.75rem' }}>Ask the AI Tutor anything</h2>
           <p style={{ color: MUTED, maxWidth: 520, margin: '.75rem auto 0', fontSize: '.95rem' }}>
-            Type a real A-Level Maths question below. See exactly how Synaptiq explains it — full working, step-by-step, mark-scheme style.
+            Type a real A-Level Maths question below. See exactly how Synapnode explains it — full working, step-by-step, mark-scheme style.
           </p>
         </div>
 
@@ -498,7 +498,7 @@ export default function HomeClient() {
               justifyContent: 'center', fontSize: '.9rem',
             }}>✦</div>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '.9rem' }}>Synaptiq AI Tutor</div>
+              <div style={{ fontWeight: 700, fontSize: '.9rem' }}>Synapnode AI Tutor</div>
               <div style={{ fontSize: '.72rem', color: '#4ADE80' }}>● A-Level Maths Specialist · Online</div>
             </div>
             <div style={{ marginLeft: 'auto', display: 'flex', gap: '.4rem' }}>
@@ -618,7 +618,7 @@ export default function HomeClient() {
           Real students. Real results.
         </h2>
         <p style={{ color: MUTED, textAlign: 'center', marginBottom: '2rem', fontSize: '.95rem' }}>
-          From D grades to A*s — here&apos;s what UK A-Level students say about Synaptiq
+          From D grades to A*s — here&apos;s what UK A-Level students say about Synapnode
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.25rem' }}>
           {TESTIMONIALS.map(({ initial, color, secondColor, name, detail, borderColor, text }) => (
@@ -706,7 +706,7 @@ export default function HomeClient() {
             padding: '.25rem .85rem', fontSize: '.72rem', fontWeight: 700,
             color: GOLD, letterSpacing: '.1em', textTransform: 'uppercase',
           }}>
-            Why Synaptiq makes sense
+            Why Synapnode makes sense
           </div>
         </div>
         <div style={{ maxWidth: 900, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', textAlign: 'center' }}>
@@ -727,7 +727,7 @@ export default function HomeClient() {
           <div style={{ padding: '1.75rem', background: 'rgba(201,168,76,0.07)', border: '1.5px solid rgba(201,168,76,0.3)', borderRadius: 18, position: 'relative', boxShadow: '0 0 40px rgba(201,168,76,0.1), inset 0 1px 0 rgba(255,255,255,0.05)' }}>
             <div style={{ position: 'absolute', top: -13, left: '50%', transform: 'translateX(-50%)', background: `linear-gradient(135deg, #D4A820, ${GOLD})`, color: '#0B0F14', fontSize: '.65rem', fontWeight: 800, letterSpacing: '.12em', padding: '.3rem 1rem', borderRadius: 20, whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(201,168,76,0.4)' }}>BEST VALUE</div>
             <div style={{ fontSize: '2.2rem', marginBottom: '.75rem' }}>🤖</div>
-            <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '.5rem' }}>Synaptiq</div>
+            <div style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '.5rem' }}>Synapnode</div>
             <div style={{ fontSize: '2.2rem', fontWeight: 900, background: `linear-gradient(135deg, ${GOLD}, #F0D080)`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>£35</div>
             <div style={{ color: MUTED, fontSize: '.82rem', marginBottom: '.25rem' }}>per month · just £1.17/day</div>
             <div style={{ fontSize: '.72rem', color: 'rgba(74,222,128,0.8)', fontWeight: 600, marginBottom: '.65rem' }}>= the cost of 1 private tutor hour</div>
@@ -860,7 +860,7 @@ export default function HomeClient() {
             padding: '.25rem .85rem', fontSize: '.72rem', fontWeight: 700,
             color: GOLD, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: '1rem',
           }}>See the difference</div>
-          <h2 style={{ fontSize: 'clamp(1.8rem,3vw,2.6rem)', fontWeight: 900, marginBottom: '.5rem' }}>How Synaptiq compares</h2>
+          <h2 style={{ fontSize: 'clamp(1.8rem,3vw,2.6rem)', fontWeight: 900, marginBottom: '.5rem' }}>How Synapnode compares</h2>
           <p style={{ color: MUTED }}>The only option combining AI, accessibility, and exam-board alignment in one product</p>
         </div>
         <div style={{ overflowX: 'auto', borderRadius: 16, border: '1px solid rgba(201,168,76,0.15)' }}>
@@ -868,7 +868,7 @@ export default function HomeClient() {
             <thead>
               <tr style={{ background: 'rgba(201,168,76,0.06)' }}>
                 <th style={{ textAlign: 'left', padding: '.9rem 1.25rem', color: MUTED, fontWeight: 600, borderBottom: '1px solid rgba(201,168,76,0.2)' }}>Feature</th>
-                <th style={{ padding: '.9rem 1rem', color: GOLD, fontWeight: 800, borderBottom: '1px solid rgba(201,168,76,0.2)' }}>Synaptiq</th>
+                <th style={{ padding: '.9rem 1rem', color: GOLD, fontWeight: 800, borderBottom: '1px solid rgba(201,168,76,0.2)' }}>Synapnode</th>
                 <th style={{ padding: '.9rem 1rem', color: MUTED, fontWeight: 600, borderBottom: '1px solid rgba(201,168,76,0.2)' }}>Save My Exams</th>
                 <th style={{ padding: '.9rem 1rem', color: MUTED, fontWeight: 600, borderBottom: '1px solid rgba(201,168,76,0.2)' }}>ChatGPT</th>
                 <th style={{ padding: '.9rem 1rem', color: MUTED, fontWeight: 600, borderBottom: '1px solid rgba(201,168,76,0.2)' }}>Private Tutor</th>
@@ -1094,7 +1094,7 @@ export default function HomeClient() {
           {/* Bottom bar */}
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', paddingTop: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <p style={{ color: MUTED, fontSize: '.75rem' }}>© 2025 Synaptiq Ltd. All rights reserved.</p>
+              <p style={{ color: MUTED, fontSize: '.75rem' }}>© 2025 Synapnode Ltd. All rights reserved.</p>
               <p style={{ color: MUTED, fontSize: '.7rem', marginTop: '.2rem' }}>Registered in England &amp; Wales · hello@synaptiqai.co.uk</p>
             </div>
             <div style={{ display: 'flex', gap: '.75rem', alignItems: 'center', flexWrap: 'wrap' }}>

@@ -6,7 +6,7 @@ import { isRateLimited, getIp } from '@/lib/rateLimit'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-const FROM_EMAIL = process.env.EMAIL_FROM || 'Synaptiq <hello@synaptiq.co.uk>'
+const FROM_EMAIL = process.env.EMAIL_FROM || 'Synapnode <hello@synaptiq.co.uk>'
 const SITE_URL = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq.co.uk'
 
 function hasValidAdminKey(adminKey: string | null) {
@@ -64,7 +64,7 @@ function weeklyEmailHtml(name: string, stats: { questions: number; accuracy: num
       <a href="${SITE_URL}/dashboard" style="display:inline-block;background:#4F8CFF;color:#fff;padding:.875rem 2rem;border-radius:10px;font-weight:700;text-decoration:none;margin-top:1rem">Keep Going</a>
     </div>
     <div style="padding:1rem 2rem;border-top:1px solid rgba(255,255,255,0.07);font-size:.8rem;color:#6B7394;text-align:center">
-      Synaptiq &middot; <a href="${SITE_URL}/privacy" style="color:#6B7394">Privacy</a>
+      Synapnode &middot; <a href="${SITE_URL}/privacy" style="color:#6B7394">Privacy</a>
     </div>
   </div>`
 }
@@ -78,7 +78,7 @@ async function sendWeeklyEmail(email: string, name: string, stats: { questions: 
     body: JSON.stringify({
       from: FROM_EMAIL,
       to: email,
-      subject: 'Your weekly Synaptiq progress report',
+      subject: 'Your weekly Synapnode progress report',
       html: weeklyEmailHtml(name, stats),
     }),
   })

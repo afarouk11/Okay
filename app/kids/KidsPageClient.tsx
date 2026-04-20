@@ -88,7 +88,7 @@ export default function KidsPageClient({
               marginBottom: '4px',
             }}
           >
-            Synaptiq family area
+            Synapnode family area
           </div>
           <h1 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: 0 }}>
             Kids Section

@@ -27,10 +27,10 @@ const FAQS = [
   { q: 'How do I cancel my subscription?', a: 'Go to Settings → Subscription and click "Cancel plan". Your access continues until the end of the current billing period.' },
   { q: 'Can I get a refund?', a: 'We do not offer partial-month refunds, but if you have a problem please contact billing@synaptiqai.co.uk and we will do our best to help.' },
   { q: 'My child is under 13 — is that okay?', a: 'We require verifiable parental consent for users under 13. Email privacy@synaptiqai.co.uk to set this up.' },
-  { q: 'Is the AI always accurate?', a: 'AI can make mistakes. Always verify important answers, especially for exams. Use Synaptiq as a study aid, not a replacement for your teacher.' },
-  { q: 'Can I use Synaptiq for my whole school?', a: 'Yes! We offer school licences from £200/month for up to 60 seats. Email schools@synaptiqai.co.uk for a quote.' },
-  { q: 'What subjects does Synaptiq cover?', a: 'Currently A-Level Maths (AQA, Edexcel, OCR, WJEC). More subjects coming soon.' },
-  { q: 'Does the AI do my homework for me?', a: "Synaptiq explains concepts and guides you step-by-step — it's a tutor, not a homework completion service. Submitting AI output as your own work violates your school's academic integrity policy." },
+  { q: 'Is the AI always accurate?', a: 'AI can make mistakes. Always verify important answers, especially for exams. Use Synapnode as a study aid, not a replacement for your teacher.' },
+  { q: 'Can I use Synapnode for my whole school?', a: 'Yes! We offer school licences from £200/month for up to 60 seats. Email schools@synaptiqai.co.uk for a quote.' },
+  { q: 'What subjects does Synapnode cover?', a: 'Currently A-Level Maths (AQA, Edexcel, OCR, WJEC). More subjects coming soon.' },
+  { q: 'Does the AI do my homework for me?', a: "Synapnode explains concepts and guides you step-by-step — it's a tutor, not a homework completion service. Submitting AI output as your own work violates your school's academic integrity policy." },
 ]
 
 export default function ContactClient() {
@@ -73,7 +73,7 @@ export default function ContactClient() {
           <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#4F8CFF,#22C55E)' }}>
             <Zap className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-sm text-white">Synaptiq</span>
+          <span className="font-bold text-sm text-white">Synapnode</span>
         </Link>
         <Link href="/dashboard" className="flex items-center gap-1.5 text-sm no-underline" style={{ color: '#9AA4AF' }}>
           <ArrowLeft className="w-4 h-4" />
@@ -231,7 +231,7 @@ export default function ContactClient() {
 
       <footer className="border-t py-8 mt-4" style={{ borderColor: 'rgba(255,255,255,0.06)', color: '#6B7394' }}>
         <div className="max-w-4xl mx-auto px-6 flex flex-wrap gap-4 text-xs">
-          <span>© {new Date().getFullYear()} Synaptiq Ltd</span>
+          <span>© {new Date().getFullYear()} Synapnode Ltd</span>
           <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
           <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
           <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
