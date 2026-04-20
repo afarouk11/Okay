@@ -72,8 +72,8 @@ export default function MindmapClient() {
           <div className="grid gap-3 md:grid-cols-3">
             {[
               { title: 'Calculus pathway', desc: 'Differentiation → stationary points → integration → area under curves', href: '/lessons' },
-              { title: 'Exam-technique pathway', desc: 'Command words → past paper practice → work checking', href: '/formulas?tab=command-words' },
-              { title: 'Confidence pathway', desc: 'Weak-topic scan → flashcards → timed exam sim', href: '/predict' },
+              { title: 'Exam-technique pathway', desc: 'Ask Jarvis about command words, worked examples, and mark-scheme tips', href: '/jarvis' },
+              { title: 'Confidence pathway', desc: 'Chat through weak topics, then test yourself with Exam Sim', href: '/exam-sim' },
             ].map(item => (
               <Link key={item.title} href={item.href} className="rounded-xl p-4 block" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div className="text-sm font-semibold text-foreground mb-1">{item.title}</div>

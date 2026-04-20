@@ -1,143 +1,125 @@
-'use client';
+'use client'
 
-import React, { useRef, useMemo, useState, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { motion, type TargetAndTransition } from 'framer-motion'
 
-type OrbState = 'LISTENING' | 'THINKING' | 'CHATTING';
+type OrbState = 'LISTENING' | 'THINKING' | 'CHATTING'
 
 interface MathsJarvisOrbProps {
-  state: OrbState;
-  analyserNode?: AnalyserNode | null;
+  state: OrbState
+  analyserNode?: AnalyserNode | null
 }
 
-const PARTICLE_COUNT = 1200;
-const ORB_RADIUS = 1.2;
-
-const vertexShader = `
-  uniform float uTime;
-  uniform int uState;
-  attribute float aScale;
-  varying float vScale;
-  void main() {
-    vScale = aScale;
-    vec3 pos = position;
-    float pulse = 1.0;
-    if (uState == 0) {
-      pulse = 1.0 + 0.08 * sin(uTime * 1.2 + position.x * 2.0);
-    } else if (uState == 1) {
-      float angle = 0.25 * sin(uTime * 3.0 + position.y * 6.0);
-      float c = cos(angle);
-      float s = sin(angle);
-      float nx = c * pos.x - s * pos.z;
-      float nz = s * pos.x + c * pos.z;
-      pos.x = nx;
-      pos.z = nz;
-      pulse = 1.0 + 0.18 * sin(uTime * 2.5 + position.y * 3.0);
-    } else {
-      pulse = aScale;
-    }
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos * pulse, 1.0);
-    gl_PointSize = 2.5 + 2.5 * vScale;
-  }
-`;
-
-const fragmentShader = `
-  varying float vScale;
-  void main() {
-    float d = length(gl_PointCoord - 0.5);
-    float alpha = smoothstep(0.5, 0.2, d) * vScale;
-    gl_FragColor = vec4(0.1, 0.85, 1.0, alpha * 0.85);
-  }
-`;
-
-function OrbParticles({ state, analyserNode }: MathsJarvisOrbProps) {
-  const pointsRef = useRef<THREE.Points>(null);
-  const materialRef = useRef<THREE.ShaderMaterial>(null);
-  const uTime = useRef(0);
-  const stateIndex = state === 'LISTENING' ? 0 : state === 'THINKING' ? 1 : 2;
-
-  const { positions, scales } = useMemo(() => {
-    const pos = new Float32Array(PARTICLE_COUNT * 3);
-    const sc = new Float32Array(PARTICLE_COUNT);
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const phi = Math.acos(1 - 2 * (i + 0.5) / PARTICLE_COUNT);
-      const theta = Math.PI * (1 + Math.sqrt(5)) * (i + 0.5);
-      pos[3 * i]     = ORB_RADIUS * Math.cos(theta) * Math.sin(phi);
-      pos[3 * i + 1] = ORB_RADIUS * Math.sin(theta) * Math.sin(phi);
-      pos[3 * i + 2] = ORB_RADIUS * Math.cos(phi);
-      sc[i] = 0.7 + 0.6 * Math.random();
-    }
-    return { positions: pos, scales: sc };
-  }, []);
-
-  const geometry = useMemo(() => {
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geo.setAttribute('aScale', new THREE.BufferAttribute(scales, 1));
-    return geo;
-  }, [positions, scales]);
-
-  const uniforms = useMemo(() => ({
-    uTime: { value: 0 },
-    uState: { value: 0 },
-  }), []);
-
-  useFrame((_, delta) => {
-    uTime.current += delta;
-    if (materialRef.current) {
-      materialRef.current.uniforms.uTime.value = uTime.current;
-      materialRef.current.uniforms.uState.value = stateIndex;
-    }
-    if (state === 'CHATTING' && analyserNode && pointsRef.current) {
-      const data = new Uint8Array(analyserNode.frequencyBinCount);
-      analyserNode.getByteFrequencyData(data);
-      const sc = new Float32Array(PARTICLE_COUNT);
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        sc[i] = 0.7 + 1.2 * (data[i % data.length] / 255);
-      }
-      pointsRef.current.geometry.setAttribute('aScale', new THREE.BufferAttribute(sc, 1));
-    }
-  });
-
-  return (
-    <points ref={pointsRef} geometry={geometry} frustumCulled={false}>
-      <shaderMaterial
-        ref={materialRef}
-        uniforms={uniforms}
-        vertexShader={vertexShader}
-        fragmentShader={fragmentShader}
-        blending={THREE.AdditiveBlending}
-        depthWrite={false}
-        transparent
-      />
-    </points>
-  );
+const STATE_COLORS: Record<OrbState, { inner: string; outer: string; ring: string }> = {
+  LISTENING: {
+    inner: 'radial-gradient(circle, #00D4FF 0%, #0088CC 50%, transparent 80%)',
+    outer: 'radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%)',
+    ring: 'rgba(0,212,255,0.4)',
+  },
+  THINKING: {
+    inner: 'radial-gradient(circle, #C9A84C 0%, #A07030 50%, transparent 80%)',
+    outer: 'radial-gradient(circle, rgba(201,168,76,0.15) 0%, transparent 70%)',
+    ring: 'rgba(201,168,76,0.4)',
+  },
+  CHATTING: {
+    inner: 'radial-gradient(circle, #00FF9D 0%, #00AA66 50%, transparent 80%)',
+    outer: 'radial-gradient(circle, rgba(0,255,157,0.15) 0%, transparent 70%)',
+    ring: 'rgba(0,255,157,0.4)',
+  },
 }
 
-export default function MathsJarvisOrb({ state, analyserNode }: MathsJarvisOrbProps) {
-  const [webglReady, setWebglReady] = useState(false);
+const STATE_ANIMATIONS: Record<OrbState, TargetAndTransition> = {
+  LISTENING: {
+    scale: [1, 1.06, 1],
+    transition: { duration: 2.4, repeat: Infinity, ease: 'easeInOut' },
+  },
+  THINKING: {
+    scale: [1, 1.12, 0.95, 1.08, 1],
+    rotate: [0, 180, 360],
+    transition: { duration: 1.8, repeat: Infinity, ease: 'linear' },
+  },
+  CHATTING: {
+    scale: [1, 1.15, 0.92, 1.1, 1],
+    transition: { duration: 0.6, repeat: Infinity, ease: 'easeInOut' },
+  },
+}
 
-  useEffect(() => {
-    try {
-      const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-      if (gl) setWebglReady(true);
-    } catch {
-      // WebGL not available — OrbErrorBoundary will show CSS fallback
-    }
-  }, []);
-
-  if (!webglReady) return null;
+export default function MathsJarvisOrb({ state }: MathsJarvisOrbProps) {
+  const colors = STATE_COLORS[state]
+  const anim = STATE_ANIMATIONS[state]
 
   return (
-    <Canvas
-      camera={{ position: [0, 0, 4.5], fov: 38 }}
-      style={{ height: 320, background: 'transparent' }}
-      gl={{ antialias: false, alpha: true, powerPreference: 'low-power', failIfMajorPerformanceCaveat: false }}
-    >
-      <ambientLight intensity={0.7} />
-      <OrbParticles state={state} analyserNode={analyserNode} />
-    </Canvas>
-  );
+    <div className="flex items-center justify-center" style={{ height: 320, width: '100%' }}>
+      <div className="relative flex items-center justify-center" style={{ width: 240, height: 240 }}>
+        {/* Outer glow */}
+        <motion.div
+          animate={{ opacity: [0.4, 0.8, 0.4] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            position: 'absolute',
+            width: 240,
+            height: 240,
+            borderRadius: '50%',
+            background: colors.outer,
+          }}
+        />
+
+        {/* Rotating ring */}
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: state === 'THINKING' ? 1.5 : 4, repeat: Infinity, ease: 'linear' }}
+          style={{
+            position: 'absolute',
+            width: 180,
+            height: 180,
+            borderRadius: '50%',
+            border: `1px solid ${colors.ring}`,
+            borderTopColor: 'transparent',
+            borderRightColor: 'transparent',
+          }}
+        />
+
+        {/* Second ring */}
+        <motion.div
+          animate={{ rotate: -360 }}
+          transition={{ duration: state === 'THINKING' ? 2.2 : 6, repeat: Infinity, ease: 'linear' }}
+          style={{
+            position: 'absolute',
+            width: 140,
+            height: 140,
+            borderRadius: '50%',
+            border: `1px solid ${colors.ring}`,
+            borderBottomColor: 'transparent',
+            borderLeftColor: 'transparent',
+            opacity: 0.6,
+          }}
+        />
+
+        {/* Core orb */}
+        <motion.div
+          animate={anim}
+          style={{
+            width: 96,
+            height: 96,
+            borderRadius: '50%',
+            background: colors.inner,
+            boxShadow: `0 0 40px ${colors.ring}, 0 0 80px ${colors.ring}40`,
+          }}
+        />
+
+        {/* Inner pulse */}
+        <motion.div
+          animate={{ scale: [1, 1.8, 1], opacity: [0.6, 0, 0.6] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeOut' }}
+          style={{
+            position: 'absolute',
+            width: 96,
+            height: 96,
+            borderRadius: '50%',
+            background: colors.inner,
+            opacity: 0.3,
+          }}
+        />
+      </div>
+    </div>
+  )
 }

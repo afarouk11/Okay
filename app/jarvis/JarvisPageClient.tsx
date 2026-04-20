@@ -1,15 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import OrbErrorBoundary from '@/components/MathsJarvis/OrbErrorBoundary';
+import MathsJarvisOrb from '@/components/MathsJarvis/MathsJarvisOrb';
 import { useRouter } from 'next/navigation';
 import { Mic, MicOff, PhoneCall, PhoneOff, Repeat2, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '@/lib/useAuth';
 import katex from 'katex';
-
-const MathsJarvisOrb = dynamic(() => import('@/components/MathsJarvis/MathsJarvisOrb'), { ssr: false });
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -997,13 +994,9 @@ export default function JarvisPageClient() {
       <div className="page-layout">
         <aside className="left-panel">
           <div className="glass-card orb-wrap">
-            <OrbErrorBoundary
-              fallback={<div className={`orb ${isRecording ? 'listening' : callStatus === 'speaking' ? 'speaking' : (isLoading || callStatus === 'thinking') ? 'thinking' : ''}`} role="img" aria-label="J.A.R.V.I.S. avatar" />}
-            >
-              <MathsJarvisOrb
-                state={isRecording ? 'LISTENING' : callStatus === 'speaking' ? 'CHATTING' : 'THINKING'}
-              />
-            </OrbErrorBoundary>
+            <MathsJarvisOrb
+              state={isRecording ? 'LISTENING' : callStatus === 'speaking' ? 'CHATTING' : 'THINKING'}
+            />
             <p className="orb-status">{orbStatusText}</p>
             <p className="orb-sub">{orbSubtext}</p>
           </div>

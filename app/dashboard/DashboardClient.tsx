@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import {
   Sparkles, Zap, Target, BookOpen, TrendingUp, ArrowRight,
-  Flame, CalendarDays, FileText, HelpCircle, MessageSquare,
+  Flame, CalendarDays, FileText, MessageSquare, Clock3, HelpCircle,
   BarChart2, Clock, CheckCircle2,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -43,12 +43,12 @@ function daysUntilExam(examDate: string | null | undefined): number | null {
 }
 
 const quickActions = [
-  { href: '/jarvis',    icon: Sparkles,     label: 'J.A.R.V.I.S.',   sub: 'AI step-by-step tutor',    accent: '#C9A84C' },
-  { href: '/questions', icon: HelpCircle,   label: 'Practice Qs',     sub: 'Exam-style questions',     accent: '#00D4FF' },
-  { href: '/plan',      icon: CalendarDays, label: "Today's Plan",    sub: 'Your daily study tasks',   accent: '#00FF9D' },
-  { href: '/papers',    icon: FileText,     label: 'Past Papers',     sub: 'Official board questions', accent: '#B060FF' },
-  { href: '/study',     icon: BookOpen,     label: 'Study Hub',       sub: 'Explore topics & modules', accent: '#FF6B35' },
-  { href: '/blitz',     icon: Zap,          label: 'Quick Blitz',     sub: '5-question rapid round',   accent: '#FF4060' },
+  { href: '/jarvis',   icon: Sparkles,     label: 'J.A.R.V.I.S.',  sub: 'AI step-by-step tutor',   accent: '#C9A84C' },
+  { href: '/chat',     icon: MessageSquare,label: 'Chat',           sub: 'Ask anything, anytime',   accent: '#00D4FF' },
+  { href: '/lessons',  icon: BookOpen,     label: 'Lessons',        sub: 'Explore topics & modules',accent: '#00FF9D' },
+  { href: '/exam-sim', icon: Clock3,       label: 'Exam Sim',       sub: 'Timed exam practice',     accent: '#B060FF' },
+  { href: '/notes',    icon: FileText,     label: 'Notes',          sub: 'Capture key ideas',       accent: '#FF6B35' },
+  { href: '/plan',     icon: CalendarDays, label: "Daily Plan",     sub: 'Your study tasks today',  accent: '#00FF9D' },
 ]
 
 function StatPill({ icon: Icon, label, value, accent }: {
@@ -334,10 +334,6 @@ export default function DashboardClient() {
                       <span className="text-[12px] text-white truncate">{topic}</span>
                     </div>
                   ))}
-                  <Link href="/mistakes">
-                    <p className="text-[11px] mt-2 hover:text-[#C9A84C] transition-colors"
-                       style={{ color: '#5A7499' }}>View all mistakes →</p>
-                  </Link>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-8 text-center">

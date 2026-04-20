@@ -13,10 +13,10 @@ interface HeaderProps {
 }
 
 const SEARCH_SHORTCUTS = [
-  { icon: MessageSquare, label: 'Chat with Jarvis', href: '/chat', color: '#00D4FF' },
-  { icon: BookOpen,      label: 'Browse Lessons',   href: '/lessons', color: '#B060FF' },
-  { icon: FileText,      label: 'Past Papers',       href: '/papers',  color: '#FF8C00' },
-  { icon: CalendarDays,  label: "Today's Plan",      href: '/plan',    color: '#00FF9D' },
+  { icon: MessageSquare, label: 'Chat with Jarvis', href: '/chat',     color: '#00D4FF' },
+  { icon: BookOpen,      label: 'Browse Lessons',   href: '/lessons',  color: '#B060FF' },
+  { icon: FileText,      label: 'My Notes',         href: '/notes',    color: '#FF8C00' },
+  { icon: CalendarDays,  label: "Today's Plan",     href: '/plan',     color: '#00FF9D' },
 ]
 
 const NOTIFICATIONS = [

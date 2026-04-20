@@ -4,10 +4,9 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  LayoutDashboard, MessageSquare, CalendarDays, BookOpen, HelpCircle,
-  FileText, StickyNote, Sparkles, Settings, Zap, LogOut, Brain,
-  Sigma, LibraryBig, FileCheck2, Clock3, Network, HeartPulse,
-  Trophy, AlertTriangle, CheckSquare, Target, ChevronDown, Layers3,
+  MessageSquare, CalendarDays, BookOpen,
+  StickyNote, Sparkles, Settings, Zap, LogOut,
+  Clock3, Network, ChevronDown,
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '@/lib/useAuth'
@@ -16,44 +15,36 @@ import { useEffect, useState } from 'react'
 
 const sections = [
   {
+    label: 'Home',
+    items: [
+      { href: '/dashboard', label: 'Dashboard', icon: Zap },
+    ],
+  },
+  {
     label: 'Learn',
     items: [
-      { href: '/dashboard',  label: 'Dashboard',   icon: LayoutDashboard },
-      { href: '/lessons',    label: 'Lessons',     icon: BookOpen        },
-      { href: '/questions',  label: 'Questions',   icon: HelpCircle      },
-      { href: '/papers',     label: 'Past Papers', icon: FileText        },
-      { href: '/study',      label: 'Study Hub',   icon: Layers3         },
-      { href: '/blitz',      label: 'Quick Blitz', icon: Zap             },
+      { href: '/lessons',  label: 'Lessons',  icon: BookOpen },
+      { href: '/exam-sim', label: 'Exam Sim', icon: Clock3   },
     ],
   },
   {
     label: 'AI Tools',
     items: [
-      { href: '/jarvis',       label: 'J.A.R.V.I.S.',  icon: Sparkles      },
-      { href: '/chat',         label: 'Chat',           icon: MessageSquare },
-      { href: '/work-checker', label: 'Work Checker',   icon: FileCheck2    },
-      { href: '/exam-sim',     label: 'Exam Sim',       icon: Clock3        },
-      { href: '/predict',      label: 'Grade Predict',  icon: Brain         },
+      { href: '/jarvis', label: 'J.A.R.V.I.S.', icon: Sparkles      },
+      { href: '/chat',   label: 'Chat',          icon: MessageSquare },
     ],
   },
   {
     label: 'Track',
     items: [
-      { href: '/plan',        label: 'Daily Plan',  icon: CalendarDays  },
-      { href: '/goals',       label: 'Goals',       icon: Target        },
-      { href: '/checklist',   label: 'Checklist',   icon: CheckSquare   },
-      { href: '/leaderboard', label: 'Leaderboard', icon: Trophy        },
-      { href: '/mistakes',    label: 'Mistakes',    icon: AlertTriangle },
+      { href: '/plan', label: 'Daily Plan', icon: CalendarDays },
     ],
   },
   {
     label: 'Resources',
     items: [
-      { href: '/notes',     label: 'Notes',     icon: StickyNote },
-      { href: '/formulas',  label: 'Formulas',  icon: Sigma      },
-      { href: '/mindmap',   label: 'Mind Map',  icon: Network    },
-      { href: '/resources', label: 'Library',   icon: LibraryBig },
-      { href: '/wellbeing', label: 'Wellbeing', icon: HeartPulse },
+      { href: '/notes',   label: 'Notes',    icon: StickyNote },
+      { href: '/mindmap', label: 'Mind Map', icon: Network    },
     ],
   },
 ]
@@ -197,10 +188,6 @@ export default function Sidebar() {
             defaultOpen={i < 2}
           />
         ))}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '12px' }}>
-          <NavItem href="/kids" label="Kids Zone" icon={BookOpen}
-            active={pathname.startsWith('/kids')} />
-        </div>
       </nav>
 
       {/* Bottom */}
