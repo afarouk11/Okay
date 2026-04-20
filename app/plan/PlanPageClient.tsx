@@ -128,7 +128,7 @@ export default function PlanPageClient() {
     <div className="flex min-h-screen" style={{ background: '#0B0F14' }}>
       <Sidebar />
 
-      <div className="flex-1 flex flex-col ml-60">
+      <div className="flex-1 flex flex-col ml-[225px]">
         <Header title="Daily Plan" subtitle={today} />
 
         <main className="flex-1 px-8 py-6 max-w-2xl">

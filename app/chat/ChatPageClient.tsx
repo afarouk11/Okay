@@ -400,7 +400,7 @@ export default function ChatPageClient() {
     <div className="flex min-h-screen" style={{ background: '#0B0F14' }}>
       <Sidebar />
 
-      <div className="flex-1 flex flex-col ml-60 min-h-screen">
+      <div className="flex-1 flex flex-col ml-[225px] min-h-screen">
         <Header title="Chat with Jarvis" subtitle="Your personal AI tutor" />
 
         <div className="flex-1 flex flex-col w-full max-w-3xl mx-auto px-6 pb-6 pt-4">

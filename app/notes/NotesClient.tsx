@@ -165,7 +165,7 @@ export default function NotesClient() {
     <div className="flex min-h-screen" style={{ background: '#0B0F14' }}>
       <Sidebar />
 
-      <div className="flex-1 flex flex-col ml-60">
+      <div className="flex-1 flex flex-col ml-[225px]">
         <Header
           title="Notes"
           subtitle="Capture and revisit your study notes"

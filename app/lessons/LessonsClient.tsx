@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { BookOpen, Play, Lock } from 'lucide-react'
+import { BookOpen, Play, Lock, ArrowRight } from 'lucide-react'
 import Sidebar from '@/components/Sidebar'
 import Header from '@/components/Header'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 const TOPICS = [
   {
@@ -45,13 +45,21 @@ const TOPICS = [
 ]
 
 export default function LessonsClient() {
-  const [selected, setSelected] = useState<string | null>(null)
+  const router = useRouter()
+
+  function openLesson(title: string, free: boolean) {
+    if (!free) {
+      router.push('/pricing')
+      return
+    }
+    router.push(`/jarvis?q=${encodeURIComponent(`Teach me ${title} step by step, with worked examples`)}`)
+  }
 
   return (
     <div className="flex min-h-screen" style={{ background: '#0B0F14' }}>
       <Sidebar />
 
-      <div className="flex-1 flex flex-col ml-60">
+      <div className="flex-1 flex flex-col ml-[225px]">
         <Header title="AI Lessons" subtitle="Interactive lessons with Jarvis" />
 
         <main className="flex-1 px-8 py-6 space-y-8">
@@ -112,13 +120,11 @@ export default function LessonsClient() {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ duration: 0.35, delay: ci * 0.1 + li * 0.04 }}
                     whileHover={{ y: -2, transition: { duration: 0.15 } }}
-                    onClick={() => setSelected(lesson.id)}
+                    onClick={() => openLesson(lesson.title, lesson.free)}
                     className="group rounded-card p-4 cursor-pointer"
                     style={{
-                      background: selected === lesson.id ? `${cat.color}10` : 'rgba(18,24,33,0.8)',
-                      border: selected === lesson.id
-                        ? `1px solid ${cat.color}40`
-                        : '1px solid rgba(255,255,255,0.06)',
+                      background: 'rgba(18,24,33,0.8)',
+                      border: '1px solid rgba(255,255,255,0.06)',
                     }}
                   >
                     <div className="flex items-start justify-between gap-2 mb-3">
@@ -132,19 +138,18 @@ export default function LessonsClient() {
                       >
                         {lesson.level}
                       </span>
-                      {!lesson.free && (
-                        <Lock className="w-3.5 h-3.5 text-muted/40" />
-                      )}
+                      {!lesson.free && <Lock className="w-3.5 h-3.5 text-muted/40" />}
                     </div>
                     <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors leading-snug">
                       {lesson.title}
                     </p>
-                    <div className="mt-3 flex items-center gap-1.5">
+                    <div className="mt-3 flex items-center justify-between">
                       {lesson.free ? (
                         <span className="text-[10px] text-accent font-medium">Free</span>
                       ) : (
                         <span className="text-[10px] text-muted">Pro</span>
                       )}
+                      <ArrowRight className="w-3 h-3 text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </motion.div>
                 ))}

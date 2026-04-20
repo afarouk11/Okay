@@ -108,7 +108,7 @@ No other text.`,
     <div className="flex min-h-screen" style={{ background: '#0B0F14' }}>
       <Sidebar />
 
-      <div className="flex-1 flex flex-col ml-60">
+      <div className="flex-1 flex flex-col ml-[225px]">
         <Header title="Practice Questions" subtitle="AI-generated exam-style questions" />
 
         <main className="flex-1 px-8 py-6 max-w-3xl">
