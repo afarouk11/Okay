@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 const FROM_EMAIL = process.env.EMAIL_FROM || 'Synapnode <hello@synaptiq.co.uk>'
-const SITE_URL = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq.co.uk'
+const SITE_URL = process.env.SITE_URL || process.env.APP_URL || 'https://studiq.org'
 
 function hasValidAdminKey(adminKey: string | null) {
   const expectedKey = process.env.ADMIN_SECRET_KEY || ''

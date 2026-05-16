@@ -138,7 +138,7 @@ function buildTemplates(name: string, stats: Record<string, unknown>, siteUrl: s
 }
 
 export async function POST(request: NextRequest) {
-  const siteUrl = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq.co.uk'
+  const siteUrl = process.env.SITE_URL || process.env.APP_URL || 'https://studiq.org'
   const ip = getIp(request)
 
   const body = await request.json().catch(() => ({})) as {

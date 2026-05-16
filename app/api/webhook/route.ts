@@ -5,7 +5,7 @@ import { createServiceClient } from '@/lib/supabase'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-const siteUrl = process.env.SITE_URL || process.env.APP_URL || 'https://synaptiq.co.uk'
+const siteUrl = process.env.SITE_URL || process.env.APP_URL || 'https://studiq.org'
 
 async function sendEmail(to: string, type: string, params: { name?: string; stats?: Record<string, unknown> } = {}) {
   if (!process.env.RESEND_API_KEY) return

@@ -13,7 +13,7 @@ const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL ||
   process.env.VERCEL_PROJECT_PRODUCTION_URL ||
   process.env.VERCEL_URL ||
-  'https://synaptiq.co.uk'
+  'https://studiq.org'
 
 const resolvedSiteUrl = siteUrl.startsWith('http') ? siteUrl : `https://${siteUrl}`
 
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     title: 'Synapnode — AI Learning Platform',
     description: 'Your personal AI tutor. Premium, intelligent, personalised.',
     type: 'website',
-    url: 'https://synaptiq.co.uk',
+    url: 'https://studiq.org',
     images: [{ url: '/og-image.svg', width: 1200, height: 630, alt: 'Synapnode — AI Learning Platform' }],
   },
   twitter: {

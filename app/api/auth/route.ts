@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
 
   if (action === 'forgot_password') {
     if (!email || !EMAIL_RE.test(email)) return NextResponse.json({ error: 'Valid email required' }, { status: 400 })
-    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || process.env.SITE_URL || 'https://synaptiq.co.uk'
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || process.env.SITE_URL || 'https://studiq.org'
     await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim(), { redirectTo: `${siteUrl}/reset-password` })
     return NextResponse.json({ success: true })
   }

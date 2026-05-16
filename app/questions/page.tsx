@@ -4,12 +4,12 @@ import QuestionsClient from './QuestionsClient'
 export const metadata: Metadata = {
   title: 'Practice Questions',
   description: 'Generate unlimited A-Level Maths practice questions with full mark-scheme solutions. Tailored to AQA, Edexcel, OCR and WJEC.',
-  alternates: { canonical: 'https://synaptiqai.co.uk/questions' },
+  alternates: { canonical: 'https://studiq.org/questions' },
   openGraph: {
     title: 'Practice Questions | Synapnode',
     description: 'Unlimited AI-generated A-Level Maths questions with mark-scheme solutions.',
     type: 'website',
-    url: 'https://synaptiqai.co.uk/questions',
+    url: 'https://studiq.org/questions',
   },
   twitter: {
     card: 'summary_large_image',

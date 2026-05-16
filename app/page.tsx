@@ -48,7 +48,7 @@ const JSON_LD = JSON.stringify([
     '@context': 'https://schema.org',
     '@type': 'EducationalOrganization',
     name: 'Synapnode',
-    url: 'https://synaptiq.co.uk',
+    url: 'https://studiq.org',
     description:
       'AI-powered A-Level Maths tutoring platform aligned to AQA, Edexcel, OCR and WJEC mark schemes.',
     sameAs: [
@@ -68,7 +68,7 @@ const JSON_LD = JSON.stringify([
 ])
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://synaptiq.co.uk'),
+  metadataBase: new URL('https://studiq.org'),
   title: 'Synapnode — AI A-Level Maths Tutor | AQA, Edexcel, OCR',
   description:
     "The UK's most focused AI tutor for A-Level Maths. Step-by-step working, mark-scheme-aligned answers, and personalised revision for AQA, Edexcel, OCR and WJEC. Start your 7-day free trial.",
@@ -76,13 +76,13 @@ export const metadata: Metadata = {
     'AI tutor', 'A-Level Maths', 'AQA', 'Edexcel', 'OCR', 'WJEC',
     'mark scheme', 'personalised learning', 'A-Level revision', 'UK students',
   ],
-  alternates: { canonical: 'https://synaptiq.co.uk' },
+  alternates: { canonical: 'https://studiq.org' },
   openGraph: {
     title: 'Synapnode — AI A-Level Maths Tutor',
     description:
       'Step-by-step working, mark-scheme-aligned answers, and personalised revision for every UK exam board.',
     type: 'website',
-    url: 'https://synaptiq.co.uk',
+    url: 'https://studiq.org',
     images: [{ url: '/og-image.svg', width: 1200, height: 630, alt: 'Synapnode — AI A-Level Maths Tutor' }],
   },
   twitter: {
