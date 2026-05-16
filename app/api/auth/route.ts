@@ -268,5 +268,40 @@ export async function POST(request: NextRequest) {
     })
   }
 
+  if (action === 'leaderboard') {
+    const { payload } = body as { payload?: { tab?: string } }
+    const tab = payload?.tab ?? 'alltime'
+    const orderCol = tab === 'streak' ? 'streak' : 'xp'
+
+    const { data: top } = await supabase
+      .from('profiles')
+      .select('name, xp, streak, avatar_emoji')
+      .order(orderCol, { ascending: false })
+      .limit(20)
+
+    let userRank: number | null = null
+    const token = request.headers.get('authorization')?.replace('Bearer ', '').trim()
+    if (token && !token.startsWith('demo_token_')) {
+      const { data: { user } } = await supabase.auth.getUser(token)
+      if (user) {
+        const { data: me } = await supabase
+          .from('profiles')
+          .select('xp, streak')
+          .eq('id', user.id)
+          .single()
+        if (me) {
+          const score = orderCol === 'streak' ? (me.streak ?? 0) : (me.xp ?? 0)
+          const { count } = await supabase
+            .from('profiles')
+            .select('id', { count: 'exact', head: true })
+            .gt(orderCol, score)
+          userRank = (count ?? 0) + 1
+        }
+      }
+    }
+
+    return NextResponse.json({ top: top ?? [], userRank })
+  }
+
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
 }
